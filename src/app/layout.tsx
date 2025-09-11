@@ -42,29 +42,29 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased">
+      <body className="font-body antialiased flex">
         <SidebarProvider>
-          <Sidebar>
+          <Sidebar className="w-64 hidden md:flex" collapsible="none">
             <MainSidebar user={user} />
           </Sidebar>
-          <SidebarInset>
+          <SidebarInset className="flex-1 md:ml-64">
             <PageHeader />
             <main className="p-4 sm:p-6 lg:p-8">{children}</main>
           </SidebarInset>
         </SidebarProvider>
 
         <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
-          <Button variant="outline" size="icon">
+           <Button variant="outline" size="icon" className="rounded-full w-10 h-10">
             <Bug className="h-5 w-5" />
             <span className="sr-only">Reportar Error</span>
           </Button>
           {user.role === 'admin' && (
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" className="rounded-full w-10 h-10">
               <Sparkles className="h-5 w-5 text-yellow-400" />
               <span className="sr-only">Asistente IA</span>
             </Button>
           )}
-          <Button size="lg" className="pl-4 pr-5">
+          <Button size="lg" className="pl-4 pr-5 rounded-full">
             <MessageSquare className="mr-2 h-5 w-5" />
             MENSAJES
           </Button>

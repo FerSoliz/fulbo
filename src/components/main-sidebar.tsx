@@ -28,7 +28,8 @@ import {
   SidebarSeparator,
 } from '@/components/ui/sidebar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from './ui/badge';
+import { usePathname } from 'next/navigation';
+import { AnimatedAvatar } from './ui/animated-avatar';
 
 // Mock user type, replace with your actual user type
 type User = {
@@ -56,27 +57,30 @@ const menuItems = [
 export function MainSidebar({ user }: MainSidebarProps) {
   const userRole = user?.role || 'user';
   const isLoggedIn = !!user;
+  const pathname = usePathname();
 
   return (
-    <>
-      <SidebarHeader>
-        <div className="flex flex-col items-center gap-4 py-4">
+    <aside className="w-64 h-screen fixed top-0 left-0 bg-card border-r border-border flex flex-col">
+      <SidebarHeader className="p-2">
+        <div className="flex items-center gap-2">
           {isLoggedIn && user ? (
             <Link href={`/profile/${user.id}`} passHref>
-              <Avatar className="h-24 w-24 border-2 border-primary cursor-pointer">
-                <AvatarImage src={user.avatarUrl} alt="User Avatar" />
-                <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
-              </Avatar>
+              <AnimatedAvatar>
+                <Avatar className="h-12 w-12 cursor-pointer">
+                  <AvatarImage src={user.avatarUrl} alt="User Avatar" />
+                  <AvatarFallback>{user.name?.charAt(0) || 'U'}</AvatarFallback>
+                </Avatar>
+              </AnimatedAvatar>
             </Link>
           ) : (
-            <div className="h-24 w-24"></div> // Placeholder
+            <div className="h-12 w-12"></div> 
           )}
            <Link href="/" passHref>
              <div className="cursor-pointer">
                 <Image
                     src="https://i.postimg.cc/vTdS7yvR/logo-sadasfsaf.png"
-                    width={150}
-                    height={40}
+                    width={114}
+                    height={32}
                     alt="SUDONE Logo"
                     priority
                 />
@@ -85,74 +89,79 @@ export function MainSidebar({ user }: MainSidebarProps) {
         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">
-        <SidebarMenu>
+        <ul className="flex flex-col gap-1">
           {menuItems.map((item) =>
             item.roles.includes(userRole) ? (
-              <SidebarMenuItem key={item.label}>
+              <li key={item.label}>
                 <Link href={item.href} passHref>
-                  <SidebarMenuButton className='main-sidebar-button' asChild>
-                    <>
-                      <item.icon />
+                  <SidebarMenuButton 
+                    variant="ghost" 
+                    className="w-full justify-start gap-2 main-sidebar-button" 
+                    data-active={pathname === item.href}
+                    asChild
+                  >
+                    <div>
+                      <item.icon className="size-4" />
                       <span>{item.label}</span>
-                    </>
+                    </div>
                   </SidebarMenuButton>
                 </Link>
-              </SidebarMenuItem>
+              </li>
             ) : null
           )}
-        </SidebarMenu>
+        </ul>
       </SidebarContent>
       <SidebarSeparator />
-      <SidebarFooter>
-        <SidebarMenu>
+      <SidebarFooter className="p-2">
+        <ul className="flex flex-col gap-1">
           {isLoggedIn && user && (
             <>
-              <SidebarMenuItem>
+              <li>
                 <Link href="/settings" passHref>
-                  <SidebarMenuButton className='main-sidebar-button' asChild>
-                    <>
-                      <Settings />
+                  <SidebarMenuButton variant="ghost" className="w-full justify-start gap-2 main-sidebar-button" data-active={pathname === '/settings'} asChild>
+                    <div>
+                      <Settings className="size-4" />
                       <span>CONFIGURACIÓN</span>
-                    </>
+                    </div>
                   </SidebarMenuButton>
                 </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
+              </li>
+              <li>
                 <Link href={`/profile/${user.id}`} passHref>
-                  <SidebarMenuButton className='main-sidebar-button' asChild>
-                    <>
-                      <User />
+                   <SidebarMenuButton variant="ghost" className="w-full justify-start gap-2 main-sidebar-button" data-active={pathname === `/profile/${user.id}`} asChild>
+                    <div>
+                      <User className="size-4" />
                       <span>MI PERFIL</span>
-                    </>
+                    </div>
                   </SidebarMenuButton>
                 </Link>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
+              </li>
+              <li>
                 <Link href="/login" passHref>
-                  <SidebarMenuButton className='main-sidebar-button' asChild>
-                    <>
-                      <LogOut />
+                  <SidebarMenuButton variant="ghost" className="w-full justify-start gap-2 main-sidebar-button" data-active={pathname === '/login'} asChild>
+                    <div>
+                      <LogOut className="size-4" />
                       <span>CERRAR SESIÓN</span>
-                    </>
+                    </div>
                   </SidebarMenuButton>
                 </Link>
-              </SidebarMenuItem>
+              </li>
             </>
           )}
           {!isLoggedIn && (
-            <SidebarMenuItem>
+            <li>
               <Link href="/login" passHref>
-                <SidebarMenuButton className='main-sidebar-button' asChild>
-                  <>
-                    <LogIn />
+                <SidebarMenuButton variant="ghost" className="w-full justify-start gap-2 main-sidebar-button" data-active={pathname === '/login'} asChild>
+                  <div>
+                    <LogIn className="size-4" />
                     <span>INICIAR SESIÓN</span>
-                  </>
+                  </div>
                 </SidebarMenuButton>
               </Link>
-            </SidebarMenuItem>
+            </li>
           )}
-        </SidebarMenu>
+        </ul>
       </SidebarFooter>
-    </>
+    </aside>
   );
 }
