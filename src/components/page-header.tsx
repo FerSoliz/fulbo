@@ -39,9 +39,6 @@ export function PageHeader({ user }: PageHeaderProps) {
                 />
             </form>
             <div className="flex flex-1 items-center justify-end gap-2">
-                <Button variant="ghost" className="rounded-full w-auto h-auto p-0">
-                    <Image src="https://i.postimg.cc/d1BuL3t1/onetrivia-logo.png" alt="ONETRIVIA" width={60} height={60} />
-                </Button>
                 <Link href="/cards">
                     <Button variant="ghost" className="flex items-center gap-2">
                         <Layers className="h-6 w-6 text-destructive" />
