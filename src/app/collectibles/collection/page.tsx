@@ -12,8 +12,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 export default function CollectionPage() {
   const [userCollection, setUserCollection] = useState<CardType[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [filter, setFilter] = useState<string>('all');
-  const [sort, setSort] = useState<string>('rating');
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
 
   useEffect(() => {
@@ -26,24 +24,12 @@ export default function CollectionPage() {
 
   const collectionPercentage = (userCollection.length / allCards.length) * 100;
 
-  const rarities: CardType['rarity'][] = ['common', 'rare', 'epic', 'legendary', 'hero', 'CRACKS', 'LEYENDA MUNDIAL'];
-  
-  const filteredAndSortedCards = allCards
+  const collectionCards = allCards
     .map(card => ({
         ...card,
         owned: userCollection.some(ownedCard => ownedCard.id === card.id)
     }))
-    .filter(card => {
-        if (filter === 'all') return true;
-        if (filter === 'owned') return card.owned;
-        if (filter === 'unowned') return !card.owned;
-        return card.rarity === filter;
-    })
-    .sort((a, b) => {
-        if (sort === 'rating') return (b.owned ? b.rating : -1) - (a.owned ? a.rating : -1);
-        if (sort === 'id') return a.id - b.id;
-        return 0;
-    });
+    .sort((a, b) => a.id - b.id);
 
   if (!isClient) {
     return <div className="p-4 text-center">Cargando colección...</div>;
@@ -63,30 +49,8 @@ export default function CollectionPage() {
           <p className="text-center text-muted-foreground mb-4">Has coleccionado {userCollection.length} de {allCards.length} cartas.</p>
           <Progress value={collectionPercentage} className="mb-6" />
           
-          <div className="flex flex-wrap justify-center items-center gap-4 mb-6">
-            <div className="flex flex-wrap justify-center gap-2">
-                <Button size="sm" variant={filter === 'all' ? 'default' : 'outline'} onClick={() => setFilter('all')}>Todas</Button>
-                {rarities.map(rarity => (
-                    <Button 
-                      key={rarity} 
-                      size="sm" 
-                      variant={filter === rarity ? 'default' : 'outline'} 
-                      onClick={() => setFilter(rarity)}
-                      className="capitalize"
-                    >
-                      {rarity}
-                    </Button>
-                ))}
-            </div>
-             <div className="flex items-center gap-2">
-                <span className="text-sm">Ordenar por:</span>
-                <Button size="sm" variant={sort === 'rating' ? 'default' : 'outline'} onClick={() => setSort('rating')}>Rating</Button>
-                <Button size="sm" variant={sort === 'id' ? 'default' : 'outline'} onClick={() => setSort('id')}>Número</Button>
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-            {filteredAndSortedCards.map((card) => (
+            {collectionCards.map((card) => (
               <div key={card.id} className="flex flex-col items-center">
                 {card.owned ? (
                   <motion.div layoutId={`card-${card.id}`} onClick={() => setSelectedCard(card)}>
