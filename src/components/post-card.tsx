@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Heart, MessageSquare, Bookmark, MoreHorizontal, CheckCircle, Play } from 'lucide-react';
+import { Heart, MessageSquare, Bookmark, MoreHorizontal, CheckCircle, Play, Pencil } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Post, User, Comment } from '@/lib/data';
@@ -52,7 +52,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
   };
 
   const isLiked = currentUser && post.likes.includes(currentUser.id);
-  const canEditOrDelete = currentUser?.id === post.authorId || currentUser?.role === 'admin';
+  const canEditOrDelete = currentUser?.id === post.authorId || currentUser?.role === 'admin' || currentUser?.role === 'editor';
 
   const renderMedia = () => {
     const { media } = post;
@@ -152,7 +152,10 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              {currentUser?.id === post.authorId && <DropdownMenuItem>Editar</DropdownMenuItem>}
+              <DropdownMenuItem>
+                  <Pencil className="mr-2 h-4 w-4" />
+                  Editar
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onDeletePost(post.id)} className="text-destructive">
                 Eliminar
               </DropdownMenuItem>
