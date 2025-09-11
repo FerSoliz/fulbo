@@ -223,7 +223,7 @@ const MainMenu = ({ setView }: { onOpenPack: () => void, setView: (v: View) => v
             <div className="space-y-4">
               <div>
                 <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg hover:from-red-600 hover:to-red-900 transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
+                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
                      onClick={() => setView("pack")}
                 >
                   <div className="flex items-center gap-3"><PackageOpen className="w-5 h-5" /><span>ABRIR SOBRE</span></div>
@@ -232,7 +232,7 @@ const MainMenu = ({ setView }: { onOpenPack: () => void, setView: (v: View) => v
               </div>
               <div>
                 <Link href="/collectibles/collection">
-                  <Button className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg hover:from-red-600 hover:to-red-900 transition-all duration-200 transform hover:-translate-y-0.5 rounded-full">
+                  <Button className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full">
                     <div className="flex items-center gap-3"><Layers className="w-5 h-5" /><span>MI COLECCIÓN</span></div>
                     <ChevronRight className="w-5 h-5" />
                   </Button>
@@ -240,7 +240,7 @@ const MainMenu = ({ setView }: { onOpenPack: () => void, setView: (v: View) => v
               </div>
               <div>
                 <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg hover:from-red-600 hover:to-red-900 transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
+                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
                      onClick={() => setView("formation")}
                 >
                   <div className="flex items-center gap-3"><Users className="w-5 h-5" /><span>MI EQUIPO</span></div>
@@ -249,7 +249,7 @@ const MainMenu = ({ setView }: { onOpenPack: () => void, setView: (v: View) => v
               </div>
               <div>
                 <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg hover:from-red-600 hover:to-red-900 transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
+                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
                      onClick={() => setView("vs_match")}
                 >
                   <div className="flex items-center gap-3"><Swords className="w-5 h-5" /><span>PARTIDO VS</span></div>
@@ -258,7 +258,7 @@ const MainMenu = ({ setView }: { onOpenPack: () => void, setView: (v: View) => v
               </div>
               <div>
                 <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg hover:from-red-600 hover:to-red-900 transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
+                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
                      disabled
                 >
                   <div className="flex items-center gap-3"><ArrowLeftRight className="w-5 h-5" /><span>INTERCAMBIOS</span></div>
