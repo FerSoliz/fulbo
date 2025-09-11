@@ -59,7 +59,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
           finalHref = `/profile/${user.id}`;
       }
 
-      const isActive = pathname === finalHref || (finalHref !== '/' && pathname.startsWith(finalHref));
+      const isActive = pathname === finalHref || (finalHref !== '/' && pathname.startsWith(finalHref) && finalHref.length > 1);
 
 
       return (

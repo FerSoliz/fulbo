@@ -16,7 +16,7 @@ import { CheckCircle, Medal, Shield, Swords, ShieldAlert, Calendar, Trophy, Link
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 
 const StatItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: string | number }) => (
@@ -229,7 +229,7 @@ export default function ProfilePage() {
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <CheckCircle className="h-6 w-6 text-destructive fill-current" />
+                                                <CheckCircle className="h-6 w-6 text-blue-500 fill-current" />
                                             </TooltipTrigger>
                                             <TooltipContent>
                                                 <p>Usuario Verificado</p>
@@ -256,11 +256,11 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
                             )}
-                             {isOwnProfile && (
+                             {isOwnProfile && !uniqueCode && (
                                 <>
                                 <Separator className="my-4" />
                                 <div className="space-y-2">
-                                    <Label htmlFor="uniqueCodeInput" className="text-sm">Ingresar Código de Jugador</Label>
+                                    <Label htmlFor="uniqueCodeInput" className="text-sm">Vincular Cuenta de Jugador</Label>
                                     <div className="flex items-center gap-2">
                                         <Input
                                             id="uniqueCodeInput"
@@ -273,7 +273,7 @@ export default function ProfilePage() {
                                         </Button>
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-2">
-                                        Este código es generado por un administrador al registrarte en un torneo.
+                                        Ingresa el código único para sincronizar tus estadísticas.
                                     </p>
                                 </div>
                                 </>

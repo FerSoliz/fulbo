@@ -110,7 +110,14 @@ export default function TournamentDetailsPage() {
     setTeams(teamNames);
 
     if (teamNames.length > 0) {
-      setFixture(generateFixture([...teamNames]));
+      const storedFixture = JSON.parse(localStorage.getItem(`fixture_${tournamentId}`) || 'null');
+      if (storedFixture) {
+        setFixture(storedFixture);
+      } else {
+        const newFixture = generateFixture([...teamNames]);
+        setFixture(newFixture);
+        localStorage.setItem(`fixture_${tournamentId}`, JSON.stringify(newFixture));
+      }
     }
 
     const stageStatus = JSON.parse(localStorage.getItem(`groupStageStatus_${tournamentId}`) || 'false');
@@ -142,6 +149,126 @@ export default function TournamentDetailsPage() {
     localStorage.setItem(`results_${tournamentId}`, JSON.stringify(newResults));
   }
 
+  const calculateAllTournamentStats = () => {
+    if (!teams || teams.length === 0) return;
+
+    const stats: { [team: string]: any } = teams.reduce((acc, team) => {
+      if (team !== 'BYE') {
+        acc[team] = { rank: 0, team, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, gc: 0, dg: 0, points: 0 };
+      }
+      return acc;
+    }, {} as { [team: string]: any });
+
+    const playerStats: { [playerId: string]: { player: string, team: string, goals: number, yellow: number, red: number } } = {};
+    const goalkeeperStats: { [playerId: string]: { player: string, team: string, played: number, conceded: number } } = {};
+    const penaltyTable: { [team: string]: any } = teams.reduce((acc, team) => {
+        if (team !== 'BYE') {
+          acc[team] = { rank: 0, team, played: 0, won: 0, lost: 0, points: 0 };
+        }
+        return acc;
+    }, {} as { [team: string]: any });
+
+    fixture.forEach((round, roundIndex) => {
+      round.forEach((match, matchIndex) => {
+        const matchId = `r${roundIndex}m${matchIndex}`;
+        const matchIdForStats = `${tournamentId}_${matchId}`;
+        const isFinished = finishedMatches.has(matchId);
+
+        if (isFinished && match.home !== 'BYE' && match.away !== 'BYE') {
+          const result = matchResults[matchId] || {};
+          const homeScore = parseInt(result.home, 10) || 0;
+          const awayScore = parseInt(result.away, 10) || 0;
+
+          // Main Table Stats
+          stats[match.home].played++;
+          stats[match.away].played++;
+          stats[match.home].gf += homeScore;
+          stats[match.away].gf += awayScore;
+          stats[match.home].gc += awayScore;
+          stats[match.away].gc += homeScore;
+          stats[match.home].dg = stats[match.home].gf - stats[match.home].gc;
+          stats[match.away].dg = stats[match.away].gf - stats[match.away].gc;
+
+          if (homeScore > awayScore) {
+            stats[match.home].won++;
+            stats[match.away].lost++;
+            stats[match.home].points += 3;
+          } else if (awayScore > homeScore) {
+            stats[match.away].won++;
+            stats[match.home].lost++;
+            stats[match.away].points += 3;
+          } else {
+            stats[match.home].drawn++;
+            stats[match.away].drawn++;
+            stats[match.home].points += 1;
+            stats[match.away].points += 1;
+          }
+
+          // Individual Player Stats
+          const matchPlayerStats = JSON.parse(localStorage.getItem(`matchStats_${matchIdForStats}`) || '{}');
+          if (matchPlayerStats.stats) {
+            for (const playerId in matchPlayerStats.stats) {
+              const pData = matchPlayerStats.stats[playerId];
+              const playerRoster = [...(JSON.parse(localStorage.getItem(`roster_${tournamentId}_${match.home}`) || '[]')), ...(JSON.parse(localStorage.getItem(`roster_${tournamentId}_${match.away}`) || '[]'))];
+              const playerInfo = playerRoster.find((p: any) => p.uniqueCode === playerId);
+              
+              if (playerInfo) {
+                  const teamName = teams.find(t => {
+                      const roster = JSON.parse(localStorage.getItem(`roster_${tournamentId}_${t}`) || '[]');
+                      return roster.some((p: any) => p.uniqueCode === playerId);
+                  });
+
+                  if (!playerStats[playerId]) {
+                      playerStats[playerId] = { player: `${playerInfo.name} ${playerInfo.lastName}`, team: teamName || 'N/A', goals: 0, yellow: 0, red: 0 };
+                  }
+                  playerStats[playerId].goals += pData.goals || 0;
+                  if (pData.yellow) playerStats[playerId].yellow++;
+                  if (pData.red) playerStats[playerId].red++;
+              }
+            }
+          }
+          
+           // Penalty Table Stats
+           if(matchPlayerStats.penaltyScore) {
+               const homePenalty = matchPlayerStats.penaltyScore.home || 0;
+               const awayPenalty = matchPlayerStats.penaltyScore.away || 0;
+               if(homePenalty > 0 || awayPenalty > 0){
+                   penaltyTable[match.home].played++;
+                   penaltyTable[match.away].played++;
+                   if(homePenalty > awayPenalty){
+                       penaltyTable[match.home].won++;
+                       penaltyTable[match.away].lost++;
+                       penaltyTable[match.home].points += 3;
+                   } else if (awayPenalty > homePenalty) {
+                       penaltyTable[match.away].won++;
+                       penaltyTable[match.home].lost++;
+                       penaltyTable[match.away].points += 3;
+                   } else {
+                        // Handle penalty draw if needed
+                   }
+               }
+           }
+        }
+      });
+    });
+
+    const sortedTeams = Object.values(stats).sort((a, b) => b.points - a.points || b.dg - a.dg || b.gf - a.gf);
+    sortedTeams.forEach((team, index) => team.rank = index + 1);
+    
+    const sortedScorers = Object.values(playerStats).filter(p => p.goals > 0).sort((a, b) => b.goals - a.goals);
+    
+    const sortedSanctions = Object.values(playerStats).filter(p => p.yellow > 0 || p.red > 0).sort((a, b) => b.red - a.red || b.yellow - a.yellow);
+
+    const sortedPenalties = Object.values(penaltyTable).sort((a, b) => b.points - a.points);
+
+
+    localStorage.setItem(`positions_${tournamentId}`, JSON.stringify(sortedTeams));
+    localStorage.setItem(`scorers_${tournamentId}`, JSON.stringify(sortedScorers));
+    localStorage.setItem(`sanctions_${tournamentId}`, JSON.stringify(sortedSanctions));
+    localStorage.setItem(`penalties_${tournamentId}`, JSON.stringify(sortedPenalties));
+    console.log("Tournament stats recalculated and saved.", {sortedTeams, sortedScorers, sortedSanctions});
+  };
+
 
   const handlePlayoffTeamChange = (
     stage: 'quarter' | 'semi' | 'final',
@@ -157,8 +284,6 @@ export default function TournamentDetailsPage() {
   };
   
   const handleFinalizeMatch = (roundIndex: number, matchIndex: number, isFinalized: boolean) => {
-    // This is the CRUCIAL logic update.
-    // When a match is finalized, we recalculate everything.
     const matchId = `r${roundIndex}m${matchIndex}`;
     const newFinishedMatches = new Set(finishedMatches);
     if(isFinalized) {
@@ -169,11 +294,8 @@ export default function TournamentDetailsPage() {
     setFinishedMatches(newFinishedMatches);
     localStorage.setItem(`finished_matches_${tournamentId}`, JSON.stringify(Array.from(newFinishedMatches)));
 
-    // In a real app, this is where you'd trigger a server-side recalculation.
-    // For now, we are implicitly relying on the fact that when the 'leagues' page
-    // is loaded, it will read all this updated data from localStorage and
-    // re-render the tables. The logic for calculation will live on the `leagues` page.
-    console.log("Recalculating all tournament stats...");
+    // Recalculate all stats every time a match is finalized/de-finalized
+    calculateAllTournamentStats();
   };
 
 
@@ -370,10 +492,10 @@ export default function TournamentDetailsPage() {
                               <CardContent className="flex items-center justify-between">
                                 <MatchStatsDialog tournamentId={tournamentId} match={match} roundIndex={roundIndex} matchIndex={matchIndex} isFinished={isFinished}/>
                                 <div className="flex items-center space-x-2">
-                                  <Label htmlFor={`finished-${matchIndex}`}>
+                                  <Label htmlFor={`finished-${matchId}`}>
                                     Finalizar Partido
                                   </Label>
-                                  <Switch id={`finished-${matchIndex}`} 
+                                  <Switch id={`finished-${matchId}`} 
                                     checked={isFinished}
                                     onCheckedChange={(checked) => handleFinalizeMatch(roundIndex, matchIndex, checked)}
                                   />
