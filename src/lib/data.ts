@@ -1,16 +1,18 @@
+
 export interface User {
   id: string;
   name: string;
-  avatar: string;
-  location: string;
-  isVerified: boolean;
-  role: 'user' | 'editor' | 'admin';
   email?: string;
+  password?: string;
+  role: 'user' | 'editor' | 'admin';
+  avatar: string;
   uniqueCode?: string;
   sudpoints: number;
   baseSudpoints: number;
   league: string;
   division: number;
+  isVerified: boolean;
+  location: string;
   stats: {
     partidosJugados: number;
     victorias: number;
@@ -63,6 +65,30 @@ export interface Product {
   images: string[];
   isInitial?: boolean;
 }
+
+export const sudpointConfig = {
+    win: 25,
+    loss: -15,
+    draw: 5,
+    goal: 5,
+    yellowCard: -5,
+    redCard: -25,
+    mvp: 15,
+    penaltyWin: 10,
+    penaltyLoss: -5,
+    competitionWin: 500,
+    firstPlace: 200,
+    lastPlace: -100,
+};
+
+export const leagues = [
+    { name: 'Bronce', divisions: 4, color: '#cd7f32', icon: 'Shield', nextLeague: 'Plata' },
+    { name: 'Plata', divisions: 4, color: '#c0c0c0', icon: 'Shield', nextLeague: 'Oro' },
+    { name: 'Oro', divisions: 4, color: '#ffd700', icon: 'Shield', nextLeague: 'Diamante' },
+    { name: 'Diamante', divisions: 4, color: '#b9f2ff', icon: 'Gem', nextLeague: 'HISTORICO' },
+    { name: 'HISTORICO', divisions: 1, color: '#9d00ff', icon: 'Crown', nextLeague: 'Leyenda del Fútbol' },
+    { name: 'Leyenda del Fútbol', divisions: 1, color: '#ff4500', icon: 'Star', nextLeague: null },
+];
 
 export const users: User[] = [
   {
@@ -203,26 +229,4 @@ export const initialProducts: Product[] = [
     ],
     isInitial: true,
   },
-];
-
-export const sudpointConfig = {
-    partidoGanado: 10,
-    partidoEmpatado: 3,
-    partidoPerdido: -5,
-    gol: 2,
-    asistencia: 1,
-    tarjetaAmarilla: -2,
-    tarjetaRoja: -5,
-    mvp: 5,
-};
-
-export const leagues = [
-    { name: 'Bronce', divisions: 4, color: '#cd7f32', icon: 'Shield', nextLeague: 'Plata' },
-    { name: 'Plata', divisions: 4, color: '#c0c0c0', icon: 'Shield', nextLeague: 'Oro' },
-    { name: 'Oro', divisions: 4, color: '#ffd700', icon: 'Shield', nextLeague: 'Platino' },
-    { name: 'Platino', divisions: 4, color: '#e5e4e2', icon: 'Gem', nextLeague: 'Diamante' },
-    { name: 'Diamante', divisions: 4, color: '#b9f2ff', icon: 'Gem', nextLeague: 'Maestro' },
-    { name: 'Maestro', divisions: 1, color: '#9d00ff', icon: 'Crown', nextLeague: 'Gran Maestro' },
-    { name: 'Gran Maestro', divisions: 1, color: '#ff0055', icon: 'Crown', nextLeague: 'Leyenda' },
-    { name: 'Leyenda', divisions: 1, color: '#ff4500', icon: 'Star', nextLeague: null },
 ];
