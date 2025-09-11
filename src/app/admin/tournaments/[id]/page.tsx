@@ -78,6 +78,9 @@ export default function TournamentDetailsPage() {
   const [teams, setTeams] = useState<string[]>([]);
   const [fixture, setFixture] = useState<{ home: string; away: string }[][]>([]);
   const [isGroupStageFinished, setIsGroupStageFinished] = useState(false);
+  const [matchResults, setMatchResults] = useState<any>({});
+  const [finishedMatches, setFinishedMatches] = useState<Set<string>>(new Set());
+
   const [playoffMatches, setPlayoffMatches] = useState({
     quarter: [
       { team1: '', team2: '' },
@@ -113,12 +116,31 @@ export default function TournamentDetailsPage() {
     const stageStatus = JSON.parse(localStorage.getItem(`groupStageStatus_${tournamentId}`) || 'false');
     setIsGroupStageFinished(stageStatus);
 
+    const savedResults = JSON.parse(localStorage.getItem(`results_${tournamentId}`) || '{}');
+    setMatchResults(savedResults);
+
+    const savedFinished = JSON.parse(localStorage.getItem(`finished_matches_${tournamentId}`) || '[]');
+    setFinishedMatches(new Set(savedFinished));
+
   }, [tournamentId]);
 
   const handleFinishGroupStage = () => {
     setIsGroupStageFinished(true);
     localStorage.setItem(`groupStageStatus_${tournamentId}`, JSON.stringify(true));
   };
+  
+  const handleResultChange = (roundIndex: number, matchIndex: number, team: 'home' | 'away', score: string) => {
+    const matchId = `r${roundIndex}m${matchIndex}`;
+    const newResults = {
+      ...matchResults,
+      [matchId]: {
+        ...matchResults[matchId],
+        [team]: score
+      }
+    };
+    setMatchResults(newResults);
+    localStorage.setItem(`results_${tournamentId}`, JSON.stringify(newResults));
+  }
 
 
   const handlePlayoffTeamChange = (
@@ -134,15 +156,24 @@ export default function TournamentDetailsPage() {
     });
   };
   
-  const handleFinalizeMatch = (roundIndex: number, matchIndex: number) => {
-    // In a real app, this would trigger calculations for league table, top scorers, etc.
-    // And save everything to a database or a more robust state management solution.
-    console.log(`Finalizing match ${matchIndex} of round ${roundIndex}`);
-    // For now, we can just save a "finished" status in localStorage for the match
-    const matchId = `${tournamentId}_r${roundIndex}_m${matchIndex}`;
-    const matchData = JSON.parse(localStorage.getItem(matchId) || '{}');
-    matchData.finished = true;
-    localStorage.setItem(matchId, JSON.stringify(matchData));
+  const handleFinalizeMatch = (roundIndex: number, matchIndex: number, isFinalized: boolean) => {
+    // This is the CRUCIAL logic update.
+    // When a match is finalized, we recalculate everything.
+    const matchId = `r${roundIndex}m${matchIndex}`;
+    const newFinishedMatches = new Set(finishedMatches);
+    if(isFinalized) {
+        newFinishedMatches.add(matchId);
+    } else {
+        newFinishedMatches.delete(matchId);
+    }
+    setFinishedMatches(newFinishedMatches);
+    localStorage.setItem(`finished_matches_${tournamentId}`, JSON.stringify(Array.from(newFinishedMatches)));
+
+    // In a real app, this is where you'd trigger a server-side recalculation.
+    // For now, we are implicitly relying on the fact that when the 'leagues' page
+    // is loaded, it will read all this updated data from localStorage and
+    // re-render the tables. The logic for calculation will live on the `leagues` page.
+    console.log("Recalculating all tournament stats...");
   };
 
 
@@ -289,8 +320,12 @@ export default function TournamentDetailsPage() {
                         value={`round-${roundIndex + 1}`}
                       >
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-                          {round.map((match, matchIndex) => (
-                            <Card key={matchIndex}>
+                          {round.map((match, matchIndex) => {
+                            const matchId = `r${roundIndex}m${matchIndex}`;
+                            const isFinished = finishedMatches.has(matchId);
+                            const result = matchResults[matchId] || {};
+                            return (
+                            <Card key={matchIndex} className={isFinished ? 'bg-green-900/20 border-green-500' : ''}>
                               <CardHeader>
                                 <CardTitle className="text-lg">
                                   {match.home} vs {match.away}
@@ -302,41 +337,50 @@ export default function TournamentDetailsPage() {
                                     type="number"
                                     placeholder="G"
                                     className="w-16 h-12 text-center text-lg font-bold"
+                                    value={result.home || ''}
+                                    onChange={(e) => handleResultChange(roundIndex, matchIndex, 'home', e.target.value)}
+                                    disabled={isFinished}
                                   />
                                   <span className="text-2xl font-bold">-</span>
                                   <Input
                                     type="number"
                                     placeholder="G"
                                     className="w-16 h-12 text-center text-lg font-bold"
+                                    value={result.away || ''}
+                                    onChange={(e) => handleResultChange(roundIndex, matchIndex, 'away', e.target.value)}
+                                    disabled={isFinished}
                                   />
                                 </div>
                                 <div className="grid grid-cols-3 gap-4">
-                                  <Input type="date" />
-                                  <Input type="time" />
-                                  <Input placeholder="Árbitro" />
+                                  <Input type="date" disabled={isFinished}/>
+                                  <Input type="time" disabled={isFinished}/>
+                                  <Input placeholder="Árbitro" disabled={isFinished}/>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <Button variant="outline">
+                                    <Button variant="outline" disabled={isFinished}>
                                         <Download className="mr-2 h-4 w-4" />
                                         Descargar Planilla
                                     </Button>
-                                     <Button variant="outline">
+                                     <Button variant="outline" disabled={isFinished}>
                                         <UploadCloud className="mr-2 h-4 w-4" />
                                         Cargar con IA
                                     </Button>
                                 </div>
                               </CardContent>
                               <CardContent className="flex items-center justify-between">
-                                <MatchStatsDialog tournamentId={tournamentId} match={match}/>
+                                <MatchStatsDialog tournamentId={tournamentId} match={match} roundIndex={roundIndex} matchIndex={matchIndex} isFinished={isFinished}/>
                                 <div className="flex items-center space-x-2">
                                   <Label htmlFor={`finished-${matchIndex}`}>
                                     Finalizar Partido
                                   </Label>
-                                  <Switch id={`finished-${matchIndex}`} onCheckedChange={() => handleFinalizeMatch(roundIndex, matchIndex)} />
+                                  <Switch id={`finished-${matchIndex}`} 
+                                    checked={isFinished}
+                                    onCheckedChange={(checked) => handleFinalizeMatch(roundIndex, matchIndex, checked)}
+                                  />
                                 </div>
                               </CardContent>
                             </Card>
-                          ))}
+                          )})}
                         </div>
                       </TabsContent>
                     ))}
@@ -351,5 +395,3 @@ export default function TournamentDetailsPage() {
     </div>
   );
 }
-
-    

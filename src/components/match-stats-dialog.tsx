@@ -8,6 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogClose,
+  DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,13 +29,15 @@ interface MatchStatsDialogProps {
   match: { home: string; away: string };
   roundIndex: number;
   matchIndex: number;
+  isFinished: boolean;
 }
 
 export function MatchStatsDialog({
   tournamentId,
   match,
   roundIndex,
-  matchIndex
+  matchIndex,
+  isFinished
 }: MatchStatsDialogProps) {
   const { toast } = useToast();
   const [homeRoster, setHomeRoster] = useState<Player[]>([]);
@@ -66,7 +70,7 @@ export function MatchStatsDialog({
   }, [tournamentId, match, matchId]);
 
   const handleStatChange = (playerId: string, stat: 'goals' | 'yellow' | 'red', value: any) => {
-    if (!playerId) return;
+    if (!playerId || isFinished) return;
     setStats(prev => {
         const currentStats = prev[playerId] || { goals: 0, yellow: false, red: false };
         return {
@@ -80,7 +84,7 @@ export function MatchStatsDialog({
   };
 
   const handleMvpChange = (playerId: string) => {
-    if (!playerId) return;
+    if (!playerId || isFinished) return;
     setMvp(prev => prev === playerId ? null : playerId);
   }
   
@@ -100,10 +104,11 @@ export function MatchStatsDialog({
   const renderPlayerStats = (player: Player | null, index: number, teamType: 'home' | 'away') => {
     const playerId = player?.id || `${teamType}-placeholder-${index}`;
     const playerName = player?.name || `Jugador ${index + 1}`;
+    const playerStats = stats[playerId] || { goals: 0, yellow: false, red: false };
 
     return (
-      <div key={playerId} className="grid grid-cols-[30px_1fr_45px_30px_30px] items-center gap-x-2">
-        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleMvpChange(playerId)} disabled={!player}>
+      <div key={playerId} className="grid grid-cols-[30px_1fr_45px_30px_30px] items-center gap-x-2 py-1">
+        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleMvpChange(playerId)} disabled={!player || isFinished}>
             <Star className={cn("h-4 w-4 text-muted-foreground", mvp === playerId && "text-amber-400 fill-amber-400")} />
         </Button>
         <p className="text-sm truncate" title={playerName}>{playerName}</p>
@@ -112,25 +117,25 @@ export function MatchStatsDialog({
           type="number"
           min="0"
           className="h-7 w-12 text-center px-1"
-          value={stats[playerId]?.goals || ''}
+          value={playerStats.goals || ''}
           onChange={(e) => handleStatChange(playerId, 'goals', e.target.value ? Number(e.target.value) : 0)}
-          disabled={!player}
+          disabled={!player || isFinished}
         />
         <Button 
               size="icon" 
-              variant={stats[playerId]?.yellow ? 'default' : 'outline'}
-              className={cn("h-6 w-6 p-0", stats[playerId]?.yellow && "bg-amber-400 hover:bg-amber-500")}
-              onClick={() => handleStatChange(playerId, 'yellow', !stats[playerId]?.yellow)}
-              disabled={!player}
+              variant={playerStats.yellow ? 'default' : 'outline'}
+              className={cn("h-6 w-6 p-0 border-amber-400", playerStats.yellow && "bg-amber-400 hover:bg-amber-500")}
+              onClick={() => handleStatChange(playerId, 'yellow', !playerStats.yellow)}
+              disabled={!player || isFinished}
           >
               <div className="w-3 h-4 bg-current rounded-sm" />
           </Button>
            <Button 
               size="icon" 
-              variant={stats[playerId]?.red ? 'default' : 'outline'}
-              className={cn("h-6 w-6 p-0", stats[playerId]?.red && "bg-red-600 hover:bg-red-700")}
-              onClick={() => handleStatChange(playerId, 'red', !stats[playerId]?.red)}
-              disabled={!player}
+              variant={playerStats.red ? 'default' : 'outline'}
+              className={cn("h-6 w-6 p-0 border-red-600", playerStats.red && "bg-red-600 hover:bg-red-700")}
+              onClick={() => handleStatChange(playerId, 'red', !playerStats.red)}
+              disabled={!player || isFinished}
            >
               <div className="w-3 h-4 bg-current rounded-sm" />
           </Button>
@@ -160,7 +165,7 @@ export function MatchStatsDialog({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" disabled={isFinished}>
           <ClipboardList className="mr-2 h-4 w-4" />
           Estadísticas
         </Button>
@@ -169,7 +174,7 @@ export function MatchStatsDialog({
         <DialogHeader>
           <DialogTitle>Estadísticas del Partido: {match.home} vs {match.away}</DialogTitle>
           <DialogDescription>
-            Carga los goles, tarjetas y jugador del partido.
+            Carga los goles, tarjetas y jugador del partido. {isFinished && <span className="font-bold text-destructive"> (Partido Finalizado)</span>}
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 p-1">
@@ -181,15 +186,22 @@ export function MatchStatsDialog({
             <h3 className="font-semibold mb-2 text-center">Resultado Tanda de Penales</h3>
             <div className="flex items-center justify-center gap-4">
                  <Label className="text-right w-1/3 truncate" title={match.home}>{match.home}</Label>
-                 <Input type="number" min="0" className="w-16 h-10 text-center" value={penaltyScore.home} onChange={(e) => setPenaltyScore(p => ({...p, home: Number(e.target.value)}))}/>
+                 <Input type="number" min="0" className="w-16 h-10 text-center" value={penaltyScore.home} onChange={(e) => setPenaltyScore(p => ({...p, home: Number(e.target.value)}))} disabled={isFinished}/>
                  <span className="font-bold">-</span>
-                 <Input type="number" min="0" className="w-16 h-10 text-center" value={penaltyScore.away} onChange={(e) => setPenaltyScore(p => ({...p, away: Number(e.target.value)}))}/>
+                 <Input type="number" min="0" className="w-16 h-10 text-center" value={penaltyScore.away} onChange={(e) => setPenaltyScore(p => ({...p, away: Number(e.target.value)}))} disabled={isFinished}/>
                  <Label className="w-1/3 truncate" title={match.away}>{match.away}</Label>
             </div>
         </div>
-         <div className="flex justify-end pt-4">
-            <Button onClick={handleSaveStats}><Save className="mr-2 h-4 w-4"/> Guardar Estadísticas</Button>
-        </div>
+         <DialogFooter>
+            <DialogClose asChild>
+                <Button type="button" variant="secondary">Cerrar</Button>
+            </DialogClose>
+            {!isFinished && (
+              <Button onClick={handleSaveStats}>
+                <Save className="mr-2 h-4 w-4"/> Guardar Estadísticas
+              </Button>
+            )}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
