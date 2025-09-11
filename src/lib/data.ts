@@ -25,6 +25,16 @@ export interface Post {
   createdAt: string;
 }
 
+export interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  images: string[];
+  isInitial?: boolean;
+}
+
 export const users: User[] = [
   {
     id: 'user-1',
@@ -98,4 +108,53 @@ export const posts: Post[] = [
         comments: [],
         createdAt: "2024-05-22T09:00:00Z"
     }
+];
+
+export const initialProducts: Product[] = [
+  {
+    id: 'prod_initial_1',
+    name: 'CAMISETA TITULAR SELECCIÓN ARGENTINA',
+    description: 'La nueva camiseta titular de la Selección Argentina para la Copa América 2024. Sentí los colores como nuestros campeones del mundo.',
+    price: 79000,
+    stock: 15,
+    images: [
+      'https://i.postimg.cc/yYxSjD0h/camiseta-titular-frente.png',
+      'https://i.postimg.cc/pL3kSzY9/camiseta-titular-espalda.png',
+    ],
+    isInitial: true,
+  },
+  {
+    id: 'prod_initial_2',
+    name: 'CAMISETA SUPLENTE SELECCIÓN ARGENTINA',
+    description: 'El nuevo modelo alternativo de la Selección Argentina para la Copa América 2024. Un diseño innovador para llevar la pasión a todos lados.',
+    price: 79000,
+    stock: 10,
+    images: [
+      'https://i.postimg.cc/XvWWbXJ7/camiseta-suplente-frente.png',
+      'https://i.postimg.cc/L8p5Gs56/camiseta-suplente-espalda.png',
+    ],
+    isInitial: true,
+  },
+   {
+    id: 'prod_initial_3',
+    name: 'SHORT TITULAR SELECCIÓN ARGENTINA',
+    description: 'El short que completa el uniforme titular de la Selección Argentina. Comodidad y estilo para jugar o alentar.',
+    price: 49000,
+    stock: 20,
+    images: [
+      'https://i.postimg.cc/Wb7gMLHh/short-titular.png',
+    ],
+    isInitial: true,
+  },
+   {
+    id: 'prod_initial_4',
+    name: 'SHORT SUPLENTE SELECCIÓN ARGENTINA',
+    description: 'El short del uniforme alternativo de la Selección. Un diseño moderno que combina con la camiseta suplente.',
+    price: 49000,
+    stock: 0,
+    images: [
+      'https://i.postimg.cc/3wH2tXWb/short-suplente.png',
+    ],
+    isInitial: true,
+  },
 ];
