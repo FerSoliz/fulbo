@@ -68,11 +68,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image: var(--background-image, url('https://i.postimg.cc/R0GhrG5N/fondo-web.png'));
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
   }
 }
 
