@@ -78,6 +78,16 @@ export function MainSidebar({ user }: MainSidebarProps) {
 
   return (
     <aside className="fixed left-0 hidden h-screen w-64 flex-col border-r bg-card md:flex">
+        <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
+            <Link href="/" className="flex items-center gap-2 font-semibold">
+                <Image
+                src="https://i.postimg.cc/tCTm3JNM/LOGO-PNG.png"
+                alt="SUDONE Logo"
+                width={120}
+                height={40}
+                />
+            </Link>
+        </div>
         <div className="flex items-center gap-2 p-2">
             <Link href="/profile">
                 <AnimatedAvatar>
@@ -87,7 +97,10 @@ export function MainSidebar({ user }: MainSidebarProps) {
                     </Avatar>
                 </AnimatedAvatar>
             </Link>
-            <Image src="https://i.postimg.cc/L8g23g1S/logo-sudone.png" alt="SUDONE Logo" width={114} height={32} />
+            <div className="flex flex-col">
+                <span className="font-semibold">Carlos Estevez</span>
+                <span className="text-sm text-muted-foreground">@charlie</span>
+            </div>
         </div>
 
         <nav className="flex flex-1 flex-col">
