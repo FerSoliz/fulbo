@@ -8,6 +8,8 @@ import { ArrowLeft, Dices, Shield, Swords, Zap } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 
@@ -222,17 +224,68 @@ const MainMenu = ({ onOpenPack, setView }: { onOpenPack: () => void, setView: (v
   </div>
 );
 
-const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: View) => void }) => (
-  <div className="flex flex-col items-center">
-    <CardPack newCards={cards} />
-    <div className="mt-8 flex gap-4">
-      <Button onClick={() => setView('menu')}>Volver al Menú</Button>
-      <Link href="/collectibles/collection">
-        <Button variant="secondary">Ver mi Colección</Button>
-      </Link>
+const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: View) => void }) => {
+  const router = useRouter();
+  const [isOpening, setIsOpening] = useState(false);
+  const [revealedCardIndex, setRevealedCardIndex] = useState<number>(-1);
+
+  const handleOpenPackAnimation = () => {
+    setIsOpening(true);
+    setTimeout(() => {
+      setRevealedCardIndex(0); // Reveal the first card
+    }, 1000);
+  };
+
+  const handleNextCard = () => {
+    if (revealedCardIndex < cards.length - 1) {
+      setRevealedCardIndex(prev => prev + 1);
+    } else {
+      // Last card clicked, go to collection
+      router.push('/collectibles/collection');
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center">
+      <AnimatePresence>
+        {revealedCardIndex === -1 && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            exit={{ scale: 0, opacity: 0, rotate: 720 }}
+            transition={{ duration: 1, ease: 'easeInOut' }}
+          >
+            <CardPack onOpen={handleOpenPackAnimation} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait">
+        {revealedCardIndex > -1 && revealedCardIndex < cards.length && (
+          <motion.div
+            key={revealedCardIndex}
+            initial={{ opacity: 0, y: 100, scale: 0.5 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -100, scale: 0.8, transition: { duration: 0.3 } }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            onClick={handleNextCard}
+            className="cursor-pointer"
+          >
+            <CollectibleCard card={cards[revealedCardIndex]} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {revealedCardIndex > -1 && (
+        <p className="mt-4 text-muted-foreground">Haz clic en la carta para revelar la siguiente</p>
+      )}
+
+      <div className="mt-8 flex gap-4">
+        <Button onClick={() => setView('menu')}>Volver al Menú</Button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
+
 
 const TeamFormationView = ({ userCollection, team, setTeam, setView }: { userCollection: CardType[], team: typeof initialTeam, setTeam: (t: typeof initialTeam) => void, setView: (v: View) => void }) => {
 
