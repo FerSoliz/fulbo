@@ -252,22 +252,6 @@ export default function ProfilePage() {
                                     </Label>
                                     <Progress value={sudpoints} className="h-2" />
                                     <p className="text-sm font-bold mt-1 text-center">{sudpoints} / 100 SP</p>
-
-                                     <div className="mt-6 space-y-2">
-                                        <Label htmlFor="uniqueCodeInput">Ingresar Código de Jugador</Label>
-                                        <div className="flex items-center gap-2">
-                                            <Input
-                                                id="uniqueCodeInput"
-                                                placeholder="SUD-XXXXXX" 
-                                                value={uniqueCodeInput}
-                                                onChange={(e) => setUniqueCodeInput(e.target.value)}
-                                                disabled={!!uniqueCode}
-                                            />
-                                            <Button onClick={handleLinkAccount} disabled={!!uniqueCode}>
-                                                <Link2 className="w-4 h-4"/>
-                                            </Button>
-                                        </div>
-                                    </div>
                                 </div>
                             )}
                         </CardContent>
@@ -317,8 +301,25 @@ export default function ProfilePage() {
                                 </div>
                             )}
                         </CardContent>
-                        <CardFooter>
+                        <CardFooter className="flex-col items-center">
                            <p className="text-xs text-muted-foreground text-center w-full">Las estadísticas se actualizan automáticamente al visitar el perfil.</p>
+                           {isOwnProfile && !uniqueCode && (
+                                <div className="mt-6 w-full space-y-2">
+                                    <Label htmlFor="uniqueCodeInput">Ingresar Código de Jugador</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            id="uniqueCodeInput"
+                                            placeholder="SUD-XXXXXX" 
+                                            value={uniqueCodeInput}
+                                            onChange={(e) => setUniqueCodeInput(e.target.value)}
+                                            disabled={!!uniqueCode}
+                                        />
+                                        <Button onClick={handleLinkAccount} disabled={!!uniqueCode}>
+                                            <Link2 className="w-4 h-4"/>
+                                        </Button>
+                                    </div>
+                                </div>
+                            )}
                         </CardFooter>
                     </Card>
                 </div>
