@@ -40,7 +40,7 @@ const menuItems = [
 
 const footerMenuItems = [
     { href: '/settings', icon: Cog, label: 'CONFIGURACIÓN' },
-    { href: '/profile/user-1', icon: User, label: 'MI PERFIL' }, // Hardcoded to user-1 for now
+    { href: '/profile', icon: User, label: 'MI PERFIL' },
     { href: '/logout', icon: LogOut, label: 'CERRAR SESIÓN' },
 ];
 
@@ -98,7 +98,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
                 <AnimatedAvatar>
                     <Avatar className="w-12 h-12">
                         <AvatarImage src={user.avatar} alt="User avatar" />
-                        <AvatarFallback>U</AvatarFallback>
+                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                     </Avatar>
                 </AnimatedAvatar>
             </Link>
