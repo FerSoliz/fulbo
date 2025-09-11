@@ -143,13 +143,14 @@ export function MatchStatsDialog({
     );
   };
 
-  const renderTeamColumn = (roster: Player[], teamType: 'home' | 'away') => {
+  const renderTeamColumn = (roster: Player[], teamType: 'home' | 'away', teamName: string) => {
     const displayItems = Array.from({ length: 10 }, (_, i) => roster[i] || null);
     return (
         <div className="space-y-1">
+             <h3 className="font-semibold mb-2 text-center">{teamName}</h3>
             <div className="grid grid-cols-[30px_1fr_45px_30px_30px] items-center gap-x-2 text-xs font-bold text-muted-foreground px-1">
                 <span className="text-center">MVP</span>
-                <span>JUGADOR</span>
+                <span className="text-center">JUGADOR</span>
                 <span className="text-center">G</span>
                 <span className="text-center">A</span>
                 <span className="text-center">R</span>
@@ -175,29 +176,25 @@ export function MatchStatsDialog({
           </DialogDescription>
         </DialogHeader>
         
-        <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-x-4 p-1">
-            {/* Home Team */}
-            <div>
-                <h3 className="font-semibold mb-2 text-center">{match.home}</h3>
-                {renderTeamColumn(homeRoster, 'home')}
-            </div>
-
-            {/* Penalty Shootout */}
-            <div className="flex flex-col items-center gap-y-2 pt-8">
+        <div className="grid grid-cols-2 items-start gap-x-4 p-1">
+            {renderTeamColumn(homeRoster, 'home', match.home)}
+            {renderTeamColumn(awayRoster, 'away', match.away)}
+        </div>
+        
+        <div className="pt-4">
+            <Separator />
+            <div className="flex flex-col items-center gap-y-2 pt-4">
                 <h3 className="font-semibold text-center whitespace-nowrap">Tanda de Penales</h3>
                 <div className="flex items-center justify-center gap-2">
+                     <span className="text-sm font-medium w-24 text-right truncate">{match.home}</span>
                     <Input type="number" min="0" className="w-16 h-10 text-center" value={penaltyScore.home} onChange={(e) => setPenaltyScore(p => ({...p, home: Number(e.target.value)}))} disabled={isFinished}/>
                     <span className="font-bold">-</span>
                     <Input type="number" min="0" className="w-16 h-10 text-center" value={penaltyScore.away} onChange={(e) => setPenaltyScore(p => ({...p, away: Number(e.target.value)}))} disabled={isFinished}/>
+                    <span className="text-sm font-medium w-24 truncate">{match.away}</span>
                 </div>
             </div>
-
-            {/* Away Team */}
-            <div>
-                <h3 className="font-semibold mb-2 text-center">{match.away}</h3>
-                {renderTeamColumn(awayRoster, 'away')}
-            </div>
         </div>
+
 
          <DialogFooter>
             <DialogClose asChild>
