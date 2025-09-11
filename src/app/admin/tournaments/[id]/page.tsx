@@ -25,6 +25,7 @@ import {
   UploadCloud,
   Settings,
   PlusCircle,
+  ShieldCheck,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -37,6 +38,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+
 
 // Mock data, this would come from your state management/API
 const teams = [
@@ -94,10 +107,18 @@ export default function TournamentDetailsPage() {
       (t: any) => t.id === tournamentId
     );
     setTournament(currentTournament);
-    // You'd have a real check here based on match results
-    // For demo, we'll just use a timeout
-    setTimeout(() => setIsGroupStageFinished(true), 5000);
+    
+    // Load group stage status from localStorage
+    const stageStatus = JSON.parse(localStorage.getItem(`groupStageStatus_${tournamentId}`) || 'false');
+    setIsGroupStageFinished(stageStatus);
+
   }, [tournamentId]);
+
+  const handleFinishGroupStage = () => {
+    setIsGroupStageFinished(true);
+    localStorage.setItem(`groupStageStatus_${tournamentId}`, JSON.stringify(true));
+  };
+
 
   const handlePlayoffTeamChange = (
     stage: 'quarter' | 'semi' | 'final',
@@ -207,10 +228,36 @@ export default function TournamentDetailsPage() {
           <TabsContent value="results" className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Fixture y Resultados</CardTitle>
-                <CardDescription>
-                  Carga los resultados de cada partido.
-                </CardDescription>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle>Fixture y Resultados</CardTitle>
+                        <CardDescription>
+                          Carga los resultados de cada partido.
+                        </CardDescription>
+                    </div>
+                    {tournament?.format === 'grupos-y-playoffs' && !isGroupStageFinished && (
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive">
+                                <ShieldCheck className="mr-2 h-4 w-4" />
+                                Finalizar Fase de Grupos
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>¿Estás seguro de finalizar la fase de grupos?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Esta acción no se puede deshacer. Al finalizar la fase, se bloqueará la carga de resultados y podrás definir los cruces de playoffs.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleFinishGroupStage}>Finalizar</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                    )}
+                </div>
               </CardHeader>
               <CardContent>
                 {tournament?.format === 'grupos-y-playoffs' &&
