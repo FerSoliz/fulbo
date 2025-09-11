@@ -44,15 +44,13 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased">
         <SidebarProvider>
-          <div className="flex">
-            <Sidebar asChild>
+            <aside className="fixed left-0 top-0 z-30 h-screen w-64 flex-col border-r bg-card md:flex">
                 <MainSidebar user={user} />
-            </Sidebar>
+            </aside>
             <div className="flex-1 md:ml-64">
               <PageHeader />
               <main className="p-4 sm:p-6 lg:p-8">{children}</main>
             </div>
-          </div>
         </SidebarProvider>
 
         <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">

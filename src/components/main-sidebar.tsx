@@ -60,7 +60,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <>
+    <div className="flex h-full w-full flex-col">
       <SidebarHeader className="p-2">
         <div className="flex items-center gap-2">
           {isLoggedIn && user ? (
@@ -162,6 +162,6 @@ export function MainSidebar({ user }: MainSidebarProps) {
           )}
         </ul>
       </SidebarFooter>
-    </>
+    </div>
   );
 }
