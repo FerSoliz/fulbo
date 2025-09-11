@@ -1,15 +1,5 @@
 import type { Metadata } from "next";
-import { Toaster } from "@/components/ui/toaster";
 import "./globals.css";
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarInset,
-} from "@/components/ui/sidebar";
-import { MainSidebar } from "@/components/main-sidebar";
-import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
-import { Bug, Sparkles, MessageSquare } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "SUDONE",
@@ -21,13 +11,6 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Mock user data, assuming 'admin' role for now
-  const user = {
-    id: '123',
-    role: 'admin',
-    avatarUrl: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
-  };
-
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
@@ -42,36 +25,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased">
-        <SidebarProvider>
-            <aside className="fixed left-0 top-0 z-30 h-screen w-64 flex-col border-r bg-card md:flex">
-                <MainSidebar user={user} />
-            </aside>
-            <div className="flex-1 md:ml-64">
-              <PageHeader />
-              <main className="p-4 sm:p-6 lg:p-8">{children}</main>
-            </div>
-        </SidebarProvider>
-
-        <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
-           <Button variant="outline" size="icon" className="rounded-full w-10 h-10">
-            <Bug className="h-5 w-5" />
-            <span className="sr-only">Reportar Error</span>
-          </Button>
-          {user.role === 'admin' && (
-            <Button variant="outline" size="icon" className="rounded-full w-10 h-10">
-              <Sparkles className="h-5 w-5 text-yellow-400" />
-              <span className="sr-only">Asistente IA</span>
-            </Button>
-          )}
-          <Button size="lg" className="pl-4 pr-5 rounded-full">
-            <MessageSquare className="mr-2 h-5 w-5" />
-            MENSAJES
-          </Button>
-        </div>
-
-        <Toaster />
-      </body>
+      <body className="font-body antialiased">{children}</body>
     </html>
   );
 }
