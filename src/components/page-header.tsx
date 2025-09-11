@@ -1,0 +1,89 @@
+'use client';
+
+import { Bell, Camera, Layers, Search } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import * as React from 'react';
+import { ScrollArea } from './ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { AnimatedAvatar } from './ui/animated-avatar';
+import { cn } from '@/lib/utils';
+
+interface PageHeaderProps {
+  user: {
+    id: string;
+    role: 'admin' | 'user';
+  };
+}
+
+const favorites = [
+    { id: '1', type: 'tournament', name: 'Liga Anual 2024', avatar: 'https://i.postimg.cc/NfHBrS60/liga-anual.png', hasNewContent: true, abbrev: "LI"},
+    { id: '2', type: 'tournament', name: 'Copa Verano', avatar: 'https://i.postimg.cc/W3d9b4Vf/copa-verano.png', hasNewContent: true, abbrev: "CO" },
+    { id: '3', type: 'tournament', name: 'Torneo Relámpago', avatar: 'https://i.postimg.cc/8zJ17B67/torneo-relampago.png', hasNewContent: false, abbrev: "TO" },
+    { id: '4', type: 'user', name: '@leomessi', avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg', hasNewContent: false, abbrev: "LM" },
+    { id: '5', type: 'user', name: '@dibumartinez', avatar: 'https://i.postimg.cc/44rD55vT/dibu.jpg', hasNewContent: false, abbrev: "DM" },
+];
+
+export function PageHeader({ user }: PageHeaderProps) {
+  const hasNotifications = true;
+  return (
+    <header className="sticky top-0 z-20 w-full bg-[#291e37]/80 backdrop-blur-sm">
+        <div className="flex h-14 items-center justify-between px-4 sm:px-6">
+            <div className="flex-1" />
+            <form className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                    placeholder="Buscar perfiles..."
+                    className="w-full rounded-full pl-10"
+                />
+            </form>
+            <div className="flex flex-1 items-center justify-end gap-2">
+                <Button variant="ghost" className="rounded-full w-auto h-auto p-0">
+                    <Image src="https://i.postimg.cc/d1BuL3t1/onetrivia-logo.png" alt="ONETRIVIA" width={60} height={60} />
+                </Button>
+                <Link href="/cards">
+                    <Button variant="ghost" className="flex items-center gap-2">
+                        <Layers className="h-6 w-6 text-destructive" />
+                        <span className="font-bold text-sm">GRATIS</span>
+                    </Button>
+                </Link>
+                <Button variant="ghost" size="icon" className="relative">
+                    <Bell className="h-5 w-5" />
+                    {hasNotifications && <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />}
+                </Button>
+            </div>
+        </div>
+        <div className="group relative h-20 w-full">
+            <Image src="https://i.postimg.cc/9Q7pW7j2/banner-sponsor.png" layout="fill" objectFit="cover" alt="Sponsor Banner" />
+            {user.role === 'admin' && (
+                <Button size="sm" className="absolute bottom-2 right-2 h-8 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Camera className="mr-2 h-4 w-4" />
+                    Cambiar Banner
+                </Button>
+            )}
+        </div>
+        <div>
+            <ScrollArea className="w-full whitespace-nowrap">
+                <div className="p-3">
+                    <h3 className="text-sm font-semibold mb-2">Favoritos:</h3>
+                    <div className="flex gap-4">
+                        {favorites.map((fav) => (
+                        <Link href="#" key={fav.id} className="flex flex-col items-center gap-1">
+                            <div className={cn(fav.hasNewContent ? "bg-gradient-to-br from-accent to-primary" : "bg-muted-foreground/50", "p-0.5 rounded-full")}>
+                                <Avatar className="w-14 h-14 border-2 border-background">
+                                    <AvatarImage src={fav.avatar} />
+                                    <AvatarFallback>{fav.abbrev}</AvatarFallback>
+                                </Avatar>
+                            </div>
+                            <span className="text-xs text-muted-foreground">{fav.name}</span>
+                        </Link>
+                        ))}
+                    </div>
+                </div>
+            </ScrollArea>
+        </div>
+    </header>
+  );
+}
