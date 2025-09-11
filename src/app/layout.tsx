@@ -46,7 +46,7 @@ export default function RootLayout({
         </div>
 
         <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
-            <Button size="lg" className="pl-4 pr-5">
+            <Button size="lg" className="pl-4 pr-5 bg-accent hover:bg-accent/90">
                 <MessageSquare className="mr-2 h-5 w-5" />
                 MENSAJES
             </Button>
