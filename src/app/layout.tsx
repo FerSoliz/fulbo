@@ -36,7 +36,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased">
+      <body className="font-body antialiased bg-background">
         <div className="flex">
           <MainSidebar user={user} />
           <div className="flex flex-1 flex-col md:ml-64">
