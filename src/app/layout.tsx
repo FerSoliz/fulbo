@@ -47,24 +47,18 @@ export default function RootLayout({
 
         <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
             <Button size="lg" className="pl-4 pr-5">
-                <>
-                    <MessageSquare className="mr-2 h-5 w-5" />
-                    MENSAJES
-                </>
+                <MessageSquare className="mr-2 h-5 w-5" />
+                MENSAJES
             </Button>
             {user.role === 'admin' && (
                 <Button variant="outline" size="icon">
-                    <>
-                        <Sparkles className="h-5 w-5 text-yellow-400" />
-                        <span className="sr-only">Asistente IA</span>
-                    </>
+                    <Sparkles className="h-5 w-5 text-yellow-400" />
+                    <span className="sr-only">Asistente IA</span>
                 </Button>
             )}
             <Button variant="outline" size="icon">
-                <>
-                    <Bug className="h-5 w-5" />
-                    <span className="sr-only">Reportar Error</span>
-                </>
+                <Bug className="h-5 w-5" />
+                <span className="sr-only">Reportar Error</span>
             </Button>
         </div>
         <Toaster />
