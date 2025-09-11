@@ -169,12 +169,6 @@ export function MatchStatsDialog({
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl">
-        <DialogHeader>
-          <DialogTitle>Estadísticas del Partido: {match.home} vs {match.away}</DialogTitle>
-          <DialogDescription>
-            Carga los goles, tarjetas y jugador del partido. {isFinished && <span className="font-bold text-destructive"> (Partido Finalizado)</span>}
-          </DialogDescription>
-        </DialogHeader>
         
         <div className="grid grid-cols-2 items-start gap-x-4 p-1">
             {renderTeamColumn(homeRoster, match.home, 'home')}
