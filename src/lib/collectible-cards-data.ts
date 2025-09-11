@@ -241,3 +241,5 @@ export const allCards: Card[] = [
     countryImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Flag_of_Argentina.svg',
   },
 ];
+
+    
