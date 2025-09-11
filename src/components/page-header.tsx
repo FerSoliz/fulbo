@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Camera, Layers, Search } from 'lucide-react';
+import { Bell, Camera, Layers, LogOut, Search, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -9,12 +9,18 @@ import * as React from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { cn } from '@/lib/utils';
+import type { User } from '@/lib/data';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface PageHeaderProps {
-  user: {
-    id: string;
-    role: 'admin' | 'user';
-  };
+  user: User;
 }
 
 const favorites = [
@@ -39,7 +45,7 @@ export function PageHeader({ user }: PageHeaderProps) {
                 />
             </form>
             <div className="flex flex-1 items-center justify-end gap-2">
-                <Link href="/cards">
+                <Link href="/collectibles">
                     <Button variant="ghost" className="flex items-center gap-2">
                         <Layers className="h-6 w-6 text-destructive" />
                         <span className="font-bold text-sm">GRATIS</span>
@@ -49,6 +55,30 @@ export function PageHeader({ user }: PageHeaderProps) {
                     <Bell className="h-5 w-5" />
                     {hasNotifications && <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />}
                 </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                       <Avatar>
+                          <AvatarImage src={user?.avatar} alt={user?.name} />
+                          <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <Link href={`/profile/${user.id}`}>
+                      <DropdownMenuItem>
+                        <UserIcon className="mr-2 h-4 w-4" />
+                        <span>Perfil</span>
+                      </DropdownMenuItem>
+                    </Link>
+                    <DropdownMenuItem>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Cerrar Sesión</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </div>
         <div>

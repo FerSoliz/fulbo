@@ -11,7 +11,7 @@ import {
   Swords,
   Ticket,
   Trophy,
-  User,
+  User as UserIcon,
   BarChart2,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -22,10 +22,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from "react";
-import type { User as UserType } from '@/lib/data';
+import type { User } from '@/lib/data';
 
 interface MainSidebarProps {
-  user: UserType;
+  user: User;
 }
 
 const menuItems = [
@@ -40,7 +40,7 @@ const menuItems = [
 
 const footerMenuItems = [
     { href: '/settings', icon: Cog, label: 'CONFIGURACIÓN' },
-    { href: '/profile', icon: User, label: 'MI PERFIL' },
+    { href: '/profile', icon: UserIcon, label: 'MI PERFIL' },
     { href: '/logout', icon: LogOut, label: 'CERRAR SESIÓN' },
 ];
 
@@ -59,7 +59,8 @@ export function MainSidebar({ user }: MainSidebarProps) {
           finalHref = `/profile/${user.id}`;
       }
 
-      const isActive = pathname.startsWith(finalHref) && (finalHref !== '/' || pathname === '/');
+      const isActive = pathname === finalHref || (finalHref !== '/' && pathname.startsWith(finalHref));
+
 
       return (
         <li key={item.href}>
