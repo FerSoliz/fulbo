@@ -55,7 +55,7 @@ export function PageHeader({ user }: PageHeaderProps) {
             </div>
         </div>
         <div className="group relative h-20 w-full">
-            <Image src="https://i.postimg.cc/9Q7pW7j2/banner-sponsor.png" layout="fill" objectFit="cover" alt="Sponsor Banner" />
+            <Image src="https://i.postimg.cc/PNGVGZ92/banner-monster.png" layout="fill" objectFit="cover" alt="Sponsor Banner" />
             {user.role === 'admin' && (
                 <Button size="sm" className="absolute bottom-2 right-2 h-8 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Camera className="mr-2 h-4 w-4" />
