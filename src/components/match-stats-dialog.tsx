@@ -102,40 +102,38 @@ export function MatchStatsDialog({
     const playerName = player?.name || `Jugador ${index + 1}`;
 
     return (
-      <div key={playerId} className="grid grid-cols-[auto_1fr_60px_60px] items-center gap-2">
-        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleMvpChange(playerId)} disabled={!player}>
+      <div key={playerId} className="grid grid-cols-[30px_1fr_45px_30px_30px] items-center gap-x-2">
+        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleMvpChange(playerId)} disabled={!player}>
             <Star className={cn("h-4 w-4 text-muted-foreground", mvp === playerId && "text-amber-400 fill-amber-400")} />
         </Button>
-        <Label htmlFor={`goals-${playerId}`} className="text-sm truncate pr-2" title={playerName}>{playerName}</Label>
+        <p className="text-sm truncate" title={playerName}>{playerName}</p>
         <Input
           id={`goals-${playerId}`}
           type="number"
           min="0"
-          className="h-8 w-14 text-center"
+          className="h-7 w-12 text-center px-1"
           value={stats[playerId]?.goals || ''}
           onChange={(e) => handleStatChange(playerId, 'goals', e.target.value ? Number(e.target.value) : 0)}
           disabled={!player}
         />
-        <div className="flex gap-1">
-          <Button 
+        <Button 
               size="icon" 
               variant={stats[playerId]?.yellow ? 'default' : 'outline'}
-              className={cn("h-7 w-7", stats[playerId]?.yellow && "bg-amber-400 hover:bg-amber-500")}
+              className={cn("h-6 w-6 p-0", stats[playerId]?.yellow && "bg-amber-400 hover:bg-amber-500")}
               onClick={() => handleStatChange(playerId, 'yellow', !stats[playerId]?.yellow)}
               disabled={!player}
           >
-              <div className="w-3 h-4 bg-current" />
+              <div className="w-3 h-4 bg-current rounded-sm" />
           </Button>
            <Button 
               size="icon" 
               variant={stats[playerId]?.red ? 'default' : 'outline'}
-              className={cn("h-7 w-7", stats[playerId]?.red && "bg-red-600 hover:bg-red-700")}
+              className={cn("h-6 w-6 p-0", stats[playerId]?.red && "bg-red-600 hover:bg-red-700")}
               onClick={() => handleStatChange(playerId, 'red', !stats[playerId]?.red)}
               disabled={!player}
            >
-              <div className="w-3 h-4 bg-current" />
+              <div className="w-3 h-4 bg-current rounded-sm" />
           </Button>
-        </div>
       </div>
     );
   };
@@ -145,7 +143,14 @@ export function MatchStatsDialog({
     return (
         <div>
             <h3 className="font-semibold mb-2 text-center">{title}</h3>
-            <div className="space-y-2">
+            <div className="space-y-1">
+                <div className="grid grid-cols-[30px_1fr_45px_30px_30px] items-center gap-x-2 text-xs font-bold text-muted-foreground px-1">
+                    <span className="text-center">MVP</span>
+                    <span>JUGADOR</span>
+                    <span className="text-center">G</span>
+                    <span className="text-center">A</span>
+                    <span className="text-center">R</span>
+                </div>
                 {displayItems.map((player, index) => renderPlayerStats(player, index, teamType))}
             </div>
         </div>
@@ -167,7 +172,7 @@ export function MatchStatsDialog({
             Carga los goles, tarjetas y jugador del partido.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 max-h-[60vh] overflow-y-auto p-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 p-1">
             {renderTeamColumn(match.home, homeRoster, 'home')}
             {renderTeamColumn(match.away, awayRoster, 'away')}
         </div>
