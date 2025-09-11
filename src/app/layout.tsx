@@ -44,23 +44,6 @@ export default function RootLayout({
             <main>{children}</main>
           </div>
         </div>
-
-        <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3">
-            <Button size="lg" className="pl-4 pr-5 bg-accent hover:bg-accent/90 rounded-full">
-                <MessageSquare className="mr-2 h-5 w-5" />
-                MENSAJES
-            </Button>
-            {user.role === 'admin' && (
-                <Button variant="outline" size="icon" className="rounded-full">
-                    <Sparkles className="h-5 w-5 text-yellow-400" />
-                    <span className="sr-only">Asistente IA</span>
-                </Button>
-            )}
-            <Button variant="outline" size="icon" className="rounded-full">
-                <Bug className="h-5 w-5" />
-                <span className="sr-only">Reportar Error</span>
-            </Button>
-        </div>
         <Toaster />
       </body>
     </html>
