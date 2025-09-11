@@ -111,6 +111,44 @@
       transform: translateX(150%) rotate(25deg);
     }
   }
+
+  .holographic {
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+  .holographic::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      110deg,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0.5) 50%,
+      rgba(255, 255, 255, 0) 60%
+    );
+    opacity: 0.5;
+    mix-blend-mode: color-dodge;
+    transition: background-position 0.1s ease-out;
+  }
+  .holographic[data-rarity="rare"]::before {
+    background-image: linear-gradient(110deg, rgba(50, 50, 255, 0) 40%, rgba(50, 50, 255, 0.5) 50%, rgba(50, 50, 255, 0) 60%);
+  }
+  .holographic[data-rarity="epic"]::before {
+    background-image: linear-gradient(110deg, rgba(128, 0, 128, 0) 40%, rgba(128, 0, 128, 0.6) 50%, rgba(128, 0, 128, 0) 60%);
+  }
+  .holographic[data-rarity="legendary"]::before, .holographic[data-rarity="hero"]::before, .holographic[data-rarity="CRACKS"]::before, .holographic[data-rarity="LEYENDA MUNDIAL"]::before {
+    background-image: linear-gradient(110deg, rgba(255, 215, 0, 0) 40%, rgba(255, 215, 0, 0.7) 50%, rgba(255, 215, 0, 0) 60%);
+    animation: holographic-shine 5s infinite;
+  }
+  @keyframes holographic-shine {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
 }
 
 .main-sidebar-button[data-active="true"] {
