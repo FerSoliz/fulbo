@@ -42,7 +42,6 @@ import {
 } from '@/components/ui/accordion';
 import { Label } from '@/components/ui/label';
 
-// Mock data, to be replaced with localStorage logic
 interface Team {
   id: string;
   name: string;
@@ -74,6 +73,8 @@ export default function ManageTeamsPage() {
   const [selectedTeam, setSelectedTeam] = useState<Team | null>(null);
   const [roster, setRoster] = useState<Player[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [teamToUpdateLogo, setTeamToUpdateLogo] = useState<string | null>(null);
 
   useEffect(() => {
     // Load tournament name
@@ -91,11 +92,15 @@ export default function ManageTeamsPage() {
     const teamNamesJson = localStorage.getItem(`teams_${tournamentId}`);
     if (teamNamesJson) {
       const teamNames = JSON.parse(teamNamesJson);
-      const teamObjects = teamNames.map((name: string, index: number) => ({
-        id: `team_${index}`,
-        name: name || `Equipo ${index + 1}`,
-        logoUrl: `https://avatar.vercel.sh/${name || `Equipo${index}`}.png`,
-      }));
+      const teamLogos = JSON.parse(localStorage.getItem(`logos_${tournamentId}`) || '{}');
+      const teamObjects = teamNames.map((name: string, index: number) => {
+        const teamId = `team_${index}`;
+        return {
+          id: teamId,
+          name: name || `Equipo ${index + 1}`,
+          logoUrl: teamLogos[teamId] || `https://avatar.vercel.sh/${name || `Equipo${index}`}.png`,
+        }
+      });
       setTeams(teamObjects);
     }
   }, [tournamentId, router]);
@@ -112,7 +117,17 @@ export default function ManageTeamsPage() {
   },[editingTeamId]);
 
   const handleSaveName = (teamId: string) => {
+    setTeams(prevTeams => 
+        prevTeams.map(t => t.id === teamId ? {...t, name: editingName} : t)
+    );
     // Logic to save the new team name to localStorage
+    const teamNames = teams.map(t => t.id === teamId ? editingName : t.name);
+    const teamNamesJson = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
+    const teamIndex = teams.findIndex(t => t.id === teamId);
+    if(teamIndex !== -1) {
+        teamNamesJson[teamIndex] = editingName;
+        localStorage.setItem(`teams_${tournamentId}`, JSON.stringify(teamNamesJson));
+    }
     setEditingTeamId(null);
   };
   
@@ -158,6 +173,36 @@ export default function ManageTeamsPage() {
         alert('Plantilla guardada con éxito!');
       }
   }
+  
+  const handleLogoClick = (teamId: string) => {
+    setTeamToUpdateLogo(teamId);
+    fileInputRef.current?.click();
+  };
+
+  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file && teamToUpdateLogo) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        
+        // Update state
+        setTeams(prevTeams => 
+            prevTeams.map(t => t.id === teamToUpdateLogo ? {...t, logoUrl: base64String} : t)
+        );
+
+        // Update localStorage
+        const teamLogos = JSON.parse(localStorage.getItem(`logos_${tournamentId}`) || '{}');
+        teamLogos[teamToUpdateLogo] = base64String;
+        localStorage.setItem(`logos_${tournamentId}`, JSON.stringify(teamLogos));
+      };
+      reader.readAsDataURL(file);
+    }
+    // Reset file input for next upload
+    if(fileInputRef.current) fileInputRef.current.value = '';
+    setTeamToUpdateLogo(null);
+  };
+
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -181,8 +226,8 @@ export default function ManageTeamsPage() {
             {teams.map((team) => (
               <Card key={team.id}>
                 <CardHeader className="items-center text-center">
-                  <Avatar className="w-24 h-24 mb-4 cursor-pointer">
-                    <AvatarImage src={team.logoUrl} />
+                  <Avatar className="w-24 h-24 mb-4 cursor-pointer" onClick={() => handleLogoClick(team.id)}>
+                    <AvatarImage src={team.logoUrl} alt={team.name} />
                     <AvatarFallback>{team.name.substring(0, 2)}</AvatarFallback>
                   </Avatar>
                   {editingTeamId === team.id ? (
@@ -213,6 +258,14 @@ export default function ManageTeamsPage() {
           </CardContent>
         </Card>
       </div>
+
+       <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        accept="image/png, image/jpeg, image/webp"
+        onChange={handleLogoChange}
+       />
 
        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
             <DialogContent className="max-w-4xl">
