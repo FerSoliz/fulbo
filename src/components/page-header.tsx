@@ -54,15 +54,6 @@ export function PageHeader({ user }: PageHeaderProps) {
                 </Button>
             </div>
         </div>
-        <div className="group relative h-20 w-full">
-            <Image src="https://i.postimg.cc/k4KfQDBS/banner-monster.png" layout="fill" objectFit="cover" alt="Sponsor Banner" />
-            {user.role === 'admin' && (
-                <Button size="sm" className="absolute bottom-2 right-2 h-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="mr-2 h-4 w-4" />
-                    Cambiar Banner
-                </Button>
-            )}
-        </div>
         <div>
             <ScrollArea className="w-full whitespace-nowrap">
                 <div className="p-3">
