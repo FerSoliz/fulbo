@@ -212,7 +212,7 @@ export default function ProfilePage() {
                             
                             <CardTitle className="flex items-center gap-2 text-3xl">
                                 {user.name}
-                                {user.isVerified && <CheckCircle className="w-6 h-6 text-primary" />}
+                                {user.isVerified && <CheckCircle className="w-6 h-6 text-destructive" />}
                             </CardTitle>
                             <CardDescription className="capitalize">
                                 {user.role === 'admin' || user.role === 'editor' ? 'Administrador' : 'Jugador'}
