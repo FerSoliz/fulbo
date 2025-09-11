@@ -256,6 +256,28 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
                             )}
+                             {isOwnProfile && !uniqueCode && (
+                                <>
+                                <Separator className="my-4" />
+                                <div className="space-y-2">
+                                    <Label htmlFor="uniqueCodeInput" className="text-sm">Ingresar Código de Jugador</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            id="uniqueCodeInput"
+                                            placeholder="SUD-XXXXXX" 
+                                            value={uniqueCodeInput}
+                                            onChange={(e) => setUniqueCodeInput(e.target.value)}
+                                        />
+                                        <Button onClick={handleLinkAccount}>
+                                            <Link2 className="w-4 h-4"/>
+                                        </Button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                        Este código es generado por un administrador al registrarte en un torneo.
+                                    </p>
+                                </div>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
                 </div>
@@ -303,28 +325,8 @@ export default function ProfilePage() {
                                 </div>
                             )}
                         </CardContent>
-                        <CardFooter className="flex-col items-center">
+                        <CardFooter>
                            <p className="text-xs text-muted-foreground text-center w-full">Las estadísticas se actualizan automáticamente al visitar el perfil.</p>
-                           {isOwnProfile && !uniqueCode && (
-                                <div className="mt-6 w-full max-w-sm mx-auto space-y-2">
-                                    <Label htmlFor="uniqueCodeInput" className="text-sm">Ingresar Código de Jugador</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input
-                                            id="uniqueCodeInput"
-                                            placeholder="SUD-XXXXXX" 
-                                            value={uniqueCodeInput}
-                                            onChange={(e) => setUniqueCodeInput(e.target.value)}
-                                            disabled={!!uniqueCode}
-                                        />
-                                        <Button onClick={handleLinkAccount} disabled={!!uniqueCode}>
-                                            <Link2 className="w-4 h-4"/>
-                                        </Button>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground mt-2">
-                                        Este código es generado por un administrador al registrarte en un torneo.
-                                    </p>
-                                </div>
-                            )}
                         </CardFooter>
                     </Card>
                 </div>
