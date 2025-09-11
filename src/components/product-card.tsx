@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -13,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Product } from '@/lib/data';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 interface ProductCardProps {
     product: Product;
@@ -24,7 +24,6 @@ interface ProductCardProps {
 export function ProductCard({ product, isAdmin, onDelete, onEdit }: ProductCardProps) {
     const [isHovered, setIsHovered] = useState(false);
     const [currentImage, setCurrentImage] = useState(0);
-    const router = useRouter();
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     useEffect(() => {
@@ -43,15 +42,8 @@ export function ProductCard({ product, isAdmin, onDelete, onEdit }: ProductCardP
         };
     }, [isHovered, product.images.length]);
 
-    const handleBuyClick = () => {
-        const params = new URLSearchParams({
-            id: product.id,
-            name: product.name,
-            price: product.price.toString(),
-            image: product.images[0],
-        });
-        router.push(`/checkout?${params.toString()}`);
-    }
+    const checkoutUrl = `/checkout?id=${product.id}&name=${encodeURIComponent(product.name)}&price=${product.price}&image=${encodeURIComponent(product.images[0])}`;
+
 
     return (
         <Card 
@@ -133,12 +125,13 @@ export function ProductCard({ product, isAdmin, onDelete, onEdit }: ProductCardP
                  <p className={cn("text-xs font-semibold uppercase", product.stock > 0 ? 'text-green-400' : 'text-red-500')}>
                     {product.stock > 0 ? `Stock: ${product.stock}` : 'Sin Stock'}
                  </p>
-                <Button 
-                    className="w-full mt-4" 
-                    onClick={handleBuyClick}
+                <Button asChild
+                    className="w-full mt-4"
                     disabled={product.stock === 0}
                 >
+                  <Link href={checkoutUrl}>
                     {product.stock > 0 ? 'COMPRAR' : 'SIN STOCK'}
+                  </Link>
                 </Button>
             </CardFooter>
         </Card>
