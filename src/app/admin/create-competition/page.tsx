@@ -71,6 +71,7 @@ export default function CreateCompetitionPage() {
       format: competitionFormat,
       teamCount: teamCount,
       autoFixture: autoFixture,
+      status: 'pending', // pending, group_stage, playoffs, finished
     };
 
     // Save tournament details
