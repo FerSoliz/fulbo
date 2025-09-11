@@ -5,6 +5,35 @@ export interface User {
   location: string;
   isVerified: boolean;
   role: 'user' | 'editor' | 'admin';
+  email?: string;
+  uniqueCode?: string;
+  sudpoints: number;
+  baseSudpoints: number;
+  league: string;
+  division: number;
+  stats: {
+    partidosJugados: number;
+    victorias: number;
+    empates: number;
+    derrotas: number;
+    goles: number;
+    asistencias: number;
+    amarillas: number;
+    rojas: number;
+    mvps: number;
+  };
+}
+
+export interface PlayerDetails {
+  id: string;
+  uniqueCode: string;
+  name: string;
+  lastName: string;
+  age: string;
+  nationality: string;
+  phone: string;
+  address: string;
+  email: string;
 }
 
 export interface Comment {
@@ -43,6 +72,11 @@ export const users: User[] = [
     location: 'Buenos Aires, Argentina',
     isVerified: true,
     role: 'admin',
+    sudpoints: 0,
+    baseSudpoints: 0,
+    league: 'Bronce',
+    division: 4,
+    stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
   },
   {
     id: 'user-2',
@@ -51,6 +85,12 @@ export const users: User[] = [
     location: 'Rosario, Argentina',
     isVerified: true,
     role: 'editor',
+    sudpoints: 80,
+    baseSudpoints: 0,
+    league: 'Oro',
+    division: 2,
+    uniqueCode: 'MESSI10',
+    stats: { partidosJugados: 10, victorias: 8, empates: 1, derrotas: 1, goles: 15, asistencias: 5, amarillas: 0, rojas: 0, mvps: 7 },
   },
   {
     id: 'user-3',
@@ -59,6 +99,12 @@ export const users: User[] = [
     location: 'Mar del Plata, Argentina',
     isVerified: false,
     role: 'user',
+    sudpoints: 55,
+    baseSudpoints: 0,
+    league: 'Plata',
+    division: 3,
+    uniqueCode: 'DIBU23',
+    stats: { partidosJugados: 10, victorias: 5, empates: 3, derrotas: 2, goles: 0, asistencias: 1, amarillas: 1, rojas: 0, mvps: 3 },
   },
 ];
 
@@ -157,4 +203,26 @@ export const initialProducts: Product[] = [
     ],
     isInitial: true,
   },
+];
+
+export const sudpointConfig = {
+    partidoGanado: 10,
+    partidoEmpatado: 3,
+    partidoPerdido: -5,
+    gol: 2,
+    asistencia: 1,
+    tarjetaAmarilla: -2,
+    tarjetaRoja: -5,
+    mvp: 5,
+};
+
+export const leagues = [
+    { name: 'Bronce', divisions: 4, color: '#cd7f32', icon: 'Shield', nextLeague: 'Plata' },
+    { name: 'Plata', divisions: 4, color: '#c0c0c0', icon: 'Shield', nextLeague: 'Oro' },
+    { name: 'Oro', divisions: 4, color: '#ffd700', icon: 'Shield', nextLeague: 'Platino' },
+    { name: 'Platino', divisions: 4, color: '#e5e4e2', icon: 'Gem', nextLeague: 'Diamante' },
+    { name: 'Diamante', divisions: 4, color: '#b9f2ff', icon: 'Gem', nextLeague: 'Maestro' },
+    { name: 'Maestro', divisions: 1, color: '#9d00ff', icon: 'Crown', nextLeague: 'Gran Maestro' },
+    { name: 'Gran Maestro', divisions: 1, color: '#ff0055', icon: 'Crown', nextLeague: 'Leyenda' },
+    { name: 'Leyenda', divisions: 1, color: '#ff4500', icon: 'Star', nextLeague: null },
 ];

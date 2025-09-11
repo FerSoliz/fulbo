@@ -12,6 +12,7 @@ import {
   Ticket,
   Trophy,
   User,
+  BarChart2,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -21,13 +22,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from "react";
+import type { User as UserType } from '@/lib/data';
 
 interface MainSidebarProps {
-  user: {
-    id: string;
-    role: 'admin' | 'user' | 'editor';
-    avatarUrl: string;
-  };
+  user: UserType;
 }
 
 const menuItems = [
@@ -37,12 +35,12 @@ const menuItems = [
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
     { href: '/store', icon: Store, label: 'TIENDA' },
     { href: '/collectibles', icon: Swords, label: 'COLECCIONABLES' },
-    { href: '/rankeds', icon: Bell, label: 'RANKEDS' },
+    { href: '/ranking', icon: BarChart2, label: 'RANKING' },
 ];
 
 const footerMenuItems = [
     { href: '/settings', icon: Cog, label: 'CONFIGURACIÓN' },
-    { href: '/profile', icon: User, label: 'MI PERFIL' },
+    { href: '/profile/user-1', icon: User, label: 'MI PERFIL' }, // Hardcoded to user-1 for now
     { href: '/logout', icon: LogOut, label: 'CERRAR SESIÓN' },
 ];
 
@@ -55,11 +53,17 @@ export function MainSidebar({ user }: MainSidebarProps) {
       if ('adminOnly' in item && item.adminOnly && user.role !== 'admin' && user.role !== 'editor') {
         return null;
       }
-      const isActive = pathname.startsWith(item.href) && (item.href !== '/' || pathname === '/');
+      
+      let finalHref = item.href;
+      if(item.label === 'MI PERFIL') {
+          finalHref = `/profile/${user.id}`;
+      }
+
+      const isActive = pathname.startsWith(finalHref) && (finalHref !== '/' || pathname === '/');
 
       return (
         <li key={item.href}>
-          <Link href={item.href} passHref>
+          <Link href={finalHref} passHref>
             <Button
               variant="ghost"
               className={cn(
@@ -90,17 +94,17 @@ export function MainSidebar({ user }: MainSidebarProps) {
           </Link>
         </div>
         <div className="flex items-center gap-2 p-2">
-            <Link href="/profile">
+            <Link href={`/profile/${user.id}`}>
                 <AnimatedAvatar>
                     <Avatar className="w-12 h-12">
-                        <AvatarImage src={user.avatarUrl} alt="User avatar" />
+                        <AvatarImage src={user.avatar} alt="User avatar" />
                         <AvatarFallback>U</AvatarFallback>
                     </Avatar>
                 </AnimatedAvatar>
             </Link>
             <div className="flex flex-col">
-                <span className="font-semibold">Carlos Estevez</span>
-                <span className="text-sm text-muted-foreground">@charlie</span>
+                <span className="font-semibold">{user.name}</span>
+                <span className="text-sm text-muted-foreground">@{user.name.split(' ')[0].toLowerCase()}</span>
             </div>
         </div>
 
