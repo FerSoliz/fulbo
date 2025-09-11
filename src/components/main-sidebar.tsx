@@ -78,6 +78,17 @@ export function MainSidebar({ user }: MainSidebarProps) {
 
   return (
     <aside className="fixed left-0 hidden h-screen w-64 flex-col border-r bg-card md:flex">
+        <div className="flex h-16 items-center justify-center border-b p-2">
+          <Link href="/">
+            <Image
+              src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
+              alt="SUDONE Logo"
+              width={140}
+              height={40}
+              priority
+            />
+          </Link>
+        </div>
         <div className="flex items-center gap-2 p-2">
             <Link href="/profile">
                 <AnimatedAvatar>
