@@ -90,7 +90,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
             item.roles.includes(userRole) ? (
               <SidebarMenuItem key={item.label}>
                 <Link href={item.href} passHref>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton className='main-sidebar-button' asChild>
                     <>
                       <item.icon />
                       <span>{item.label}</span>
@@ -109,7 +109,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
             <>
               <SidebarMenuItem>
                 <Link href="/settings" passHref>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton className='main-sidebar-button' asChild>
                     <>
                       <Settings />
                       <span>CONFIGURACIÓN</span>
@@ -119,7 +119,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <Link href={`/profile/${user.id}`} passHref>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton className='main-sidebar-button' asChild>
                     <>
                       <User />
                       <span>MI PERFIL</span>
@@ -129,7 +129,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <Link href="/login" passHref>
-                  <SidebarMenuButton asChild>
+                  <SidebarMenuButton className='main-sidebar-button' asChild>
                     <>
                       <LogOut />
                       <span>CERRAR SESIÓN</span>
@@ -142,7 +142,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
           {!isLoggedIn && (
             <SidebarMenuItem>
               <Link href="/login" passHref>
-                <SidebarMenuButton asChild>
+                <SidebarMenuButton className='main-sidebar-button' asChild>
                   <>
                     <LogIn />
                     <span>INICIAR SESIÓN</span>
