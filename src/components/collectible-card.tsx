@@ -22,11 +22,12 @@ export function CollectibleCard({ card, small = false }: CollectibleCardProps) {
       const y = (e.clientY - top - height / 2) / 25;
       cardElement.style.transform = `rotateY(${x}deg) rotateX(${-y}deg) scale(1.05)`;
 
-      const bgX = (e.clientX - left) / width * 100;
-      const bgY = (e.clientY - top) / height * 100;
-      const holoEffect = cardElement.querySelector('.holographic::before') as HTMLElement;
-      if (holoEffect) {
-        holoEffect.style.backgroundPosition = `${bgX}% ${bgY}%`;
+      const holoImage = cardElement.querySelector('img') as HTMLElement;
+      if (holoImage) {
+        const bgX = (e.clientX - left) / width * 100;
+        const bgY = (e.clientY - top) / height * 100;
+        const holoEffect = holoImage.style;
+        holoEffect.backgroundPosition = `${bgX}% ${bgY}%`;
       }
     };
     
@@ -53,25 +54,21 @@ export function CollectibleCard({ card, small = false }: CollectibleCardProps) {
       ref={cardRef}
       className={cn(
         'relative transition-transform duration-100 ease-out preserve-3d',
-        small ? 'w-28' : 'w-48'
+        small ? 'w-28 h-[157px]' : 'w-48 h-[269px]'
       )}
       style={{ 
         perspective: '1000px',
-        width: `${width}px`,
-        height: `${height}px`,
        }}
     >
-      <div className="absolute inset-0 holographic rounded-lg overflow-hidden" data-rarity={card.rarity.toLowerCase()}>
-        <Image
-          src={card.playerImageUrl}
-          alt={card.name}
-          width={width}
-          height={height}
-          objectFit="cover"
-          className="rounded-lg"
-          priority
-        />
-      </div>
+      <Image
+        src={card.playerImageUrl}
+        alt={card.name}
+        width={width}
+        height={height}
+        className={cn('rounded-lg holographic', small && 'w-full h-full')}
+        data-rarity={card.rarity.toLowerCase()}
+        priority
+      />
     </div>
   );
 }

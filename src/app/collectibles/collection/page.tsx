@@ -33,7 +33,7 @@ export default function CollectionPage() {
         ...card,
         owned: userCollection.some(ownedCard => ownedCard.id === card.id)
     }))
-    .filter(card => filter === 'all' || (card.owned && card.rarity === filter))
+    .filter(card => filter === 'all' || (card.owned && card.rarity === filter) || (!card.owned && filter !== 'all' ? false : true))
     .sort((a, b) => {
         if (sort === 'rating' && a.owned && b.owned) return b.rating - a.rating;
         if (sort === 'id') return a.id - b.id;
@@ -86,14 +86,14 @@ export default function CollectionPage() {
               <div key={card.id} className="flex flex-col items-center">
                 {card.owned ? (
                   <motion.div layoutId={`card-${card.id}`} onClick={() => setSelectedCard(card)}>
-                    <CollectibleCard card={card} />
+                    <CollectibleCard card={card} small />
                   </motion.div>
                 ) : (
-                  <div className="w-48 h-[269px] bg-muted/20 rounded-lg flex items-center justify-center">
-                    <span className="text-5xl font-bold text-muted-foreground/50">{card.id}</span>
+                  <div className="w-28 h-[157px] bg-muted/20 rounded-lg flex items-center justify-center">
+                    <span className="text-4xl font-bold text-muted-foreground/50">{card.id}</span>
                   </div>
                 )}
-                <p className="mt-2 text-sm text-center truncate w-full">{card.id}. {card.name}</p>
+                <p className="mt-2 text-xs text-center truncate w-full">{card.id}. {card.name}</p>
               </div>
             ))}
           </div>
