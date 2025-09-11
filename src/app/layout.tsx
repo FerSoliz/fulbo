@@ -45,7 +45,7 @@ export default function RootLayout({
       <body className="font-body antialiased">
         <SidebarProvider>
           <div className="flex">
-            <Sidebar asChild className="w-64 flex-col fixed inset-y-0 z-50 hidden md:flex border-r">
+            <Sidebar asChild>
                 <MainSidebar user={user} />
             </Sidebar>
             <div className="flex-1 md:ml-64">
