@@ -10,7 +10,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Crown, Star } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Crown } from 'lucide-react';
 import { User, users as initialUsers, leagues } from '@/lib/data';
 import { DivisionBadge } from '@/components/division-badge';
 import { cn } from '@/lib/utils';
@@ -102,7 +103,9 @@ export default function RankingPage() {
                     <TableCell>
                         <DivisionBadge league={user.league} division={user.division} />
                     </TableCell>
-                    <TableCell className="text-right font-mono">{user.sudpoints}</TableCell>
+                    <TableCell className="text-right">
+                        <Badge variant="outline" className="text-base">{user.sudpoints}</Badge>
+                    </TableCell>
                   </TableRow>
                 ))
               ) : (

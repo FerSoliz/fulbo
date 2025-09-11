@@ -22,8 +22,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 const StatItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: string | number }) => (
     <div className="flex flex-col items-center gap-1 text-center">
         <Icon className="w-8 h-8 text-accent" />
-        <span className="text-xs text-muted-foreground">{label}</span>
-        <span className="font-bold text-2xl">{value}</span>
+        <p className="text-muted-foreground text-sm">{label}</p>
+        <p className="font-semibold text-lg">{value}</p>
     </div>
 );
 
@@ -202,7 +202,7 @@ export default function ProfilePage() {
                 {/* Columna Izquierda */}
                 <div className="md:col-span-1 space-y-6">
                     <Card className="relative">
-                        <CardHeader className="items-center text-center pt-8">
+                        <CardHeader className="items-center text-center">
                            {currentUser && !isOwnProfile && (
                                 <Button 
                                     variant="ghost" 
@@ -223,13 +223,13 @@ export default function ProfilePage() {
                             </div>
                              <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*"/>
                             
-                             <div className="flex items-center gap-2">
-                                <CardTitle className="text-3xl">{name}</CardTitle>
+                             <div className="flex items-center gap-2 pt-4">
+                                <CardTitle className="text-2xl">{name}</CardTitle>
                                 {isVerified && (
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <CheckCircle className="h-6 w-6 text-blue-500 fill-current" />
+                                                <CheckCircle className="h-6 w-6 text-destructive fill-current" />
                                             </TooltipTrigger>
                                             <TooltipContent>
                                                 <p>Usuario Verificado</p>
@@ -238,20 +238,22 @@ export default function ProfilePage() {
                                     </TooltipProvider>
                                 )}
                              </div>
-                            <CardDescription className="capitalize">
+                            <CardDescription className="capitalize text-sm">
                                 {role === 'admin' || role === 'editor' ? 'Administrador' : 'Jugador'}
                             </CardDescription>
-                            <DivisionBadge league={league} division={division} />
+                            <div className="flex items-center gap-4 pt-2">
+                                <DivisionBadge league={league} division={division} />
+                            </div>
                         </CardHeader>
                         <CardContent>
-                             {isOwnProfile && (
+                            {isOwnProfile && (
                                 <div className="mt-4">
-                                    <Label className="text-xs text-muted-foreground flex items-center justify-center gap-2 mb-1">
-                                        <Trophy className="w-4 h-4 text-amber-400" />
-                                        SUDPOINTS
-                                    </Label>
-                                    <Progress value={sudpoints} className="h-2" />
-                                    <p className="text-sm font-bold mt-1 text-center">{sudpoints} / 100 SP</p>
+                                    <Label className="text-sm font-medium">Progreso en la división</Label>
+                                    <Progress value={sudpoints} className="h-2 my-1" />
+                                    <div className="flex justify-between">
+                                        <p className="text-xs text-muted-foreground mt-1">Siguiente división en 100 SP</p>
+                                        <p className="text-sm font-semibold">{sudpoints} / 100 SP</p>
+                                    </div>
                                 </div>
                             )}
                         </CardContent>
@@ -262,7 +264,7 @@ export default function ProfilePage() {
                 <div className="md:col-span-2">
                      <Card>
                         <CardHeader>
-                            <CardTitle className="text-4xl font-bold tracking-wider text-center uppercase">Estadisticas</CardTitle>
+                            <CardTitle className="text-4xl font-bold uppercase tracking-wider text-center">Estadisticas</CardTitle>
                         </CardHeader>
                         <CardContent>
                             {uniqueCode ? (
@@ -304,8 +306,8 @@ export default function ProfilePage() {
                         <CardFooter className="flex-col items-center">
                            <p className="text-xs text-muted-foreground text-center w-full">Las estadísticas se actualizan automáticamente al visitar el perfil.</p>
                            {isOwnProfile && !uniqueCode && (
-                                <div className="mt-6 w-full space-y-2">
-                                    <Label htmlFor="uniqueCodeInput">Ingresar Código de Jugador</Label>
+                                <div className="mt-6 w-full max-w-sm mx-auto space-y-2">
+                                    <Label htmlFor="uniqueCodeInput" className="text-sm">Ingresar Código de Jugador</Label>
                                     <div className="flex items-center gap-2">
                                         <Input
                                             id="uniqueCodeInput"
@@ -318,6 +320,9 @@ export default function ProfilePage() {
                                             <Link2 className="w-4 h-4"/>
                                         </Button>
                                     </div>
+                                    <p className="text-xs text-muted-foreground mt-2">
+                                        Este código es generado por un administrador al registrarte en un torneo.
+                                    </p>
                                 </div>
                             )}
                         </CardFooter>

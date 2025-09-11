@@ -72,8 +72,8 @@ export function MainSidebar({ user }: MainSidebarProps) {
               )}
               data-active={isActive}
             >
-              <item.icon className="size-4" />
-              {item.label}
+              <item.icon className="h-5 w-5" />
+              <span className="lg:text-base">{item.label}</span>
             </Button>
           </Link>
         </li>

@@ -33,12 +33,13 @@ export function DivisionBadge({ league, division }: DivisionBadgeProps) {
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold'
+        'inline-flex items-center gap-2 rounded-full px-3 py-1'
       )}
       style={{ backgroundColor: `${leagueInfo.color}20`, color: leagueInfo.color }}
     >
       <Icon className="h-4 w-4" />
-      <span>{leagueInfo.name} {romanDivision}</span>
+      <span className="font-bold uppercase text-sm">{leagueInfo.name}</span>
+      <span className="font-mono text-xs font-bold">{romanDivision}</span>
     </div>
   );
 }
