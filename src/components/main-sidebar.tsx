@@ -60,7 +60,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 h-screen fixed top-0 left-0 bg-card border-r border-border flex flex-col">
+    <>
       <SidebarHeader className="p-2">
         <div className="flex items-center gap-2">
           {isLoggedIn && user ? (
@@ -100,10 +100,10 @@ export function MainSidebar({ user }: MainSidebarProps) {
                     data-active={pathname === item.href}
                     asChild
                   >
-                    <div>
+                    <>
                       <item.icon className="size-4" />
                       <span>{item.label}</span>
-                    </div>
+                    </>
                   </SidebarMenuButton>
                 </Link>
               </li>
@@ -119,30 +119,30 @@ export function MainSidebar({ user }: MainSidebarProps) {
               <li>
                 <Link href="/settings" passHref>
                   <SidebarMenuButton variant="ghost" className="w-full justify-start gap-2 main-sidebar-button" data-active={pathname === '/settings'} asChild>
-                    <div>
+                    <>
                       <Settings className="size-4" />
                       <span>CONFIGURACIÓN</span>
-                    </div>
+                    </>
                   </SidebarMenuButton>
                 </Link>
               </li>
               <li>
                 <Link href={`/profile/${user.id}`} passHref>
                    <SidebarMenuButton variant="ghost" className="w-full justify-start gap-2 main-sidebar-button" data-active={pathname === `/profile/${user.id}`} asChild>
-                    <div>
+                    <>
                       <User className="size-4" />
                       <span>MI PERFIL</span>
-                    </div>
+                    </>
                   </SidebarMenuButton>
                 </Link>
               </li>
               <li>
                 <Link href="/login" passHref>
                   <SidebarMenuButton variant="ghost" className="w-full justify-start gap-2 main-sidebar-button" data-active={pathname === '/login'} asChild>
-                    <div>
+                    <>
                       <LogOut className="size-4" />
                       <span>CERRAR SESIÓN</span>
-                    </div>
+                    </>
                   </SidebarMenuButton>
                 </Link>
               </li>
@@ -152,16 +152,16 @@ export function MainSidebar({ user }: MainSidebarProps) {
             <li>
               <Link href="/login" passHref>
                 <SidebarMenuButton variant="ghost" className="w-full justify-start gap-2 main-sidebar-button" data-active={pathname === '/login'} asChild>
-                  <div>
+                  <>
                     <LogIn className="size-4" />
                     <span>INICIAR SESIÓN</span>
-                  </div>
+                  </>
                 </SidebarMenuButton>
               </Link>
             </li>
           )}
         </ul>
       </SidebarFooter>
-    </aside>
+    </>
   );
 }

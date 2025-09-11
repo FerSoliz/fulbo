@@ -42,15 +42,17 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased flex">
+      <body className="font-body antialiased">
         <SidebarProvider>
-          <Sidebar className="w-64 hidden md:flex" collapsible="none">
-            <MainSidebar user={user} />
-          </Sidebar>
-          <SidebarInset className="flex-1 md:ml-64 bg-transparent">
-            <PageHeader />
-            <main>{children}</main>
-          </SidebarInset>
+          <div className="flex">
+            <Sidebar asChild className="w-64 flex-col fixed inset-y-0 z-50 hidden md:flex border-r">
+                <MainSidebar user={user} />
+            </Sidebar>
+            <div className="flex-1 md:ml-64">
+              <PageHeader />
+              <main>{children}</main>
+            </div>
+          </div>
         </SidebarProvider>
 
         <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
