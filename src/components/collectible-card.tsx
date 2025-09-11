@@ -45,21 +45,29 @@ export function CollectibleCard({ card, small = false }: CollectibleCardProps) {
     };
   }, []);
 
+  const width = small ? 112 : 192;
+  const height = small ? 157 : 269;
+
   return (
     <div
       ref={cardRef}
       className={cn(
-        'relative aspect-[2.5/3.5] transition-transform duration-100 ease-out preserve-3d',
+        'relative transition-transform duration-100 ease-out preserve-3d',
         small ? 'w-28' : 'w-48'
       )}
-      style={{ perspective: '1000px' }}
+      style={{ 
+        perspective: '1000px',
+        width: `${width}px`,
+        height: `${height}px`,
+       }}
     >
-      <div className="absolute inset-0 holographic" data-rarity={card.rarity.toLowerCase()}>
+      <div className="absolute inset-0 holographic rounded-lg overflow-hidden" data-rarity={card.rarity.toLowerCase()}>
         <Image
           src={card.playerImageUrl}
           alt={card.name}
-          layout="fill"
-          objectFit="contain"
+          width={width}
+          height={height}
+          objectFit="cover"
           className="rounded-lg"
           priority
         />
