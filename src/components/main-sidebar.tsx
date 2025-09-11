@@ -36,7 +36,6 @@ const menuItems = [
     { href: '/leagues', icon: Trophy, label: 'LIGAS EN CURSO' },
     { href: '/subscribe', icon: Ticket, label: 'INSCRIBIRME' },
     { href: '/store', icon: Store, label: 'TIENDA' },
-    { href: '/onetrivia', icon: BookCopy, label: 'ONETRIVIA' },
     { href: '/collectibles', icon: Swords, label: 'COLECCIONABLES' },
     { href: '/rankeds', icon: Bell, label: 'RANKEDS' },
 ];
