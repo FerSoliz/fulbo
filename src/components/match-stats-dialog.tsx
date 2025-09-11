@@ -143,7 +143,7 @@ export function MatchStatsDialog({
     );
   };
 
-  const renderTeamColumn = (roster: Player[], teamType: 'home' | 'away', teamName: string) => {
+  const renderTeamColumn = (roster: Player[], teamName: string, teamType: 'home' | 'away') => {
     const displayItems = Array.from({ length: 10 }, (_, i) => roster[i] || null);
     return (
         <div className="space-y-1">
@@ -177,35 +177,35 @@ export function MatchStatsDialog({
         </DialogHeader>
         
         <div className="grid grid-cols-2 items-start gap-x-4 p-1">
-            {renderTeamColumn(homeRoster, 'home', match.home)}
-            {renderTeamColumn(awayRoster, 'away', match.away)}
+            {renderTeamColumn(homeRoster, match.home, 'home')}
+            {renderTeamColumn(awayRoster, match.away, 'away')}
         </div>
         
-        <div className="pt-4">
-            <Separator />
-            <div className="flex flex-col items-center gap-y-2 pt-4">
-                <h3 className="font-semibold text-center whitespace-nowrap">Tanda de Penales</h3>
+        <Separator className="my-2" />
+
+        <div className="flex items-center justify-between px-1">
+            <div className="flex items-center gap-4">
+                <h3 className="font-semibold text-sm">Tanda de Penales:</h3>
                 <div className="flex items-center justify-center gap-2">
-                     <span className="text-sm font-medium w-24 text-right truncate">{match.home}</span>
-                    <Input type="number" min="0" className="w-16 h-10 text-center" value={penaltyScore.home} onChange={(e) => setPenaltyScore(p => ({...p, home: Number(e.target.value)}))} disabled={isFinished}/>
+                     <span className="text-sm font-medium w-16 text-right truncate">{match.home}</span>
+                    <Input type="number" min="0" className="w-12 h-8 text-center" value={penaltyScore.home} onChange={(e) => setPenaltyScore(p => ({...p, home: Number(e.target.value)}))} disabled={isFinished}/>
                     <span className="font-bold">-</span>
-                    <Input type="number" min="0" className="w-16 h-10 text-center" value={penaltyScore.away} onChange={(e) => setPenaltyScore(p => ({...p, away: Number(e.target.value)}))} disabled={isFinished}/>
-                    <span className="text-sm font-medium w-24 truncate">{match.away}</span>
+                    <Input type="number" min="0" className="w-12 h-8 text-center" value={penaltyScore.away} onChange={(e) => setPenaltyScore(p => ({...p, away: Number(e.target.value)}))} disabled={isFinished}/>
+                    <span className="text-sm font-medium w-16 truncate">{match.away}</span>
                 </div>
+            </div>
+            <div className="flex gap-2">
+                 <DialogClose asChild>
+                    <Button type="button" variant="secondary">Cerrar</Button>
+                </DialogClose>
+                {!isFinished && (
+                  <Button onClick={handleSaveStats}>
+                    <Save className="mr-2 h-4 w-4"/> Guardar
+                  </Button>
+                )}
             </div>
         </div>
 
-
-         <DialogFooter>
-            <DialogClose asChild>
-                <Button type="button" variant="secondary">Cerrar</Button>
-            </DialogClose>
-            {!isFinished && (
-              <Button onClick={handleSaveStats}>
-                <Save className="mr-2 h-4 w-4"/> Guardar Estadísticas
-              </Button>
-            )}
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
