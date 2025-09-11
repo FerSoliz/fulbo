@@ -46,7 +46,7 @@ export function MatchStatsDialog({
   const [stats, setStats] = useState<{ [playerId: string]: { goals: number, yellow: boolean, red: boolean } }>({});
   const [penaltyScore, setPenaltyScore] = useState({ home: 0, away: 0 });
   
-  const matchId = `${tournamentId}_r${roundIndex}_m${matchIndex}`;
+  const matchId = `${tournamentId}_r${roundIndex}m${matchIndex}`;
 
   useEffect(() => {
     // Load rosters from localStorage
@@ -168,16 +168,16 @@ export function MatchStatsDialog({
           Estadísticas
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl p-4">
         
-        <div className="grid grid-cols-2 items-start gap-x-4 p-1">
+        <div className="grid grid-cols-2 items-start gap-x-4">
             {renderTeamColumn(homeRoster, match.home, 'home')}
             {renderTeamColumn(awayRoster, match.away, 'away')}
         </div>
         
         <Separator className="my-2" />
 
-        <div className="flex items-center justify-between px-1">
+        <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
                 <h3 className="font-semibold text-sm">Tanda de Penales:</h3>
                 <div className="flex items-center justify-center gap-2">

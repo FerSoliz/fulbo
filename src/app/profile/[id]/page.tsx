@@ -256,7 +256,7 @@ export default function ProfilePage() {
                                     </div>
                                 </div>
                             )}
-                             {isOwnProfile && !uniqueCode && (
+                             {isOwnProfile && (
                                 <>
                                 <Separator className="my-4" />
                                 <div className="space-y-2">
