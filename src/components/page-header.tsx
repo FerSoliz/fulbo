@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import * as React from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { AnimatedAvatar } from './ui/animated-avatar';
 import { cn } from '@/lib/utils';
 
 interface PageHeaderProps {
