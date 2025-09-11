@@ -29,6 +29,7 @@ import {
   Shirt,
   FileText,
   ArrowLeft,
+  MessageCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -126,13 +127,33 @@ function RegisterPageContent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isClient) {
-      const inscriptionId = `inscription-${Date.now()}`;
-      const dataToStore = {
-        ...formData,
-        tournamentName: tournamentName || 'Torneo General',
-      };
-      sessionStorage.setItem(inscriptionId, JSON.stringify(dataToStore));
-      router.push(`/tournament/register/sheet/${inscriptionId}`);
+        const phoneNumber = '5491141790072'; // Reemplaza con el número de teléfono que te proporcionarán.
+        let message = `*Nueva Inscripción de Equipo*\n\n`;
+        message += `*Torneo:* ${tournamentName || 'No especificado'}\n\n`;
+        message += `*DATOS DEL EQUIPO*\n`;
+        message += `Nombre: ${formData.teamName}\n`;
+        message += `Colores: ${formData.teamColor1} y ${formData.teamColor2}\n\n`;
+        message += `*DATOS DEL DELEGADO*\n`;
+        message += `Nombre: ${formData.delegateName}\n`;
+        message += `Celular: ${formData.delegatePhone}\n`;
+        message += `DNI: ${formData.delegateDni}\n\n`;
+        message += `*DATOS DEL CAPITÁN*\n`;
+        message += `Nombre: ${formData.captainName}\n`;
+        message += `Celular: ${formData.captainPhone}\n\n`;
+        message += `*LISTA DE BUENA FE*\n`;
+        
+        formData.players.forEach((player, index) => {
+            if(player.name || player.dni || player.dob) {
+                 message += `*Jugador ${index + 1}:*\n`;
+                 message += `  - Nombre: ${player.name}\n`;
+                 message += `  - DNI: ${player.dni}\n`;
+                 message += `  - Nacimiento: ${player.dob}\n`;
+            }
+        });
+
+        const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+        
+        window.open(whatsappUrl, '_blank');
     }
   };
 
@@ -328,7 +349,8 @@ function RegisterPageContent() {
                 type="submit"
                 className="bg-accent text-accent-foreground hover:bg-accent/90"
               >
-                Generar Planilla de Inscripción
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Enviar Inscripción por WhatsApp
               </Button>
             </div>
           </form>
@@ -345,5 +367,3 @@ export default function RegisterPage() {
         </Suspense>
     )
 }
-
-    
