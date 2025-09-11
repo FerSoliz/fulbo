@@ -86,6 +86,7 @@ export default function ManageTeamsPage() {
       setTournamentName(currentTournament.name);
     } else {
       router.push('/admin/manage-tournaments');
+      return;
     }
 
     // Load teams for this tournament
@@ -94,7 +95,7 @@ export default function ManageTeamsPage() {
       const teamNames = JSON.parse(teamNamesJson);
       const teamLogos = JSON.parse(localStorage.getItem(`logos_${tournamentId}`) || '{}');
       const teamObjects = teamNames.map((name: string, index: number) => {
-        const teamId = `team_${index}`;
+        const teamId = `team_${tournamentId}_${index}`; // More unique ID
         return {
           id: teamId,
           name: name || `Equipo ${index + 1}`,
@@ -117,28 +118,30 @@ export default function ManageTeamsPage() {
   },[editingTeamId]);
 
   const handleSaveName = (teamId: string) => {
-    setTeams(prevTeams => 
-        prevTeams.map(t => t.id === teamId ? {...t, name: editingName} : t)
-    );
-    // Logic to save the new team name to localStorage
-    const teamNames = teams.map(t => t.id === teamId ? editingName : t.name);
-    const teamNamesJson = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
     const teamIndex = teams.findIndex(t => t.id === teamId);
-    if(teamIndex !== -1) {
-        teamNamesJson[teamIndex] = editingName;
-        localStorage.setItem(`teams_${tournamentId}`, JSON.stringify(teamNamesJson));
-    }
+    if (teamIndex === -1) return;
+
+    // Update state
+    const updatedTeams = teams.map(t => 
+        t.id === teamId ? {...t, name: editingName} : t
+    );
+    setTeams(updatedTeams);
+
+    // Save to localStorage
+    const teamNamesToSave = updatedTeams.map(t => t.name);
+    localStorage.setItem(`teams_${tournamentId}`, JSON.stringify(teamNamesToSave));
+    
     setEditingTeamId(null);
   };
   
   const handleEditRoster = (team: Team) => {
       setSelectedTeam(team);
-      // Load roster from localStorage for `roster_[tournamentId]_[teamName]`
-      const savedRoster = JSON.parse(localStorage.getItem(`roster_${tournamentId}_${team.name}`) || '[]');
+      const teamIdForRoster = team.id.split('_').slice(2).join('_'); // Get original index based name
+      const rosterKey = `roster_${tournamentId}_${team.name}`;
+      const savedRoster = JSON.parse(localStorage.getItem(rosterKey) || '[]');
       if(savedRoster.length > 0) {
         setRoster(savedRoster);
       } else {
-        // Create initial empty roster if none exists
         const initialRoster: Player[] = Array(11).fill(null).map((_, i) => ({
             id: `player_${i}`,
             uniqueCode: `SUD-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
@@ -157,10 +160,9 @@ export default function ManageTeamsPage() {
 
   const handleSaveRoster = () => {
       if(selectedTeam) {
-        // Save to `roster_[tournamentId]_[teamName]`
-        localStorage.setItem(`roster_${tournamentId}_${selectedTeam.name}`, JSON.stringify(roster));
+        const rosterKey = `roster_${tournamentId}_${selectedTeam.name}`;
+        localStorage.setItem(rosterKey, JSON.stringify(roster));
         
-        // Also update the global player details
         const allPlayerDetails = JSON.parse(localStorage.getItem("playerDetails") || "{}");
         roster.forEach(player => {
             if(player.uniqueCode) {
@@ -186,19 +188,16 @@ export default function ManageTeamsPage() {
       reader.onloadend = () => {
         const base64String = reader.result as string;
         
-        // Update state
         setTeams(prevTeams => 
             prevTeams.map(t => t.id === teamToUpdateLogo ? {...t, logoUrl: base64String} : t)
         );
 
-        // Update localStorage
         const teamLogos = JSON.parse(localStorage.getItem(`logos_${tournamentId}`) || '{}');
         teamLogos[teamToUpdateLogo] = base64String;
         localStorage.setItem(`logos_${tournamentId}`, JSON.stringify(teamLogos));
       };
       reader.readAsDataURL(file);
     }
-    // Reset file input for next upload
     if(fileInputRef.current) fileInputRef.current.value = '';
     setTeamToUpdateLogo(null);
   };
@@ -341,3 +340,5 @@ export default function ManageTeamsPage() {
     </div>
   );
 }
+
+    

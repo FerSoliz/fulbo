@@ -26,6 +26,7 @@ import {
   Settings,
   PlusCircle,
   ShieldCheck,
+  Download,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -49,19 +50,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { MatchStatsDialog } from '@/components/match-stats-dialog';
 
 
 // Mock data, this would come from your state management/API
-const teams = [
-  'Equipo A',
-  'Equipo B',
-  'Equipo C',
-  'Equipo D',
-  'Equipo E',
-  'Equipo F',
-  'Equipo G',
-  'Equipo H',
-];
 const generateFixture = (teams: string[]) => {
   if (teams.length % 2 !== 0) teams.push('BYE');
   const rounds: { home: string; away: string }[][] = [];
@@ -78,12 +70,13 @@ const generateFixture = (teams: string[]) => {
   return rounds;
 };
 
-const initialFixture = generateFixture([...teams]);
 
 export default function TournamentDetailsPage() {
   const params = useParams();
   const tournamentId = params.id as string;
   const [tournament, setTournament] = useState<any>(null);
+  const [teams, setTeams] = useState<string[]>([]);
+  const [fixture, setFixture] = useState<{ home: string; away: string }[][]>([]);
   const [isGroupStageFinished, setIsGroupStageFinished] = useState(false);
   const [playoffMatches, setPlayoffMatches] = useState({
     quarter: [
@@ -100,6 +93,8 @@ export default function TournamentDetailsPage() {
   });
 
   useEffect(() => {
+    if (!tournamentId) return;
+
     const allTournaments = JSON.parse(
       localStorage.getItem('tournaments') || '[]'
     );
@@ -108,7 +103,13 @@ export default function TournamentDetailsPage() {
     );
     setTournament(currentTournament);
     
-    // Load group stage status from localStorage
+    const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
+    setTeams(teamNames);
+
+    if (teamNames.length > 0) {
+      setFixture(generateFixture([...teamNames]));
+    }
+
     const stageStatus = JSON.parse(localStorage.getItem(`groupStageStatus_${tournamentId}`) || 'false');
     setIsGroupStageFinished(stageStatus);
 
@@ -132,6 +133,18 @@ export default function TournamentDetailsPage() {
       return { ...prev, [stage]: newStage };
     });
   };
+  
+  const handleFinalizeMatch = (roundIndex: number, matchIndex: number) => {
+    // In a real app, this would trigger calculations for league table, top scorers, etc.
+    // And save everything to a database or a more robust state management solution.
+    console.log(`Finalizing match ${matchIndex} of round ${roundIndex}`);
+    // For now, we can just save a "finished" status in localStorage for the match
+    const matchId = `${tournamentId}_r${roundIndex}_m${matchIndex}`;
+    const matchData = JSON.parse(localStorage.getItem(matchId) || '{}');
+    matchData.finished = true;
+    localStorage.setItem(matchId, JSON.stringify(matchData));
+  };
+
 
   const renderPlayoffStage = (
     title: string,
@@ -202,27 +215,13 @@ export default function TournamentDetailsPage() {
         </div>
 
         <Tabs defaultValue="results">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="results">
-              <ClipboardList className="mr-2 h-4 w-4" />
-              Cargar Resultados
-            </TabsTrigger>
-            <TabsTrigger value="positions">
-              <Table className="mr-2 h-4 w-4" />
-              Posiciones
-            </TabsTrigger>
-            <TabsTrigger value="scorers">
-              <Trophy className="mr-2 h-4 w-4" />
-              Goleadores
-            </TabsTrigger>
-            <TabsTrigger value="stats">
-              <BarChart className="mr-2 h-4 w-4" />
-              Estadísticas
-            </TabsTrigger>
-            <TabsTrigger value="settings">
-              <Settings className="mr-2 h-4 w-4" />
-              Configuración
-            </TabsTrigger>
+           <TabsList className="grid w-full grid-cols-6 text-xs">
+            <TabsTrigger value="results">CARGAR</TabsTrigger>
+            <TabsTrigger value="positions">POSICIONES</TabsTrigger>
+            <TabsTrigger value="scorers">GOLEADORES</TabsTrigger>
+            <TabsTrigger value="goalkeepers">VALLA</TabsTrigger>
+            <TabsTrigger value="sanctions">SANCIONES</TabsTrigger>
+            <TabsTrigger value="penalties">PENALES</TabsTrigger>
           </TabsList>
 
           <TabsContent value="results" className="mt-6">
@@ -278,13 +277,13 @@ export default function TournamentDetailsPage() {
                 ) : (
                   <Tabs defaultValue="round-1" className="w-full">
                     <TabsList>
-                      {initialFixture.map((_, index) => (
+                      {fixture.map((_, index) => (
                         <TabsTrigger key={index} value={`round-${index + 1}`}>
                           FECHA {index + 1}
                         </TabsTrigger>
                       ))}
                     </TabsList>
-                    {initialFixture.map((round, roundIndex) => (
+                    {fixture.map((round, roundIndex) => (
                       <TabsContent
                         key={roundIndex}
                         value={`round-${roundIndex + 1}`}
@@ -298,35 +297,42 @@ export default function TournamentDetailsPage() {
                                 </CardTitle>
                               </CardHeader>
                               <CardContent className="space-y-4">
-                                <div className="flex items-center gap-4">
+                                <div className="flex items-center justify-center gap-2">
                                   <Input
                                     type="number"
-                                    placeholder="Goles"
-                                    className="w-24 text-center"
+                                    placeholder="G"
+                                    className="w-16 h-12 text-center text-lg font-bold"
                                   />
-                                  <span>-</span>
+                                  <span className="text-2xl font-bold">-</span>
                                   <Input
                                     type="number"
-                                    placeholder="Goles"
-                                    className="w-24 text-center"
+                                    placeholder="G"
+                                    className="w-16 h-12 text-center text-lg font-bold"
                                   />
                                 </div>
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-3 gap-4">
                                   <Input type="date" />
                                   <Input type="time" />
+                                  <Input placeholder="Árbitro" />
                                 </div>
-                                <Input placeholder="Árbitro" />
+                                <div className="grid grid-cols-2 gap-2">
+                                    <Button variant="outline">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Descargar Planilla
+                                    </Button>
+                                     <Button variant="outline">
+                                        <UploadCloud className="mr-2 h-4 w-4" />
+                                        Cargar con IA
+                                    </Button>
+                                </div>
                               </CardContent>
                               <CardContent className="flex items-center justify-between">
-                                <Button variant="outline" size="sm">
-                                  <ClipboardList className="mr-2 h-4 w-4" />
-                                  Estadísticas
-                                </Button>
+                                <MatchStatsDialog tournamentId={tournamentId} match={match}/>
                                 <div className="flex items-center space-x-2">
                                   <Label htmlFor={`finished-${matchIndex}`}>
-                                    Finalizado
+                                    Finalizar Partido
                                   </Label>
-                                  <Switch id={`finished-${matchIndex}`} />
+                                  <Switch id={`finished-${matchIndex}`} onCheckedChange={() => handleFinalizeMatch(roundIndex, matchIndex)} />
                                 </div>
                               </CardContent>
                             </Card>
@@ -339,8 +345,11 @@ export default function TournamentDetailsPage() {
               </CardContent>
             </Card>
           </TabsContent>
+          {/* Add other TabsContent for positions, scorers, etc. here */}
         </Tabs>
       </div>
     </div>
   );
 }
+
+    
