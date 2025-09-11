@@ -4,7 +4,7 @@ import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
 import { CollectibleCard } from '@/components/collectible-card';
 import { CardPack } from '@/components/card-pack';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Dices, Shield, Swords, Zap } from 'lucide-react';
+import { ArrowLeft, Dices, Shield, Swords, Zap, PackageOpen, Layers, Users, ChevronRight, ArrowLeftRight } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
@@ -12,6 +12,9 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
+import Image from 'next/image';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
 
 type View = 'menu' | 'pack' | 'formation' | 'vs_match';
 
@@ -190,39 +193,84 @@ export default function CollectibleCardsPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 text-white min-h-screen">
-      <div className="max-w-7xl mx-auto">
+    <div className="p-4 sm:p-6 lg:p-8 text-white min-h-screen flex items-center justify-center">
+      <div className="w-full">
         <h1 className="text-3xl font-bold mb-6 text-center tracking-wider uppercase">Cartas Coleccionables</h1>
-        {renderView()}
+        <div className="flex justify-center">
+            {renderView()}
+        </div>
       </div>
     </div>
   );
 }
 
-const MainMenu = ({ onOpenPack, setView }: { onOpenPack: () => void, setView: (v: View) => void }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-center">
-    <button onClick={onOpenPack} className="bg-primary/80 hover:bg-primary rounded-lg p-8 transition-all transform hover:scale-105">
-      <h2 className="text-2xl font-bold">ABRIR SOBRE</h2>
-      <p className="text-muted-foreground">Consigue nuevas cartas</p>
-    </button>
-    <Link href="/collectibles/collection" className="bg-secondary/80 hover:bg-secondary block rounded-lg p-8 transition-all transform hover:scale-105">
-      <h2 className="text-2xl font-bold">MI COLECCIÓN</h2>
-      <p className="text-muted-foreground">Ver tu álbum de cartas</p>
-    </Link>
-    <button onClick={() => setView('formation')} className="bg-secondary/80 hover:bg-secondary rounded-lg p-8 transition-all transform hover:scale-105">
-      <h2 className="text-2xl font-bold">MI EQUIPO</h2>
-      <p className="text-muted-foreground">Arma tu alineación</p>
-    </button>
-    <button onClick={() => setView('vs_match')} className="bg-accent/80 hover:bg-accent col-span-1 md:col-span-2 lg:col-span-1 rounded-lg p-8 transition-all transform hover:scale-105">
-      <h2 className="text-2xl font-bold">PARTIDO VS</h2>
-      <p className="text-muted-foreground">Juega contra la IA</p>
-    </button>
-    <button className="bg-muted/50 rounded-lg p-8 cursor-not-allowed col-span-1 md:col-span-2 lg:col-span-2">
-      <h2 className="text-2xl font-bold">INTERCAMBIOS</h2>
-      <p className="text-muted-foreground">(Próximamente)</p>
-    </button>
-  </div>
-);
+const MainMenu = ({ setView }: { onOpenPack: () => void, setView: (v: View) => void }) => (
+    <Card className="w-full max-w-lg bg-card/70">
+      <div className="grid grid-cols-1 md:grid-cols-3">
+        <div className="relative md:col-span-1 h-64 md:h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-r-none">
+          <Image
+               src="https://i.postimg.cc/QMqLDWsL/BANNER-GAME.png"
+               alt="Banner del juego de cartas coleccionables"
+               fill
+               className="object-cover"
+           />
+        </div>
+        <div className="md:col-span-2 p-4 flex flex-col justify-center">
+          <CardHeader className="p-2">
+            <CardTitle className="text-2xl font-bold uppercase">MENU</CardTitle>
+          </CardHeader>
+          <CardContent className="p-2">
+            <div className="space-y-4">
+              <div>
+                <Button
+                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg hover:from-red-600 hover:to-red-900 transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
+                     onClick={() => setView("pack")}
+                >
+                  <div className="flex items-center gap-3"><PackageOpen className="w-5 h-5" /><span>ABRIR SOBRE</span></div>
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
+              <div>
+                <Link href="/collectibles/collection">
+                  <Button className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg hover:from-red-600 hover:to-red-900 transition-all duration-200 transform hover:-translate-y-0.5 rounded-full">
+                    <div className="flex items-center gap-3"><Layers className="w-5 h-5" /><span>MI COLECCIÓN</span></div>
+                    <ChevronRight className="w-5 h-5" />
+                  </Button>
+                </Link>
+              </div>
+              <div>
+                <Button
+                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg hover:from-red-600 hover:to-red-900 transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
+                     onClick={() => setView("formation")}
+                >
+                  <div className="flex items-center gap-3"><Users className="w-5 h-5" /><span>MI EQUIPO</span></div>
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
+              <div>
+                <Button
+                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg hover:from-red-600 hover:to-red-900 transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
+                     onClick={() => setView("vs_match")}
+                >
+                  <div className="flex items-center gap-3"><Swords className="w-5 h-5" /><span>PARTIDO VS</span></div>
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
+              <div>
+                <Button
+                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg hover:from-red-600 hover:to-red-900 transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
+                     disabled
+                >
+                  <div className="flex items-center gap-3"><ArrowLeftRight className="w-5 h-5" /><span>INTERCAMBIOS</span></div>
+                  <ChevronRight className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </div>
+      </div>
+    </Card>
+ );
 
 const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: View) => void }) => {
   const router = useRouter();
