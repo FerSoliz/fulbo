@@ -51,9 +51,9 @@ const footerMenuItems = [
 export function MainSidebar({ user }: MainSidebarProps) {
   const pathname = usePathname();
 
-  const renderMenuItems = (items: typeof menuItems) => {
+  const renderMenuItems = (items: typeof menuItems | typeof footerMenuItems) => {
     return items.map((item) => {
-      if (item.adminOnly && user.role !== 'admin') {
+      if ('adminOnly' in item && item.adminOnly && user.role !== 'admin') {
         return null;
       }
       const isActive = pathname === item.href;
@@ -63,7 +63,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
             <Button
               variant="ghost"
               className={cn(
-                'main-sidebar-button w-full justify-start gap-2',
+                'main-sidebar-button w-full justify-start gap-2 text-foreground',
               )}
               data-active={isActive}
             >
