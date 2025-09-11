@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import {
@@ -113,7 +113,7 @@ function CheckoutContent() {
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">
                   Próximamente disponible.
-                p>
+                </p>
               </Label>
             </RadioGroup>
 
