@@ -1,0 +1,101 @@
+export interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  location: string;
+  isVerified: boolean;
+  role: 'user' | 'editor' | 'admin';
+}
+
+export interface Comment {
+  id: number;
+  authorId: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface Post {
+  id: number;
+  authorId: string;
+  title: string;
+  content: string;
+  media: { type: 'image' | 'video'; url: string }[];
+  likes: string[];
+  comments: Comment[];
+  createdAt: string;
+}
+
+export const users: User[] = [
+  {
+    id: 'user-1',
+    name: 'Carlos Estevez',
+    avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
+    location: 'Buenos Aires, Argentina',
+    isVerified: true,
+    role: 'admin',
+  },
+  {
+    id: 'user-2',
+    name: 'Leo Messi',
+    avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg',
+    location: 'Rosario, Argentina',
+    isVerified: true,
+    role: 'editor',
+  },
+  {
+    id: 'user-3',
+    name: 'Dibu Martinez',
+    avatar: 'https://i.postimg.cc/44rD55vT/dibu.jpg',
+    location: 'Mar del Plata, Argentina',
+    isVerified: false,
+    role: 'user',
+  },
+];
+
+export const posts: Post[] = [
+    {
+        id: 1,
+        authorId: 'user-1',
+        title: "¡Arrancó la Liga Anual 2024!",
+        content: "Estamos muy emocionados de anunciar el comienzo de la Liga Anual de SUDONE. Prepárense para competir y demostrar quién es el mejor. ¡Mucha suerte a todos los participantes!",
+        media: [
+            { type: "image", url: "https://i.postimg.cc/NfHBrS60/liga-anual.png" },
+        ],
+        likes: ['user-2', 'user-3'],
+        comments: [
+            { id: 1, authorId: 'user-2', content: "¡Vamos con todo!", createdAt: "2024-05-20T11:00:00Z" }
+        ],
+        createdAt: "2024-05-20T10:00:00Z"
+    },
+    {
+        id: 2,
+        authorId: 'user-2',
+        title: "Recordando la final del mundo",
+        content: "Un momento inolvidable para todos los argentinos. Comparto este video del resumen del partido. ¿Cuál fue su momento favorito?",
+        media: [
+            { type: "video", url: "https://img.youtube.com/vi/FG_wffPU-yM/maxresdefault.jpg" },
+        ],
+        likes: ['user-1', 'user-3'],
+        comments: [
+             { id: 2, authorId: 'user-3', content: "La atajada en el último minuto. ¡Gracias Dibu!", createdAt: "2024-05-21T15:30:00Z" },
+             { id: 3, authorId: 'user-1', content: "El gol de Fideo. ¡Qué locura!", createdAt: "2024-05-21T16:00:00Z" }
+        ],
+        createdAt: "2024-05-21T14:00:00Z"
+    },
+    {
+        id: 3,
+        authorId: 'user-3',
+        title: "Algunas fotos del último entrenamiento",
+        content: "Dejándolo todo en la cancha para lo que se viene. ¡Vamos equipo!",
+        media: [
+            { type: "image", url: "https://i.postimg.cc/VLZz1sN1/dibu-training-1.jpg" },
+            { type: "image", url: "https://i.postimg.cc/jSgWc4pD/dibu-training-2.jpg" },
+            { type: "image", url: "https://i.postimg.cc/6pRf05s3/dibu-training-3.jpg" },
+            { type: "image", url: "https://i.postimg.cc/y8BmcX33/dibu-training-4.jpg" },
+            { type: "image", url: "https://i.postimg.cc/Z5xLQrG6/dibu-training-5.jpg" },
+        ],
+        likes: ['user-1'],
+        comments: [],
+        createdAt: "2024-05-22T09:00:00Z"
+    }
+];
