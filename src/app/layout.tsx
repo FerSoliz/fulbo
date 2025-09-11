@@ -6,6 +6,7 @@ import { PageHeader } from "@/components/page-header";
 import { Bug, MessageSquare, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { User } from "@/lib/data";
+import { users } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "SUDONE",
@@ -17,19 +18,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user: User = {
-    id: 'user-1',
-    name: 'Carlos Estevez',
-    role: 'admin',
-    avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
-    location: 'Buenos Aires, Argentina',
-    isVerified: true,
-    sudpoints: 0,
-    baseSudpoints: 0,
-    league: 'Bronce',
-    division: 4,
-    stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-  };
+  const user: User = users[0]; // Always use the first user as the current user for now
 
   return (
     <html lang="es" suppressHydrationWarning>
