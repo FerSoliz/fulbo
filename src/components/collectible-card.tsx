@@ -14,7 +14,7 @@ export function CollectibleCard({ card, small = false }: CollectibleCardProps) {
 
   useEffect(() => {
     const cardElement = cardRef.current;
-    if (!cardElement) return;
+    if (!cardElement || small) return; // Don't apply effect on small cards for performance
 
     const handleMouseMove = (e: MouseEvent) => {
       const { left, top, width, height } = cardElement.getBoundingClientRect();
@@ -22,12 +22,11 @@ export function CollectibleCard({ card, small = false }: CollectibleCardProps) {
       const y = (e.clientY - top - height / 2) / 25;
       cardElement.style.transform = `rotateY(${x}deg) rotateX(${-y}deg) scale(1.05)`;
 
-      const holoImage = cardElement.querySelector('img') as HTMLElement;
-      if (holoImage) {
+      const holoBefore = cardElement.querySelector('.holographic::before') as HTMLElement;
+       if (holoBefore) {
         const bgX = (e.clientX - left) / width * 100;
         const bgY = (e.clientY - top) / height * 100;
-        const holoEffect = holoImage.style;
-        holoEffect.backgroundPosition = `${bgX}% ${bgY}%`;
+        holoBefore.style.backgroundPosition = `${bgX}% ${bgY}%`;
       }
     };
     
@@ -44,20 +43,22 @@ export function CollectibleCard({ card, small = false }: CollectibleCardProps) {
       cardElement.removeEventListener('mousemove', handleMouseMove);
       cardElement.removeEventListener('mouseleave', handleMouseLeave);
     };
-  }, []);
+  }, [small]);
 
-  const width = small ? 112 : 192;
-  const height = small ? 157 : 269;
+  // Adjust size for small cards to be slightly bigger
+  const width = small ? 144 : 320;
+  const height = small ? 225 : 500;
 
   return (
     <div
       ref={cardRef}
       className={cn(
-        'relative transition-transform duration-100 ease-out preserve-3d',
-        small ? 'w-28 h-[157px]' : 'w-48 h-[269px]'
+        'relative transition-transform duration-100 ease-out',
+        !small && 'perspective-1000 transform-style-preserve-3d'
       )}
       style={{ 
-        perspective: '1000px',
+        width: `${width}px`,
+        height: `${height}px`,
        }}
     >
       <Image
@@ -65,7 +66,10 @@ export function CollectibleCard({ card, small = false }: CollectibleCardProps) {
         alt={card.name}
         width={width}
         height={height}
-        className={cn('rounded-lg holographic', small && 'w-full h-full')}
+        className={cn(
+            'rounded-lg w-full h-full object-cover',
+            card.rarity !== 'common' && 'holographic'
+        )}
         data-rarity={card.rarity.toLowerCase()}
         priority
       />

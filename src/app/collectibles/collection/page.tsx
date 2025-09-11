@@ -33,9 +33,14 @@ export default function CollectionPage() {
         ...card,
         owned: userCollection.some(ownedCard => ownedCard.id === card.id)
     }))
-    .filter(card => filter === 'all' || (card.owned && card.rarity === filter) || (!card.owned && filter !== 'all' ? false : true))
+    .filter(card => {
+        if (filter === 'all') return true;
+        if (filter === 'owned') return card.owned;
+        if (filter === 'unowned') return !card.owned;
+        return card.rarity === filter;
+    })
     .sort((a, b) => {
-        if (sort === 'rating' && a.owned && b.owned) return b.rating - a.rating;
+        if (sort === 'rating') return (b.owned ? b.rating : -1) - (a.owned ? a.rating : -1);
         if (sort === 'id') return a.id - b.id;
         return 0;
     });
@@ -80,8 +85,7 @@ export default function CollectionPage() {
             </div>
           </div>
 
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
             {filteredAndSortedCards.map((card) => (
               <div key={card.id} className="flex flex-col items-center">
                 {card.owned ? (
@@ -89,8 +93,8 @@ export default function CollectionPage() {
                     <CollectibleCard card={card} small />
                   </motion.div>
                 ) : (
-                  <div className="w-28 h-[157px] bg-muted/20 rounded-lg flex items-center justify-center">
-                    <span className="text-4xl font-bold text-muted-foreground/50">{card.id}</span>
+                  <div className="w-36 h-[225px] bg-muted/20 rounded-lg flex items-center justify-center">
+                    <span className="text-5xl font-bold text-muted-foreground/50">{card.id}</span>
                   </div>
                 )}
                 <p className="mt-2 text-xs text-center truncate w-full">{card.id}. {card.name}</p>
@@ -102,13 +106,17 @@ export default function CollectionPage() {
       <AnimatePresence>
         {selectedCard && (
             <motion.div 
-                className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+                className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
                 onClick={() => setSelectedCard(null)}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
             >
-                <motion.div layoutId={`card-${selectedCard.id}`} className="w-72">
+                <motion.div 
+                    layoutId={`card-${selectedCard.id}`} 
+                    className="w-72 md:w-80"
+                    onClick={(e) => e.stopPropagation()}
+                >
                     <CollectibleCard card={selectedCard} />
                 </motion.div>
             </motion.div>
