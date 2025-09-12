@@ -1,25 +1,22 @@
+
+'use client';
+import { useState, useEffect } from 'react';
 import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { MainSidebar } from "@/components/main-sidebar";
 import { PageHeader } from "@/components/page-header";
-import { Bug, MessageSquare, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import type { User } from "@/lib/data";
-import { users } from "@/lib/data";
+import { UserProvider } from '@/context/user-context';
+import { useRouter } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: "SUDONE",
-  description: "Plataforma de torneos y comunidad.",
-};
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const user: User = users[0]; // Always use the first user as the current user for now
-
+  
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
@@ -35,17 +32,42 @@ export default function RootLayout({
         />
       </head>
       <body className="font-body antialiased bg-background">
-        <div className="flex">
-          <MainSidebar user={user} />
-          <div className="flex flex-1 flex-col md:ml-64">
-            <PageHeader user={user} />
-            <main>{children}</main>
-          </div>
-        </div>
-        <Toaster />
+        <UserProvider>
+            <LayoutContent>{children}</LayoutContent>
+        </UserProvider>
       </body>
     </html>
   );
 }
 
-    
+
+function LayoutContent({ children }: { children: React.ReactNode }) {
+    const router = useRouter();
+
+    // Check if we are on login or register page
+    const [isAuthPage, setIsAuthPage] = useState(false);
+
+    useEffect(() => {
+        // next/navigation's usePathname is not used here to avoid making the whole layout a client component unnecessarily deep down the tree
+        if (typeof window !== 'undefined') {
+            const currentPath = window.location.pathname;
+            setIsAuthPage(currentPath === '/login' || currentPath === '/register');
+        }
+    }, []);
+
+
+    if (isAuthPage) {
+        return <main>{children}</main>;
+    }
+
+    return (
+        <div className="flex">
+            <MainSidebar />
+            <div className="flex flex-1 flex-col md:ml-64">
+                <PageHeader />
+                <main>{children}</main>
+            </div>
+            <Toaster />
+        </div>
+    );
+}
