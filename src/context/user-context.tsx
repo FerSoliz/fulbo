@@ -1,11 +1,10 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User, Notification } from '@/lib/data';
 import { defaultVisitor, users as initialUsers, initialNotifications } from '@/lib/data';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 interface UserContextType {
   user: User | null;
@@ -24,23 +23,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
 
   useEffect(() => {
-    // TEMPORARY: Automatically log in as admin user for development
-    const adminUser = initialUsers.find(u => u.role === 'admin');
-    if (adminUser) {
-        setUserState(adminUser);
-        localStorage.setItem('currentUser', JSON.stringify(adminUser));
-    } else {
-        setUserState(defaultVisitor);
-    }
-    setLoading(false);
-
-    // Original Firebase Auth logic is commented out for now
-    /*
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
         // User is signed in.
-        const allKnownUsers = [...initialUsers, ...(JSON.parse(localStorage.getItem('users') || '[]'))];
+        const allKnownUsersJSON = localStorage.getItem('users') || '[]';
+        const allKnownUsers = [...initialUsers, ...JSON.parse(allKnownUsersJSON)];
+        
         let foundUser = allKnownUsers.find(u => u.email === firebaseUser.email);
         
         if (foundUser) {
@@ -65,29 +54,32 @@ export function UserProvider({ children }: { children: ReactNode }) {
             const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
             localStorage.setItem('users', JSON.stringify([...storedUsers, newUser]));
             setUserState(newUser);
+            localStorage.setItem('currentUser', JSON.stringify(newUser));
         }
       } else {
         // User is signed out.
         setUserState(defaultVisitor);
+        localStorage.removeItem('currentUser');
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-    */
   }, []);
   
   const logout = async () => {
-    // await auth.signOut(); // Commented out to maintain logged-in state
-    setUserState(defaultVisitor); // Set to visitor immediately
-    localStorage.removeItem('currentUser');
-    // For development, we might want to reload to go back to admin
-    window.location.reload();
+    try {
+        await signOut(auth);
+        setUserState(defaultVisitor);
+        localStorage.removeItem('currentUser');
+    } catch(error) {
+        console.error("Error signing out: ", error);
+    }
   };
   
   const setUser = (updatedUser: User | null) => {
       setUserState(updatedUser);
-      if(updatedUser){
+      if(updatedUser && updatedUser.id !== 'visitor-0'){
           localStorage.setItem('currentUser', JSON.stringify(updatedUser));
       } else {
           localStorage.removeItem('currentUser');

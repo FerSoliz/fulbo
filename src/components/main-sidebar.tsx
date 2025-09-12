@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -23,13 +22,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from "react";
-import type { User } from '@/lib/data';
 import { Skeleton } from './ui/skeleton';
+import { useUser } from '@/context/user-context';
+import { useRouter } from 'next/navigation';
 
-
-interface MainSidebarProps {
-  user: User | null;
-}
 
 const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
@@ -44,26 +40,33 @@ const menuItems = [
 const footerMenuItems = [
     { href: '/settings', icon: Cog, label: 'CONFIGURACIÓN' },
     { href: '/profile', icon: UserIcon, label: 'MI PERFIL' },
-    { href: '/logout', icon: LogOut, label: 'CERRAR SESIÓN' },
 ];
 
 
-export function MainSidebar({ user }: MainSidebarProps) {
+export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
+  const { user, loading, logout } = useUser();
+  const router = useRouter();
 
-  const renderMenuItems = (items: typeof menuItems | typeof footerMenuItems) => {
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  }
+
+  const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)[]) => {
     return items.map((item) => {
       if ('adminOnly' in item && item.adminOnly && user?.role !== 'admin' && user?.role !== 'editor') {
         return null;
       }
       
       let finalHref = item.href;
-      if(item.label === 'MI PERFIL' && user) {
+      if(item.label === 'MI PERFIL' && user && user.name !== 'VISITANTE') {
           finalHref = `/profile/${user.id}`;
+      } else if (item.label === 'MI PERFIL' && (!user || user.name === 'VISITANTE')) {
+          finalHref = '/login'; // Redirect visitor to login
       }
 
       const isActive = pathname === finalHref || (finalHref !== '/' && pathname.startsWith(finalHref) && finalHref.length > 1);
-
 
       return (
         <li key={item.href}>
@@ -74,7 +77,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
                 'main-sidebar-button w-full justify-start gap-2 text-foreground',
               )}
               data-active={isActive}
-              disabled={!user}
+              disabled={loading}
             >
               <item.icon className="h-5 w-5" />
               <span className="lg:text-base">{item.label}</span>
@@ -85,8 +88,13 @@ export function MainSidebar({ user }: MainSidebarProps) {
     });
   };
 
+  const sidebarClasses = cn(
+    "flex flex-col bg-card h-full",
+    { "fixed left-0 hidden h-screen w-64 border-r md:flex": !isMobile },
+  );
+
   return (
-    <aside className="fixed left-0 hidden h-screen w-64 flex-col border-r bg-card md:flex">
+    <aside className={sidebarClasses}>
         <div className="flex h-16 items-center justify-center border-b p-2">
           <Link href="/">
             <Image
@@ -99,9 +107,17 @@ export function MainSidebar({ user }: MainSidebarProps) {
           </Link>
         </div>
         <div className="flex items-center gap-2 p-2">
-            {user ? (
+            {loading ? (
+                 <>
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-[100px]" />
+                        <Skeleton className="h-4 w-[80px]" />
+                    </div>
+                </>
+            ) : user ? (
                 <>
-                    <Link href={`/profile/${user.id}`}>
+                    <Link href={user.name === 'VISITANTE' ? '/login' : `/profile/${user.id}`}>
                         <AnimatedAvatar>
                             <Avatar className="w-12 h-12">
                                 <AvatarImage src={user.avatar} alt="User avatar" />
@@ -109,20 +125,12 @@ export function MainSidebar({ user }: MainSidebarProps) {
                             </Avatar>
                         </AnimatedAvatar>
                     </Link>
-                    <div className="flex flex-col">
-                        <span className="font-semibold">{user.name}</span>
-                        <span className="text-sm text-muted-foreground">@{user.name.split(' ')[0].toLowerCase()}</span>
+                    <div className="flex flex-col overflow-hidden">
+                        <span className="font-semibold truncate">{user.name}</span>
+                        {user.name !== 'VISITANTE' && <span className="text-sm text-muted-foreground truncate">@{user.name === 'Lucio Mingrone' ? 'luccio' : user.name.split(' ')[0].toLowerCase()}</span>}
                     </div>
                 </>
-            ) : (
-                <>
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-[100px]" />
-                        <Skeleton className="h-4 w-[80px]" />
-                    </div>
-                </>
-            )}
+            ) : null}
         </div>
 
         <nav className="flex flex-1 flex-col">
@@ -131,6 +139,17 @@ export function MainSidebar({ user }: MainSidebarProps) {
             </ul>
             <ul className="mt-auto flex flex-col gap-1 border-t p-2">
                 {renderMenuItems(footerMenuItems)}
+                 <li>
+                    <Button
+                        variant="ghost"
+                        className="main-sidebar-button w-full justify-start gap-2 text-foreground"
+                        onClick={handleLogout}
+                        disabled={loading}
+                    >
+                        <LogOut className="h-5 w-5" />
+                        <span className="lg:text-base">{user?.name === 'VISITANTE' ? 'INICIAR SESIÓN' : 'CERRAR SESIÓN'}</span>
+                    </Button>
+                </li>
             </ul>
         </nav>
     </aside>
