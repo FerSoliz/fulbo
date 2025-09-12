@@ -1,7 +1,7 @@
 
 'use client';
 
-import { Bell, Camera, Layers, LogOut, Search, User as UserIcon, Star, FileText, Heart, Package, Trophy } from 'lucide-react';
+import { Bell, Menu, Layers, LogOut, Search, User as UserIcon, Star, FileText, Heart, Package, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
 import { useRouter } from 'next/navigation';
 import { Notification } from '@/lib/data';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { MainSidebar } from './main-sidebar';
+
 
 const favorites = [
     { id: '1', type: 'tournament', name: 'Liga Anual 2024', avatar: 'https://i.postimg.cc/NfHBrS60/liga-anual.png', hasNewContent: true, abbrev: "LI"},
@@ -62,8 +69,19 @@ export function PageHeader() {
   return (
     <header className="sticky top-0 z-20 w-full bg-[#291e37]/80 backdrop-blur-sm">
         <div className="flex h-14 items-center justify-between px-4 sm:px-6">
-            <div className="flex-1" />
-            <div className="flex flex-1 justify-center items-center gap-2">
+            <div className="md:hidden flex-1">
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Menu/>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="p-0 w-64">
+                       <MainSidebar isMobile={true}/>
+                    </SheetContent>
+                </Sheet>
+            </div>
+            <div className="hidden md:flex flex-1 justify-center items-center gap-2">
                 <form className="relative flex-1 max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <Input
@@ -171,7 +189,16 @@ export function PageHeader() {
                 )}
             </div>
         </div>
-        <div className="px-4 pb-2">
+        <div className="md:hidden px-4 pb-2">
+           <form className="relative flex-1 max-w-md mx-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Input
+                    placeholder="Buscar perfiles..."
+                    className="w-full rounded-full pl-10"
+                />
+            </form>
+        </div>
+         <div className="px-4 pb-2">
             <Link href="https://www.monsterenergy.com" target="_blank" rel="noopener noreferrer">
                 <Image
                     src="https://i.postimg.cc/PNGVGZ92/banner-monster.png"

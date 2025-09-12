@@ -1,4 +1,5 @@
 
+
 export interface User {
   id: string;
   name: string;
@@ -75,6 +76,23 @@ export interface Notification {
   createdAt: string;
 }
 
+export interface Message {
+    id: string;
+    senderId: string;
+    text: string;
+    timestamp: number;
+}
+
+export interface Conversation {
+    id: string; // Combination of two user IDs
+    participants: string[];
+    messages: Message[];
+    lastMessage?: {
+        text: string;
+        timestamp: number;
+    }
+}
+
 
 export const sudpointConfig = {
     win: 25,
@@ -101,18 +119,19 @@ export const leagues = [
 ];
 
 export const defaultVisitor: User = {
-    id: 'visitor-0',
-    name: 'VISITANTE',
-    avatar: 'https://avatar.vercel.sh/visitor.png',
-    location: 'Navegando',
-    isVerified: false,
-    role: 'user',
+    id: '1',
+    name: 'Lucio Mingrone',
+    email: 'lucionmingrone@gmail.com',
+    avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
+    location: 'Buenos Aires, Argentina',
+    isVerified: true,
+    role: 'admin',
     sudpoints: 0,
     baseSudpoints: 0,
     league: 'Bronce',
     division: 4,
     stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-};
+  };
 
 
 export const users: User[] = [
