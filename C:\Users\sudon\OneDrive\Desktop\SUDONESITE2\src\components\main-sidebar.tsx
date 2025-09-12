@@ -123,7 +123,7 @@ export function MainSidebar() {
                     </Link>
                     <div className="flex flex-col">
                         <span className="font-semibold">{user.name}</span>
-                        {user.name !== 'VISITANTE' && <span className="text-sm text-muted-foreground">@{user.name.split(' ')[0].toLowerCase()}</span>}
+                        {user.name !== 'VISITANTE' && <span className="text-sm text-muted-foreground">@{user.name === 'Lucio Mingrone' ? 'luccio' : user.name.split(' ')[0].toLowerCase()}</span>}
                     </div>
                 </>
             ) : null}
@@ -151,3 +151,5 @@ export function MainSidebar() {
     </aside>
   );
 }
+
+    
