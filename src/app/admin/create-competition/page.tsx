@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
+  AlertTriangle,
   ArrowLeft,
   Calendar,
   ChevronRight,
@@ -24,6 +25,8 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 type TournamentType = 'LIGA' | 'COPA';
 type TournamentFormat =
@@ -31,6 +34,8 @@ type TournamentFormat =
   | 'eliminacion-directa'
   | 'grupos-y-playoffs'
   | 'doble-rueda';
+
+type ManualMatch = { home: string; away: string };
 
 export default function CreateCompetitionPage() {
   const router = useRouter();
@@ -44,16 +49,17 @@ export default function CreateCompetitionPage() {
   const [teamNames, setTeamNames] = useState<string[]>(
     Array(8).fill('')
   );
+  const [manualFixture, setManualFixture] = useState<ManualMatch[][]>([]);
 
   const handleTeamCountChange = (value: number) => {
     const newCount = Math.max(0, Math.min(20, value));
     setTeamCount(newCount);
     const newTeamNames = Array(newCount).fill('');
-    // Preserve existing names if shrinking
     teamNames.slice(0, newCount).forEach((name, i) => {
       newTeamNames[i] = name;
     });
     setTeamNames(newTeamNames);
+    setManualFixture([]); // Reset manual fixture if team count changes
   };
 
   const handleTeamNameChange = (index: number, name: string) => {
@@ -61,6 +67,46 @@ export default function CreateCompetitionPage() {
     newTeamNames[index] = name;
     setTeamNames(newTeamNames);
   };
+
+  const generateEmptyFixture = () => {
+    if (teamCount < 2) return;
+    const numTeams = teamCount % 2 === 0 ? teamCount : teamCount + 1;
+    const numRounds = numTeams - 1;
+    const matchesPerRound = numTeams / 2;
+    const newFixture: ManualMatch[][] = Array(numRounds)
+      .fill(null)
+      .map(() =>
+        Array(matchesPerRound)
+          .fill(null)
+          .map(() => ({ home: '', away: '' }))
+      );
+    setManualFixture(newFixture);
+  };
+  
+  const handleManualMatchChange = (roundIndex: number, matchIndex: number, teamType: 'home' | 'away', teamName: string) => {
+    const newFixture = [...manualFixture];
+    newFixture[roundIndex][matchIndex][teamType] = teamName;
+    setManualFixture(newFixture);
+  }
+  
+  const fixtureWarnings = useMemo(() => {
+    const warnings: {[key: string]: boolean} = {};
+    const seenMatches = new Set<string>();
+
+    manualFixture.forEach((round, roundIndex) => {
+        round.forEach((match, matchIndex) => {
+            if (match.home && match.away) {
+                const sortedTeams = [match.home, match.away].sort().join('-');
+                if (seenMatches.has(sortedTeams)) {
+                    warnings[`${roundIndex}-${matchIndex}`] = true;
+                }
+                seenMatches.add(sortedTeams);
+            }
+        });
+    });
+    return warnings;
+  }, [manualFixture]);
+
 
   const handleSaveCompetition = () => {
     const tournamentId = `tournament_${Date.now()}`;
@@ -71,10 +117,9 @@ export default function CreateCompetitionPage() {
       format: competitionFormat,
       teamCount: teamCount,
       autoFixture: autoFixture,
-      status: 'pending', // pending, group_stage, playoffs, finished
+      status: 'pending', 
     };
 
-    // Save tournament details
     const existingTournaments = JSON.parse(
       localStorage.getItem('tournaments') || '[]'
     );
@@ -83,17 +128,23 @@ export default function CreateCompetitionPage() {
       JSON.stringify([...existingTournaments, newTournament])
     );
 
-    // Save team names for this tournament
     localStorage.setItem(
       `teams_${tournamentId}`,
-      JSON.stringify(teamNames)
+      JSON.stringify(teamNames.filter(name => name.trim() !== ''))
     );
+    
+    if(!autoFixture) {
+        localStorage.setItem(`fixture_${tournamentId}`, JSON.stringify(manualFixture));
+    }
 
     alert('¡Competencia guardada con éxito!');
     router.push('/admin/manage-tournaments');
   };
 
+  const validTeamNames = teamNames.filter(name => name && name.trim() !== '');
+
   return (
+    <TooltipProvider>
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <Link href="/admin">
@@ -172,10 +223,13 @@ export default function CreateCompetitionPage() {
               </RadioGroup>
             </div>
 
-            <div className="flex items-center justify-between">
-              <Label htmlFor="auto-fixture" className="text-lg font-semibold">
-                Crear Fixture Automático
-              </Label>
+            <div className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <Label htmlFor="auto-fixture" className="text-lg font-semibold">
+                    Crear Fixture Automático
+                  </Label>
+                   <p className="text-sm text-muted-foreground">Genera todos los partidos al guardar.</p>
+                </div>
               <Switch
                 id="auto-fixture"
                 checked={autoFixture}
@@ -226,8 +280,55 @@ export default function CreateCompetitionPage() {
                 </div>
               </div>
             )}
+            
+            {!autoFixture && teamCount > 0 && (
+                <div className="space-y-4 pt-4 border-t">
+                    <Label className="text-lg font-semibold">Creación Manual del Fixture</Label>
+                    <p className="text-sm text-muted-foreground">
+                        Genera las fechas y luego asigna manualmente cada partido.
+                    </p>
+                    <Button onClick={generateEmptyFixture} variant="outline">
+                        Generar Fechas Vacías
+                    </Button>
+                    
+                    {manualFixture.map((round, roundIndex) => (
+                        <div key={roundIndex} className="p-4 border rounded-lg">
+                            <h4 className="font-bold mb-4">Fecha {roundIndex + 1}</h4>
+                            <div className="space-y-4">
+                                {round.map((match, matchIndex) => (
+                                    <div key={matchIndex} className="flex items-center gap-2">
+                                        <Select value={match.home} onValueChange={(value) => handleManualMatchChange(roundIndex, matchIndex, 'home', value)}>
+                                            <SelectTrigger><SelectValue placeholder="Equipo Local" /></SelectTrigger>
+                                            <SelectContent>
+                                                {validTeamNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <span>vs</span>
+                                         <Select value={match.away} onValueChange={(value) => handleManualMatchChange(roundIndex, matchIndex, 'away', value)}>
+                                            <SelectTrigger><SelectValue placeholder="Equipo Visitante" /></SelectTrigger>
+                                            <SelectContent>
+                                                {validTeamNames.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        {fixtureWarnings[`${roundIndex}-${matchIndex}`] && (
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    <AlertTriangle className="w-5 h-5 text-destructive"/>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Este partido ya existe en el fixture.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
 
-            <div className="flex justify-end pt-4">
+            <div className="flex justify-end pt-4 border-t">
               <Button onClick={handleSaveCompetition}>
                 <Save className="mr-2 h-4 w-4" />
                 Guardar Competencia
@@ -237,5 +338,6 @@ export default function CreateCompetitionPage() {
         </Card>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
