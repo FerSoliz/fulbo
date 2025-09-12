@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Camera, Layers, LogOut, Search, User as UserIcon, Star } from 'lucide-react';
+import { Bell, Layers, LogOut, Search, User as UserIcon } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
