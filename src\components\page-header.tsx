@@ -53,7 +53,9 @@ export function PageHeader() {
 
   const handleOpenNotifications = () => {
     // Mark all as read when opening
-    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    setTimeout(() => {
+        setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+    }, 1000);
   }
 
   return (
@@ -182,3 +184,5 @@ export function PageHeader() {
     </header>
   );
 }
+
+    

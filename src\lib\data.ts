@@ -260,6 +260,14 @@ export const initialProducts: Product[] = [
 
 export const initialNotifications: Notification[] = [
     {
+        id: '0',
+        type: 'post',
+        message: '¡Bienvenido! Siéntete libre de explorar la página, editar tu perfil o lo que quieras hacer.',
+        link: '/profile/1',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+    },
+    {
         id: '1',
         type: 'post',
         message: 'Lucio Mingrone ha hecho una nueva publicación.',
