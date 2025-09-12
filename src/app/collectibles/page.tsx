@@ -204,7 +204,7 @@ export default function CollectibleCardsPage() {
   );
 }
 
-const MainMenu = ({ setView }: { onOpenPack: () => void, setView: (v: View) => void }) => (
+const MainMenu = ({ onOpenPack, setView }: { onOpenPack: () => void, setView: (v: View) => void }) => (
     <Card className="w-full max-w-lg bg-card/70">
       <div className="grid grid-cols-1 md:grid-cols-3">
         <div className="relative md:col-span-1 h-64 md:h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-r-none">
@@ -224,7 +224,7 @@ const MainMenu = ({ setView }: { onOpenPack: () => void, setView: (v: View) => v
               <div>
                 <Button
                      className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
-                     onClick={() => setView("pack")}
+                     onClick={onOpenPack}
                 >
                   <div className="flex items-center gap-3"><PackageOpen className="w-5 h-5" /><span>ABRIR SOBRE</span></div>
                   <ChevronRight className="w-5 h-5" />
@@ -274,14 +274,15 @@ const MainMenu = ({ setView }: { onOpenPack: () => void, setView: (v: View) => v
 
 const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: View) => void }) => {
   const router = useRouter();
-  const [isOpening, setIsOpening] = useState(false);
   const [revealedCardIndex, setRevealedCardIndex] = useState<number>(-1);
 
   const handleOpenPackAnimation = () => {
-    setIsOpening(true);
-    setTimeout(() => {
-      setRevealedCardIndex(0); // Reveal the first card
-    }, 1000);
+    if (cards.length > 0) {
+        // Start revealing the first card after the pack animation
+        setTimeout(() => {
+          setRevealedCardIndex(0); 
+        }, 1000);
+    }
   };
 
   const handleNextCard = () => {
@@ -292,11 +293,19 @@ const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: V
       router.push('/collectibles/collection');
     }
   };
+  
+  useEffect(() => {
+    // If the view is 'pack' but the pack is empty, go back to menu.
+    if (cards.length === 0) {
+        setView('menu');
+    }
+  }, [cards, setView]);
+
 
   return (
     <div className="flex flex-col items-center">
       <AnimatePresence>
-        {revealedCardIndex === -1 && (
+        {revealedCardIndex === -1 && cards.length > 0 && (
           <motion.div
             initial={{ opacity: 1 }}
             exit={{ scale: 0, opacity: 0, rotate: 720 }}
@@ -580,3 +589,9 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
+
+    
+
+    
+
+    
