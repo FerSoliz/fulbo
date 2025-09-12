@@ -274,13 +274,14 @@ const MainMenu = ({ onOpenPack, setView }: { onOpenPack: () => void, setView: (v
 
 const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: View) => void }) => {
   const router = useRouter();
+  const [isOpening, setIsOpening] = useState(false);
   const [revealedCardIndex, setRevealedCardIndex] = useState<number>(-1);
 
   const handleOpenPackAnimation = () => {
     if (cards.length > 0) {
-        // Start revealing the first card after the pack animation
+        setIsOpening(true);
         setTimeout(() => {
-          setRevealedCardIndex(0); 
+          setRevealedCardIndex(0); // Reveal the first card
         }, 1000);
     }
   };
@@ -295,17 +296,23 @@ const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: V
   };
   
   useEffect(() => {
-    // If the view is 'pack' but the pack is empty, go back to menu.
+    // If the view is 'pack' but the pack is empty, something is wrong, go back to menu.
     if (cards.length === 0) {
         setView('menu');
+        return;
     }
-  }, [cards, setView]);
+    // If we have cards and haven't started opening, start the animation.
+    if (cards.length > 0 && !isOpening) {
+        handleOpenPackAnimation();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cards, isOpening, setView]);
 
 
   return (
     <div className="flex flex-col items-center">
       <AnimatePresence>
-        {revealedCardIndex === -1 && cards.length > 0 && (
+        {!isOpening && cards.length > 0 && (
           <motion.div
             initial={{ opacity: 1 }}
             exit={{ scale: 0, opacity: 0, rotate: 720 }}
@@ -317,7 +324,7 @@ const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: V
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {revealedCardIndex > -1 && revealedCardIndex < cards.length && (
+        {isOpening && revealedCardIndex > -1 && cards.length > 0 && revealedCardIndex < cards.length && (
           <motion.div
             key={revealedCardIndex}
             initial={{ opacity: 0, y: 100, scale: 0.5 }}
@@ -325,7 +332,7 @@ const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: V
             exit={{ opacity: 0, y: -100, scale: 0.8, transition: { duration: 0.3 } }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
             onClick={handleNextCard}
-            className="cursor-pointer"
+            className="cursor-pointer w-72"
           >
             <CollectibleCard card={cards[revealedCardIndex]} />
           </motion.div>
