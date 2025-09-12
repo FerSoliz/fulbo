@@ -1,28 +1,20 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { CreatePostForm } from '@/components/create-post-form';
 import { PostCard } from '@/components/post-card';
 import { Post, User, users as initialUsers, posts as initialPosts } from '@/lib/data';
+import { useUser } from '@/context/user-context';
+
 
 export default function HomePage() {
+  const { user: currentUser } = useUser();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
 
   // Cargar datos desde localStorage al montar el componente
   useEffect(() => {
-    // Cargar o establecer usuario actual
-    const userJson = localStorage.getItem('currentUser');
-    if (userJson) {
-      setCurrentUser(JSON.parse(userJson));
-    } else {
-      // Establecer un usuario por defecto si no hay ninguno
-      const defaultUser = initialUsers[0];
-      setCurrentUser(defaultUser);
-      localStorage.setItem('currentUser', JSON.stringify(defaultUser));
-    }
-
     // Cargar todos los usuarios (iniciales + almacenados)
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const combinedUsers = [...initialUsers, ...storedUsers];
@@ -101,3 +93,4 @@ export default function HomePage() {
     </div>
   );
 }
+

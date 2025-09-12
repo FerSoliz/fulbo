@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -17,6 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { useUser } from '@/context/user-context';
 
 
 const StatItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label: string, value: string | number }) => (
@@ -32,10 +34,10 @@ export default function ProfilePage() {
     const params = useParams();
     const userId = params.id as string;
     const { toast } = useToast();
+    const { user: currentUser, setUser: setCurrentUser, loading: userLoading } = useUser();
 
     const [allUsers, setAllUsers] = useState<User[]>([]);
     const [profileUser, setProfileUser] = useState<User | null>(null);
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
     const [isFavorite, setIsFavorite] = useState(false);
     const [loading, setLoading] = useState(true);
     const [uniqueCodeInput, setUniqueCodeInput] = useState('');
@@ -51,11 +53,6 @@ export default function ProfilePage() {
 
         const targetUser = uniqueUsers.find(u => u.id === userId);
         setProfileUser(targetUser || null);
-
-        const currentUserJSON = localStorage.getItem('currentUser');
-        if (currentUserJSON) {
-            setCurrentUser(JSON.parse(currentUserJSON));
-        }
         
         setLoading(false);
     }, [userId]);
@@ -143,7 +140,6 @@ export default function ProfilePage() {
          
          // Update current user if it's the one being changed
          if(currentUser?.id === updatedUser.id) {
-            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
             setCurrentUser(updatedUser);
          }
     }
@@ -189,7 +185,7 @@ export default function ProfilePage() {
     };
 
 
-    if (loading) return <div className="p-8 text-center">Cargando perfil...</div>;
+    if (loading || userLoading) return <div className="p-8 text-center">Cargando perfil...</div>;
     if (!profileUser) return <div className="p-8 text-center">Usuario no encontrado.</div>;
     
     const isOwnProfile = currentUser?.id === profileUser.id;
@@ -335,3 +331,4 @@ export default function ProfilePage() {
         </div>
     );
 }
+

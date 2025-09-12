@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect } from "react";
@@ -44,6 +45,8 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
+import { useUser } from "@/context/user-context";
+
 
 type TournamentInfo = {
     id: string;
@@ -108,7 +111,7 @@ const InfoItem = ({ iconName, text, highlight }: {iconName: string, text: string
 };
 
 export default function TournamentPage() {
-    const [currentUser, setCurrentUser] = useState<User | null>(null);
+    const { user: currentUser } = useUser();
     const [tournaments, setTournaments] = useState<TournamentInfo[]>([]);
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [newTournament, setNewTournament] = useState<Partial<TournamentInfo>>({
@@ -124,11 +127,6 @@ export default function TournamentPage() {
     });
 
     useEffect(() => {
-        const userJson = localStorage.getItem("currentUser");
-        if (userJson) {
-            setCurrentUser(JSON.parse(userJson));
-        }
-
         const storedTournaments = JSON.parse(localStorage.getItem("tournament_info_cards") || "[]");
         if (storedTournaments.length > 0) {
             setTournaments([...initialTournamentData, ...storedTournaments]);

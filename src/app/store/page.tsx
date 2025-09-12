@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,20 +8,17 @@ import { ProductCard } from '@/components/product-card';
 import { AddProductDialog } from '@/components/add-product-dialog';
 import { Product, User, initialProducts } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/context/user-context';
+
 
 export default function StorePage() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { user: currentUser } = useUser();
   const [products, setProducts] = useState<Product[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
-    const userJson = localStorage.getItem('currentUser');
-    if (userJson) {
-      setCurrentUser(JSON.parse(userJson));
-    }
-
     const deletedProducts = JSON.parse(localStorage.getItem('deleted_products') || '[]');
     const availableInitialProducts = initialProducts.filter(p => !deletedProducts.includes(p.id));
     

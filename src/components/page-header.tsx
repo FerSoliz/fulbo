@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Bell, Camera, Layers, LogOut, Search, User as UserIcon, Star } from 'lucide-react';
@@ -17,9 +18,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { Skeleton } from './ui/skeleton';
 
 interface PageHeaderProps {
-  user: User;
+  user: User | null;
 }
 
 const favorites = [
@@ -81,30 +83,34 @@ export function PageHeader({ user }: PageHeaderProps) {
                     <Bell className="h-5 w-5" />
                     {hasNotifications && <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />}
                 </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                       <Avatar>
-                          <AvatarImage src={user?.avatar} alt={user?.name} />
-                          <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <Link href={`/profile/${user.id}`}>
-                      <DropdownMenuItem>
-                        <UserIcon className="mr-2 h-4 w-4" />
-                        <span>Perfil</span>
-                      </DropdownMenuItem>
-                    </Link>
-                    <DropdownMenuItem>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Cerrar Sesión</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {user ? (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="rounded-full">
+                           <Avatar>
+                              <AvatarImage src={user?.avatar} alt={user?.name} />
+                              <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <Link href={`/profile/${user.id}`}>
+                          <DropdownMenuItem>
+                            <UserIcon className="mr-2 h-4 w-4" />
+                            <span>Perfil</span>
+                          </DropdownMenuItem>
+                        </Link>
+                        <DropdownMenuItem>
+                          <LogOut className="mr-2 h-4 w-4" />
+                          <span>Cerrar Sesión</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                ) : (
+                   <Skeleton className="h-10 w-10 rounded-full" />
+                )}
             </div>
         </div>
         <div className="px-4 pb-2">

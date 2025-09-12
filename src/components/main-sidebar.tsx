@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -23,9 +24,11 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from "react";
 import type { User } from '@/lib/data';
+import { Skeleton } from './ui/skeleton';
+
 
 interface MainSidebarProps {
-  user: User;
+  user: User | null;
 }
 
 const menuItems = [
@@ -50,12 +53,12 @@ export function MainSidebar({ user }: MainSidebarProps) {
 
   const renderMenuItems = (items: typeof menuItems | typeof footerMenuItems) => {
     return items.map((item) => {
-      if ('adminOnly' in item && item.adminOnly && user.role !== 'admin' && user.role !== 'editor') {
+      if ('adminOnly' in item && item.adminOnly && user?.role !== 'admin' && user?.role !== 'editor') {
         return null;
       }
       
       let finalHref = item.href;
-      if(item.label === 'MI PERFIL') {
+      if(item.label === 'MI PERFIL' && user) {
           finalHref = `/profile/${user.id}`;
       }
 
@@ -71,6 +74,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
                 'main-sidebar-button w-full justify-start gap-2 text-foreground',
               )}
               data-active={isActive}
+              disabled={!user}
             >
               <item.icon className="h-5 w-5" />
               <span className="lg:text-base">{item.label}</span>
@@ -95,18 +99,30 @@ export function MainSidebar({ user }: MainSidebarProps) {
           </Link>
         </div>
         <div className="flex items-center gap-2 p-2">
-            <Link href={`/profile/${user.id}`}>
-                <AnimatedAvatar>
-                    <Avatar className="w-12 h-12">
-                        <AvatarImage src={user.avatar} alt="User avatar" />
-                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                </AnimatedAvatar>
-            </Link>
-            <div className="flex flex-col">
-                <span className="font-semibold">{user.name}</span>
-                <span className="text-sm text-muted-foreground">@{user.name.split(' ')[0].toLowerCase()}</span>
-            </div>
+            {user ? (
+                <>
+                    <Link href={`/profile/${user.id}`}>
+                        <AnimatedAvatar>
+                            <Avatar className="w-12 h-12">
+                                <AvatarImage src={user.avatar} alt="User avatar" />
+                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                        </AnimatedAvatar>
+                    </Link>
+                    <div className="flex flex-col">
+                        <span className="font-semibold">{user.name}</span>
+                        <span className="text-sm text-muted-foreground">@{user.name.split(' ')[0].toLowerCase()}</span>
+                    </div>
+                </>
+            ) : (
+                <>
+                    <Skeleton className="h-12 w-12 rounded-full" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-[100px]" />
+                        <Skeleton className="h-4 w-[80px]" />
+                    </div>
+                </>
+            )}
         </div>
 
         <nav className="flex flex-1 flex-col">

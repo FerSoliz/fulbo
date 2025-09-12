@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import {
@@ -19,6 +20,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@/lib/data';
+import { useUser } from '@/context/user-context';
+
 
 const adminActions = [
   {
@@ -59,16 +62,7 @@ const adminActions = [
 ];
 
 export default function AdminPage() {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const userJson = localStorage.getItem('currentUser');
-    if (userJson) {
-      setCurrentUser(JSON.parse(userJson));
-    }
-    setLoading(false);
-  }, []);
+  const { user: currentUser, loading } = useUser();
 
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'editor';
 
@@ -129,3 +123,4 @@ export default function AdminPage() {
     </div>
   );
 }
+
