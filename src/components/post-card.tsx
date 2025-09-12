@@ -31,7 +31,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
   if (!author) return null;
 
   const handleLike = () => {
-    if (!currentUser) return;
+    if (!currentUser || currentUser.name === 'VISITANTE') return;
     const isLiked = post.likes.includes(currentUser.id);
     const newLikes = isLiked
       ? post.likes.filter(id => id !== currentUser.id)
@@ -40,7 +40,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
   };
 
   const handleAddComment = () => {
-    if (!currentUser || !commentText.trim()) return;
+    if (!currentUser || currentUser.name === 'VISITANTE' || !commentText.trim()) return;
     const newComment: Comment = {
       id: Date.now(),
       authorId: currentUser.id,
@@ -53,6 +53,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
 
   const isLiked = currentUser && post.likes.includes(currentUser.id);
   const canEditOrDelete = currentUser?.id === post.authorId || currentUser?.role === 'admin' || currentUser?.role === 'editor';
+  const isVisitor = currentUser?.name === 'VISITANTE';
 
   const renderMedia = () => {
     const { media } = post;
@@ -171,7 +172,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
       <CardFooter className="flex-col items-start">
         <div className="flex justify-between w-full mb-2">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={handleLike}>
+              <Button variant="ghost" size="sm" onClick={handleLike} disabled={isVisitor}>
                 <Heart className={cn("h-5 w-5", isLiked && 'text-red-500 fill-current')} />
                 <span className="ml-2 text-sm">{post.likes.length}</span>
               </Button>
@@ -180,7 +181,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
                 <span className="ml-2 text-sm">{post.comments.length}</span>
               </Button>
             </div>
-            <Button variant="ghost" size="sm">
+            <Button variant="ghost" size="sm" disabled={isVisitor}>
                 <Bookmark className="h-5 w-5" />
             </Button>
         </div>
@@ -194,7 +195,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
             )
           })}
         </div>
-        {currentUser && (
+        {currentUser && !isVisitor && (
             <div className="flex w-full items-center gap-2 pt-4">
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={currentUser.avatar} />

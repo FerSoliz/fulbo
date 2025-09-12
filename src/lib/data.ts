@@ -89,6 +89,21 @@ export const leagues = [
     { name: 'Leyenda del Fútbol', divisions: 1, color: '#ff4500', icon: 'Star', nextLeague: null },
 ];
 
+export const defaultVisitor: User = {
+    id: 'visitor-0',
+    name: 'VISITANTE',
+    avatar: 'https://avatar.vercel.sh/visitor.png',
+    location: 'Navegando',
+    isVerified: false,
+    role: 'user',
+    sudpoints: 0,
+    baseSudpoints: 0,
+    league: 'Bronce',
+    division: 4,
+    stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+};
+
+
 export const users: User[] = [
   {
     id: '1',

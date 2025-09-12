@@ -3,7 +3,8 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import type { User } from '@/lib/data';
-import { users as initialUsers } from '@/lib/data';
+import { initialProducts } from '@/lib/data';
+import { defaultVisitor, users as initialUsers } from '@/lib/data';
 
 interface UserContextType {
   user: User | null;
@@ -23,13 +24,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (storedUser) {
         setUserState(JSON.parse(storedUser));
       } else {
-        const defaultUser = initialUsers[0];
-        setUserState(defaultUser);
-        localStorage.setItem('currentUser', JSON.stringify(defaultUser));
+        setUserState(defaultVisitor);
+        localStorage.setItem('currentUser', JSON.stringify(defaultVisitor));
       }
     } catch (error) {
       console.error("Failed to load user from localStorage", error);
-      setUserState(initialUsers[0]);
+      setUserState(defaultVisitor);
     } finally {
       setLoading(false);
     }

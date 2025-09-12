@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useUser } from '@/context/user-context';
 
 
 type View = 'menu' | 'pack' | 'formation' | 'vs_match';
@@ -41,6 +42,7 @@ export default function CollectibleCardsPage() {
   const [userTeam, setUserTeam] = useState(initialTeam);
   const [lastOpenedPack, setLastOpenedPack] = useState<CardType[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const { user } = useUser();
 
   useEffect(() => {
     setIsClient(true);
@@ -73,6 +75,7 @@ export default function CollectibleCardsPage() {
   }
 
   const handleOpenPack = () => {
+    if (user?.name === 'VISITANTE') return;
     const newCards = allCards.sort(() => 0.5 - Math.random()).slice(0, 3);
     setLastOpenedPack(newCards);
     const updatedCollection = [...userCollection];
@@ -173,7 +176,7 @@ export default function CollectibleCardsPage() {
   const renderView = () => {
     switch (view) {
       case 'menu':
-        return <MainMenu onOpenPack={handleOpenPack} setView={setView} />;
+        return <MainMenu onOpenPack={handleOpenPack} setView={setView} user={user} />;
       case 'pack':
         return <PackOpeningView cards={lastOpenedPack} setView={setView} />;
       case 'formation':
@@ -204,7 +207,9 @@ export default function CollectibleCardsPage() {
   );
 }
 
-const MainMenu = ({ onOpenPack, setView }: { onOpenPack: () => void, setView: (v: View) => void }) => (
+const MainMenu = ({ onOpenPack, setView, user }: { onOpenPack: () => void, setView: (v: View) => void, user: any }) => {
+    const isVisitor = user?.name === 'VISITANTE';
+    return (
     <Card className="w-full max-w-lg bg-card/70">
       <div className="grid grid-cols-1 md:grid-cols-3">
         <div className="relative md:col-span-1 h-64 md:h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-r-none">
@@ -223,8 +228,9 @@ const MainMenu = ({ onOpenPack, setView }: { onOpenPack: () => void, setView: (v
             <div className="space-y-4">
               <div>
                 <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
+                     className={cn("w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full", isVisitor && "opacity-60 cursor-not-allowed")}
                      onClick={onOpenPack}
+                     disabled={isVisitor}
                 >
                   <div className="flex items-center gap-3"><PackageOpen className="w-5 h-5" /><span>ABRIR SOBRE</span></div>
                   <ChevronRight className="w-5 h-5" />
@@ -272,7 +278,8 @@ const MainMenu = ({ onOpenPack, setView }: { onOpenPack: () => void, setView: (v
         </div>
       </div>
     </Card>
- );
+ )
+};
 
 const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: View) => void }) => {
   const router = useRouter();
@@ -601,9 +608,3 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
-
-    
-
-    
-
-    
