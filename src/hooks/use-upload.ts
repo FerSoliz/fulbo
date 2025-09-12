@@ -11,6 +11,8 @@ export function useUpload() {
   const { toast } = useToast();
 
   const uploadFile = async (file: File, path: string): Promise<string> => {
+    setIsUploading(true);
+    setProgress(0);
     return new Promise((resolve, reject) => {
       const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
       const uploadTask = uploadBytesResumable(storageRef, file);
@@ -28,14 +30,17 @@ export function useUpload() {
             description: 'Hubo un problema al subir el archivo.',
             variant: 'destructive',
           });
+          setIsUploading(false);
           reject(error);
         },
         async () => {
           try {
             const url = await getDownloadURL(uploadTask.snapshot.ref);
+            setIsUploading(false);
             resolve(url);
           } catch (e: any) {
             console.error("URL fetch error:", e);
+            setIsUploading(false);
             reject(e);
           }
         }
@@ -49,8 +54,12 @@ export function useUpload() {
       
       const promises = files.map(async (file, index) => {
           try {
-              const url = await uploadFile(file, path);
-              // Calculate progress for multiple files
+              // This single-file uploader inside the multi-uploader needs its own state management or to be refactored.
+              // For now, we will just rely on the overall progress calculation.
+              const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
+              const uploadTask = uploadBytesResumable(storageRef, file);
+              const snapshot = await uploadTask;
+              const url = await getDownloadURL(snapshot.ref);
               setProgress(((index + 1) / files.length) * 100);
               return url;
           } catch (error) {
