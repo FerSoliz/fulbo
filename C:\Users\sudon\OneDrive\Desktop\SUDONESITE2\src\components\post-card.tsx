@@ -140,7 +140,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
           <Link href={`/profile/${author.id}`} className="hover:underline">
             <div className="flex items-center gap-1">
                 <p className="font-semibold text-sm">{author.name}</p>
-                {author.isVerified && <Image src="/images/verificado.png" alt="Verificado" width={16} height={16} />}
+                {author.isVerified && <Image src="src/images/verificado.png" alt="Verificado" width={16} height={16} />}
             </div>
           </Link>
           <p className="text-xs text-muted-foreground">{author.location} · {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: es })}</p>

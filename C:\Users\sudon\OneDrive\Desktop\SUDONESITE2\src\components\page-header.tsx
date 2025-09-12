@@ -200,7 +200,7 @@ export function PageHeader() {
          <div className="px-4 pb-2">
             <Link href="https://www.monsterenergy.com" target="_blank" rel="noopener noreferrer">
                 <Image
-                    src="/images/banner-monster.png"
+                    src="src/images/banner-monster.png"
                     alt="Monster Energy Banner"
                     width={1200}
                     height={150}

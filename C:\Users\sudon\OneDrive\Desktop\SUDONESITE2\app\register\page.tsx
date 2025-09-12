@@ -117,7 +117,7 @@ export default function RegisterPage() {
         <div className="flex justify-center">
             <Link href="/">
                 <Image
-                src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
+                src="src/images/sudone-titulo.png"
                 alt="SUDONE Logo"
                 width={200}
                 height={60}

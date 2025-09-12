@@ -35,14 +35,8 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https'
-        hostname: 'firebasestorage.googleapis.com',
-        port: '',
-        pathname: '/**',
-      },
-      {
         protocol: 'https',
-        hostname: 'i.postimg.cc',
+        hostname: 'firebasestorage.googleapis.com',
         port: '',
         pathname: '/**',
       }
