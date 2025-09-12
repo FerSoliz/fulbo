@@ -34,6 +34,7 @@ export default function HomePage() {
 
   // Persistir las publicaciones en localStorage cada vez que cambian
   useEffect(() => {
+    // Evita guardar el estado inicial vacío antes de que se carguen los posts
     if (posts.length > 0) {
       localStorage.setItem('posts', JSON.stringify(posts));
     }
@@ -93,4 +94,3 @@ export default function HomePage() {
     </div>
   );
 }
-
