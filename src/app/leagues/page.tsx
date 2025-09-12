@@ -24,6 +24,12 @@ import {
 } from '@/components/ui/table';
 import { Trophy, ShieldQuestion, Star, Crown, ShieldCheck, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 interface Tournament {
   id: string;
@@ -85,7 +91,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
     const [scorers, setScorers] = useState<Scorer[]>([]);
     const [sanctions, setSanctions] = useState<Sanction[]>([]);
     const [penalties, setPenalties] = useState<PenaltyPosition[]>([]);
-    const [fixture, setFixture] = useState<FixtureMatch[]>([]);
+    const [fixtureRounds, setFixtureRounds] = useState<{[key: string]: FixtureMatch[]}>({});
     const [favorites, setFavorites] = useState<string[]>([]);
 
     useEffect(() => {
@@ -104,24 +110,39 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                 const result = savedResults[matchId];
                 const details = savedDetails[matchId];
                 const isFinished = savedFinishedMatches.has(matchId);
+                
+                const date = new Date(details?.date);
+                const formattedDate = !isNaN(date.getTime()) 
+                    ? date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
+                    : '-';
+                
                 return {
                     round: roundIndex + 1,
                     home: match.home,
                     away: match.away,
-                    score: isFinished ? `${result?.home || 0} - ${result?.away || 0}` : 'vs',
+                    score: isFinished ? `${result?.home ?? 0} - ${result?.away ?? 0}` : 'vs',
                     finished: isFinished,
-                    date: details?.date || '-',
+                    date: formattedDate,
                     time: details?.time || '-',
                     referee: details?.referee || '-',
                 }
             })
         );
         
+        const rounds = fullFixture.reduce((acc, match) => {
+            const roundKey = `FECHA ${match.round}`;
+            if (!acc[roundKey]) {
+                acc[roundKey] = [];
+            }
+            acc[roundKey].push(match);
+            return acc;
+        }, {} as {[key: string]: FixtureMatch[]});
+
+        setFixtureRounds(rounds);
         setPositions(savedPositions);
         setScorers(savedScorers);
         setSanctions(savedSanctions);
         setPenalties(savedPenalties);
-        setFixture(fullFixture);
 
         const savedFavorites = JSON.parse(localStorage.getItem('favorite_tournaments') || '[]');
         setFavorites(savedFavorites);
@@ -208,41 +229,35 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
 
                 {/* FIXTURE */}
                 <TabsContent value="fixture" className="mt-4">
-                   <div className="rounded-lg border max-h-96 overflow-y-auto">
-                     <Table>
-                        <TableBody>
-                            {fixture.reduce((acc, match, index) => {
-                                const lastMatch = acc[acc.length - 1];
-                                // Check if it's a new round and add a header row
-                                if (!lastMatch || (lastMatch.type === 'match' && lastMatch.props.match.round !== match.round)) {
-                                    acc.push(
-                                        <TableRow key={`header-${match.round}`} className="bg-muted hover:bg-muted">
-                                            <TableCell colSpan={4} className="font-bold text-center">
-                                                FECHA {match.round}
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                }
-                                acc.push(
-                                    <TableRow key={index} data-type="match">
-                                        <TableCell className="text-right">{match.home}</TableCell>
-                                        <TableCell className={`text-center font-bold ${!match.finished && 'text-sm'}`}>
-                                            {match.score}
-                                            {!match.finished && 
-                                             <div className="text-xs font-normal text-muted-foreground">
-                                                {new Date(match.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })} - {match.time}hs
-                                             </div>
-                                            }
-                                        </TableCell>
-                                        <TableCell>{match.away}</TableCell>
-                                        <TableCell className="text-xs text-muted-foreground text-right">{match.referee}</TableCell>
-                                    </TableRow>
-                                );
-                                return acc;
-                            }, [] as any[])}
-                        </TableBody>
-                      </Table>
-                   </div>
+                  <Accordion type="single" collapsible className="w-full">
+                    {Object.entries(fixtureRounds).map(([roundName, matches]) => (
+                      <AccordionItem value={roundName} key={roundName}>
+                        <AccordionTrigger className="font-bold">{roundName}</AccordionTrigger>
+                        <AccordionContent>
+                          <div className="space-y-4 p-2">
+                            {matches.map((match, index) => (
+                              <div key={index} className="flex flex-col items-center justify-between text-sm p-3 bg-muted/50 rounded-md">
+                                <div className="flex items-center justify-between w-full">
+                                    <span className="font-semibold text-right w-2/5 truncate">{match.home}</span>
+                                    <span className={`font-bold text-center w-1/5 ${match.finished ? 'text-lg' : 'text-xs'}`}>
+                                        {match.score}
+                                    </span>
+                                    <span className="font-semibold text-left w-2/5 truncate">{match.away}</span>
+                                </div>
+                                {!match.finished && (
+                                  <div className="text-xs text-muted-foreground mt-2 text-center">
+                                      <span>{match.date} - {match.time}hs</span>
+                                      <br/>
+                                      <span>Árbitro: {match.referee}</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    ))}
+                  </Accordion>
                 </TabsContent>
                 
                 {/* GOLEADORES */}
