@@ -4,9 +4,11 @@ import React, { forwardRef } from 'react';
 interface PlanillaProps {
   homeTeam?: string;
   awayTeam?: string;
+  matchId?: string;
+  qrCodeUrl?: string;
 }
 
-export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ homeTeam = "Equipo Local", awayTeam = "Equipo Visitante" }, ref) => {
+export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ homeTeam = "Equipo Local", awayTeam = "Equipo Visitante", matchId, qrCodeUrl }, ref) => {
     
     const PlayerRow = ({ index }: { index: number }) => (
         <>
@@ -29,13 +31,18 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
 
     return (
         <div ref={ref} style={{ width: '800px', height: '1131px', backgroundColor: 'white' }}>
-            <svg width="800" height="1131" viewBox="0 0 800 1131" xmlns="http://www.w3.org/2000/svg">
+            <svg width="800" height="1131" viewBox="0 0 800 1131" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink">
                 <rect width="800" height="1131" fill="white" />
 
                 {/* Header */}
                 <rect x="10" y="10" width="780" height="80" stroke="black" fill="#f0f0f0" />
-                <text x="400" y="45" fontFamily="Arial" fontSize="24" fontWeight="bold" textAnchor="middle">Planilla de Partido</text>
-                <text x="400" y="75" fontFamily="Arial" fontSize="16" textAnchor="middle">SUDONE Torneos</text>
+                <text x="325" y="45" fontFamily="Arial" fontSize="24" fontWeight="bold" textAnchor="middle">Planilla de Partido</text>
+                <text x="325" y="75" fontFamily="Arial" fontSize="16" textAnchor="middle">SUDONE Torneos</text>
+                
+                {/* QR Code and Match ID */}
+                {qrCodeUrl && <image href={qrCodeUrl} x="680" y="15" height="70" width="70" />}
+                <text x="15" y="30" fontFamily="monospace" fontSize="10">ID: {matchId || 'NO-ID'}</text>
+
 
                 {/* Match Info */}
                 <rect x="10" y="100" width="780" height="50" stroke="black" fill="#fafafa" />

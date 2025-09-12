@@ -53,6 +53,7 @@ import {
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { PlanillaPartidoSVG } from '@/components/planilla-partido-svg';
 import * as htmlToImage from 'html-to-image';
+import QRCode from 'qrcode';
 
 
 // Mock data, this would come from your state management/API
@@ -97,6 +98,7 @@ export default function TournamentDetailsPage() {
     final: [{ team1: '', team2: '' }],
   });
   const planillaRef = useRef<HTMLDivElement>(null);
+  const [planillaData, setPlanillaData] = useState<{home: string, away: string, matchId: string, qrCodeUrl: string} | null>(null);
 
 
   useEffect(() => {
@@ -134,6 +136,24 @@ export default function TournamentDetailsPage() {
     setFinishedMatches(new Set(savedFinished));
 
   }, [tournamentId]);
+
+  useEffect(() => {
+    if (planillaData && planillaRef.current) {
+        htmlToImage.toPng(planillaRef.current, { quality: 0.95, backgroundColor: '#FFFFFF' })
+        .then((dataUrl) => {
+            const link = document.createElement('a');
+            link.download = `Planilla_${planillaData.home}_vs_${planillaData.away}.png`;
+            link.href = dataUrl;
+            link.click();
+            setPlanillaData(null); // Reset after download
+        })
+        .catch((err) => {
+            console.error('oops, something went wrong!', err);
+            setPlanillaData(null);
+        });
+    }
+  }, [planillaData]);
+
 
   const handleFinishGroupStage = () => {
     setIsGroupStageFinished(true);
@@ -302,24 +322,19 @@ export default function TournamentDetailsPage() {
     calculateAllTournamentStats();
   };
 
-  const handleDownloadPlanilla = (match: { home: string; away: string }) => {
-    if (!planillaRef.current) return;
-    
-    // We need to re-render the SVG with the correct team names before downloading
-    // This is a bit of a hack, but it works for this purpose
-    const node = document.getElementById('planilla-to-download');
-    if(!node) return;
-    
-    htmlToImage.toPng(node, { quality: 0.95, backgroundColor: '#FFFFFF' })
-      .then((dataUrl) => {
-        const link = document.createElement('a');
-        link.download = `Planilla_${match.home}_vs_${match.away}.png`;
-        link.href = dataUrl;
-        link.click();
-      })
-      .catch((err) => {
-        console.error('oops, something went wrong!', err);
-      });
+  const handleDownloadPlanilla = async (match: { home: string; away: string }, roundIndex: number, matchIndex: number) => {
+    const matchId = `${tournamentId}-R${roundIndex + 1}-M${matchIndex + 1}`;
+    try {
+        const qrCodeUrl = await QRCode.toDataURL(matchId);
+        setPlanillaData({
+            home: match.home,
+            away: match.away,
+            matchId: matchId,
+            qrCodeUrl: qrCodeUrl,
+        });
+    } catch (err) {
+        console.error("Failed to generate QR code", err);
+    }
   };
 
 
@@ -377,8 +392,16 @@ export default function TournamentDetailsPage() {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Hidden div for rendering the planilla SVG for download */}
-        <div id="planilla-to-download" className="fixed -left-[9999px] top-0">
-          <PlanillaPartidoSVG ref={planillaRef} />
+        <div className="fixed -left-[9999px] top-0">
+          {planillaData && (
+              <PlanillaPartidoSVG 
+                  ref={planillaRef} 
+                  homeTeam={planillaData.home} 
+                  awayTeam={planillaData.away}
+                  matchId={planillaData.matchId}
+                  qrCodeUrl={planillaData.qrCodeUrl}
+              />
+          )}
         </div>
 
         <Link href="/admin/manage-tournaments">
@@ -508,7 +531,7 @@ export default function TournamentDetailsPage() {
                                   <Input placeholder="Árbitro" disabled={isFinished}/>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <Button variant="outline" disabled={isFinished} onClick={() => handleDownloadPlanilla(match)}>
+                                    <Button variant="outline" disabled={isFinished} onClick={() => handleDownloadPlanilla(match, roundIndex, matchIndex)}>
                                         <Download className="mr-2 h-4 w-4" />
                                         Descargar Planilla
                                     </Button>
