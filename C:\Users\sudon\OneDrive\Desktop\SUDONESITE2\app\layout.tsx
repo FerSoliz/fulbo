@@ -47,14 +47,15 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     // Check if we are on login, register or forgot-password page
     const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
 
-    if (isAuthPage) {
-        return (
-          <>
-            <main>{children}</main>
-            <Toaster />
-          </>
-        );
-    }
+    // ALWAYS SHOW THE MAIN LAYOUT TO ALLOW NAVIGATION IN DEV
+    // if (isAuthPage) {
+    //     return (
+    //       <>
+    //         <main>{children}</main>
+    //         <Toaster />
+    //       </>
+    //     );
+    // }
 
     return (
         <div className="flex">
