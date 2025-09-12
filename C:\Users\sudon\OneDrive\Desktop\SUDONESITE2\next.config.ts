@@ -24,12 +24,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'i.postimg.cc',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
         hostname: 'img.youtube.com',
         port: '',
         pathname: '/**',

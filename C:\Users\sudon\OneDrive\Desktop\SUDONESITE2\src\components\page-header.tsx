@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Bell, Camera, Layers, LogOut, Search, User as UserIcon, Star } from 'lucide-react';
@@ -21,11 +20,11 @@ import { useUser } from '@/context/user-context';
 import { useRouter } from 'next/navigation';
 
 const favorites = [
-    { id: '1', type: 'tournament', name: 'Liga Anual 2024', avatar: 'https://i.postimg.cc/NfHBrS60/liga-anual.png', hasNewContent: true, abbrev: "LI"},
-    { id: '2', type: 'tournament', name: 'Copa Verano', avatar: 'https://i.postimg.cc/W3d9b4Vf/copa-verano.png', hasNewContent: true, abbrev: "CO" },
-    { id: '3', type: 'tournament', name: 'Torneo Relámpago', avatar: 'https://i.postimg.cc/8zJ17B67/torneo-relampago.png', hasNewContent: false, abbrev: "TO" },
-    { id: '4', type: 'user', name: '@leomessi', avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg', hasNewContent: false, abbrev: "LM" },
-    { id: '5', type: 'user', name: '@dibumartinez', avatar: 'https://i.postimg.cc/44rD55vT/dibu.jpg', hasNewContent: false, abbrev: "DM" },
+    { id: '1', type: 'tournament', name: 'Liga Anual 2024', avatar: '/images/liga-anual.png', hasNewContent: true, abbrev: "LI"},
+    { id: '2', type: 'tournament', name: 'Copa Verano', avatar: '/images/copa-verano.png', hasNewContent: true, abbrev: "CO" },
+    { id: '3', type: 'tournament', name: 'Torneo Relámpago', avatar: '/images/torneo-relampago.png', hasNewContent: false, abbrev: "TO" },
+    { id: '4', type: 'user', name: '@leomessi', avatar: '/images/messi.jpg', hasNewContent: false, abbrev: "LM" },
+    { id: '5', type: 'user', name: '@dibumartinez', avatar: '/images/dibu.jpg', hasNewContent: false, abbrev: "DM" },
 ];
 
 export function PageHeader() {
@@ -124,7 +123,7 @@ export function PageHeader() {
         <div className="px-4 pb-2">
             <Link href="https://www.monsterenergy.com" target="_blank" rel="noopener noreferrer">
                 <Image
-                    src="https://i.postimg.cc/PNGVGZ92/banner-monster.png"
+                    src="/images/banner-monster.png"
                     alt="Monster Energy Banner"
                     width={1200}
                     height={150}

@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -99,7 +98,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
         <div className="flex h-16 items-center justify-center border-b p-2">
           <Link href="/">
             <Image
-              src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
+              src="/images/sudone-titulo.png"
               alt="SUDONE Logo"
               width={140}
               height={40}
@@ -156,5 +155,3 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
     </aside>
   );
 }
-
-    
