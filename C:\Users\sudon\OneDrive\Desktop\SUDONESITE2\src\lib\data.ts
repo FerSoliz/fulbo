@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -245,3 +246,5 @@ export const initialProducts: Product[] = [
     isInitial: true,
   },
 ];
+
+    
