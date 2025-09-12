@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 import {
   Tabs,
@@ -51,6 +51,8 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
+import { PlanillaPartidoSVG } from '@/components/planilla-partido-svg';
+import * as htmlToImage from 'html-to-image';
 
 
 // Mock data, this would come from your state management/API
@@ -94,6 +96,8 @@ export default function TournamentDetailsPage() {
     ],
     final: [{ team1: '', team2: '' }],
   });
+  const planillaRef = useRef<HTMLDivElement>(null);
+
 
   useEffect(() => {
     if (!tournamentId) return;
@@ -298,6 +302,26 @@ export default function TournamentDetailsPage() {
     calculateAllTournamentStats();
   };
 
+  const handleDownloadPlanilla = (match: { home: string; away: string }) => {
+    if (!planillaRef.current) return;
+    
+    // We need to re-render the SVG with the correct team names before downloading
+    // This is a bit of a hack, but it works for this purpose
+    const node = document.getElementById('planilla-to-download');
+    if(!node) return;
+    
+    htmlToImage.toPng(node, { quality: 0.95, backgroundColor: '#FFFFFF' })
+      .then((dataUrl) => {
+        const link = document.createElement('a');
+        link.download = `Planilla_${match.home}_vs_${match.away}.png`;
+        link.href = dataUrl;
+        link.click();
+      })
+      .catch((err) => {
+        console.error('oops, something went wrong!', err);
+      });
+  };
+
 
   const renderPlayoffStage = (
     title: string,
@@ -352,6 +376,11 @@ export default function TournamentDetailsPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
+        {/* Hidden div for rendering the planilla SVG for download */}
+        <div id="planilla-to-download" className="fixed -left-[9999px] top-0">
+          <PlanillaPartidoSVG ref={planillaRef} />
+        </div>
+
         <Link href="/admin/manage-tournaments">
           <Button variant="outline" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -479,7 +508,7 @@ export default function TournamentDetailsPage() {
                                   <Input placeholder="Árbitro" disabled={isFinished}/>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
-                                    <Button variant="outline" disabled={isFinished}>
+                                    <Button variant="outline" disabled={isFinished} onClick={() => handleDownloadPlanilla(match)}>
                                         <Download className="mr-2 h-4 w-4" />
                                         Descargar Planilla
                                     </Button>
