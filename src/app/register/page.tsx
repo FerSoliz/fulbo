@@ -50,17 +50,14 @@ export default function RegisterPage() {
       });
       router.push('/');
     } catch (error: any) {
-      console.error(error);
-      let errorMessage = "Ocurrió un error al registrar la cuenta.";
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "Este correo electrónico ya está en uso.";
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = "La contraseña debe tener al menos 6 caracteres.";
-      }
+      console.error("Firebase registration error:", error);
+      let errorMessage = `Error: ${error.code} - ${error.message}`;
+      
       toast({
-        title: "Error de registro",
+        title: "Error de Registro (Detallado)",
         description: errorMessage,
         variant: "destructive",
+        duration: 9000,
       });
     } finally {
       setIsLoading(false);
