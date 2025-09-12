@@ -6,30 +6,23 @@ import { storage } from '@/lib/firebase';
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
 export function useUpload() {
-  const [status, setStatus] = useState<UploadStatus>('idle');
+  const [isUploading, setIsUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [downloadURL, setDownloadURL] = useState<string | null>(null);
-  const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   const uploadFile = async (file: File, path: string): Promise<string> => {
     return new Promise((resolve, reject) => {
-      setStatus('uploading');
-      setError(null);
-      setProgress(0);
-
       const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
       const uploadTask = uploadBytesResumable(storageRef, file);
 
       uploadTask.on(
         'state_changed',
         (snapshot) => {
-          const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setProgress(progress);
+          const currentProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+          setProgress(currentProgress);
         },
         (error) => {
-          setError(error);
-          setStatus('error');
+          console.error("Upload error:", error);
           toast({
             title: 'Error de Subida',
             description: 'Hubo un problema al subir el archivo.',
@@ -40,12 +33,9 @@ export function useUpload() {
         async () => {
           try {
             const url = await getDownloadURL(uploadTask.snapshot.ref);
-            setDownloadURL(url);
-            setStatus('success');
             resolve(url);
           } catch (e: any) {
-            setError(e);
-            setStatus('error');
+            console.error("URL fetch error:", e);
             reject(e);
           }
         }
@@ -54,25 +44,29 @@ export function useUpload() {
   };
   
   const uploadMultipleFiles = async (files: File[], path: string): Promise<string[]> => {
-      setStatus('uploading');
-      const uploadPromises = files.map(file => uploadFile(file, path));
+      setIsUploading(true);
+      setProgress(0);
       
       try {
+        const uploadPromises = files.map(file => uploadFile(file, path));
         const urls = await Promise.all(uploadPromises);
-        setStatus('success');
+        toast({
+          title: '¡Subida Exitosa!',
+          description: `${files.length} imagen(es) subida(s) correctamente.`,
+        });
         return urls;
       } catch (error: any) {
-        setStatus('error');
-        setError(error);
         toast({
           title: 'Error de Subida Múltiple',
           description: 'Algunos archivos no se pudieron subir.',
           variant: 'destructive',
         });
         return [];
+      } finally {
+        setIsUploading(false);
+        setProgress(0);
       }
   }
 
-
-  return { status, progress, downloadURL, error, uploadFile, uploadMultipleFiles, isUploading: status === 'uploading' };
+  return { isUploading, progress, uploadMultipleFiles };
 }

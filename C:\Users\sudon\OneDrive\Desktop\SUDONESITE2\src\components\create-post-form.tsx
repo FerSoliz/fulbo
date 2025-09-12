@@ -40,13 +40,17 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     setFilesToUpload(prevFiles => prevFiles.filter((_, i) => i !== indexToRemove));
     setImagePreviews(prevPreviews => {
       const newPreviews = prevPreviews.filter((_, i) => i !== indexToRemove);
-      newPreviews.forEach(p => { if (p.startsWith('blob:')) URL.revokeObjectURL(p) }); // Clean up blob urls
-      return newPreviews.filter((_, i) => i !== indexToRemove);
+      // Clean up blob urls to prevent memory leaks
+      const urlToRemove = imagePreviews[indexToRemove];
+      if (urlToRemove.startsWith('blob:')) {
+          URL.revokeObjectURL(urlToRemove);
+      }
+      return newPreviews;
     });
   };
 
   const handleSubmit = async () => {
-    if ((!title && !content) || filesToUpload.length === 0) return;
+    if (!title && !content && filesToUpload.length === 0) return;
     
     let uploadedImageUrls: string[] = [];
     if(filesToUpload.length > 0) {
@@ -65,6 +69,9 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     setContent('');
     setFilesToUpload([]);
     setImagePreviews([]);
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+    }
   };
 
   return (
@@ -136,7 +143,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
           />
         </div>
         <Button onClick={handleSubmit} disabled={(!title && !content && filesToUpload.length === 0) || isUploading}>
-          {isUploading ? 'Publicando...' : 'Publicar'}
+          {isUploading ? `Publicando... ${Math.round(progress)}%` : 'Publicar'}
         </Button>
       </div>
     </Card>
