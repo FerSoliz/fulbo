@@ -1,11 +1,19 @@
 @echo off
-set "PROJECT_PATH=C:\Users\sudon\OneDrive\Desktop\SUDONESITE2"
-echo =================================================================
-echo  Terminal de SUDONE v2
-echo =================================================================
+echo Configurando el entorno para SUDONESITE2...
+
+:: Establece la ruta a la carpeta de npm donde se instalan los comandos globales (como firebase)
+set "NPM_PATH=%APPDATA%\npm"
+
+:: Agrega la ruta de npm al PATH de esta sesion de terminal
+set "PATH=%PATH%;%NPM_PATH%"
+
+:: Cambia al directorio del proyecto
+cd /d "C:\Users\sudon\OneDrive\Desktop\SUDONESITE2"
+
 echo.
-echo  Cambiando al directorio del proyecto:
-echo  %PROJECT_PATH%
+echo Directorio actual: %cd%
+echo Entorno listo. Ya puedes usar los comandos de npm y firebase.
 echo.
-cd /d "%PROJECT_PATH%"
-cmd /k "echo. && echo Directorio actual: %cd% && echo. && echo Listo. Ya puedes ejecutar los comandos de Firebase (ej: firebase deploy)."
+
+:: Inicia el Command Prompt
+cmd.exe
