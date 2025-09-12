@@ -119,12 +119,13 @@ export const leagues = [
 ];
 
 export const defaultVisitor: User = {
-    id: 'visitor-0',
-    name: 'VISITANTE',
-    avatar: 'https://avatar.vercel.sh/visitor.png',
-    location: 'Navegando',
-    isVerified: false,
-    role: 'user',
+    id: '1',
+    name: 'Lucio Mingrone',
+    email: 'lucionmingrone@gmail.com',
+    avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
+    location: 'Buenos Aires, Argentina',
+    isVerified: true,
+    role: 'admin',
     sudpoints: 0,
     baseSudpoints: 0,
     league: 'Bronce',
@@ -326,4 +327,3 @@ export const initialNotifications: Notification[] = [
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // hace 2 días
     },
 ];
-
