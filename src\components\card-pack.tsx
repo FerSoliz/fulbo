@@ -12,7 +12,7 @@ export function CardPack() {
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.2 }}
         >
-            <Image src={packImageUrl} alt="Sobre de cartas" width={180} height={252} priority />
+            <Image src={packImageUrl} alt="Sobre de cartas" width={135} height={189} priority />
         </motion.div>
     </div>
   );
