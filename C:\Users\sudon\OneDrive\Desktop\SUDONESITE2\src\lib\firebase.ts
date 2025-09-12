@@ -1,6 +1,7 @@
+
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, connectAuthEmulator } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
@@ -12,5 +13,17 @@ const firebaseConfig = {"apiKey":"your-api-key","authDomain":"sudonesite2.fireba
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const storage = getStorage(app);
+
+// Development-only: Force admin login simulation
+if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    // This part simulates the admin user being logged in for local development.
+    // It will not run in the deployed production environment.
+    try {
+        connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+    } catch (e) {
+        // Emulator might already be connected
+    }
+}
+
 
 export { app, auth, storage, GoogleAuthProvider, signInWithPopup };
