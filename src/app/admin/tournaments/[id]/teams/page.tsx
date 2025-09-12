@@ -20,6 +20,7 @@ import {
   Upload,
   UserPlus,
   KeyRound,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -41,6 +42,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 import { Label } from '@/components/ui/label';
+import { useUpload } from '@/hooks/use-upload';
+import { useToast } from '@/hooks/use-toast';
 
 interface Team {
   id: string;
@@ -64,6 +67,8 @@ export default function ManageTeamsPage() {
   const router = useRouter();
   const params = useParams();
   const tournamentId = params.id as string;
+  const { uploadFile, isUploading } = useUpload();
+  const { toast } = useToast();
 
   const [tournamentName, setTournamentName] = useState('');
   const [teams, setTeams] = useState<Team[]>([]);
@@ -75,6 +80,7 @@ export default function ManageTeamsPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [teamToUpdateLogo, setTeamToUpdateLogo] = useState<string | null>(null);
+   const [uploadingLogoId, setUploadingLogoId] = useState<string | null>(null);
 
   useEffect(() => {
     // Load tournament name
@@ -136,8 +142,7 @@ export default function ManageTeamsPage() {
   
   const handleEditRoster = (team: Team) => {
       setSelectedTeam(team);
-      const teamIdForRoster = team.id.split('_').slice(2).join('_'); // Get original index based name
-      const rosterKey = `roster_${tournamentId}_${team.name}`;
+      const rosterKey = `roster_${tournamentId}_${team.id}`;
       const savedRoster = JSON.parse(localStorage.getItem(rosterKey) || '[]');
       if(savedRoster.length > 0) {
         setRoster(savedRoster);
@@ -160,43 +165,48 @@ export default function ManageTeamsPage() {
 
   const handleSaveRoster = () => {
       if(selectedTeam) {
-        const rosterKey = `roster_${tournamentId}_${selectedTeam.name}`;
+        const rosterKey = `roster_${tournamentId}_${selectedTeam.id}`;
         localStorage.setItem(rosterKey, JSON.stringify(roster));
         
         const allPlayerDetails = JSON.parse(localStorage.getItem("playerDetails") || "{}");
         roster.forEach(player => {
-            if(player.uniqueCode) {
+            if(player.uniqueCode && player.name && player.lastName) {
                  allPlayerDetails[player.uniqueCode] = player;
             }
         });
         localStorage.setItem("playerDetails", JSON.stringify(allPlayerDetails));
 
         setIsEditDialogOpen(false);
-        alert('Plantilla guardada con éxito!');
+        toast({ title: '¡Plantilla Guardada!', description: `La plantilla de ${selectedTeam.name} se guardó correctamente.`});
       }
   }
   
   const handleLogoClick = (teamId: string) => {
+    if(isUploading) return;
     setTeamToUpdateLogo(teamId);
     fileInputRef.current?.click();
   };
 
-  const handleLogoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file && teamToUpdateLogo) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = reader.result as string;
+      setUploadingLogoId(teamToUpdateLogo);
+      try {
+        const uploadedUrl = await uploadFile(file, `teams/${tournamentId}/logos`);
         
         setTeams(prevTeams => 
-            prevTeams.map(t => t.id === teamToUpdateLogo ? {...t, logoUrl: base64String} : t)
+            prevTeams.map(t => t.id === teamToUpdateLogo ? {...t, logoUrl: uploadedUrl} : t)
         );
 
         const teamLogos = JSON.parse(localStorage.getItem(`logos_${tournamentId}`) || '{}');
-        teamLogos[teamToUpdateLogo] = base64String;
+        teamLogos[teamToUpdateLogo] = uploadedUrl;
         localStorage.setItem(`logos_${tournamentId}`, JSON.stringify(teamLogos));
-      };
-      reader.readAsDataURL(file);
+        toast({ title: '¡Logo Actualizado!', description: 'El nuevo logo del equipo ha sido guardado.'});
+      } catch (error) {
+        // useUpload hook already shows a toast on error
+      } finally {
+        setUploadingLogoId(null);
+      }
     }
     if(fileInputRef.current) fileInputRef.current.value = '';
     setTeamToUpdateLogo(null);
@@ -225,10 +235,17 @@ export default function ManageTeamsPage() {
             {teams.map((team) => (
               <Card key={team.id}>
                 <CardHeader className="items-center text-center">
-                  <Avatar className="w-24 h-24 mb-4 cursor-pointer" onClick={() => handleLogoClick(team.id)}>
-                    <AvatarImage src={team.logoUrl} alt={team.name} />
-                    <AvatarFallback>{team.name.substring(0, 2)}</AvatarFallback>
-                  </Avatar>
+                  <div className="relative">
+                     <Avatar className="w-24 h-24 mb-4 cursor-pointer" onClick={() => handleLogoClick(team.id)}>
+                        <AvatarImage src={team.logoUrl} alt={team.name} className="object-cover"/>
+                        <AvatarFallback>{team.name.substring(0, 2)}</AvatarFallback>
+                    </Avatar>
+                    {uploadingLogoId === team.id && (
+                        <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center mb-4">
+                            <Loader2 className="w-8 h-8 animate-spin text-white"/>
+                        </div>
+                    )}
+                  </div>
                   {editingTeamId === team.id ? (
                      <div className="flex items-center gap-2">
                         <Input
@@ -340,5 +357,3 @@ export default function ManageTeamsPage() {
     </div>
   );
 }
-
-    

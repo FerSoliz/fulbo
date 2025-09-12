@@ -52,24 +52,36 @@ export function useUpload() {
       setIsUploading(true);
       setProgress(0);
       
-      const promises = files.map(async (file, index) => {
-          try {
-              // This single-file uploader inside the multi-uploader needs its own state management or to be refactored.
-              // For now, we will just rely on the overall progress calculation.
-              const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
-              const uploadTask = uploadBytesResumable(storageRef, file);
-              const snapshot = await uploadTask;
-              const url = await getDownloadURL(snapshot.ref);
-              setProgress(((index + 1) / files.length) * 100);
-              return url;
-          } catch (error) {
-              console.error(`Failed to upload ${file.name}`, error);
-              return null; // Return null for failed uploads
-          }
-      });
+      const uploadPromises = files.map((file, index) => 
+        new Promise<string | null>((resolve, reject) => {
+          const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
+          const uploadTask = uploadBytesResumable(storageRef, file);
+
+          uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+              const overallProgress = ((index + (snapshot.bytesTransferred / snapshot.totalBytes)) / files.length) * 100;
+              setProgress(overallProgress);
+            },
+            (error) => {
+              console.error(`Error subiendo ${file.name}:`, error);
+              resolve(null); // Resolve with null on error for individual file
+            },
+            async () => {
+              try {
+                const url = await getDownloadURL(uploadTask.snapshot.ref);
+                resolve(url);
+              } catch (e) {
+                console.error(`Error obteniendo URL for ${file.name}:`, e);
+                resolve(null);
+              }
+            }
+          );
+        })
+      );
       
       try {
-        const results = await Promise.all(promises);
+        const results = await Promise.all(uploadPromises);
         const successfulUrls = results.filter((url): url is string => url !== null);
         
         if (successfulUrls.length === files.length) {
@@ -80,16 +92,16 @@ export function useUpload() {
         } else {
              toast({
               title: 'Subida Parcial',
-              description: `${successfulUrls.length} de ${files.length} imágenes se subieron.`,
+              description: `${successfulUrls.length} de ${files.length} imágenes se subieron. Algunas pueden haber fallado.`,
               variant: 'destructive',
             });
         }
         return successfulUrls;
 
-      } catch (error: any) {
+      } catch (error) { // This catch might not be necessary with the current promise setup
         toast({
           title: 'Error de Subida Múltiple',
-          description: 'Algunos archivos no se pudieron subir.',
+          description: 'Ocurrió un error inesperado durante la subida.',
           variant: 'destructive',
         });
         return [];
