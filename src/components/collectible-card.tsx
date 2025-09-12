@@ -46,8 +46,8 @@ export function CollectibleCard({ card, small = false }: CollectibleCardProps) {
   }, [small]);
 
   // Adjust size for small cards to be slightly bigger
-  const width = small ? 144 : 320;
-  const height = small ? 225 : 500;
+  const width = small ? 144 : 160;
+  const height = small ? 225 : 250;
 
   return (
     <div
