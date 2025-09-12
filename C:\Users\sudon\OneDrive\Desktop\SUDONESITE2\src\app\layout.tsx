@@ -9,7 +9,7 @@ import type { User } from "@/lib/data";
 import { users } from "@/lib/data";
 
 export const metadata: Metadata = {
-  title: "SUDONE - PRUEBA DE EDICIÓN",
+  title: "SUDONE",
   description: "Plataforma de torneos y comunidad.",
 };
 
@@ -47,3 +47,5 @@ export default function RootLayout({
     </html>
   );
 }
+
+    
