@@ -240,8 +240,9 @@ const MainMenu = ({ onOpenPack, setView }: { onOpenPack: () => void, setView: (v
               </div>
               <div>
                 <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full"
+                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
                      onClick={() => setView("formation")}
+                     disabled
                 >
                   <div className="flex items-center gap-3"><Users className="w-5 h-5" /><span>MI EQUIPO</span></div>
                   <ChevronRight className="w-5 h-5" />
@@ -606,4 +607,3 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
     
 
     
-
