@@ -195,7 +195,7 @@ export default function CollectibleCardsPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 text-white min-h-screen flex items-center justify-center">
       <div className="w-full">
-        <h1 className="text-3xl font-bold mb-6 text-center tracking-wider uppercase">PRUEBA DE EDICIÓN</h1>
+        <h1 className="text-3xl font-bold mb-6 text-center tracking-wider uppercase">MODIFICACIÓN REALIZADA</h1>
         <div className="flex justify-center">
             {renderView()}
         </div>
@@ -596,5 +596,7 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
+
+    
 
     
