@@ -47,7 +47,7 @@ export function PageHeader({ user }: PageHeaderProps) {
                  <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
-                        <Star className="h-5 w-5 text-yellow-400"/>
+                        <Star className="h-5 w-5"/>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-64">
