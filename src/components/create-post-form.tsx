@@ -10,6 +10,8 @@ import { Image as ImageIcon, Video, X } from 'lucide-react';
 import { User, Post } from '@/lib/data';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import Image from 'next/image';
+import { useUpload } from '@/hooks/use-upload';
+import { Progress } from '@/components/ui/progress';
 
 interface CreatePostFormProps {
   currentUser: User;
@@ -19,32 +21,56 @@ interface CreatePostFormProps {
 export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [images, setImages] = useState<string[]>([]);
+  const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { uploadMultipleFiles, isUploading, progress } = useUpload();
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      const files = Array.from(event.target.files);
-      const newImageUrls = files.map((file) => URL.createObjectURL(file));
-      setImages((prevImages) => [...prevImages, ...newImageUrls]);
+      const newFiles = Array.from(event.target.files);
+      setFilesToUpload((prevFiles) => [...prevFiles, ...newFiles]);
+      
+      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
+      setImagePreviews(prevPreviews => [...prevPreviews, ...newPreviews]);
     }
   };
 
-  const removeImage = (index: number) => {
-    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
+  const removeImage = (indexToRemove: number) => {
+    setFilesToUpload(prevFiles => prevFiles.filter((_, i) => i !== indexToRemove));
+    setImagePreviews(prevPreviews => {
+      const newPreviews = prevPreviews.filter((_, i) => i !== indexToRemove);
+      // Clean up blob urls to prevent memory leaks
+      const urlToRemove = imagePreviews[indexToRemove];
+      if (urlToRemove.startsWith('blob:')) {
+          URL.revokeObjectURL(urlToRemove);
+      }
+      return newPreviews;
+    });
   };
 
-  const handleSubmit = () => {
-    if (title || content || images.length > 0) {
-      onAddPost({
-        authorId: currentUser.id,
-        title,
-        content,
-        media: images.map(url => ({ type: 'image', url })),
-      });
-      setTitle('');
-      setContent('');
-      setImages([]);
+  const handleSubmit = async () => {
+    if (!title && !content && filesToUpload.length === 0) return;
+    
+    let uploadedImageUrls: string[] = [];
+    if(filesToUpload.length > 0) {
+      uploadedImageUrls = await uploadMultipleFiles(filesToUpload, `posts/${currentUser.id}`);
+    }
+
+    onAddPost({
+      authorId: currentUser.id,
+      title,
+      content,
+      media: uploadedImageUrls.map(url => ({ type: 'image', url })),
+    });
+
+    // Reset form
+    setTitle('');
+    setContent('');
+    setFilesToUpload([]);
+    setImagePreviews([]);
+    if (fileInputRef.current) {
+        fileInputRef.current.value = '';
     }
   };
 
@@ -61,6 +87,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="text-lg font-bold border-none shadow-none focus-visible:ring-0 px-0"
+            disabled={isUploading}
           />
           <Textarea
             placeholder={`¿Qué estás pensando, ${currentUser.name}?`}
@@ -68,35 +95,40 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             onChange={(e) => setContent(e.target.value)}
             className="border-none shadow-none focus-visible:ring-0 px-0 resize-none"
             rows={2}
+            disabled={isUploading}
           />
         </div>
       </div>
-      {images.length > 0 && (
+      {imagePreviews.length > 0 && (
         <ScrollArea className="w-full whitespace-nowrap rounded-md mt-4">
             <div className="flex space-x-2 p-1">
-                {images.map((url, index) => (
+                {imagePreviews.map((url, index) => (
                     <div key={index} className="relative h-24 w-24 flex-shrink-0">
-                        <Image src={url} alt={`Preview ${index}`} layout="fill" className="object-cover rounded-md" />
-                        <Button
+                        <Image src={url} alt={`Preview ${index}`} fill className="object-cover rounded-md" />
+                        {!isUploading && <Button
                             variant="destructive"
                             size="icon"
                             className="absolute top-1 right-1 h-5 w-5 rounded-full"
                             onClick={() => removeImage(index)}
                         >
                             <X className="h-3 w-3" />
-                        </Button>
+                        </Button>}
                     </div>
                 ))}
             </div>
             <ScrollBar orientation="horizontal" />
         </ScrollArea>
       )}
+
+      {isUploading && <Progress value={progress} className="mt-4" />}
+
       <div className="flex justify-between items-center mt-4 pt-4 border-t">
         <div className="flex gap-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
           >
             <ImageIcon className="mr-2 h-4 w-4" />
             Foto/Video
@@ -105,13 +137,13 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             type="file"
             ref={fileInputRef}
             className="hidden"
-            accept="image/*,video/*"
+            accept="image/*"
             multiple
-            onChange={handleImageUpload}
+            onChange={handleFileChange}
           />
         </div>
-        <Button onClick={handleSubmit} disabled={!title && !content && images.length === 0}>
-          Publicar
+        <Button onClick={handleSubmit} disabled={(!title && !content && filesToUpload.length === 0) || isUploading}>
+          {isUploading ? `Publicando... ${Math.round(progress)}%` : 'Publicar'}
         </Button>
       </div>
     </Card>
