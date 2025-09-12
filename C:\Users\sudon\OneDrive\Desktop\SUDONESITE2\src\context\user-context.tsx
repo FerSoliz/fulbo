@@ -11,6 +11,7 @@ interface UserContextType {
   user: User | null;
   loading: boolean;
   logout: () => Promise<void>;
+  setUser: (user: User | null) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -24,6 +25,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const adminUser = initialUsers.find(u => u.role === 'admin');
     if (adminUser) {
         setUserState(adminUser);
+        localStorage.setItem('currentUser', JSON.stringify(adminUser));
     } else {
         setUserState(defaultVisitor);
     }
@@ -79,9 +81,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
     // For development, we might want to reload to go back to admin
     window.location.reload();
   };
+  
+  const setUser = (updatedUser: User | null) => {
+      setUserState(updatedUser);
+      if(updatedUser){
+          localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      } else {
+          localStorage.removeItem('currentUser');
+      }
+  }
 
   return (
-    <UserContext.Provider value={{ user, loading, logout }}>
+    <UserContext.Provider value={{ user, loading, logout, setUser }}>
       {children}
     </UserContext.Provider>
   );
