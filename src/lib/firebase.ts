@@ -6,7 +6,7 @@ import { getStorage } from "firebase/storage";
 // https://firebase.google.com/docs/web/setup#available-libraries
 
 // Your web app's Firebase configuration will be populated here automatically by Firebase App Hosting.
-const firebaseConfig = {"projectId":"sudonesite2","appId":"1:397488055627:web:2120b08053c30623348039","storageBucket":"sudonesite2.appspot.com","apiKey":"your-api-key","authDomain":"sudonesite2.firebaseapp.com","messagingSenderId":"397488055627"};
+const firebaseConfig = {"apiKey":"your-api-key","authDomain":"sudonesite2.firebaseapp.com","projectId":"sudonesite2","storageBucket":"sudonesite2.appspot.com","messagingSenderId":"397488055627","appId":"1:397488055627:web:2120b08053c30623348039"};
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
