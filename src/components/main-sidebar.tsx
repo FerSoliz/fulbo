@@ -36,7 +36,6 @@ const menuItems = [
     { href: '/store', icon: Store, label: 'TIENDA' },
     { href: '/collectibles', icon: Swords, label: 'COLECCIONABLES' },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
-    { href: '/prueba', icon: BookCopy, label: 'PRUEBA' },
 ];
 
 const footerMenuItems = [
