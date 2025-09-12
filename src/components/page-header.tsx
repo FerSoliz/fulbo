@@ -197,6 +197,17 @@ export function PageHeader() {
                 />
             </form>
         </div>
+         <div className="px-4 pb-2">
+            <Link href="https://www.monsterenergy.com" target="_blank" rel="noopener noreferrer">
+                <Image
+                    src="https://i.postimg.cc/PNGVGZ92/banner-monster.png"
+                    alt="Monster Energy Banner"
+                    width={1200}
+                    height={150}
+                    className="w-full h-auto rounded-lg"
+                />
+            </Link>
+        </div>
     </header>
   );
 }
