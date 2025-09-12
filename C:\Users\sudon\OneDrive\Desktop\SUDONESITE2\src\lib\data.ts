@@ -245,5 +245,3 @@ export const initialProducts: Product[] = [
     isInitial: true,
   },
 ];
-
-    
