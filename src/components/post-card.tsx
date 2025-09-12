@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -10,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Heart, MessageSquare, Bookmark, MoreHorizontal, CheckCircle, Play, Pencil } from 'lucide-react';
+import { Heart, MessageSquare, Bookmark, MoreHorizontal, Play, Pencil } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Post, User, Comment } from '@/lib/data';
@@ -140,7 +141,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
           <Link href={`/profile/${author.id}`} className="hover:underline">
             <div className="flex items-center gap-1">
                 <p className="font-semibold text-sm">{author.name}</p>
-                {author.isVerified && <CheckCircle className="h-4 w-4 text-primary fill-current" />}
+                {author.isVerified && <Image src="https://i.postimg.cc/SQM9LfMY/verificado.png" alt="Verificado" width={16} height={16} />}
             </div>
           </Link>
           <p className="text-xs text-muted-foreground">{author.location} · {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: es })}</p>
@@ -215,3 +216,5 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
     </Card>
   );
 }
+
+    

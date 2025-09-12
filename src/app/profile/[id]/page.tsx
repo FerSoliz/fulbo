@@ -13,7 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { DivisionBadge } from '@/components/division-badge';
 import { User, users as initialUsers, PlayerDetails, sudpointConfig, leagues } from '@/lib/data';
-import { CheckCircle, Medal, Shield, Swords, ShieldAlert, Calendar, Trophy, Link2, Star, Loader2 } from 'lucide-react';
+import { Medal, Shield, Swords, ShieldAlert, Calendar, Trophy, Link2, Star, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -239,7 +239,7 @@ export default function ProfilePage() {
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <CheckCircle className="h-6 w-6 text-blue-500 fill-current" />
+                                                <Image src="https://i.postimg.cc/SQM9LfMY/verificado.png" alt="Verificado" width={24} height={24} />
                                             </TooltipTrigger>
                                             <TooltipContent>
                                                 <p>Usuario Verificado</p>
@@ -345,3 +345,5 @@ export default function ProfilePage() {
         </div>
     );
 }
+
+    
