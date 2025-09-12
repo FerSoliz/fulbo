@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import type { User, Notification } from '@/lib/data';
 import { defaultVisitor, users as initialUsers, initialNotifications } from '@/lib/data';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 
 interface UserContextType {
   user: User | null;
@@ -28,18 +28,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       if (firebaseUser) {
         // User is signed in.
-        const storedUsersJSON = localStorage.getItem('users') || '[]';
-        const storedUsers: User[] = JSON.parse(storedUsersJSON);
-        const allKnownUsers = [...initialUsers, ...storedUsers];
+        const allKnownUsersJSON = localStorage.getItem('users') || '[]';
+        const allKnownUsers = [...initialUsers, ...JSON.parse(allKnownUsersJSON)];
         
         let foundUser = allKnownUsers.find(u => u.email === firebaseUser.email);
         
         if (foundUser) {
             setUserState(foundUser);
+            localStorage.setItem('currentUser', JSON.stringify(foundUser));
         } else {
-            // This is a new Firebase user not in our local data. Create and save a basic profile.
+            // This is a new Firebase user not in our mock data. Create a basic profile.
             const newUser: User = {
-              id: firebaseUser.uid, // Use Firebase UID for consistency
+              id: `user-${Date.now()}`,
               name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Nuevo Usuario',
               email: firebaseUser.email || '',
               role: 'user',
@@ -52,17 +52,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
               division: 4,
               stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
             };
-            
-            // Add the new user to our list of custom users and save it
-            const updatedStoredUsers = [...storedUsers, newUser];
-            localStorage.setItem('users', JSON.stringify(updatedStoredUsers));
-            
-            // Set the new user as the active user
+            const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+            localStorage.setItem('users', JSON.stringify([...storedUsers, newUser]));
             setUserState(newUser);
+            localStorage.setItem('currentUser', JSON.stringify(newUser));
         }
       } else {
-        // User is signed out.
-        setUserState(defaultVisitor);
+        // User is signed out. Force admin user for dev purposes.
+        const adminUser = initialUsers.find(u => u.role === 'admin');
+        setUserState(adminUser || defaultVisitor);
       }
       setLoading(false);
     });
@@ -72,23 +70,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
   
   const logout = async () => {
     await signOut(auth); 
-    setUserState(defaultVisitor);
+    setUserState(defaultVisitor); // Set to visitor immediately
+    localStorage.removeItem('currentUser');
+    window.location.reload();
   };
   
   const setUser = (updatedUser: User | null) => {
       setUserState(updatedUser);
-      if (updatedUser && updatedUser.id !== 'visitor-0') {
-         // Persist changes to the current user in the full user list
-         const storedUsersJSON = localStorage.getItem('users') || '[]';
-         let storedUsers: User[] = JSON.parse(storedUsersJSON);
-         const userIndex = storedUsers.findIndex(u => u.id === updatedUser.id);
-         if (userIndex > -1) {
-             storedUsers[userIndex] = updatedUser;
-         } else if (!initialUsers.some(u => u.id === updatedUser.id)) {
-            // It's a new custom user or an updated one not in the initial list
-             storedUsers.push(updatedUser);
-         }
-         localStorage.setItem('users', JSON.stringify(storedUsers));
+      if(updatedUser && updatedUser.id !== 'visitor-0'){
+          localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      } else {
+          localStorage.removeItem('currentUser');
       }
   }
 
