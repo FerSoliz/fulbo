@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,7 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { DivisionBadge } from '@/components/division-badge';
 import { User, users as initialUsers, PlayerDetails, sudpointConfig, leagues } from '@/lib/data';
-import { Medal, Shield, Swords, ShieldAlert, Calendar, Trophy, Link2, Star, Loader2 } from 'lucide-react';
+import { Medal, Shield, Swords, ShieldAlert, Calendar, Trophy, Link2, Star, Loader2, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -33,6 +33,7 @@ const StatItem = ({ icon: Icon, label, value }: { icon: React.ElementType, label
 
 export default function ProfilePage() {
     const params = useParams();
+    const router = useRouter();
     const userId = params.id as string;
     const { toast } = useToast();
     const { user: currentUser, setUser: setCurrentUser, loading: userLoading } = useUser();
@@ -192,6 +193,11 @@ export default function ProfilePage() {
         }
     };
 
+    const handleSendMessage = () => {
+        if (!profileUser) return;
+        router.push(`/messages?recipient=${profileUser.id}`);
+    }
+
 
     if (loading || userLoading) return <div className="p-8 text-center">Cargando perfil...</div>;
     if (!profileUser) return <div className="p-8 text-center">Usuario no encontrado.</div>;
@@ -207,16 +213,17 @@ export default function ProfilePage() {
                 <div className="md:col-span-1 space-y-6">
                     <Card className="relative">
                         <CardHeader className="items-center text-center">
-                           {currentUser && !isOwnProfile && (
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="absolute top-4 right-4" 
-                                    onClick={() => setIsFavorite(!isFavorite)}
-                                >
-                                    <Star className={cn("w-5 h-5 text-muted-foreground", isFavorite && "fill-accent text-accent")} />
-                                </Button>
-                           )}
+                           <div className="absolute top-4 right-4">
+                                {currentUser && !isOwnProfile && (
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={() => setIsFavorite(!isFavorite)}
+                                    >
+                                        <Star className={cn("w-5 h-5 text-muted-foreground", isFavorite && "fill-accent text-accent")} />
+                                    </Button>
+                               )}
+                           </div>
                             <div className={cn("relative cursor-pointer group", isOwnProfile && "hover:opacity-80 transition-opacity")} onClick={handleAvatarClick}>
                                <AnimatedAvatar>
                                     <Avatar className="w-32 h-32 text-4xl">
@@ -256,6 +263,12 @@ export default function ProfilePage() {
                             </div>
                         </CardHeader>
                         <CardContent>
+                           {currentUser && !isOwnProfile && currentUser.name !== 'VISITANTE' && (
+                               <Button className="w-full" onClick={handleSendMessage}>
+                                   <MessageSquare className="mr-2 h-4 w-4" />
+                                   Enviar Mensaje
+                               </Button>
+                           )}
                             {isOwnProfile && (
                                 <div className="mt-4">
                                     <Label className="text-sm font-medium">Progreso en la división</Label>

@@ -2,7 +2,7 @@
 
 import {
   Bell,
-  BookCopy,
+  MessageSquare,
   Cog,
   Home,
   LogOut,
@@ -31,6 +31,7 @@ const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
     { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', adminOnly: true },
     { href: '/leagues', icon: Trophy, label: 'LIGAS EN CURSO' },
+    { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
     { href: '/store', icon: Store, label: 'TIENDA' },
     { href: '/collectibles', icon: Swords, label: 'COLECCIONABLES' },

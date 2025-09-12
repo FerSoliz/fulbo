@@ -1,4 +1,5 @@
 
+
 export interface User {
   id: string;
   name: string;
@@ -73,6 +74,23 @@ export interface Notification {
   link: string;
   isRead: boolean;
   createdAt: string;
+}
+
+export interface Message {
+    id: string;
+    senderId: string;
+    text: string;
+    timestamp: number;
+}
+
+export interface Conversation {
+    id: string; // Combination of two user IDs
+    participants: string[];
+    messages: Message[];
+    lastMessage?: {
+        text: string;
+        timestamp: number;
+    }
 }
 
 
@@ -308,3 +326,4 @@ export const initialNotifications: Notification[] = [
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // hace 2 días
     },
 ];
+
