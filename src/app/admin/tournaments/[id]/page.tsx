@@ -82,6 +82,7 @@ export default function TournamentDetailsPage() {
   const [fixture, setFixture] = useState<{ home: string; away: string }[][]>([]);
   const [isGroupStageFinished, setIsGroupStageFinished] = useState(false);
   const [matchResults, setMatchResults] = useState<any>({});
+  const [matchDetails, setMatchDetails] = useState<any>({});
   const [finishedMatches, setFinishedMatches] = useState<Set<string>>(new Set());
 
   const [playoffMatches, setPlayoffMatches] = useState({
@@ -131,6 +132,9 @@ export default function TournamentDetailsPage() {
 
     const savedResults = JSON.parse(localStorage.getItem(`results_${tournamentId}`) || '{}');
     setMatchResults(savedResults);
+    
+    const savedDetails = JSON.parse(localStorage.getItem(`details_${tournamentId}`) || '{}');
+    setMatchDetails(savedDetails);
 
     const savedFinished = JSON.parse(localStorage.getItem(`finished_matches_${tournamentId}`) || '[]');
     setFinishedMatches(new Set(savedFinished));
@@ -171,6 +175,19 @@ export default function TournamentDetailsPage() {
     };
     setMatchResults(newResults);
     localStorage.setItem(`results_${tournamentId}`, JSON.stringify(newResults));
+  }
+  
+  const handleDetailChange = (roundIndex: number, matchIndex: number, field: 'date' | 'time' | 'referee', value: string) => {
+    const matchId = `r${roundIndex}m${matchIndex}`;
+    const newDetails = {
+        ...matchDetails,
+        [matchId]: {
+            ...matchDetails[matchId],
+            [field]: value
+        }
+    };
+    setMatchDetails(newDetails);
+    localStorage.setItem(`details_${tournamentId}`, JSON.stringify(newDetails));
   }
 
   const calculateAllTournamentStats = () => {
@@ -498,6 +515,7 @@ export default function TournamentDetailsPage() {
                             const matchId = `r${roundIndex}m${matchIndex}`;
                             const isFinished = finishedMatches.has(matchId);
                             const result = matchResults[matchId] || {};
+                            const details = matchDetails[matchId] || {};
                             return (
                             <Card key={matchIndex} className={isFinished ? 'bg-green-900/20 border-green-500' : ''}>
                               <CardHeader>
@@ -526,9 +544,9 @@ export default function TournamentDetailsPage() {
                                   />
                                 </div>
                                 <div className="grid grid-cols-3 gap-4">
-                                  <Input type="date" disabled={isFinished}/>
-                                  <Input type="time" disabled={isFinished}/>
-                                  <Input placeholder="Árbitro" disabled={isFinished}/>
+                                  <Input type="date" value={details.date || ''} onChange={(e) => handleDetailChange(roundIndex, matchIndex, 'date', e.target.value)} disabled={isFinished}/>
+                                  <Input type="time" value={details.time || ''} onChange={(e) => handleDetailChange(roundIndex, matchIndex, 'time', e.target.value)} disabled={isFinished}/>
+                                  <Input placeholder="Árbitro" value={details.referee || ''} onChange={(e) => handleDetailChange(roundIndex, matchIndex, 'referee', e.target.value)} disabled={isFinished}/>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2">
                                     <Button variant="outline" disabled={isFinished} onClick={() => handleDownloadPlanilla(match, roundIndex, matchIndex)}>

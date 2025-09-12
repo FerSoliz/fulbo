@@ -68,13 +68,24 @@ interface PenaltyPosition {
     points: number;
 }
 
+interface FixtureMatch {
+    round: number;
+    home: string;
+    away: string;
+    score: string;
+    finished: boolean;
+    date: string;
+    time: string;
+    referee: string;
+}
+
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
     const [positions, setPositions] = useState<Position[]>([]);
     const [scorers, setScorers] = useState<Scorer[]>([]);
     const [sanctions, setSanctions] = useState<Sanction[]>([]);
     const [penalties, setPenalties] = useState<PenaltyPosition[]>([]);
-    const [fixture, setFixture] = useState<{ round: number; home: string; score: string; away: string; finished: boolean }[]>([]);
+    const [fixture, setFixture] = useState<FixtureMatch[]>([]);
     const [favorites, setFavorites] = useState<string[]>([]);
 
     useEffect(() => {
@@ -84,12 +95,14 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
         const savedPenalties = JSON.parse(localStorage.getItem(`penalties_${tournament.id}`) || '[]');
         const savedFixture = JSON.parse(localStorage.getItem(`fixture_${tournament.id}`) || '[]');
         const savedResults = JSON.parse(localStorage.getItem(`results_${tournament.id}`) || '{}');
+        const savedDetails = JSON.parse(localStorage.getItem(`details_${tournament.id}`) || '{}');
         const savedFinishedMatches = new Set(JSON.parse(localStorage.getItem(`finished_matches_${tournament.id}`) || '[]'));
 
-        const fullFixture = savedFixture.flatMap((round: any[], roundIndex: number) => 
+        const fullFixture: FixtureMatch[] = savedFixture.flatMap((round: any[], roundIndex: number) => 
             round.map((match: any, matchIndex: number) => {
                 const matchId = `r${roundIndex}m${matchIndex}`;
                 const result = savedResults[matchId];
+                const details = savedDetails[matchId];
                 const isFinished = savedFinishedMatches.has(matchId);
                 return {
                     round: roundIndex + 1,
@@ -97,6 +110,9 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                     away: match.away,
                     score: isFinished ? `${result?.home || 0} - ${result?.away || 0}` : 'vs',
                     finished: isFinished,
+                    date: details?.date || '-',
+                    time: details?.time || '-',
+                    referee: details?.referee || '-',
                 }
             })
         );
@@ -194,23 +210,36 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                 <TabsContent value="fixture" className="mt-4">
                    <div className="rounded-lg border max-h-96 overflow-y-auto">
                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[80px]">Fecha</TableHead>
-                            <TableHead className="text-right">Local</TableHead>
-                            <TableHead className="text-center w-[100px]">Resultado</TableHead>
-                            <TableHead>Visitante</TableHead>
-                          </TableRow>
-                        </TableHeader>
                         <TableBody>
-                          {fixture.map((match, index) => (
-                            <TableRow key={index}>
-                              <TableCell className="font-medium">F. {match.round}</TableCell>
-                              <TableCell className="text-right">{match.home}</TableCell>
-                              <TableCell className={`text-center font-bold ${!match.finished && 'text-sm'}`}>{match.score}</TableCell>
-                              <TableCell>{match.away}</TableCell>
-                            </TableRow>
-                          ))}
+                            {fixture.reduce((acc, match, index) => {
+                                const lastMatch = acc[acc.length - 1];
+                                // Check if it's a new round and add a header row
+                                if (!lastMatch || (lastMatch.type === 'match' && lastMatch.props.match.round !== match.round)) {
+                                    acc.push(
+                                        <TableRow key={`header-${match.round}`} className="bg-muted hover:bg-muted">
+                                            <TableCell colSpan={4} className="font-bold text-center">
+                                                FECHA {match.round}
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                }
+                                acc.push(
+                                    <TableRow key={index} data-type="match">
+                                        <TableCell className="text-right">{match.home}</TableCell>
+                                        <TableCell className={`text-center font-bold ${!match.finished && 'text-sm'}`}>
+                                            {match.score}
+                                            {!match.finished && 
+                                             <div className="text-xs font-normal text-muted-foreground">
+                                                {new Date(match.date).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })} - {match.time}hs
+                                             </div>
+                                            }
+                                        </TableCell>
+                                        <TableCell>{match.away}</TableCell>
+                                        <TableCell className="text-xs text-muted-foreground text-right">{match.referee}</TableCell>
+                                    </TableRow>
+                                );
+                                return acc;
+                            }, [] as any[])}
                         </TableBody>
                       </Table>
                    </div>
