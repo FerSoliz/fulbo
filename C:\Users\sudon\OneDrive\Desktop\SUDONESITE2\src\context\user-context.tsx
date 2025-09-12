@@ -20,17 +20,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // TEMPORARY: Automatically log in as admin user for development
+    const adminUser = initialUsers.find(u => u.role === 'admin');
+    if (adminUser) {
+        setUserState(adminUser);
+    } else {
+        setUserState(defaultVisitor);
+    }
+    setLoading(false);
+
+    // Original Firebase Auth logic is commented out for now
+    /*
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
         // User is signed in.
-        // Try to find user in localStorage first, then in initialUsers.
         const allKnownUsers = [...initialUsers, ...(JSON.parse(localStorage.getItem('users') || '[]'))];
         let foundUser = allKnownUsers.find(u => u.email === firebaseUser.email);
         
         if (foundUser) {
             setUserState(foundUser);
-            // Ensure local storage is up to date with this user.
             localStorage.setItem('currentUser', JSON.stringify(foundUser));
         } else {
             // This is a new Firebase user not in our mock data. Create a basic profile.
@@ -60,12 +69,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
+    */
   }, []);
   
   const logout = async () => {
-    await auth.signOut();
+    // await auth.signOut(); // Commented out to maintain logged-in state
     setUserState(defaultVisitor); // Set to visitor immediately
     localStorage.removeItem('currentUser');
+    // For development, we might want to reload to go back to admin
+    window.location.reload();
   };
 
   return (
