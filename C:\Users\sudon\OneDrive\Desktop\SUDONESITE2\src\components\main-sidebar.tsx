@@ -1,9 +1,8 @@
-
 'use client';
 
 import {
   Bell,
-  BookCopy,
+  MessageSquare,
   Cog,
   Home,
   LogOut,
@@ -44,7 +43,7 @@ const footerMenuItems = [
 ];
 
 
-export function MainSidebar() {
+export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
   const { user, loading, logout } = useUser();
   const router = useRouter();
@@ -89,8 +88,13 @@ export function MainSidebar() {
     });
   };
 
+  const sidebarClasses = cn(
+    "flex flex-col bg-card h-full",
+    { "fixed left-0 hidden h-screen w-64 border-r md:flex": !isMobile },
+  );
+
   return (
-    <aside className="fixed left-0 hidden h-screen w-64 flex-col border-r bg-card md:flex">
+    <aside className={sidebarClasses}>
         <div className="flex h-16 items-center justify-center border-b p-2">
           <Link href="/">
             <Image
@@ -121,9 +125,9 @@ export function MainSidebar() {
                             </Avatar>
                         </AnimatedAvatar>
                     </Link>
-                    <div className="flex flex-col">
-                        <span className="font-semibold">{user.name}</span>
-                        {user.name !== 'VISITANTE' && <span className="text-sm text-muted-foreground">@{user.name === 'Lucio Mingrone' ? 'luccio' : user.name.split(' ')[0].toLowerCase()}</span>}
+                    <div className="flex flex-col overflow-hidden">
+                        <span className="font-semibold truncate">{user.name}</span>
+                        {user.name !== 'VISITANTE' && <span className="text-sm text-muted-foreground truncate">@{user.name === 'Lucio Mingrone' ? 'luccio' : user.name.split(' ')[0].toLowerCase()}</span>}
                     </div>
                 </>
             ) : null}
@@ -143,7 +147,7 @@ export function MainSidebar() {
                         disabled={loading}
                     >
                         <LogOut className="h-5 w-5" />
-                        <span className="lg:text-base">CERRAR SESIÓN</span>
+                        <span className="lg:text-base">{user?.name === 'VISITANTE' ? 'INICIAR SESIÓN' : 'CERRAR SESIÓN'}</span>
                     </Button>
                 </li>
             </ul>
