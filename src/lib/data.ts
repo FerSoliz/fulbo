@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -65,6 +66,16 @@ export interface Product {
   isInitial?: boolean;
 }
 
+export interface Notification {
+  id: string;
+  type: 'sudpoints' | 'post' | 'like' | 'pack' | 'team';
+  message: string;
+  link: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+
 export const sudpointConfig = {
     win: 25,
     loss: -15,
@@ -107,7 +118,8 @@ export const defaultVisitor: User = {
 export const users: User[] = [
   {
     id: '1',
-    name: 'LUCIO MINGRONE',
+    name: 'Lucio Mingrone',
+    email: 'lucionmingrone@gmail.com',
     avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
     location: 'Buenos Aires, Argentina',
     isVerified: true,
@@ -243,4 +255,56 @@ export const initialProducts: Product[] = [
     ],
     isInitial: true,
   },
+];
+
+
+export const initialNotifications: Notification[] = [
+    {
+        id: '0',
+        type: 'post',
+        message: '¡Bienvenido! Siéntete libre de explorar la página, editar tu perfil o lo que quieras hacer.',
+        link: '/profile/1',
+        isRead: false,
+        createdAt: new Date().toISOString(),
+    },
+    {
+        id: '1',
+        type: 'post',
+        message: 'Lucio Mingrone ha hecho una nueva publicación.',
+        link: '/',
+        isRead: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // hace 5 mins
+    },
+    {
+        id: '2',
+        type: 'sudpoints',
+        message: '¡Ganaste 25 Sudpoints por tu victoria!',
+        link: '/profile/1',
+        isRead: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // hace 2 horas
+    },
+    {
+        id: '3',
+        type: 'like',
+        message: 'A Leo Messi le ha gustado tu comentario: "¡Gracias Dibu!".',
+        link: '/',
+        isRead: false,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // hace 8 horas
+    },
+    {
+        id: '4',
+        type: 'pack',
+        message: '¡Tu sobre diario gratuito está listo para abrir!',
+        link: '/collectibles',
+        isRead: true,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // hace 1 día
+    },
+    {
+        id: '5',
+        type: 'team',
+        message: 'Se han actualizado los resultados de la "Liga Anual 2024".',
+        link: '/leagues',
+        isRead: true,
+        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // hace 2 días
+    },
 ];
