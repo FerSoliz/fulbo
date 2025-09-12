@@ -25,44 +25,13 @@ interface PageHeaderProps {
   user: User;
 }
 
-const favorites = [
-    { id: '1', type: 'tournament', name: 'Liga Anual 2024', avatar: 'https://i.postimg.cc/NfHBrS60/liga-anual.png', hasNewContent: true, abbrev: "LI"},
-    { id: '2', type: 'tournament', name: 'Copa Verano', avatar: 'https://i.postimg.cc/W3d9b4Vf/copa-verano.png', hasNewContent: true, abbrev: "CO" },
-    { id: '3', type: 'tournament', name: 'Torneo Relámpago', avatar: 'https://i.postimg.cc/8zJ17B67/torneo-relampago.png', hasNewContent: false, abbrev: "TO" },
-    { id: '4', type: 'user', name: '@leomessi', avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg', hasNewContent: false, abbrev: "LM" },
-    { id: '5', type: 'user', name: '@dibumartinez', avatar: 'https://i.postimg.cc/44rD55vT/dibu.jpg', hasNewContent: false, abbrev: "DM" },
-];
-
 export function PageHeader({ user }: PageHeaderProps) {
   const hasNotifications = true;
   return (
     <header className="sticky top-0 z-20 w-full bg-[#291e37]/80 backdrop-blur-sm border-b">
         <div className="flex h-14 items-center justify-between px-4 sm:px-6">
-            
-            {/* FAVORITOS - A LA IZQUIERDA */}
-            <div className="flex flex-1 items-center gap-2">
-                 <Star className="h-4 w-4 text-muted-foreground"/>
-                 <TooltipProvider>
-                    <div className="flex gap-2">
-                        {favorites.map((fav) => (
-                        <Tooltip key={fav.id}>
-                            <TooltipTrigger asChild>
-                                <Link href="#" className="flex flex-col items-center">
-                                    <div className={cn(fav.hasNewContent ? "bg-gradient-to-br from-accent to-primary" : "bg-muted-foreground/50", "p-0.5 rounded-full")}>
-                                        <Avatar className="w-8 h-8 border-2 border-background">
-                                            <AvatarImage src={fav.avatar} />
-                                            <AvatarFallback>{fav.abbrev}</AvatarFallback>
-                                        </Avatar>
-                                    </div>
-                                </Link>
-                            </TooltipTrigger>
-                             <TooltipContent>
-                                <p>{fav.name}</p>
-                            </TooltipContent>
-                        </Tooltip>
-                        ))}
-                    </div>
-                </TooltipProvider>
+            <div className="flex-1">
+                {/* Espacio a la izquierda, antes estaba favoritos */}
             </div>
 
             {/* BUSCADOR - CENTRO */}
