@@ -122,7 +122,7 @@ export const defaultVisitor: User = {
     id: '1',
     name: 'Lucio Mingrone',
     email: 'lucionmingrone@gmail.com',
-    avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
+    avatar: '/images/MARADONA_Y_EL_PURO_e1630357319461.jpg',
     location: 'Buenos Aires, Argentina',
     isVerified: true,
     role: 'admin',
@@ -131,7 +131,7 @@ export const defaultVisitor: User = {
     league: 'Bronce',
     division: 4,
     stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-};
+  };
 
 
 export const users: User[] = [
@@ -139,7 +139,7 @@ export const users: User[] = [
     id: '1',
     name: 'Lucio Mingrone',
     email: 'lucionmingrone@gmail.com',
-    avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
+    avatar: '/images/MARADONA_Y_EL_PURO_e1630357319461.jpg',
     location: 'Buenos Aires, Argentina',
     isVerified: true,
     role: 'admin',
@@ -152,7 +152,7 @@ export const users: User[] = [
   {
     id: 'user-2',
     name: 'Leo Messi',
-    avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg',
+    avatar: '/images/messi.jpg',
     location: 'Rosario, Argentina',
     isVerified: true,
     role: 'editor',
@@ -166,7 +166,7 @@ export const users: User[] = [
   {
     id: 'user-3',
     name: 'Dibu Martinez',
-    avatar: 'https://i.postimg.cc/44rD55vT/dibu.jpg',
+    avatar: '/images/dibu.jpg',
     location: 'Mar del Plata, Argentina',
     isVerified: false,
     role: 'user',
@@ -186,7 +186,7 @@ export const posts: Post[] = [
         title: "¡Arrancó la Liga Anual 2024!",
         content: "Estamos muy emocionados de anunciar el comienzo de la Liga Anual de SUDONE. Prepárense para competir y demostrar quién es el mejor. ¡Mucha suerte a todos los participantes!",
         media: [
-            { type: "image", url: "https://i.postimg.cc/NfHBrS60/liga-anual.png" },
+            { type: "image", url: "/images/liga-anual.png" },
         ],
         likes: ['user-2', 'user-3'],
         comments: [
@@ -215,11 +215,11 @@ export const posts: Post[] = [
         title: "Algunas fotos del último entrenamiento",
         content: "Dejándolo todo en la cancha para lo que se viene. ¡Vamos equipo!",
         media: [
-            { type: "image", url: "https://i.postimg.cc/VLZz1sN1/dibu-training-1.jpg" },
-            { type: "image", url: "https://i.postimg.cc/jSgWc4pD/dibu-training-2.jpg" },
-            { type: "image", url: "https://i.postimg.cc/6pRf05s3/dibu-training-3.jpg" },
-            { type: "image", url: "https://i.postimg.cc/y8BmcX33/dibu-training-4.jpg" },
-            { type: "image", url: "https://i.postimg.cc/Z5xLQrG6/dibu-training-5.jpg" },
+            { type: "image", url: "/images/dibu-training-1.jpg" },
+            { type: "image", url: "/images/dibu-training-2.jpg" },
+            { type: "image", url: "/images/dibu-training-3.jpg" },
+            { type: "image", url: "/images/dibu-training-4.jpg" },
+            { type: "image", url: "/images/dibu-training-5.jpg" },
         ],
         likes: ['1'],
         comments: [],
@@ -235,8 +235,8 @@ export const initialProducts: Product[] = [
     price: 79000,
     stock: 15,
     images: [
-      'https://i.postimg.cc/yYxSjD0h/camiseta-titular-frente.png',
-      'https://i.postimg.cc/pL3kSzY9/camiseta-titular-espalda.png',
+      '/images/camiseta-titular-frente.png',
+      '/images/camiseta-titular-espalda.png',
     ],
     isInitial: true,
   },
@@ -247,8 +247,8 @@ export const initialProducts: Product[] = [
     price: 79000,
     stock: 10,
     images: [
-      'https://i.postimg.cc/XvWWbXJ7/camiseta-suplente-frente.png',
-      'https://i.postimg.cc/L8p5Gs56/camiseta-suplente-espalda.png',
+      '/images/camiseta-suplente-frente.png',
+      '/images/camiseta-suplente-espalda.png',
     ],
     isInitial: true,
   },
@@ -259,7 +259,7 @@ export const initialProducts: Product[] = [
     price: 49000,
     stock: 20,
     images: [
-      'https://i.postimg.cc/Wb7gMLHh/short-titular.png',
+      '/images/short-titular.png',
     ],
     isInitial: true,
   },
@@ -270,7 +270,7 @@ export const initialProducts: Product[] = [
     price: 49000,
     stock: 0,
     images: [
-      'https://i.postimg.cc/3wH2tXWb/short-suplente.png',
+      '/images/short-suplente.png',
     ],
     isInitial: true,
   },

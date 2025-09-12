@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -246,7 +245,7 @@ export default function ProfilePage() {
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger>
-                                                <Image src="https://i.postimg.cc/SQM9LfMY/verificado.png" alt="Verificado" width={24} height={24} />
+                                                <Image src="/images/verificado.png" alt="Verificado" width={24} height={24} />
                                             </TooltipTrigger>
                                             <TooltipContent>
                                                 <p>Usuario Verificado</p>
@@ -358,5 +357,4 @@ export default function ProfilePage() {
         </div>
     );
 }
-
     

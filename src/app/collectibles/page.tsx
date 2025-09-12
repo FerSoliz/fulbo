@@ -214,7 +214,7 @@ const MainMenu = ({ onOpenPack, setView, user }: { onOpenPack: () => void, setVi
       <div className="grid grid-cols-1 md:grid-cols-3">
         <div className="relative md:col-span-1 h-64 md:h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-r-none">
           <Image
-               src="https://i.postimg.cc/QMqLDWsL/BANNER-GAME.png"
+               src="/images/BANNER_GAME.png"
                alt="Banner del juego de cartas coleccionables"
                fill
                className="object-cover"
