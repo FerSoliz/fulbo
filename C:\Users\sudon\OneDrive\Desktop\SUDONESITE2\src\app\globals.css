@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 260 26% 17%;
+    --foreground: 210 40% 98%;
+    --card: 251 32% 16%;
+    --card-foreground: 210 40% 98%;
+    --popover: 251 32% 16%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 345 100% 50%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 261 28% 22%;
+    --muted-foreground: 215 20.2% 75.1%;
+    --accent: 345 100% 50%;
+    --accent-foreground: 355.7 100% 97.3%;
+    --sidebar-accent: 345 100% 50%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 261 28% 25%;
+    --input: 261 28% 25%;
+    --ring: 345 100% 50%;
+    --radius: 0.5rem;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+ 
+  .dark {
+    --background: 260 26% 17%;
+    --foreground: 210 40% 98%;
+    --card: 251 32% 16%;
+    --card-foreground: 210 40% 98%;
+    --popover: 251 32% 16%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 345 100% 50%;
+    --primary-foreground: 355.7 100% 97.3%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 261 28% 22%;
+    --muted-foreground: 215 20.2% 75.1%;
+    --accent: 345 100% 50%;
+    --accent-foreground: 355.7 100% 97.3%;
+    --sidebar-accent: 345 100% 50%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 261 28% 25%;
+    --input: 261 28% 25%;
+    --ring: 345 100% 50%;
+    --radius: 0.5rem;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+ 
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .shimmer-effect {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 0.5rem; /* Corresponds to rounded-lg */
+    -webkit-mask-image: var(--mask-image);
+    mask-image: var(--mask-image);
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+  }
+  .shimmer-effect::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 20%;
+    height: 200%;
+    background: linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(25deg);
+    animation: shimmer 4s infinite cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-150%) rotate(25deg);
+    }
+    100% {
+      transform: translateX(150%) rotate(25deg);
+    }
+  }
+
+  .holographic {
+    position: relative;
+    overflow: hidden;
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+  .holographic::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      110deg,
+      rgba(255, 255, 255, 0) 40%,
+      rgba(255, 255, 255, 0.5) 50%,
+      rgba(255, 255, 255, 0) 60%
+    );
+    opacity: 0.5;
+    mix-blend-mode: color-dodge;
+    transition: background-position 0.1s ease-out;
+  }
+  .holographic[data-rarity="rare"]::before {
+    background-image: linear-gradient(110deg, rgba(50, 50, 255, 0) 40%, rgba(50, 50, 255, 0.5) 50%, rgba(50, 50, 255, 0) 60%);
+  }
+  .holographic[data-rarity="epic"]::before {
+    background-image: linear-gradient(110deg, rgba(128, 0, 128, 0) 40%, rgba(128, 0, 128, 0.6) 50%, rgba(128, 0, 128, 0) 60%);
+  }
+  .holographic[data-rarity="legendary"]::before, .holographic[data-rarity="hero"]::before, .holographic[data-rarity="CRACKS"]::before, .holographic[data-rarity="LEYENDA MUNDIAL"]::before {
+    background-image: linear-gradient(110deg, rgba(255, 215, 0, 0) 40%, rgba(255, 215, 0, 0.7) 50%, rgba(255, 215, 0, 0) 60%);
+    animation: holographic-shine 5s infinite;
+  }
+  @keyframes holographic-shine {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+}
+
+.main-sidebar-button[data-active="true"] {
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--accent-foreground));
+}
+
+.main-sidebar-button:hover {
+    background-color: hsl(var(--sidebar-accent));
+    color: hsl(var(--accent-foreground));
+}
