@@ -19,7 +19,7 @@ import {
 import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
 import { useRouter } from 'next/navigation';
-import { initialNotifications, Notification } from '@/lib/data';
+import { Notification } from '@/lib/data';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -40,9 +40,8 @@ const notificationIcons: { [key: string]: React.ElementType } = {
 };
 
 export function PageHeader() {
-  const { user, loading, logout } = useUser();
+  const { user, loading, logout, notifications, setNotifications } = useUser();
   const router = useRouter();
-  const [notifications, setNotifications] = React.useState<Notification[]>(initialNotifications);
   
   const hasUnreadNotifications = notifications.some(n => !n.isRead);
 
@@ -54,7 +53,9 @@ export function PageHeader() {
   const handleOpenNotifications = () => {
     // Mark all as read when opening
     setTimeout(() => {
-        setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+        setNotifications(prevNotifications => 
+            prevNotifications.map(n => ({ ...n, isRead: true }))
+        );
     }, 1000);
   }
 

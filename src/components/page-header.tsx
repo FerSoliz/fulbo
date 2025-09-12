@@ -1,14 +1,13 @@
 
 'use client';
 
-import { Bell, Camera, Layers, LogOut, Search, User as UserIcon, Star } from 'lucide-react';
+import { Bell, Camera, Layers, LogOut, Search, User as UserIcon, Star, FileText, Heart, Package, Trophy } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import * as React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import type { User } from '@/lib/data';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,12 +16,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
 import { Skeleton } from './ui/skeleton';
-
-interface PageHeaderProps {
-  user: User | null;
-}
+import { useUser } from '@/context/user-context';
+import { useRouter } from 'next/navigation';
+import { Notification } from '@/lib/data';
+import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 const favorites = [
     { id: '1', type: 'tournament', name: 'Liga Anual 2024', avatar: 'https://i.postimg.cc/NfHBrS60/liga-anual.png', hasNewContent: true, abbrev: "LI"},
@@ -32,8 +31,34 @@ const favorites = [
     { id: '5', type: 'user', name: '@dibumartinez', avatar: 'https://i.postimg.cc/44rD55vT/dibu.jpg', hasNewContent: false, abbrev: "DM" },
 ];
 
-export function PageHeader({ user }: PageHeaderProps) {
-  const hasNotifications = true;
+const notificationIcons: { [key: string]: React.ElementType } = {
+  post: FileText,
+  sudpoints: Trophy,
+  like: Heart,
+  pack: Package,
+  team: Trophy,
+};
+
+export function PageHeader() {
+  const { user, loading, logout, notifications, setNotifications } = useUser();
+  const router = useRouter();
+  
+  const hasUnreadNotifications = notifications.some(n => !n.isRead);
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  }
+
+  const handleOpenNotifications = () => {
+    // Mark all as read when opening
+    setTimeout(() => {
+        setNotifications(prevNotifications => 
+            prevNotifications.map(n => ({ ...n, isRead: true }))
+        );
+    }, 1000);
+  }
+
   return (
     <header className="sticky top-0 z-20 w-full bg-[#291e37]/80 backdrop-blur-sm">
         <div className="flex h-14 items-center justify-between px-4 sm:px-6">
@@ -79,11 +104,42 @@ export function PageHeader({ user }: PageHeaderProps) {
                         <span className="font-bold text-sm">GRATIS</span>
                     </Button>
                 </Link>
-                <Button variant="ghost" size="icon" className="relative">
-                    <Bell className="h-5 w-5" />
-                    {hasNotifications && <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />}
-                </Button>
-                {user ? (
+                <DropdownMenu onOpenChange={(open) => open && handleOpenNotifications()}>
+                    <DropdownMenuTrigger asChild>
+                         <Button variant="ghost" size="icon" className="relative">
+                            <Bell className="h-5 w-5" />
+                            {hasUnreadNotifications && <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />}
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-80">
+                         <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        {notifications.length > 0 ? notifications.map(notif => {
+                            const Icon = notificationIcons[notif.type] || Bell;
+                            return (
+                                <DropdownMenuItem key={notif.id} asChild>
+                                    <Link href={notif.link} className="flex items-start gap-3">
+                                         <div className="relative">
+                                             <Icon className="h-4 w-4 mt-1" />
+                                             {!notif.isRead && <div className="absolute -right-1 top-0 h-1.5 w-1.5 rounded-full bg-accent" />}
+                                         </div>
+                                         <div className="flex-1">
+                                             <p className="text-sm whitespace-normal">{notif.message}</p>
+                                             <p className="text-xs text-muted-foreground mt-1">
+                                                 {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: es })}
+                                             </p>
+                                         </div>
+                                    </Link>
+                                </DropdownMenuItem>
+                            )
+                        }) : (
+                            <p className="p-4 text-sm text-center text-muted-foreground">No tienes notificaciones.</p>
+                        )}
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                {loading ? (
+                   <Skeleton className="h-10 w-10 rounded-full" />
+                ) : user && user.name !== 'VISITANTE' ? (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="rounded-full">
@@ -102,14 +158,16 @@ export function PageHeader({ user }: PageHeaderProps) {
                             <span>Perfil</span>
                           </DropdownMenuItem>
                         </Link>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleLogout}>
                           <LogOut className="mr-2 h-4 w-4" />
                           <span>Cerrar Sesión</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                 ) : (
-                   <Skeleton className="h-10 w-10 rounded-full" />
+                    <Link href="/login">
+                        <Button>Iniciar Sesión</Button>
+                    </Link>
                 )}
             </div>
         </div>
