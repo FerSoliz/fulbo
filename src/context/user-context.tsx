@@ -23,18 +23,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
 
   useEffect(() => {
-    // TEMPORARY: Automatically log in as admin user for development
-    const adminUser = initialUsers.find(u => u.role === 'admin');
-    if (adminUser) {
-        setUserState(adminUser);
-        localStorage.setItem('currentUser', JSON.stringify(adminUser));
-    } else {
-        setUserState(defaultVisitor);
-    }
-    setLoading(false);
-
-    // Original Firebase Auth logic is commented out for now
-    /*
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
@@ -77,14 +65,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-    */
   }, []);
   
   const logout = async () => {
-    // await signOut(auth); // Commented out to maintain logged-in state
+    await signOut(auth); 
     setUserState(defaultVisitor); // Set to visitor immediately
     localStorage.removeItem('currentUser');
-    // For development, we might want to reload to go back to admin
     window.location.reload();
   };
   
