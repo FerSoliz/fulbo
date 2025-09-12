@@ -275,14 +275,17 @@ const MainMenu = ({ onOpenPack, setView }: { onOpenPack: () => void, setView: (v
 const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: View) => void }) => {
   const router = useRouter();
   const [isOpening, setIsOpening] = useState(false);
+  const [packVisible, setPackVisible] = useState(true);
   const [revealedCardIndex, setRevealedCardIndex] = useState<number>(-1);
 
   const handleOpenPackAnimation = () => {
-    if (cards.length > 0) {
-        setIsOpening(true);
-        setTimeout(() => {
-          setRevealedCardIndex(0); // Reveal the first card
-        }, 1000);
+    if (cards.length > 0 && !isOpening) {
+      setIsOpening(true);
+      // Wait for pack animation to finish before hiding it and showing the card
+      setTimeout(() => {
+        setPackVisible(false);
+        setRevealedCardIndex(0); // Reveal the first card
+      }, 800); // Duration of the pack exit animation
     }
   };
 
@@ -290,62 +293,62 @@ const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: V
     if (revealedCardIndex < cards.length - 1) {
       setRevealedCardIndex(prev => prev + 1);
     } else {
-      // Last card clicked, go to collection
+      // Last card clicked, go back to menu or collection
       router.push('/collectibles/collection');
     }
   };
   
   useEffect(() => {
-    // If the view is 'pack' but the pack is empty, something is wrong, go back to menu.
+    // If the view is 'pack' but the pack is empty, go back to menu.
     if (cards.length === 0) {
         setView('menu');
         return;
     }
-    // If we have cards and haven't started opening, start the animation.
-    if (cards.length > 0 && !isOpening) {
-        handleOpenPackAnimation();
-    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cards, isOpening, setView]);
+  }, [cards, setView]);
 
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex flex-col items-center justify-center h-full w-full">
       <AnimatePresence>
-        {!isOpening && cards.length > 0 && (
+        {packVisible && (
           <motion.div
-            initial={{ opacity: 1 }}
-            exit={{ scale: 0, opacity: 0, rotate: 720 }}
-            transition={{ duration: 1, ease: 'easeInOut' }}
+            key="pack"
+            initial={{ opacity: 1, scale: 1 }}
+            animate={isOpening ? { scale: 1.1, transition: { duration: 0.3, ease: 'easeOut' } } : {}}
+            exit={{ scale: 1.2, opacity: 0, transition: { duration: 0.5, ease: 'easeIn' } }}
+            className="flex flex-col items-center"
           >
-            <CardPack onOpen={handleOpenPackAnimation} />
+            <CardPack />
+             <Button onClick={handleOpenPackAnimation} className="mt-8">
+              ABRIR SOBRE
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {isOpening && revealedCardIndex > -1 && cards.length > 0 && revealedCardIndex < cards.length && (
+        {!packVisible && revealedCardIndex > -1 && revealedCardIndex < cards.length && (
           <motion.div
             key={revealedCardIndex}
-            initial={{ opacity: 0, y: 100, scale: 0.5 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -100, scale: 0.8, transition: { duration: 0.3 } }}
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.3 } }}
             transition={{ duration: 0.5, ease: 'easeOut' }}
             onClick={handleNextCard}
-            className="cursor-pointer w-72"
+            className="cursor-pointer w-72 flex flex-col items-center"
           >
             <CollectibleCard card={cards[revealedCardIndex]} />
+            <p className="mt-4 text-muted-foreground">Haz clic en la carta para revelar la siguiente</p>
           </motion.div>
         )}
       </AnimatePresence>
       
       {revealedCardIndex > -1 && (
-        <p className="mt-4 text-muted-foreground">Haz clic en la carta para revelar la siguiente</p>
+        <div className="mt-8">
+          <Button onClick={() => setView('menu')} variant="secondary">Volver al Menú</Button>
+        </div>
       )}
-
-      <div className="mt-8 flex gap-4">
-        <Button onClick={() => setView('menu')}>Volver al Menú</Button>
-      </div>
     </div>
   );
 };
