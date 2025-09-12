@@ -1,14 +1,12 @@
 'use client';
 
-import { Bell, Camera, Layers, LogOut, Search, User as UserIcon } from 'lucide-react';
+import { Bell, Camera, Layers, LogOut, Search, User as UserIcon, Star } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import * as React from 'react';
-import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { cn } from '@/lib/utils';
 import type { User } from '@/lib/data';
 import {
   DropdownMenu,
@@ -18,6 +16,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 interface PageHeaderProps {
   user: User;
@@ -37,13 +36,40 @@ export function PageHeader({ user }: PageHeaderProps) {
     <header className="sticky top-0 z-20 w-full bg-[#291e37]/80 backdrop-blur-sm">
         <div className="flex h-14 items-center justify-between px-4 sm:px-6">
             <div className="flex-1" />
-            <form className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                    placeholder="Buscar perfiles..."
-                    className="w-full rounded-full pl-10"
-                />
-            </form>
+            <div className="flex flex-1 justify-center items-center gap-2">
+                <form className="relative flex-1 max-w-md">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                        placeholder="Buscar perfiles..."
+                        className="w-full rounded-full pl-10"
+                    />
+                </form>
+                 <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                        <Star className="h-5 w-5 text-yellow-400"/>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64">
+                    <DropdownMenuLabel>Favoritos</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {favorites.map(fav => (
+                         <DropdownMenuItem key={fav.id} asChild>
+                            <Link href="#" className="flex items-center justify-between">
+                                 <div className="flex items-center gap-2">
+                                     <Avatar className="w-6 h-6">
+                                        <AvatarImage src={fav.avatar} />
+                                        <AvatarFallback>{fav.abbrev}</AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm">{fav.name}</span>
+                                 </div>
+                                {fav.hasNewContent && <div className="h-2 w-2 rounded-full bg-accent" />}
+                            </Link>
+                         </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
             <div className="flex flex-1 items-center justify-end gap-2">
                 <Link href="/collectibles">
                     <Button variant="ghost" className="flex items-center gap-2">
@@ -80,26 +106,6 @@ export function PageHeader({ user }: PageHeaderProps) {
                   </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-        </div>
-        <div>
-            <ScrollArea className="w-full whitespace-nowrap">
-                <div className="p-3">
-                    <h3 className="text-sm font-semibold mb-2">Favoritos:</h3>
-                    <div className="flex gap-4">
-                        {favorites.map((fav) => (
-                        <Link href="#" key={fav.id} className="flex flex-col items-center gap-1">
-                            <div className={cn(fav.hasNewContent ? "bg-gradient-to-br from-accent to-primary" : "bg-muted-foreground/50", "p-0.5 rounded-full")}>
-                                <Avatar className="w-14 h-14 border-2 border-background">
-                                    <AvatarImage src={fav.avatar} />
-                                    <AvatarFallback>{fav.abbrev}</AvatarFallback>
-                                </Avatar>
-                            </div>
-                            <span className="text-xs text-muted-foreground">{fav.name}</span>
-                        </Link>
-                        ))}
-                    </div>
-                </div>
-            </ScrollArea>
         </div>
         <div className="px-4 pb-2">
             <Link href="https://www.monsterenergy.com" target="_blank" rel="noopener noreferrer">
