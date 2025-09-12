@@ -31,6 +31,7 @@ const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
     { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', adminOnly: true },
     { href: '/leagues', icon: Trophy, label: 'LIGAS EN CURSO' },
+    { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
     { href: '/store', icon: Store, label: 'TIENDA' },
     { href: '/collectibles', icon: Swords, label: 'COLECCIONABLES' },
@@ -98,7 +99,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
         <div className="flex h-16 items-center justify-center border-b p-2">
           <Link href="/">
             <Image
-              src="/images/sudone-titulo.png"
+              src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
               alt="SUDONE Logo"
               width={140}
               height={40}
