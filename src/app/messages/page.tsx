@@ -26,11 +26,9 @@ function MessagesPageContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load users from local storage
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     setAllUsers(storedUsers);
 
-    // Load conversations from local storage
     const savedConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
     setConversations(savedConversations);
 
@@ -58,11 +56,13 @@ function MessagesPageContent() {
         setActiveConversationId(conversationId);
       }
     } else if (conversations.length > 0 && !activeConversationId) {
-       // Open the most recent conversation by default
        const sortedConversations = [...conversations].sort((a, b) => (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0));
-       setActiveConversationId(sortedConversations[0].id);
+       if (sortedConversations.length > 0) {
+           setActiveConversationId(sortedConversations[0].id);
+       }
     }
-  }, [recipientId, currentUser, conversations, allUsers, activeConversationId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipientId, currentUser, allUsers]);
   
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -110,7 +110,7 @@ function MessagesPageContent() {
       {/* Sidebar de Conversaciones */}
       <div className="w-1/3 border-r flex flex-col">
         <div className="p-4 border-b">
-          <h2 className="text-xl font-bold">Mensajes</h2>
+          <h2 className="text-xl font-bold">{currentUser?.name}</h2>
         </div>
         <ScrollArea className="flex-1">
           {conversations
@@ -157,12 +157,11 @@ function MessagesPageContent() {
               <h2 className="text-lg font-semibold">{otherParticipant.name}</h2>
             </div>
             <ScrollArea className="flex-1 p-4 bg-muted/20">
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {activeConversation.messages.map(msg => (
                   <div key={msg.id} className={cn("flex", msg.senderId === currentUser?.id ? 'justify-end' : 'justify-start')}>
-                    <div className={cn("max-w-xs md:max-w-md p-3 rounded-lg", msg.senderId === currentUser?.id ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
+                    <div className={cn("max-w-xs md:max-w-md p-3 rounded-lg text-sm", msg.senderId === currentUser?.id ? 'bg-primary text-primary-foreground' : 'bg-muted')}>
                       <p>{msg.text}</p>
-                      <p className="text-xs opacity-70 mt-1 text-right">{format(new Date(msg.timestamp), 'p')}</p>
                     </div>
                   </div>
                 ))}
@@ -173,11 +172,12 @@ function MessagesPageContent() {
               <div className="flex items-center gap-2">
                 <Input
                   placeholder="Escribe un mensaje..."
+                  className="rounded-full"
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                 />
-                <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                <Button onClick={handleSendMessage} disabled={!newMessage.trim()} size="icon" className="rounded-full">
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
@@ -185,9 +185,15 @@ function MessagesPageContent() {
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
-            <MessageSquareDashed className="w-16 h-16 text-muted-foreground mb-4"/>
-            <h2 className="text-xl font-semibold">Selecciona una conversación</h2>
-            <p className="text-muted-foreground">O inicia una nueva desde el perfil de un usuario.</p>
+            <div className="w-24 h-24 rounded-full border-2 border-foreground flex items-center justify-center mb-4">
+                 <Send className="w-12 h-12 text-foreground"/>
+            </div>
+            <h2 className="text-2xl font-bold">Tus Mensajes</h2>
+            <p className="text-muted-foreground">Envía mensajes privados a un amigo.</p>
+            <Button className="mt-4" onClick={() => {
+                const firstConvo = conversations.sort((a, b) => (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0))[0];
+                if (firstConvo) setActiveConversationId(firstConvo.id);
+            }}>Empezar a chatear</Button>
           </div>
         )}
       </div>

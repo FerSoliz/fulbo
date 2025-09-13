@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Wand2, Bug, MessageSquare } from 'lucide-react';
+import { Wand2, Bug, Send } from 'lucide-react';
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -49,11 +49,11 @@ export function FloatingActionButtons() {
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button 
-                        className="rounded-full h-14 w-14 shadow-lg bg-blue-500 hover:bg-blue-600 text-white" 
+                        className="rounded-full h-14 w-14 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground" 
                         size="icon"
                         onClick={() => router.push('/messages')}
                     >
-                        <MessageSquare className="h-7 w-7" />
+                        <Send className="h-7 w-7" />
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent side="left">
