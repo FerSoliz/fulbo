@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
-const packImageUrl = '/images/sobre-base-campeones-de-qatar.png';
+const packImageUrl = 'https://i.postimg.cc/qM6GyVNg/sobre-base-campeones-de-qatar.png';
 
 export function CardPack() {
   return (

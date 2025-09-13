@@ -99,7 +99,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
         <div className="flex h-16 items-center justify-center border-b p-2">
           <Link href="/">
             <Image
-              src="/images/sudone-titulo.png"
+              src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
               alt="SUDONE Logo"
               width={140}
               height={40}
