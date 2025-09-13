@@ -41,7 +41,7 @@ const menuItems = [
 ];
 
 const socialItems = [
-    { href: 'https://youtube.com', icon: Youtube, label: 'YOUTUBE' },
+    { href: 'https://www.youtube.com/@ORGANIZACIONSUDONE', icon: Youtube, label: 'YOUTUBE' },
     { href: 'https://instagram.com', icon: Instagram, label: 'INSTAGRAM' },
 ];
 
@@ -152,7 +152,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 <div className="flex justify-start gap-2 py-2">
                     {socialItems.map(item => (
                         <li key={item.href}>
-                             <Link href={item.href} passHref target="_blank">
+                             <Link href={item.href} passHref target="_blank" rel="noopener noreferrer">
                                 <Button
                                 variant='destructive'
                                 size="icon"
