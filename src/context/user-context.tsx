@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { auth, isMockConfig } from '@/lib/firebase';
+import { auth, isMocked as isMockConfig } from '@/lib/firebase';
 import type { User, Notification } from '@/lib/data';
 import { initialNotifications, initialUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
