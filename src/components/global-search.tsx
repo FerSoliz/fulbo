@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
 import { Search, User, Trophy, Gamepad2, Newspaper } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/context/user-context';
@@ -84,6 +84,15 @@ export function GlobalSearch() {
         default: return <Search className="h-4 w-4 text-muted-foreground"/>
     }
   }
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    if (e.target.value.length > 0 && !open) {
+      setOpen(true);
+    } else if (e.target.value.length === 0 && open) {
+      setOpen(false);
+    }
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -92,11 +101,10 @@ export function GlobalSearch() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
                 ref={inputRef}
-                onClick={() => setOpen(true)}
                 placeholder="Buscar perfiles, torneos..."
                 className="w-full rounded-full pl-10"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleInputChange}
             />
              <kbd className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">
                 <span className="text-xs">⌘</span>K
@@ -106,7 +114,7 @@ export function GlobalSearch() {
       <PopoverContent className="p-0 w-[--radix-popover-trigger-width] mt-2" align="start">
         <Command shouldFilter={false}>
           <CommandList>
-            {filteredData.length === 0 && searchTerm.length > 2 && (
+            {filteredData.length === 0 && searchTerm.length > 0 && (
                 <CommandEmpty>No se encontraron resultados.</CommandEmpty>
             )}
             {filteredData.map(item => (
