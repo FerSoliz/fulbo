@@ -21,104 +21,85 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true); // Separate state for auth readiness
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      try {
-        setUserState(JSON.parse(savedUser));
-      } catch {
-        setUserState(defaultVisitor);
-      }
-    } else {
-      setUserState(defaultVisitor);
-    }
-    setLoading(false);
-
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setLoading(true);
+      setAuthLoading(true);
       if (firebaseUser) {
-        const isNewUser = firebaseUser.metadata.creationTime === firebaseUser.metadata.lastSignInTime;
-        
+        // User is signed in
         const storedUsersJSON = localStorage.getItem('users') || '[]';
         const allKnownUsers = [...initialUsers, ...JSON.parse(storedUsersJSON)];
         let foundUser = allKnownUsers.find(u => u.id === firebaseUser.uid);
 
         if (foundUser) {
-            const updatedUser = {
+          // Update existing user with latest from Firebase
+           const updatedUser = {
                 ...foundUser,
                 name: firebaseUser.displayName || foundUser.name,
+                email: firebaseUser.email || foundUser.email,
                 avatar: firebaseUser.photoURL || foundUser.avatar,
                 isVerified: firebaseUser.emailVerified || foundUser.isVerified,
             };
             setUserState(updatedUser);
             localStorage.setItem('currentUser', JSON.stringify(updatedUser));
         } else {
-            const userName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Nuevo Usuario';
-            const userAvatar = firebaseUser.photoURL || `https://avatar.vercel.sh/${userName.replace(/\s+/g, '')}.png`;
-            const newUser: User = {
-                id: firebaseUser.uid,
-                name: userName,
-                email: firebaseUser.email || '',
-                role: 'user',
-                avatar: userAvatar,
-                location: 'Desconocida',
-                isVerified: firebaseUser.emailVerified,
-                sudpoints: 0,
-                baseSudpoints: 0,
-                league: 'Bronce',
-                division: 4,
-                stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-            };
-            const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-            localStorage.setItem('users', JSON.stringify([...storedUsers, newUser]));
-            setUserState(newUser);
-            localStorage.setItem('currentUser', JSON.stringify(newUser));
+          // New user, create a profile
+          const userName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Nuevo Usuario';
+          const newUser: User = {
+            id: firebaseUser.uid,
+            name: userName,
+            email: firebaseUser.email || '',
+            role: 'user',
+            avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${userName.replace(/\s+/g, '')}.png`,
+            location: 'Desconocida',
+            isVerified: firebaseUser.emailVerified,
+            sudpoints: 0,
+            baseSudpoints: 0,
+            league: 'Bronce',
+            division: 4,
+            stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+          };
+          
+          const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+          localStorage.setItem('users', JSON.stringify([...storedUsers, newUser]));
+          setUserState(newUser);
+          localStorage.setItem('currentUser', JSON.stringify(newUser));
         }
-        
-        if (isNewUser) {
-            toast({ title: '¡Cuenta creada!', description: 'Bienvenido a SUDONE.' });
-        } else {
-            toast({ title: '¡Bienvenido de vuelta!', description: 'Has iniciado sesión correctamente.' });
-        }
-        router.push('/');
-
       } else {
+        // User is signed out
         setUserState(defaultVisitor);
-        localStorage.removeItem('currentUser');
+        localStorage.setItem('currentUser', JSON.stringify(defaultVisitor));
       }
-      setLoading(false);
+      setAuthLoading(false);
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const logout = async () => {
-    setLoading(true);
     await signOut(auth);
     setUserState(defaultVisitor);
-    localStorage.clear();
+    localStorage.setItem('currentUser', JSON.stringify(defaultVisitor)); // Set to visitor on logout
     router.push('/login');
     toast({ title: 'Sesión Cerrada', description: 'Has cerrado sesión correctamente.' });
-    setLoading(false);
   };
   
   const setUser = (updatedUser: User | null) => {
       setUserState(updatedUser);
-      if(updatedUser && updatedUser.id !== 'visitor-0'){
+      if(updatedUser){
           localStorage.setItem('currentUser', JSON.stringify(updatedUser));
       } else {
-          localStorage.removeItem('currentUser');
+          // This case should ideally not happen, fallback to visitor
+          localStorage.setItem('currentUser', JSON.stringify(defaultVisitor));
       }
   }
 
   return (
-    <UserContext.Provider value={{ user, loading, logout, setUser, notifications, setNotifications }}>
+    <UserContext.Provider value={{ user, loading: authLoading, logout, setUser, notifications, setNotifications }}>
       {children}
     </UserContext.Provider>
   );
