@@ -49,7 +49,7 @@ export function FloatingActionButtons() {
             <Tooltip>
                  <TooltipTrigger asChild>
                     <Button 
-                        className="rounded-full h-11 w-11 shadow-lg bg-yellow-500 hover:bg-yellow-600 text-white" 
+                        className="rounded-full h-11 w-11 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground" 
                         size="icon"
                         onClick={() => setIsReportOpen(true)}
                     >
