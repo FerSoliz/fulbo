@@ -1,6 +1,7 @@
 
 
 
+
 export interface User {
   id: string;
   name: string;
@@ -146,7 +147,7 @@ export const initialUsers: User[] = [
     avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg',
     location: 'Rosario, Argentina',
     isVerified: true,
-    role: 'editor',
+    role: 'user',
     isBlocked: false,
     sudpoints: 80,
     baseSudpoints: 0,
@@ -158,6 +159,30 @@ export const initialUsers: User[] = [
 ];
 
 export const posts: Post[] = [
+     {
+        id: 4,
+        authorId: 'admin-user',
+        title: "Nuevas funcionalidades en la plataforma",
+        content: "Hemos estado trabajando duro para traerles nuevas características. ¡Pronto podrán disfrutar del sistema de ranking de jugadores y las cartas coleccionables! 🔥",
+        media: [
+             { type: "image", url: "https://i.postimg.cc/SRHq90Yg/sudone-features.png" }
+        ],
+        likes: ['editor-user'],
+        comments: [],
+        createdAt: "2024-05-23T12:00:00Z"
+    },
+    {
+        id: 3,
+        authorId: 'admin-user',
+        title: "¡Inscripciones Abiertas - Copa Verano!",
+        content: "Ya están abiertas las inscripciones para la edición de verano de nuestra copa. ¡No te quedes afuera! Equipos limitados. Más info en la sección 'Inscribirme'.",
+        media: [
+             { type: "image", url: "https://i.postimg.cc/W3d9b4Vf/copa-verano.png" }
+        ],
+        likes: [],
+        comments: [],
+        createdAt: "2024-05-22T18:00:00Z"
+    },
     {
         id: 1,
         authorId: 'admin-user',
