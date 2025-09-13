@@ -74,7 +74,7 @@ export default function RegisterPage() {
         password: password, // In a real app, this should be hashed
         role: 'user',
         avatar: `https://avatar.vercel.sh/${username.replace(/\s+/g, '')}.png`,
-        isVerified: false,
+        isVerified: true,
         isBlocked: false,
         location: 'Desconocida',
         sudpoints: 0,
