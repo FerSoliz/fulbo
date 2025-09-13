@@ -1,20 +1,26 @@
-// This file is intentionally left with mock data as Firebase is not being used for authentication.
-// You can remove this file or repurpose it if you decide to use other Firebase services.
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
-    apiKey: "mock-key",
-    authDomain: "mock-domain.firebaseapp.com",
-    projectId: "mock-project",
-    storageBucket: "mock-project.appspot.com",
-    messagingSenderId: "mock-sender-id",
-    appId: "mock-app-id"
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
 };
 
-// Mock Firebase services if needed elsewhere to avoid crashes
-const app = {};
-const auth = {};
-const storage = {};
-const GoogleAuthProvider = function() {};
-const signInWithPopup = () => Promise.reject("Firebase auth is not configured.");
+// Initialize Firebase
+const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth = getAuth(app);
+const storage = getStorage(app);
 
-export { app, auth, storage, GoogleAuthProvider, signInWithPopup };
+// Check if the config is just placeholder values
+const isMockConfig = firebaseConfig.apiKey === "YOUR_API_KEY";
+
+if (isMockConfig) {
+    console.warn("Firebase config is not set. Using mock implementation. Please replace placeholder values in src/lib/firebase.ts");
+}
+
+export { app, auth, storage, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, isMockConfig };

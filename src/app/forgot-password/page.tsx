@@ -17,6 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
+import { auth, sendPasswordResetEmail } from '@/lib/firebase';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
 export default function ForgotPasswordPage() {
@@ -29,18 +30,24 @@ export default function ForgotPasswordPage() {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // This is a mock implementation. In a real app, you'd send an email.
-    console.log(`Password reset requested for ${email}`);
-    
-    setTimeout(() => {
-        setIsSent(true);
-        toast({
-            title: "Correo de Recuperación Enviado",
-            description: "Si existe una cuenta con ese email, recibirás un enlace para restablecer tu contraseña (simulación).",
-        });
-        setIsLoading(false);
-    }, 1000);
+    try {
+      await sendPasswordResetEmail(auth, email);
+      setIsSent(true);
+      toast({
+        title: "Correo Enviado",
+        description: "Si existe una cuenta con ese email, recibirás un enlace para restablecer tu contraseña.",
+      });
+    } catch (error: any) {
+      console.error("Password reset error", error);
+      // For security, we show the same message whether the user exists or not.
+      setIsSent(true);
+      toast({
+        title: "Correo Enviado",
+        description: "Si existe una cuenta con ese email, recibirás un enlace para restablecer tu contraseña.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

@@ -2,12 +2,15 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { auth, isMockConfig } from '@/lib/firebase';
 import type { User, Notification } from '@/lib/data';
 import { initialNotifications, initialUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 
 interface UserContextType {
   user: User | null;
+  firebaseUser: FirebaseUser | null;
   allUsers: User[];
   setAllUsers: React.Dispatch<React.SetStateAction<User[]>>;
   loading: boolean;
@@ -35,7 +38,8 @@ const defaultVisitor: User = {
 };
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUserState] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -43,32 +47,72 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load all users from storage/initial data
+    // Load all non-Firebase user data from storage/initial data
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const combinedUsers = [...initialUsers, ...storedUsers];
     const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
     setAllUsers(uniqueUsers);
 
-    // Check for a logged-in user in localStorage
-    const loggedInUserId = localStorage.getItem('loggedInUserId');
-    if (loggedInUserId) {
-        const foundUser = uniqueUsers.find((u: User) => u.id === loggedInUserId);
+    if (isMockConfig) {
+      console.log("Using mock auth flow.");
+      const loggedInUserId = localStorage.getItem('loggedInUserId');
+      if (loggedInUserId) {
+        const foundUser = uniqueUsers.find((u:User) => u.id === loggedInUserId);
         if (foundUser) {
-            setUserState(foundUser);
-            // Load user-specific notifications
-            const storedNotifications = localStorage.getItem(`notifications_${foundUser.id}`);
-            setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
+          setUser(foundUser);
+          const storedNotifications = localStorage.getItem(`notifications_${foundUser.id}`);
+          setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
         } else {
-            // If user in localStorage not found, default to visitor
-            setUserState(defaultVisitor);
-            setNotifications([]);
+          setUser(defaultVisitor);
         }
-    } else {
-        // No user logged in, default to visitor
-        setUserState(defaultVisitor);
-        setNotifications([]);
+      } else {
+        setUser(defaultVisitor);
+      }
+      setLoading(false);
+      return;
     }
-    setLoading(false);
+
+    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
+      setFirebaseUser(fbUser);
+      if (fbUser) {
+        // User is signed in. Find matching user in our data or create a new one.
+        let appUser = uniqueUsers.find((u: User) => u.email === fbUser.email);
+        
+        if (!appUser) {
+          appUser = {
+            id: fbUser.uid,
+            name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Nuevo Usuario',
+            email: fbUser.email || '',
+            role: 'user',
+            avatar: fbUser.photoURL || `https://avatar.vercel.sh/${fbUser.uid}.png`,
+            isVerified: fbUser.emailVerified,
+            isBlocked: false,
+            location: 'Desconocida',
+            sudpoints: 0,
+            baseSudpoints: 0,
+            league: 'Bronce',
+            division: 4,
+            stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+          };
+          const newAllUsers = [...allUsers, appUser];
+          setAllUsers(newAllUsers);
+        }
+        
+        setUser(appUser);
+        const storedNotifications = localStorage.getItem(`notifications_${appUser.id}`);
+        setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
+        localStorage.setItem('loggedInUserId', appUser.id);
+      } else {
+        // User is signed out
+        setUser(defaultVisitor);
+        setFirebaseUser(null);
+        setNotifications([]);
+        localStorage.removeItem('loggedInUserId');
+      }
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -87,6 +131,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [notifications, user]);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
+    // This function is now only for the mock flow, as onAuthStateChanged handles real login
     const foundUser = allUsers.find(u => u.email === email && u.password === pass);
     if (foundUser) {
       if (foundUser.isBlocked) {
@@ -94,7 +139,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return false;
       }
       localStorage.setItem('loggedInUserId', foundUser.id);
-      setUserState(foundUser);
+      setUser(foundUser);
       const storedNotifications = localStorage.getItem(`notifications_${foundUser.id}`);
       setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
       return true;
@@ -103,15 +148,32 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    localStorage.removeItem('loggedInUserId');
-    setUserState(defaultVisitor);
+    if (!isMockConfig) {
+      await auth.signOut();
+    }
+    // The onAuthStateChanged listener will handle resetting the state
+    setUser(defaultVisitor);
     setNotifications([]);
+    localStorage.removeItem('loggedInUserId');
     toast({ title: 'Sesión Cerrada' });
     router.push('/login');
   };
 
+  const contextValue = {
+      user,
+      firebaseUser,
+      allUsers,
+      setAllUsers,
+      loading,
+      login,
+      logout,
+      notifications,
+      setNotifications,
+  };
+
+
   return (
-    <UserContext.Provider value={{ user, allUsers, setAllUsers, loading, login, logout, notifications, setNotifications }}>
+    <UserContext.Provider value={contextValue}>
       {children}
     </UserContext.Provider>
   );
