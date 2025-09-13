@@ -125,7 +125,7 @@ export const users: User[] = [];
 export const posts: Post[] = [
     {
         id: 1,
-        authorId: '1',
+        authorId: 'U84vcxnngCNqPQ2mfDUtHpep76522',
         title: "¡Arrancó la Liga Anual 2024!",
         content: "Estamos muy emocionados de anunciar el comienzo de la Liga Anual de SUDONE. Prepárense para competir y demostrar quién es el mejor. ¡Mucha suerte a todos los participantes!",
         media: [
@@ -145,10 +145,10 @@ export const posts: Post[] = [
         media: [
             { type: "video", url: "https://img.youtube.com/vi/FG_wffPU-yM/maxresdefault.jpg" },
         ],
-        likes: ['1', 'user-3'],
+        likes: ['U84vcxnngCNqPQ2mfDUtHpep76522', 'user-3'],
         comments: [
              { id: 2, authorId: 'user-3', content: "La atajada en el último minuto. ¡Gracias Dibu!", createdAt: "2024-05-21T15:30:00Z" },
-             { id: 3, authorId: '1', content: "El gol de Fideo. ¡Qué locura!", createdAt: "2024-05-21T16:00:00Z" }
+             { id: 3, authorId: 'U84vcxnngCNqPQ2mfDUtHpep76522', content: "El gol de Fideo. ¡Qué locura!", createdAt: "2024-05-21T16:00:00Z" }
         ],
         createdAt: "2024-05-21T14:00:00Z"
     },
@@ -164,7 +164,7 @@ export const posts: Post[] = [
             { type: "image", url: "https://i.postimg.cc/y8BmcX33/dibu-training-4.jpg" },
             { type: "image", url: "https://i.postimg.cc/Z5xLQrG6/dibu-training-5.jpg" },
         ],
-        likes: ['1'],
+        likes: ['U84vcxnngCNqPQ2mfDUtHpep76522'],
         comments: [],
         createdAt: "2024-05-22T09:00:00Z"
     }
@@ -225,7 +225,7 @@ export const initialNotifications: Notification[] = [
         id: '0',
         type: 'post',
         message: '¡Bienvenido! Siéntete libre de explorar la página, editar tu perfil o lo que quieras hacer.',
-        link: '/profile/1',
+        link: '/profile/U84vcxnngCNqPQ2mfDUtHpep76522',
         isRead: false,
         createdAt: new Date().toISOString(),
     },
@@ -241,7 +241,7 @@ export const initialNotifications: Notification[] = [
         id: '2',
         type: 'sudpoints',
         message: '¡Ganaste 25 Sudpoints por tu victoria!',
-        link: '/profile/1',
+        link: '/profile/U84vcxnngCNqPQ2mfDUtHpep76522',
         isRead: false,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // hace 2 horas
     },

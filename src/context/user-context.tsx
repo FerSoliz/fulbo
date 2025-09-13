@@ -7,6 +7,7 @@ import type { User, Notification } from '@/lib/data';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
+import { initialNotifications } from '@/lib/data';
 
 interface UserContextType {
   user: User | null;
@@ -44,7 +45,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             name: userName,
             email: firebaseUser.email || '',
             avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${userName.replace(/\s+/g, '')}.png`,
-            role: 'user', // Rol por defecto para nuevos usuarios
+            role: 'user', // Rol por defecto
             location: 'Desconocida',
             isVerified: firebaseUser.emailVerified,
             sudpoints: 0,
@@ -58,6 +59,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
           localStorage.setItem('users', JSON.stringify(updatedStoredUsers));
           setUserState(newUser);
         }
+        
+        const storedNotifications = localStorage.getItem(`notifications_${firebaseUser.uid}`);
+        setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
+        
 
         // Redirige si está en una página de autenticación después de iniciar sesión
         if (pathname === '/login' || pathname === '/register' || pathname === '/forgot-password') {
@@ -65,24 +70,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
 
       } else {
-        // No hay usuario de Firebase, se establece el usuario como null.
+        // No hay usuario de Firebase, se establece el usuario en null.
         setUserState(null);
+        setNotifications([]);
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  
+    useEffect(() => {
+    if (user?.id) {
+      localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
+    }
+  }, [notifications, user?.id]);
+
 
   const logout = async () => {
     await signOut(auth);
     setUserState(null);
+    setNotifications([]);
     router.push('/login');
     toast({ title: 'Sesión Cerrada' });
   };
   
-  // Función para actualizar manualmente el perfil de usuario (ej. al vincular cuenta)
+  // Función para actualizar manualmente el perfil de usuario
   const setUser = (updatedUser: User | null) => {
       setUserState(updatedUser);
       if (updatedUser) {
