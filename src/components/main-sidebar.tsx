@@ -13,6 +13,8 @@ import {
   Trophy,
   User as UserIcon,
   BarChart2,
+  Youtube,
+  Instagram,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -38,6 +40,11 @@ const menuItems = [
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
 ];
 
+const socialItems = [
+    { href: 'https://youtube.com', icon: Youtube, label: 'YOUTUBE', color: 'bg-red-600 hover:bg-red-700 text-white' },
+    { href: 'https://instagram.com', icon: Instagram, label: 'INSTAGRAM', color: 'bg-red-600 hover:bg-red-700 text-white' },
+];
+
 const footerMenuItems = [
     { href: '/settings', icon: Cog, label: 'CONFIGURACIÓN' },
     { href: '/profile', icon: UserIcon, label: 'MI PERFIL' },
@@ -54,20 +61,19 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
         router.push('/login');
     } else {
         await logout();
-        router.push('/login');
     }
   }
 
-  const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)[]) => {
+  const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems | typeof socialItems)) => {
     return items.map((item) => {
       if ('adminOnly' in item && item.adminOnly && user?.role !== 'admin' && user?.role !== 'editor') {
         return null;
       }
       
       let finalHref = item.href;
-      if(item.label === 'MI PERFIL' && user && user.name !== 'VISITANTE') {
+      if('label' in item && item.label === 'MI PERFIL' && user && user.name !== 'VISITANTE') {
           finalHref = `/profile/${user.id}`;
-      } else if (item.label === 'MI PERFIL' && (!user || user.name === 'VISITANTE')) {
+      } else if ('label' in item && item.label === 'MI PERFIL' && (!user || user.name === 'VISITANTE')) {
           finalHref = '/login'; // Redirect visitor to login
       }
 
@@ -75,11 +81,12 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
 
       return (
         <li key={item.href}>
-          <Link href={finalHref} passHref>
+          <Link href={finalHref} passHref target={'color' in item ? '_blank' : '_self'}>
             <Button
-              variant="ghost"
+              variant={'color' in item ? 'default' : 'ghost'}
               className={cn(
                 'main-sidebar-button w-full justify-start gap-2 text-foreground',
+                 'color' in item && item.color
               )}
               data-active={isActive}
               disabled={loading}
@@ -143,6 +150,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 {renderMenuItems(menuItems)}
             </ul>
             <ul className="mt-auto flex flex-col gap-1 border-t p-2">
+                {renderMenuItems(socialItems)}
                 {user?.name !== 'VISITANTE' && renderMenuItems(footerMenuItems)}
                  <li>
                     <Button
