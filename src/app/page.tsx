@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { CreatePostForm } from '@/components/create-post-form';
 import { PostCard } from '@/components/post-card';
-import { Post, User, users as initialUsers, posts as initialPosts } from '@/lib/data';
+import { Post, User, posts as initialPosts } from '@/lib/data';
 import { useUser } from '@/context/user-context';
 
 
@@ -17,11 +17,7 @@ export default function HomePage() {
   useEffect(() => {
     // Cargar todos los usuarios (iniciales + almacenados)
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    const combinedUsers = [...initialUsers, ...storedUsers];
-    const uniqueUsers = Array.from(
-      new Map(combinedUsers.map((user) => [user.id, user])).values()
-    );
-    setAllUsers(uniqueUsers);
+    setAllUsers(storedUsers);
 
     // Cargar publicaciones o establecer las iniciales si no hay ninguna guardada
     const savedPosts = localStorage.getItem('posts');

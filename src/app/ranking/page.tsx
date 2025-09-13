@@ -12,7 +12,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Crown } from 'lucide-react';
-import { User, users as initialUsers, leagues } from '@/lib/data';
+import { User, leagues } from '@/lib/data';
 import { DivisionBadge } from '@/components/division-badge';
 import { cn } from '@/lib/utils';
 
@@ -23,13 +23,12 @@ export default function RankingPage() {
   useEffect(() => {
     // Combine initial users with users from localStorage
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    const allUsers = Array.from(new Map([...initialUsers, ...storedUsers].map(user => [user.id, user])).values());
-
+    
     const leagueOrder = leagues.map(l => l.name);
 
-    const sortedUsers = allUsers
-      .filter(user => user.uniqueCode) // Only show users who have linked their profile
-      .sort((a, b) => {
+    const sortedUsers = storedUsers
+      .filter((user: User) => user.uniqueCode) // Only show users who have linked their profile
+      .sort((a: User, b: User) => {
         const leagueIndexA = leagueOrder.indexOf(a.league);
         const leagueIndexB = leagueOrder.indexOf(b.league);
         if (leagueIndexA !== leagueIndexB) {
@@ -40,7 +39,7 @@ export default function RankingPage() {
         }
         return b.sudpoints - a.sudpoints; // Higher sudpoints first
       })
-      .map((user, index) => ({ ...user, rank: index + 1 }));
+      .map((user: User, index: number) => ({ ...user, rank: index + 1 }));
 
     setRankedUsers(sortedUsers);
     setLoading(false);

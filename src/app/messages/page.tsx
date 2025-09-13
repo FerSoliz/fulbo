@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useUser } from '@/context/user-context';
-import { User, Conversation, Message, users as initialUsers } from '@/lib/data';
+import { User, Conversation, Message } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -26,9 +26,9 @@ function MessagesPageContent() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Load users
+    // Load users from local storage
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    setAllUsers([...initialUsers, ...storedUsers]);
+    setAllUsers(storedUsers);
 
     // Load conversations from local storage
     const savedConversations = JSON.parse(localStorage.getItem('conversations') || '[]');

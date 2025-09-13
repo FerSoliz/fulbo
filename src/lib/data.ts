@@ -1,5 +1,6 @@
 
 
+
 export interface User {
   id: string;
   name: string;
@@ -119,66 +120,23 @@ export const leagues = [
 ];
 
 export const defaultVisitor: User = {
-    id: '1',
-    name: 'Lucio Mingrone',
-    email: 'lucionmingrone@gmail.com',
-    avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
-    location: 'Buenos Aires, Argentina',
-    isVerified: true,
-    role: 'admin',
-    sudpoints: 0,
-    baseSudpoints: 0,
-    league: 'Bronce',
-    division: 4,
-    stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-  };
+  id: 'visitor',
+  name: 'VISITANTE',
+  role: 'user',
+  avatar: 'https://avatar.vercel.sh/visitor.png',
+  location: '',
+  isVerified: false,
+  sudpoints: 0,
+  baseSudpoints: 0,
+  league: 'Bronce',
+  division: 4,
+  stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+};
 
+// Se eliminan los usuarios iniciales para depender únicamente de Firebase
+export const users: User[] = [];
 
-export const users: User[] = [
-  {
-    id: '1',
-    name: 'Lucio Mingrone',
-    email: 'lucionmingrone@gmail.com',
-    avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
-    location: 'Buenos Aires, Argentina',
-    isVerified: true,
-    role: 'admin',
-    sudpoints: 0,
-    baseSudpoints: 0,
-    league: 'Bronce',
-    division: 4,
-    stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-  },
-  {
-    id: 'user-2',
-    name: 'Leo Messi',
-    avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg',
-    location: 'Rosario, Argentina',
-    isVerified: true,
-    role: 'editor',
-    sudpoints: 80,
-    baseSudpoints: 0,
-    league: 'Oro',
-    division: 2,
-    uniqueCode: 'MESSI10',
-    stats: { partidosJugados: 10, victorias: 8, empates: 1, derrotas: 1, goles: 15, asistencias: 5, amarillas: 0, rojas: 0, mvps: 7 },
-  },
-  {
-    id: 'user-3',
-    name: 'Dibu Martinez',
-    avatar: 'https://i.postimg.cc/44rD55vT/dibu.jpg',
-    location: 'Mar del Plata, Argentina',
-    isVerified: false,
-    role: 'user',
-    sudpoints: 55,
-    baseSudpoints: 0,
-    league: 'Plata',
-    division: 3,
-    uniqueCode: 'DIBU23',
-    stats: { partidosJugados: 10, victorias: 5, empates: 3, derrotas: 2, goles: 0, asistencias: 1, amarillas: 1, rojas: 0, mvps: 3 },
-  },
-];
-
+// Las publicaciones y notificaciones iniciales pueden permanecer si son contenido de ejemplo
 export const posts: Post[] = [
     {
         id: 1,

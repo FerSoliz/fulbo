@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
-import { defaultVisitor, users as initialUsers, initialNotifications } from '@/lib/data';
+import { defaultVisitor } from '@/lib/data';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -31,23 +31,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
-        // User is signed in.
         const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const allKnownUsers: User[] = [...initialUsers, ...storedUsers];
-        let foundUser = allKnownUsers.find(u => u.id === firebaseUser.uid);
+        let foundUser = storedUsers.find((u: User) => u.id === firebaseUser.uid);
 
         if (foundUser) {
-          // Existing user, update session.
           setUserState(foundUser);
         } else {
-          // New user (registered). Create a local profile.
-          const userName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Nuevo Usuario';
+          // Si es un usuario nuevo, crea un perfil básico
+          const userName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'NuevoUsuario';
           const newUser: User = {
             id: firebaseUser.uid,
             name: userName,
             email: firebaseUser.email || '',
             avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${userName.replace(/\s+/g, '')}.png`,
-            role: 'user', // Default role
+            role: 'user', // Rol por defecto para nuevos usuarios
             location: 'Desconocida',
             isVerified: firebaseUser.emailVerified,
             sudpoints: 0,
@@ -56,40 +53,38 @@ export function UserProvider({ children }: { children: ReactNode }) {
             division: 4,
             stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
           };
-
-          // Save new user to localStorage
-          localStorage.setItem('users', JSON.stringify([...storedUsers, newUser]));
+          
+          const updatedStoredUsers = [...storedUsers, newUser];
+          localStorage.setItem('users', JSON.stringify(updatedStoredUsers));
           setUserState(newUser);
         }
-        
-        // Redirect if they are on an auth page
-        if (pathname === '/login' || pathname === '/register') {
-            toast({ title: '¡Bienvenido!', description: 'Has iniciado sesión correctamente.' });
-            router.push('/');
+
+        // Redirige si está en una página de autenticación después de iniciar sesión
+        if (pathname === '/login' || pathname === '/register' || pathname === '/forgot-password') {
+          router.push('/');
         }
 
       } else {
-        // User is signed out.
+        // No hay usuario de Firebase, establece el perfil de visitante
         setUserState(defaultVisitor);
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const logout = async () => {
     await signOut(auth);
-    // onAuthStateChanged will handle setting the user to visitor
+    // onAuthStateChanged se encargará de establecer el usuario a 'visitante'
     router.push('/login');
-    toast({ title: 'Sesión Cerrada', description: 'Has cerrado sesión correctamente.' });
+    toast({ title: 'Sesión Cerrada' });
   };
   
-  // This function is for manual updates to user profile, e.g. linking account
+  // Función para actualizar manualmente el perfil de usuario (ej. al vincular cuenta)
   const setUser = (updatedUser: User | null) => {
       setUserState(updatedUser);
-      // Persist this manual change
       if (updatedUser) {
         const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
         const userExists = storedUsers.some((u: User) => u.id === updatedUser.id);
