@@ -42,7 +42,7 @@ const menuItems = [
 
 const socialItems = [
     { href: 'https://www.youtube.com/@ORGANIZACIONSUDONE', icon: Youtube, label: 'YOUTUBE' },
-    { href: 'https://instagram.com', icon: Instagram, label: 'INSTAGRAM' },
+    { href: 'https://www.instagram.com/liga.sudone/', icon: Instagram, label: 'INSTAGRAM' },
 ];
 
 const footerMenuItems = [
