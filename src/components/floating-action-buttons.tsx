@@ -43,24 +43,8 @@ export function FloatingActionButtons() {
 
   return (
     <>
-      <div className="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-4">
+      <div className="fixed bottom-6 right-6 z-40 flex items-center gap-4">
         <TooltipProvider>
-            {/* Botón de Mensajes */}
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button 
-                        className="rounded-full h-14 w-14 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground" 
-                        size="icon"
-                        onClick={() => router.push('/messages')}
-                    >
-                        <Send className="h-7 w-7" />
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent side="left">
-                    <p>Mensajes</p>
-                </TooltipContent>
-            </Tooltip>
-
             {/* Botón de Reportar Error */}
             <Tooltip>
                  <TooltipTrigger asChild>
@@ -72,10 +56,27 @@ export function FloatingActionButtons() {
                         <Bug className="h-7 w-7" />
                     </Button>
                 </TooltipTrigger>
-                 <TooltipContent side="left">
+                 <TooltipContent side="top">
                     <p>Reportar un Error</p>
                 </TooltipContent>
             </Tooltip>
+            
+            {/* Botón de Mensajes */}
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button 
+                        className="rounded-full h-14 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground px-6" 
+                        onClick={() => router.push('/messages')}
+                    >
+                        <Send className="h-6 w-6 mr-2" />
+                        <span className="font-bold text-lg">MENSAJES</span>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top">
+                    <p>Abrir Mensajes</p>
+                </TooltipContent>
+            </Tooltip>
+
         </TooltipProvider>
       </div>
 
