@@ -140,12 +140,12 @@ export function GlobalSearch() {
                     {searchValue.length < 3 && history.length > 0 && (
                         <CommandGroup heading="Búsquedas Recientes">
                             {history.map(item => (
-                                <CommandItem key={`hist-${item.id}`} onSelect={() => handleSelect(item.path, item)} className="flex justify-between items-center">
+                                <CommandItem key={`hist-${item.id}`} onSelect={() => handleSelect(item.path, item)} className="flex justify-between items-center group">
                                     <div className="flex items-center">
                                         <History className="h-4 w-4 mr-3 text-muted-foreground"/>
                                         {item.name}
                                     </div>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => removeFromHistory(e, item.id)}>
+                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={(e) => removeFromHistory(e, item.id)}>
                                         <X className="h-4 w-4"/>
                                     </Button>
                                 </CommandItem>
