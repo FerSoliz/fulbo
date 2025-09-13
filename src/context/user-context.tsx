@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { initialNotifications, users as initialUsersData } from '@/lib/data';
@@ -25,26 +25,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const initializeData = useCallback(() => {
+  useEffect(() => {
+    // Cargar usuarios desde localStorage o inicializarlos si no existen
     const storedUsers = localStorage.getItem('users');
     if (!storedUsers) {
-        localStorage.setItem('users', JSON.stringify(initialUsersData));
+      localStorage.setItem('users', JSON.stringify(initialUsersData));
     }
-    const currentUser = localStorage.getItem('currentUser');
-    if(currentUser){
-        const parsedUser = JSON.parse(currentUser);
-        setUserState(parsedUser);
-        const storedNotifications = localStorage.getItem(`notifications_${parsedUser.id}`);
-        setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
+
+    // Cargar el usuario actual de la sesión
+    const currentUserJSON = localStorage.getItem('currentUser');
+    if (currentUserJSON) {
+      const loggedInUser = JSON.parse(currentUserJSON);
+      setUserState(loggedInUser);
+      // Cargar notificaciones para el usuario logueado
+      const storedNotifications = localStorage.getItem(`notifications_${loggedInUser.id}`);
+      setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
     }
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    initializeData();
-  }, [initializeData]);
-
-  useEffect(() => {
+    // Persistir notificaciones cuando cambian
     if (user?.id) {
       localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
     }
@@ -58,13 +59,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (foundUser.isBlocked) {
         toast({
           title: "Acceso Denegado",
-          description: "Esta cuenta ha sido bloqueada.",
+          description: "Esta cuenta ha sido bloqueada por un administrador.",
           variant: "destructive"
         });
         return false;
       }
       localStorage.setItem('currentUser', JSON.stringify(foundUser));
       setUserState(foundUser);
+      // Cargar notificaciones para el nuevo usuario que inicia sesión
+      const storedNotifications = localStorage.getItem(`notifications_${foundUser.id}`);
+      setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
       return true;
     }
     return false;
@@ -80,13 +84,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const setUser = (updatedUser: User | null) => {
     setUserState(updatedUser);
-    if(updatedUser){
-        localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const updatedUsers = storedUsers.map((u:User) => u.id === updatedUser.id ? updatedUser : u);
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
+    if (updatedUser) {
+      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+      // Actualizar también la lista completa de usuarios en localStorage
+      const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+      const updatedUsers = storedUsers.map((u: User) => (u.id === updatedUser.id ? updatedUser : u));
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
     } else {
-        localStorage.removeItem('currentUser');
+      localStorage.removeItem('currentUser');
     }
   };
 

@@ -18,10 +18,12 @@ import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Loader2, X } from 'lucide-react';
 import type { User } from '@/lib/data';
+import { useUser } from '@/context/user-context';
 
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { login } = useUser();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -73,6 +75,7 @@ export default function RegisterPage() {
         role: 'user',
         avatar: `https://avatar.vercel.sh/${username.replace(/\s+/g, '')}.png`,
         isVerified: false,
+        isBlocked: false,
         location: 'Desconocida',
         sudpoints: 0,
         baseSudpoints: 0,
@@ -84,15 +87,25 @@ export default function RegisterPage() {
     const updatedUsers = [...storedUsers, newUser];
     localStorage.setItem('users', JSON.stringify(updatedUsers));
     
-    // Auto-login the user after registration
-    localStorage.setItem('currentUser', JSON.stringify(newUser));
+    // Auto-login the user after registration by calling the context login function
+    const loginSuccess = login(email, password);
 
-    toast({
-        title: "¡Cuenta Creada!",
-        description: "Tu cuenta ha sido creada exitosamente. Serás redirigido.",
-    });
+    if (loginSuccess) {
+        toast({
+            title: "¡Cuenta Creada!",
+            description: "Tu cuenta ha sido creada exitosamente. Serás redirigido.",
+        });
+        router.push('/');
+    } else {
+        // This case should ideally not happen if registration is successful
+        toast({
+            title: "Error de inicio de sesión post-registro",
+            description: "No se pudo iniciar sesión automáticamente. Por favor, intenta iniciar sesión manualmente.",
+            variant: "destructive",
+        });
+        router.push('/login');
+    }
     
-    router.push('/');
     setIsLoading(false);
   };
 
