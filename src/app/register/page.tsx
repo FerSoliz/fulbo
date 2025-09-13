@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Loader2, X } from 'lucide-react';
 
 const GoogleIcon = () => (
     <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
@@ -124,9 +124,14 @@ export default function RegisterPage() {
                 />
             </Link>
         </div>
-        <Card>
+        <Card className="relative">
+          <Link href="/" passHref>
+            <Button variant="ghost" size="icon" className="absolute top-4 right-4">
+              <X className="h-5 w-5" />
+            </Button>
+          </Link>
           <form onSubmit={handleRegister}>
-            <CardHeader className="text-center">
+            <CardHeader className="text-center pt-12">
               <CardTitle className="text-2xl">Crear una Cuenta</CardTitle>
               <CardDescription>
                 Ingresa tu email y contraseña para registrarte
