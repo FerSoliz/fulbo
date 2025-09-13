@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
-import { defaultVisitor } from '@/lib/data';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
@@ -65,8 +64,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         }
 
       } else {
-        // No hay usuario de Firebase, establece el perfil de visitante
-        setUserState(defaultVisitor);
+        // No hay usuario de Firebase, se establece el usuario como null.
+        setUserState(null);
       }
       setLoading(false);
     });
@@ -77,7 +76,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
-    // onAuthStateChanged se encargará de establecer el usuario a 'visitante'
+    // onAuthStateChanged se encargará de establecer el usuario a null
+    localStorage.removeItem('user');
     router.push('/login');
     toast({ title: 'Sesión Cerrada' });
   };
