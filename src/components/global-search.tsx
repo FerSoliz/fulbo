@@ -100,6 +100,7 @@ export function GlobalSearch() {
 
   const handleSelect = (path: string, item: SearchResult) => {
     addToHistory(item);
+    setSearchValue('');
     setOpen(false);
     router.push(path);
   }
