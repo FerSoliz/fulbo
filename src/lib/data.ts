@@ -1,5 +1,6 @@
 
 
+
 export interface User {
   id: string;
   name: string;
@@ -119,7 +120,7 @@ export const leagues = [
     { name: 'Leyenda del Fútbol', divisions: 1, color: '#ff4500', icon: 'Star', nextLeague: null },
 ];
 
-export const users: User[] = [
+export const initialUsers: User[] = [
   {
     id: 'admin-user',
     name: 'Lucio Mingrone',
