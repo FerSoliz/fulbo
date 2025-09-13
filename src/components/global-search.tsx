@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Input } from '@/components/ui/input';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from '@/components/ui/command';
+import { Button } from '@/components/ui/button';
+import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Search, User, Trophy, Gamepad2, Newspaper } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/context/user-context';
@@ -28,13 +27,9 @@ export function GlobalSearch() {
   const router = useRouter();
   const { allUsers } = useUser();
   const [open, setOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
   const [allData, setAllData] = useState<SearchResult[]>([]);
-  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    // This effect runs when allUsers data is available from context
-    // Combine all data sources for searching
     const userResults: SearchResult[] = allUsers.map(user => ({
       type: 'USUARIO',
       id: user.id,
@@ -48,7 +43,7 @@ export function GlobalSearch() {
         type: 'TORNEO',
         id: t.id,
         name: t.name,
-        path: `/leagues`, // Or tournament-specific page if available
+        path: `/leagues`,
     }));
 
     setAllData([...userResults, ...tournamentResults, ...staticPages]);
@@ -58,86 +53,75 @@ export function GlobalSearch() {
     const down = (e: KeyboardEvent) => {
         if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
-            inputRef.current?.focus();
-            setOpen(o => !o);
+            setOpen((open) => !open);
         }
     }
     document.addEventListener('keydown', down);
     return () => document.removeEventListener('keydown', down);
+  }, []);
+
+  const runCommand = useCallback((command: () => unknown) => {
+    setOpen(false)
+    command()
   }, [])
-
-  const filteredData = searchTerm
-    ? allData.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    : [];
-
-  const handleSelect = (value: string) => {
-    const selectedItem = allData.find(item => `${item.type}-${item.id}` === value);
-    if(selectedItem) {
-        router.push(selectedItem.path);
-        setOpen(false);
-        setSearchTerm('');
-    }
-  };
   
   const getIcon = (type: SearchResult['type']) => {
     switch (type) {
-        case 'USUARIO': return <User className="h-4 w-4 text-muted-foreground"/>;
-        case 'TORNEO': return <Trophy className="h-4 w-4 text-muted-foreground"/>;
-        case 'PÁGINA': return <Newspaper className="h-4 w-4 text-muted-foreground"/>;
-        case 'JUEGO': return <Gamepad2 className="h-4 w-4 text-muted-foreground"/>;
-        default: return <Search className="h-4 w-4 text-muted-foreground"/>
-    }
-  }
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const term = e.target.value;
-    setSearchTerm(term);
-    if (term.length > 0 && !open) {
-      setOpen(true);
+        case 'USUARIO': return <User className="h-4 w-4 mr-2 text-muted-foreground"/>;
+        case 'TORNEO': return <Trophy className="h-4 w-4 mr-2 text-muted-foreground"/>;
+        case 'PÁGINA': return <Newspaper className="h-4 w-4 mr-2 text-muted-foreground"/>;
+        case 'JUEGO': return <Gamepad2 className="h-4 w-4 mr-2 text-muted-foreground"/>;
+        default: return <Search className="h-4 w-4 mr-2 text-muted-foreground"/>
     }
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-         <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-                ref={inputRef}
-                placeholder="Buscar perfiles, torneos..."
-                className="w-full rounded-full pl-10"
-                value={searchTerm}
-                onChange={handleInputChange}
-                onFocus={() => searchTerm.length > 0 && setOpen(true)}
-            />
-             <kbd className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">
-                <span className="text-xs">⌘</span>K
-            </kbd>
-        </div>
-      </PopoverTrigger>
-      <PopoverContent className="p-0 w-[--radix-popover-trigger-width] mt-2" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-        <Command shouldFilter={false} onValueChange={handleSelect}>
-          <CommandList>
-            {filteredData.length === 0 && searchTerm.length > 0 && (
-                <CommandEmpty>No se encontraron resultados.</CommandEmpty>
-            )}
-            {filteredData.map(item => (
-              <CommandItem key={`${item.type}-${item.id}`} value={`${item.type}-${item.id}`}>
-                <div className="flex items-center gap-3 flex-1">
-                    {item.avatar ? (
-                        <Avatar className="h-6 w-6">
-                            <AvatarImage src={item.avatar}/>
-                            <AvatarFallback>{item.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                    ) : getIcon(item.type)}
-                    <span>{item.name}</span>
-                </div>
-                <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm">{item.type}</span>
-              </CommandItem>
+    <>
+      <Button
+        variant="outline"
+        className="relative h-9 w-full justify-start rounded-full text-sm text-muted-foreground sm:pr-12 md:w-40 lg:w-64"
+        onClick={() => setOpen(true)}
+      >
+        <Search className="h-4 w-4 mr-2 lg:hidden" />
+        <span className="hidden lg:inline-flex">Buscar...</span>
+        <span className="inline-flex lg:hidden">Buscar...</span>
+        <kbd className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+          <span className="text-xs">⌘</span>K
+        </kbd>
+      </Button>
+      <CommandDialog open={open} onOpenChange={setOpen}>
+        <CommandInput placeholder="Busca un perfil, torneo, página..." />
+        <CommandList>
+          <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+           <CommandGroup heading="Usuarios">
+            {allData.filter(i => i.type === 'USUARIO').map(item => (
+                 <CommandItem key={item.path} onSelect={() => runCommand(() => router.push(item.path))}>
+                    <Avatar className="h-6 w-6 mr-2">
+                        <AvatarImage src={item.avatar}/>
+                        <AvatarFallback>{item.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    {item.name}
+                </CommandItem>
             ))}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+           </CommandGroup>
+           <CommandGroup heading="Torneos">
+             {allData.filter(i => i.type === 'TORNEO').map(item => (
+                 <CommandItem key={item.path} onSelect={() => runCommand(() => router.push(item.path))}>
+                    {getIcon(item.type)}
+                    {item.name}
+                </CommandItem>
+            ))}
+           </CommandGroup>
+           <CommandGroup heading="Otras Páginas">
+             {allData.filter(i => i.type === 'PÁGINA' || i.type === 'JUEGO').map(item => (
+                 <CommandItem key={item.path} onSelect={() => runCommand(() => router.push(item.path))}>
+                    {getIcon(item.type)}
+                    {item.name}
+                </CommandItem>
+            ))}
+           </CommandGroup>
+        </CommandList>
+      </CommandDialog>
+    </>
   );
 }

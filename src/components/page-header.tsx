@@ -4,7 +4,6 @@ import { Bell, Menu, Layers, LogOut, Search, User as UserIcon, Star, FileText, H
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import * as React from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
@@ -67,7 +66,7 @@ export function PageHeader() {
     console.log("Action clicked:", action);
     // Here you would implement the logic for accepting/rejecting friends
     // For now, we just log it
-    toast({title: "Acción no implementada", description: "La lógica para esta acción aún no está definida."})
+    // toast({title: "Acción no implementada", description: "La lógica para esta acción aún no está definida."})
   }
 
   const handleOpenNotifications = () => {
