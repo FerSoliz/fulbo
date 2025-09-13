@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Bell, Menu, Layers, LogOut, Search, User as UserIcon, Star, FileText, Heart, Package, Trophy } from 'lucide-react';
@@ -28,6 +27,7 @@ import { Notification } from '@/lib/data';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { MainSidebar } from './main-sidebar';
+import { GlobalSearch } from './global-search';
 
 
 const favorites = [
@@ -53,8 +53,11 @@ export function PageHeader() {
   const hasUnreadNotifications = notifications.some(n => !n.isRead);
 
   const handleLogout = async () => {
-    await logout();
-    router.push('/login');
+    if (user?.name === 'VISITANTE') {
+        router.push('/login');
+    } else {
+        await logout();
+    }
   }
 
   const handleOpenNotifications = () => {
@@ -82,13 +85,7 @@ export function PageHeader() {
                 </Sheet>
             </div>
             <div className="hidden md:flex flex-1 justify-center items-center gap-2">
-                <form className="relative flex-1 max-w-md">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <Input
-                        placeholder="Buscar perfiles..."
-                        className="w-full rounded-full pl-10"
-                    />
-                </form>
+                <GlobalSearch />
                  <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
@@ -192,13 +189,7 @@ export function PageHeader() {
             </div>
         </div>
         <div className="md:hidden px-4 pb-2">
-           <form className="relative flex-1 max-w-md mx-auto">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                <Input
-                    placeholder="Buscar perfiles..."
-                    className="w-full rounded-full pl-10"
-                />
-            </form>
+           <GlobalSearch />
         </div>
          <div className="px-4 pb-2">
             <Link href="https://www.monsterenergy.com" target="_blank" rel="noopener noreferrer">

@@ -1,0 +1,130 @@
+'use client';
+
+import { useState, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Search, User, Trophy, Gamepad2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { initialUsers } from '@/lib/data';
+
+type SearchResult = {
+  type: 'USUARIO' | 'TORNEO' | 'PÁGINA' | 'JUEGO';
+  id: string;
+  name: string;
+  avatar?: string;
+  path: string;
+};
+
+const staticPages: SearchResult[] = [
+    { type: 'PÁGINA', id: 'store', name: 'Tienda', path: '/store' },
+    { type: 'JUEGO', id: 'collectibles', name: 'Cartas Coleccionables', path: '/collectibles' },
+    { type: 'PÁGINA', id: 'ranking', name: 'Ranking de Jugadores', path: '/ranking' },
+    { type: 'PÁGINA', id: 'leagues', name: 'Ligas en Curso', path: '/leagues' },
+];
+
+export function GlobalSearch() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [allData, setAllData] = useState<SearchResult[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Combine all data sources for searching
+    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+    const allUsers = [...initialUsers, ...storedUsers];
+    const userResults: SearchResult[] = allUsers.map(user => ({
+      type: 'USUARIO',
+      id: user.id,
+      name: user.name,
+      avatar: user.avatar,
+      path: `/profile/${user.id}`,
+    }));
+
+    const storedTournaments = JSON.parse(localStorage.getItem('tournaments') || '[]');
+    const tournamentResults: SearchResult[] = storedTournaments.map((t: any) => ({
+        type: 'TORNEO',
+        id: t.id,
+        name: t.name,
+        path: `/leagues`, // Or tournament-specific page if available
+    }));
+
+    setAllData([...userResults, ...tournamentResults, ...staticPages]);
+  }, []);
+  
+  useEffect(() => {
+    const down = (e: KeyboardEvent) => {
+        if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            setOpen(o => !o);
+        }
+    }
+    document.addEventListener('keydown', down);
+    return () => document.removeEventListener('keydown', down);
+  }, [])
+
+  const filteredData = searchTerm
+    ? allData.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    : [];
+
+  const handleSelect = (path: string) => {
+    setOpen(false);
+    setSearchTerm('');
+    router.push(path);
+  };
+  
+  const getIcon = (type: SearchResult['type']) => {
+    switch (type) {
+        case 'USUARIO': return <User className="h-4 w-4 text-muted-foreground"/>;
+        case 'TORNEO': return <Trophy className="h-4 w-4 text-muted-foreground"/>;
+        case 'PÁGINA': return <Search className="h-4 w-4 text-muted-foreground"/>;
+        case 'JUEGO': return <Gamepad2 className="h-4 w-4 text-muted-foreground"/>;
+    }
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+         <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+                ref={inputRef}
+                onClick={() => setOpen(true)}
+                placeholder="Buscar perfiles, torneos..."
+                className="w-full rounded-full pl-10"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+            />
+             <kbd className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">
+                <span className="text-xs">⌘</span>K
+            </kbd>
+        </div>
+      </PopoverTrigger>
+      <PopoverContent className="p-0 w-[--radix-popover-trigger-width] mt-2" align="start">
+        <Command shouldFilter={false}>
+          <CommandList>
+            {filteredData.length === 0 && searchTerm.length > 2 && (
+                <CommandEmpty>No se encontraron resultados.</CommandEmpty>
+            )}
+            {filteredData.map(item => (
+              <CommandItem key={item.id} onSelect={() => handleSelect(item.path)} value={item.name}>
+                <div className="flex items-center gap-3 flex-1">
+                    {item.avatar ? (
+                        <Avatar className="h-6 w-6">
+                            <AvatarImage src={item.avatar}/>
+                            <AvatarFallback>{item.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                    ) : getIcon(item.type)}
+                    <span>{item.name}</span>
+                </div>
+                <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-sm">{item.type}</span>
+              </CommandItem>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
