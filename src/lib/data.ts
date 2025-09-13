@@ -1,8 +1,3 @@
-
-
-
-
-
 export interface User {
   id: string;
   name: string;
@@ -73,11 +68,12 @@ export interface Product {
 
 export interface Notification {
   id: string;
-  type: 'sudpoints' | 'post' | 'like' | 'pack' | 'team';
+  type: 'sudpoints' | 'post' | 'like' | 'pack' | 'team' | 'friend_request';
   message: string;
   link: string;
   isRead: boolean;
   createdAt: string;
+  actions?: { label: string; action: string; }[];
 }
 
 export interface Message {

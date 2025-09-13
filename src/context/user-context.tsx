@@ -11,6 +11,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 interface UserContextType {
   user: User | null;
   allUsers: User[];
+  setAllUsers: React.Dispatch<React.SetStateAction<User[]>>;
   loading: boolean;
   logout: () => Promise<void>;
   notifications: Notification[];
@@ -43,7 +44,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Cargar todos los usuarios una vez
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const combinedUsers = [...initialUsers, ...storedUsers];
     const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
@@ -52,18 +52,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
-        // User is signed in. Find them in our user data.
         let foundUser = uniqueUsers.find((u: User) => u.email === firebaseUser.email);
 
         if (!foundUser) {
-          // If not in our DB, create a basic profile
           foundUser = {
             id: firebaseUser.uid,
             name: firebaseUser.displayName || 'Nuevo Usuario',
             email: firebaseUser.email!,
             role: 'user',
             avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
-            isVerified: true, // As per previous request
+            isVerified: true, 
             isBlocked: false,
             location: 'Desconocida',
             sudpoints: 0,
@@ -80,10 +78,30 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUserState(foundUser);
         
         const storedNotifications = localStorage.getItem(`notifications_${foundUser.id}`);
-        setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
+        const currentNotifications = storedNotifications ? JSON.parse(storedNotifications) : initialNotifications;
+        
+        // Check for pending friend requests on login
+        const friendRequests = JSON.parse(localStorage.getItem(`friendRequests_${foundUser.id}`) || '[]');
+        friendRequests.forEach((req: any) => {
+             const notificationExists = currentNotifications.some((n: Notification) => n.actions?.some(a => a.action.includes(req.from)));
+             if (!notificationExists) {
+                currentNotifications.unshift({
+                    id: `fr-${req.from}-${Date.now()}`,
+                    type: 'friend_request',
+                    message: `${req.name} te ha enviado una solicitud de amistad.`,
+                    link: `/profile/${req.from}`,
+                    isRead: false,
+                    createdAt: new Date().toISOString(),
+                    actions: [
+                        { label: 'Aceptar', action: `accept_friend_${req.from}`},
+                        { label: 'Rechazar', action: `reject_friend_${req.from}`}
+                    ]
+                })
+             }
+        });
+        setNotifications(currentNotifications);
         
       } else {
-        // User is signed out.
         setUserState(defaultVisitor);
         setNotifications([]);
       }
@@ -91,11 +109,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
     
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    // Persist notifications when they change
     if (user && user.id !== 'visitor') {
       localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
     }
@@ -110,7 +126,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <UserContext.Provider value={{ user, allUsers, loading, logout, notifications, setNotifications }}>
+    <UserContext.Provider value={{ user, allUsers, setAllUsers, loading, logout, notifications, setNotifications }}>
       {children}
     </UserContext.Provider>
   );

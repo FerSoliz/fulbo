@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Menu, Layers, LogOut, Search, User as UserIcon, Star, FileText, Heart, Package, Trophy } from 'lucide-react';
+import { Bell, Menu, Layers, LogOut, Search, User as UserIcon, Star, FileText, Heart, Package, Trophy, UserCheck, UserX } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,7 @@ const notificationIcons: { [key: string]: React.ElementType } = {
   like: Heart,
   pack: Package,
   team: Trophy,
+  friend_request: UserCheck,
 };
 
 export function PageHeader() {
@@ -58,6 +59,15 @@ export function PageHeader() {
     } else {
         await logout();
     }
+  }
+  
+  const handleNotificationAction = (e: React.MouseEvent, action: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log("Action clicked:", action);
+    // Here you would implement the logic for accepting/rejecting friends
+    // For now, we just log it
+    toast({title: "Acción no implementada", description: "La lógica para esta acción aún no está definida."})
   }
 
   const handleOpenNotifications = () => {
@@ -136,8 +146,8 @@ export function PageHeader() {
                                 {notifications.length > 0 ? notifications.map(notif => {
                                     const Icon = notificationIcons[notif.type] || Bell;
                                     return (
-                                        <DropdownMenuItem key={notif.id} asChild>
-                                            <Link href={notif.link} className="flex items-start gap-3">
+                                        <DropdownMenuItem key={notif.id} asChild className="p-0">
+                                            <Link href={notif.link} className="flex items-start gap-3 p-2 w-full">
                                                 <div className="relative">
                                                     <Icon className="h-4 w-4 mt-1" />
                                                     {!notif.isRead && <div className="absolute -right-1 top-0 h-1.5 w-1.5 rounded-full bg-accent" />}
@@ -147,6 +157,16 @@ export function PageHeader() {
                                                     <p className="text-xs text-muted-foreground mt-1">
                                                         {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: es })}
                                                     </p>
+                                                    {notif.actions && (
+                                                        <div className="flex gap-2 mt-2">
+                                                            {notif.actions.map(action => (
+                                                                <Button key={action.label} size="sm" variant={action.label === 'Aceptar' ? 'default' : 'outline'} onClick={(e) => handleNotificationAction(e, action.action)}>
+                                                                    {action.label === 'Aceptar' ? <UserCheck className="mr-2 h-4 w-4"/> : <UserX className="mr-2 h-4 w-4"/>}
+                                                                    {action.label}
+                                                                </Button>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </Link>
                                         </DropdownMenuItem>

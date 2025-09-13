@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -12,8 +11,8 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { DivisionBadge } from '@/components/division-badge';
-import { User, initialUsers, PlayerDetails, sudpointConfig, leagues } from '@/lib/data';
-import { Medal, Shield, Swords, ShieldAlert, Calendar, Trophy, Link2, Star, Loader2, MessageSquare } from 'lucide-react';
+import { User, initialUsers, PlayerDetails, sudpointConfig, leagues, Notification } from '@/lib/data';
+import { Medal, Shield, Swords, ShieldAlert, Calendar, Trophy, Link2, Star, Loader2, MessageSquare, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { Separator } from '@/components/ui/separator';
@@ -36,31 +35,50 @@ export default function ProfilePage() {
     const router = useRouter();
     const userId = params.id as string;
     const { toast } = useToast();
-    const { user: currentUser, setUser: setCurrentUser, loading: userLoading } = useUser();
+    const { user: currentUser, allUsers, setAllUsers, loading: userLoading, setNotifications } = useUser();
     const { uploadFile, isUploading, progress } = useUpload();
-
-    const [allUsers, setAllUsers] = useState<User[]>([]);
+    
     const [profileUser, setProfileUser] = useState<User | null>(null);
     const [isFavorite, setIsFavorite] = useState(false);
     const [loading, setLoading] = useState(true);
     const [uniqueCodeInput, setUniqueCodeInput] = useState('');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [friendStatus, setFriendStatus] = useState<'friends' | 'pending' | 'not_friends' | 'self'>('not_friends');
 
-    // Load initial data from localStorage
+
     useEffect(() => {
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const combinedUsers = [...initialUsers, ...storedUsers];
-        const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
-        setAllUsers(uniqueUsers);
-
-        const targetUser = uniqueUsers.find((u:User) => u.id === userId);
+        const targetUser = allUsers.find((u:User) => u.id === userId);
         setProfileUser(targetUser || null);
-        
         setLoading(false);
-    }, [userId]);
+
+        if (currentUser && targetUser) {
+            if(currentUser.id === targetUser.id) {
+                setFriendStatus('self');
+                return;
+            }
+
+            const currentUserFriends = JSON.parse(localStorage.getItem(`friends_${currentUser.id}`) || '[]');
+            if (currentUserFriends.includes(targetUser.id)) {
+                setFriendStatus('friends');
+            } else {
+                 const currentUserRequests = JSON.parse(localStorage.getItem(`friendRequests_${currentUser.id}`) || '[]');
+                 if(currentUserRequests.some((req: any) => req.from === targetUser.id)){
+                    // They sent you a request
+                    setFriendStatus('not_friends'); // Or a new status like 'request_received'
+                 } else {
+                    const targetUserRequests = JSON.parse(localStorage.getItem(`friendRequests_${targetUser.id}`) || '[]');
+                    if(targetUserRequests.some((req: any) => req.from === currentUser.id)) {
+                        setFriendStatus('pending');
+                    } else {
+                        setFriendStatus('not_friends');
+                    }
+                 }
+            }
+        }
+    }, [userId, allUsers, currentUser]);
 
 
-    // Recalculate stats and sudpoints when user profile is loaded and linked
+    // Recalculate stats and progression when user profile is loaded and linked
      useEffect(() => {
         if (profileUser && profileUser.uniqueCode) {
             recalculateStatsAndProgression();
@@ -73,8 +91,8 @@ export default function ProfilePage() {
 
         // This is a placeholder for the real logic. 
         // In a real app, you would fetch all match data.
-        const allPlayerStats = JSON.parse(localStorage.getItem("allPlayerMatchStats") || "{}"); // e.g. { "match_1_player_SUD-XYZ": { goals: 2, yellow: 1 } }
-        const allMatchResults = JSON.parse(localStorage.getItem("allMatchResults") || "{}"); // e.g. { "match_1": { teamA: 'Team X', teamB: 'Team Y', scoreA: 3, scoreB: 1, winner: 'teamA' } }
+        const allPlayerStats = JSON.parse(localStorage.getItem("allPlayerMatchStats") || "{}");
+        const allMatchResults = JSON.parse(localStorage.getItem("allMatchResults") || "{}");
         
         const playerDetails = JSON.parse(localStorage.getItem("playerDetails") || "{}");
         const linkedPlayer: PlayerDetails = playerDetails[profileUser.uniqueCode];
@@ -135,12 +153,6 @@ export default function ProfilePage() {
     const updateUserInStorage = (updatedUser: User) => {
          const newAllUsers = allUsers.map(u => u.id === updatedUser.id ? updatedUser : u);
          setAllUsers(newAllUsers);
-
-         localStorage.setItem('users', JSON.stringify(newAllUsers));
-         
-         if(currentUser?.id === updatedUser.id) {
-            setCurrentUser(updatedUser);
-         }
     }
 
     const handleLinkAccount = () => {
@@ -166,7 +178,7 @@ export default function ProfilePage() {
     };
 
     const handleAvatarClick = () => {
-        if (currentUser?.id === profileUser?.id && !isUploading) {
+        if (friendStatus === 'self' && !isUploading) {
             fileInputRef.current?.click();
         }
     };
@@ -189,6 +201,37 @@ export default function ProfilePage() {
         }
     };
 
+    const handleAddFriend = () => {
+        if (!currentUser || !profileUser || currentUser.name === 'VISITANTE') return;
+        
+        // Add request to target user's requests
+        const targetUserRequests = JSON.parse(localStorage.getItem(`friendRequests_${profileUser.id}`) || '[]');
+        const newRequest = { from: currentUser.id, name: currentUser.name, avatar: currentUser.avatar };
+        localStorage.setItem(`friendRequests_${profileUser.id}`, JSON.stringify([...targetUserRequests, newRequest]));
+        
+        // Update status to pending
+        setFriendStatus('pending');
+        
+        // Add notification for the target user (this is a simulation)
+        // In a real app, this would be a push notification or a DB entry.
+        const newNotification: Omit<Notification, 'id'> = {
+            type: 'friend_request',
+            message: `${currentUser.name} te ha enviado una solicitud de amistad.`,
+            link: `/profile/${currentUser.id}`,
+            isRead: false,
+            createdAt: new Date().toISOString(),
+            actions: [
+                { label: 'Aceptar', action: `accept_friend_${currentUser.id}`},
+                { label: 'Rechazar', action: `reject_friend_${currentUser.id}`}
+            ]
+        };
+
+        // We can't directly add to another user's notifications, but we can simulate it for the demo
+        console.log(`Notification for ${profileUser.name}:`, newNotification);
+        toast({ title: 'Solicitud Enviada', description: `Se envió una solicitud de amistad a ${profileUser.name}.` });
+    };
+
+
     const handleSendMessage = () => {
         if (!profileUser) return;
         router.push(`/messages?recipient=${profileUser.id}`);
@@ -198,8 +241,46 @@ export default function ProfilePage() {
     if (loading || userLoading) return <div className="p-8 text-center">Cargando perfil...</div>;
     if (!profileUser) return <div className="p-8 text-center">Usuario no encontrado.</div>;
     
-    const isOwnProfile = currentUser?.id === profileUser.id;
+    const isOwnProfile = friendStatus === 'self';
     const { stats, name, role, league, division, sudpoints, uniqueCode, isVerified, avatar } = profileUser;
+
+    const renderFriendButton = () => {
+        if (isOwnProfile || !currentUser || currentUser.name === 'VISITANTE') return null;
+
+        switch (friendStatus) {
+            case 'friends':
+                return (
+                    <Button className="w-full" onClick={handleSendMessage}>
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Enviar Mensaje
+                    </Button>
+                );
+            case 'pending':
+                return (
+                    <Button className="w-full" disabled>
+                        Solicitud Pendiente
+                    </Button>
+                );
+            case 'not_friends':
+                return (
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="destructive" size="icon" className="absolute top-4 left-4" onClick={handleAddFriend}>
+                                    <UserPlus className="h-5 w-5" />
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Agregar Amigo</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                );
+            default:
+                return null;
+        }
+    };
+
 
     return (
         <div className="p-4 sm:p-6 lg:p-8">
@@ -210,15 +291,7 @@ export default function ProfilePage() {
                     <Card className="relative">
                         <CardHeader className="items-center text-center">
                            <div className="absolute top-4 right-4">
-                                {currentUser && !isOwnProfile && (
-                                    <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        onClick={() => setIsFavorite(!isFavorite)}
-                                    >
-                                        <Star className={cn("w-5 h-5 text-muted-foreground", isFavorite && "fill-accent text-accent")} />
-                                    </Button>
-                               )}
+                               {renderFriendButton()}
                            </div>
                             <div className={cn("relative cursor-pointer group", isOwnProfile && "hover:opacity-80 transition-opacity")} onClick={handleAvatarClick}>
                                <AnimatedAvatar>
@@ -259,7 +332,7 @@ export default function ProfilePage() {
                             </div>
                         </CardHeader>
                         <CardContent>
-                           {currentUser && !isOwnProfile && currentUser.name !== 'VISITANTE' && (
+                           {friendStatus === 'friends' && !isOwnProfile && (
                                <Button className="w-full" onClick={handleSendMessage}>
                                    <MessageSquare className="mr-2 h-4 w-4" />
                                    Enviar Mensaje
