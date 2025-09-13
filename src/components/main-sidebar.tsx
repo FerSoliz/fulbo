@@ -41,8 +41,8 @@ const menuItems = [
 ];
 
 const socialItems = [
-    { href: 'https://youtube.com', icon: Youtube, label: 'YOUTUBE', color: 'bg-red-600 hover:bg-red-700 text-white' },
-    { href: 'https://instagram.com', icon: Instagram, label: 'INSTAGRAM', color: 'bg-red-600 hover:bg-red-700 text-white' },
+    { href: 'https://youtube.com', icon: Youtube, label: 'YOUTUBE' },
+    { href: 'https://instagram.com', icon: Instagram, label: 'INSTAGRAM' },
 ];
 
 const footerMenuItems = [
@@ -64,7 +64,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
     }
   }
 
-  const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems | typeof socialItems)) => {
+  const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)) => {
     return items.map((item) => {
       if ('adminOnly' in item && item.adminOnly && user?.role !== 'admin' && user?.role !== 'editor') {
         return null;
@@ -81,12 +81,11 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
 
       return (
         <li key={item.href}>
-          <Link href={finalHref} passHref target={'color' in item ? '_blank' : '_self'}>
+          <Link href={finalHref} passHref>
             <Button
-              variant={'color' in item ? 'default' : 'ghost'}
+              variant='ghost'
               className={cn(
-                'main-sidebar-button w-full justify-start gap-2 text-foreground',
-                 'color' in item && item.color
+                'main-sidebar-button w-full justify-start gap-2 text-foreground'
               )}
               data-active={isActive}
               disabled={loading}
@@ -150,7 +149,21 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 {renderMenuItems(menuItems)}
             </ul>
             <ul className="mt-auto flex flex-col gap-1 border-t p-2">
-                {renderMenuItems(socialItems)}
+                <div className="flex justify-center gap-2 py-2">
+                    {socialItems.map(item => (
+                        <li key={item.href}>
+                             <Link href={item.href} passHref target="_blank">
+                                <Button
+                                variant='destructive'
+                                size="icon"
+                                className='bg-red-600 hover:bg-red-700 text-white'
+                                >
+                                <item.icon className="h-5 w-5" />
+                                </Button>
+                            </Link>
+                        </li>
+                    ))}
+                </div>
                 {user?.name !== 'VISITANTE' && renderMenuItems(footerMenuItems)}
                  <li>
                     <Button
