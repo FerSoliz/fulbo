@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Search, User, Trophy, Gamepad2 } from 'lucide-react';
+import { Search, User, Trophy, Gamepad2, Newspaper } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { initialUsers } from '@/lib/data';
+import { useUser } from '@/context/user-context';
 
 type SearchResult = {
   type: 'USUARIO' | 'TORNEO' | 'PÁGINA' | 'JUEGO';
@@ -26,15 +26,15 @@ const staticPages: SearchResult[] = [
 
 export function GlobalSearch() {
   const router = useRouter();
+  const { allUsers } = useUser();
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [allData, setAllData] = useState<SearchResult[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    // This effect runs when allUsers data is available from context
     // Combine all data sources for searching
-    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    const allUsers = [...initialUsers, ...storedUsers];
     const userResults: SearchResult[] = allUsers.map(user => ({
       type: 'USUARIO',
       id: user.id,
@@ -52,7 +52,7 @@ export function GlobalSearch() {
     }));
 
     setAllData([...userResults, ...tournamentResults, ...staticPages]);
-  }, []);
+  }, [allUsers]);
   
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -79,8 +79,9 @@ export function GlobalSearch() {
     switch (type) {
         case 'USUARIO': return <User className="h-4 w-4 text-muted-foreground"/>;
         case 'TORNEO': return <Trophy className="h-4 w-4 text-muted-foreground"/>;
-        case 'PÁGINA': return <Search className="h-4 w-4 text-muted-foreground"/>;
+        case 'PÁGINA': return <Newspaper className="h-4 w-4 text-muted-foreground"/>;
         case 'JUEGO': return <Gamepad2 className="h-4 w-4 text-muted-foreground"/>;
+        default: return <Search className="h-4 w-4 text-muted-foreground"/>
     }
   }
 
@@ -109,7 +110,7 @@ export function GlobalSearch() {
                 <CommandEmpty>No se encontraron resultados.</CommandEmpty>
             )}
             {filteredData.map(item => (
-              <CommandItem key={item.id} onSelect={() => handleSelect(item.path)} value={item.name}>
+              <CommandItem key={`${item.type}-${item.id}`} onSelect={() => handleSelect(item.path)} value={item.name}>
                 <div className="flex items-center gap-3 flex-1">
                     {item.avatar ? (
                         <Avatar className="h-6 w-6">

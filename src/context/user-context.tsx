@@ -10,6 +10,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 interface UserContextType {
   user: User | null;
+  allUsers: User[];
   loading: boolean;
   logout: () => Promise<void>;
   notifications: Notification[];
@@ -35,18 +36,24 @@ const defaultVisitor: User = {
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
+    // Cargar todos los usuarios una vez
+    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+    const combinedUsers = [...initialUsers, ...storedUsers];
+    const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
+    setAllUsers(uniqueUsers);
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
         // User is signed in. Find them in our user data.
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const allUsers = [...initialUsers, ...storedUsers];
-        let foundUser = allUsers.find((u: User) => u.email === firebaseUser.email);
+        let foundUser = uniqueUsers.find((u: User) => u.email === firebaseUser.email);
 
         if (!foundUser) {
           // If not in our DB, create a basic profile
@@ -56,7 +63,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             email: firebaseUser.email!,
             role: 'user',
             avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
-            isVerified: true,
+            isVerified: true, // As per previous request
             isBlocked: false,
             location: 'Desconocida',
             sudpoints: 0,
@@ -67,6 +74,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           };
           const updatedStoredUsers = [...storedUsers, foundUser];
           localStorage.setItem('users', JSON.stringify(updatedStoredUsers));
+          setAllUsers(prev => [...prev, foundUser]);
         }
 
         setUserState(foundUser);
@@ -83,6 +91,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
     
     return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -101,7 +110,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
 
   return (
-    <UserContext.Provider value={{ user, loading, logout, notifications, setNotifications }}>
+    <UserContext.Provider value={{ user, allUsers, loading, logout, notifications, setNotifications }}>
       {children}
     </UserContext.Provider>
   );

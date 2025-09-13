@@ -4,22 +4,16 @@
 import { useState, useEffect } from 'react';
 import { CreatePostForm } from '@/components/create-post-form';
 import { PostCard } from '@/components/post-card';
-import { Post, User, posts as initialPosts, initialUsers } from '@/lib/data';
+import { Post, User, posts as initialPosts } from '@/lib/data';
 import { useUser } from '@/context/user-context';
 
 
 export default function HomePage() {
-  const { user: currentUser } = useUser();
+  const { user: currentUser, allUsers } = useUser();
   const [posts, setPosts] = useState<Post[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-
+  
   // Cargar datos desde localStorage al montar el componente
   useEffect(() => {
-    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    const combinedUsers = [...initialUsers, ...storedUsers];
-    const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
-    setAllUsers(uniqueUsers);
-
     const savedPosts = localStorage.getItem('posts');
     if (savedPosts) {
       setPosts(JSON.parse(savedPosts));
