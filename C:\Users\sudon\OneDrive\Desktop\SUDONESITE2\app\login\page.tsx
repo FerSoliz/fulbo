@@ -67,6 +67,8 @@ export default function LoginPage() {
       let errorMessage = "Ocurrió un error al iniciar sesión.";
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         errorMessage = "El correo electrónico o la contraseña son incorrectos.";
+      } else {
+        errorMessage = `Error: ${error.code}`
       }
       toast({
         title: "Error de inicio de sesión",

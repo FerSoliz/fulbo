@@ -30,11 +30,11 @@ import { MainSidebar } from './main-sidebar';
 
 
 const favorites = [
-    { id: '1', type: 'tournament', name: 'Liga Anual 2024', avatar: '/images/liga-anual.png', hasNewContent: true, abbrev: "LI"},
-    { id: '2', type: 'tournament', name: 'Copa Verano', avatar: '/images/copa-verano.png', hasNewContent: true, abbrev: "CO" },
-    { id: '3', type: 'tournament', name: 'Torneo Relámpago', avatar: '/images/torneo-relampago.png', hasNewContent: false, abbrev: "TO" },
-    { id: '4', type: 'user', name: '@leomessi', avatar: '/images/messi.jpg', hasNewContent: false, abbrev: "LM" },
-    { id: '5', type: 'user', name: '@dibumartinez', avatar: '/images/dibu.jpg', hasNewContent: false, abbrev: "DM" },
+    { id: '1', type: 'tournament', name: 'Liga Anual 2024', avatar: 'src/images/liga-anual.png', hasNewContent: true, abbrev: "LI"},
+    { id: '2', type: 'tournament', name: 'Copa Verano', avatar: 'src/images/copa-verano.png', hasNewContent: true, abbrev: "CO" },
+    { id: '3', type: 'tournament', name: 'Torneo Relámpago', avatar: 'src/images/torneo-relampago.png', hasNewContent: false, abbrev: "TO" },
+    { id: '4', type: 'user', name: '@leomessi', avatar: 'src/images/messi.jpg', hasNewContent: false, abbrev: "LM" },
+    { id: '5', type: 'user', name: '@dibumartinez', avatar: 'src/images/dibu.jpg', hasNewContent: false, abbrev: "DM" },
 ];
 
 const notificationIcons: { [key: string]: React.ElementType } = {
