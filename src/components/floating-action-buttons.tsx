@@ -68,7 +68,7 @@ export function FloatingActionButtons() {
                         className="rounded-full h-11 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground px-6" 
                         onClick={() => router.push('/messages')}
                     >
-                        <Send className="h-5 w-5 mr-2" />
+                        <img src="https://i.postimg.cc/JhYwF0RF/icono-mensajes.png" alt="Mensajes" className="h-5 w-5 mr-2" />
                         <span className="font-bold text-base">MENSAJES</span>
                     </Button>
                 </TooltipTrigger>
