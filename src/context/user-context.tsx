@@ -55,10 +55,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Persist allUsers whenever it changes, filtering out initial ones that haven't been modified
-    if(allUsers.length > 0) {
-        const customUsers = allUsers.filter(u => !initialUsers.some(iu => iu.id === u.id && JSON.stringify(iu) === JSON.stringify(u)));
-        localStorage.setItem('users', JSON.stringify(customUsers));
+    // Persist custom users (not initial ones) to localStorage
+    if (allUsers.length > 0) {
+      const customUsers = allUsers.filter(
+        (u) => !initialUsers.some((iu) => iu.id === u.id)
+      );
+      localStorage.setItem('users', JSON.stringify(customUsers));
     }
   }, [allUsers]);
 
@@ -119,5 +121,3 @@ export function useUser() {
   }
   return context;
 }
-
-    

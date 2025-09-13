@@ -1,4 +1,5 @@
 
+
 export interface User {
   id: string;
   name: string;
@@ -263,5 +264,3 @@ export const initialNotifications: Notification[] = [
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // hace 8 horas
     },
 ];
-
-    
