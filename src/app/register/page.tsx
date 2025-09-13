@@ -75,8 +75,8 @@ export default function RegisterPage() {
     setIsLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
+      // The user context will handle the redirect now
       router.push('/');
-      router.refresh();
     } catch (error: any) {
       console.error("Register error:", error.code);
       let errorMessage = "Ocurrió un error al registrar la cuenta.";
@@ -99,7 +99,6 @@ export default function RegisterPage() {
     try {
         await signInWithPopup(auth, provider);
         router.push('/');
-        router.refresh();
     } catch (error: any) {
         console.error("Google sign-in error", error);
         toast({

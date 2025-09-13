@@ -41,29 +41,43 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       handleUserChange(firebaseUser);
+      setLoading(false);
     });
     
-    setLoading(false);
     return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-      localStorage.setItem('notifications', JSON.stringify(notifications));
+      // Do not save notifications if it's the initial state, to avoid overwriting on load
+      if(notifications !== initialNotifications) {
+        localStorage.setItem('notifications', JSON.stringify(notifications));
+      }
   }, [notifications]);
 
   const handleUserChange = (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
+        // Find user in initialUsers or localStorage
         const storedUsersJSON = localStorage.getItem('users') || '[]';
         const allKnownUsers = [...initialUsers, ...JSON.parse(storedUsersJSON)];
         
-        let foundUser = allKnownUsers.find(u => u.email === firebaseUser.email);
+        let foundUser = allKnownUsers.find(u => u.id === firebaseUser.uid || u.email === firebaseUser.email);
         
         if (foundUser) {
-            setUserState(foundUser);
-            localStorage.setItem('currentUser', JSON.stringify(foundUser));
+            // Update user with latest from Firebase if available
+            const updatedUser = {
+                ...foundUser,
+                id: firebaseUser.uid, // Always use the UID from Firebase as the canonical ID
+                name: firebaseUser.displayName || foundUser.name,
+                avatar: firebaseUser.photoURL || foundUser.avatar,
+                isVerified: firebaseUser.emailVerified || foundUser.isVerified,
+            };
+            setUserState(updatedUser);
+            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
         } else {
+            // Create a new user profile if not found
             const userName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Nuevo Usuario';
-            const userAvatar = firebaseUser.photoURL || `https://avatar.vercel.sh/${userName}.png`;
+            const userAvatar = firebaseUser.photoURL || `https://avatar.vercel.sh/${userName.replace(/\s+/g, '')}.png`;
+            
             const newUser: User = {
               id: firebaseUser.uid,
               name: userName,
@@ -84,6 +98,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             localStorage.setItem('currentUser', JSON.stringify(newUser));
         }
       } else {
+        // User is signed out
         setUserState(defaultVisitor);
         localStorage.removeItem('currentUser');
       }
@@ -92,9 +107,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await signOut(auth);
     setUserState(defaultVisitor);
-    localStorage.removeItem('currentUser');
-    localStorage.removeItem('users');
-    localStorage.removeItem('posts');
+    localStorage.clear(); // Clear all app data on logout
     window.location.href = '/login';
   };
   
