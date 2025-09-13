@@ -1,10 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { defaultVisitor, users as initialUsers, initialNotifications } from '@/lib/data';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
+import { useToast } from '@/hooks/use-toast';
 
 interface UserContextType {
   user: User | null;
@@ -21,52 +23,34 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Cargar datos del usuario desde localStorage para una carga inicial más rápida
-    try {
-        const savedUser = localStorage.getItem('currentUser');
-        if (savedUser) {
-            setUserState(JSON.parse(savedUser));
-        } else {
-            setUserState(defaultVisitor);
-        }
-        const savedNotifications = localStorage.getItem('notifications');
-        setNotifications(savedNotifications ? JSON.parse(savedNotifications) : initialNotifications);
-    } catch (e) {
-        console.error("Failed to parse from localStorage", e);
+    const savedUser = localStorage.getItem('currentUser');
+    if (savedUser) {
+      try {
+        setUserState(JSON.parse(savedUser));
+      } catch {
         setUserState(defaultVisitor);
-        setNotifications(initialNotifications);
-    }
-
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      handleUserChange(firebaseUser);
-      setLoading(false);
-    });
-    
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-      // Do not save notifications if it's the initial state, to avoid overwriting on load
-      if(notifications !== initialNotifications) {
-        localStorage.setItem('notifications', JSON.stringify(notifications));
       }
-  }, [notifications]);
+    } else {
+      setUserState(defaultVisitor);
+    }
+    setLoading(false);
 
-  const handleUserChange = (firebaseUser: FirebaseUser | null) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
-        // Find user in initialUsers or localStorage
+        const isNewUser = firebaseUser.metadata.creationTime === firebaseUser.metadata.lastSignInTime;
+        
         const storedUsersJSON = localStorage.getItem('users') || '[]';
         const allKnownUsers = [...initialUsers, ...JSON.parse(storedUsersJSON)];
-        
-        let foundUser = allKnownUsers.find(u => u.id === firebaseUser.uid || u.email === firebaseUser.email);
-        
+        let foundUser = allKnownUsers.find(u => u.id === firebaseUser.uid);
+
         if (foundUser) {
-            // Update user with latest from Firebase if available
             const updatedUser = {
                 ...foundUser,
-                id: firebaseUser.uid, // Always use the UID from Firebase as the canonical ID
                 name: firebaseUser.displayName || foundUser.name,
                 avatar: firebaseUser.photoURL || foundUser.avatar,
                 isVerified: firebaseUser.emailVerified || foundUser.isVerified,
@@ -74,41 +58,54 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setUserState(updatedUser);
             localStorage.setItem('currentUser', JSON.stringify(updatedUser));
         } else {
-            // Create a new user profile if not found
             const userName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Nuevo Usuario';
             const userAvatar = firebaseUser.photoURL || `https://avatar.vercel.sh/${userName.replace(/\s+/g, '')}.png`;
-            
             const newUser: User = {
-              id: firebaseUser.uid,
-              name: userName,
-              email: firebaseUser.email || '',
-              role: 'user',
-              avatar: userAvatar,
-              location: 'Desconocida',
-              isVerified: firebaseUser.emailVerified,
-              sudpoints: 0,
-              baseSudpoints: 0,
-              league: 'Bronce',
-              division: 4,
-              stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+                id: firebaseUser.uid,
+                name: userName,
+                email: firebaseUser.email || '',
+                role: 'user',
+                avatar: userAvatar,
+                location: 'Desconocida',
+                isVerified: firebaseUser.emailVerified,
+                sudpoints: 0,
+                baseSudpoints: 0,
+                league: 'Bronce',
+                division: 4,
+                stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
             };
             const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
             localStorage.setItem('users', JSON.stringify([...storedUsers, newUser]));
             setUserState(newUser);
             localStorage.setItem('currentUser', JSON.stringify(newUser));
         }
+        
+        if (isNewUser) {
+            toast({ title: '¡Cuenta creada!', description: 'Bienvenido a SUDONE.' });
+        } else {
+            toast({ title: '¡Bienvenido de vuelta!', description: 'Has iniciado sesión correctamente.' });
+        }
+        router.push('/');
+
       } else {
-        // User is signed out
         setUserState(defaultVisitor);
         localStorage.removeItem('currentUser');
       }
-  }
-  
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const logout = async () => {
+    setLoading(true);
     await signOut(auth);
     setUserState(defaultVisitor);
-    localStorage.clear(); // Clear all app data on logout
-    window.location.href = '/login';
+    localStorage.clear();
+    router.push('/login');
+    toast({ title: 'Sesión Cerrada', description: 'Has cerrado sesión correctamente.' });
+    setLoading(false);
   };
   
   const setUser = (updatedUser: User | null) => {

@@ -57,8 +57,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push('/');
-      router.refresh(); // Force a refresh to update user state across the app
+      // The user context will handle the redirect
     } catch (error: any) {
       console.error("Login error:", error.code);
       let errorMessage = "Ocurrió un error al iniciar sesión.";
@@ -80,8 +79,7 @@ export default function LoginPage() {
     const provider = new GoogleAuthProvider();
     try {
         await signInWithPopup(auth, provider);
-        router.push('/');
-        router.refresh();
+        // The user context will handle the redirect
     } catch (error: any) {
         console.error("Google sign-in error", error);
         toast({
