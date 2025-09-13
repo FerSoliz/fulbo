@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Bell, Menu, Layers, LogOut, Search, User as UserIcon, Star, FileText, Heart, Package, Trophy } from 'lucide-react';
@@ -33,6 +34,8 @@ const favorites = [
     { id: '1', type: 'tournament', name: 'Liga Anual 2024', avatar: 'https://i.postimg.cc/NfHBrS60/liga-anual.png', hasNewContent: true, abbrev: "LI"},
     { id: '2', type: 'tournament', name: 'Copa Verano', avatar: 'https://i.postimg.cc/W3d9b4Vf/copa-verano.png', hasNewContent: true, abbrev: "CO" },
     { id: '3', type: 'tournament', name: 'Torneo Relámpago', avatar: 'https://i.postimg.cc/8zJ17B67/torneo-relampago.png', hasNewContent: false, abbrev: "TO" },
+    { id: '4', type: 'user', name: '@leomessi', avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg', hasNewContent: false, abbrev: "LM" },
+    { id: '5', type: 'user', name: '@dibumartinez', avatar: 'https://i.postimg.cc/44rD55vT/dibu.jpg', hasNewContent: false, abbrev: "DM" },
 ];
 
 const notificationIcons: { [key: string]: React.ElementType } = {
@@ -50,7 +53,8 @@ export function PageHeader() {
   const hasUnreadNotifications = notifications.some(n => !n.isRead);
 
   const handleLogout = async () => {
-    logout();
+    await logout();
+    router.push('/login');
   }
 
   const handleOpenNotifications = () => {
@@ -118,68 +122,68 @@ export function PageHeader() {
                         <span className="font-bold text-sm">GRATIS</span>
                     </Button>
                 </Link>
-                {user && (
-                    <DropdownMenu onOpenChange={(open) => open && handleOpenNotifications()}>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="relative">
-                                <Bell className="h-5 w-5" />
-                                {hasUnreadNotifications && <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-80">
-                            <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {notifications.length > 0 ? notifications.map(notif => {
-                                const Icon = notificationIcons[notif.type] || Bell;
-                                return (
-                                    <DropdownMenuItem key={notif.id} asChild>
-                                        <Link href={notif.link} className="flex items-start gap-3">
-                                            <div className="relative">
-                                                <Icon className="h-4 w-4 mt-1" />
-                                                {!notif.isRead && <div className="absolute -right-1 top-0 h-1.5 w-1.5 rounded-full bg-accent" />}
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="text-sm whitespace-normal">{notif.message}</p>
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: es })}
-                                                </p>
-                                            </div>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                )
-                            }) : (
-                                <p className="p-4 text-sm text-center text-muted-foreground">No tienes notificaciones.</p>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                )}
                 {loading ? (
                    <Skeleton className="h-10 w-10 rounded-full" />
-                ) : user ? (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="rounded-full">
-                           <Avatar>
-                              <AvatarImage src={user.avatar} alt={user.name} />
-                              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <Link href={`/profile/${user.id}`}>
-                          <DropdownMenuItem>
-                            <UserIcon className="mr-2 h-4 w-4" />
-                            <span>Perfil</span>
-                          </DropdownMenuItem>
-                        </Link>
-                        <DropdownMenuItem onClick={handleLogout}>
-                          <LogOut className="mr-2 h-4 w-4" />
-                          <span>Cerrar Sesión</span>
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                ) : user && user.name !== 'VISITANTE' ? (
+                    <>
+                        <DropdownMenu onOpenChange={(open) => open && handleOpenNotifications()}>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="relative">
+                                    <Bell className="h-5 w-5" />
+                                    {hasUnreadNotifications && <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-80">
+                                <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {notifications.length > 0 ? notifications.map(notif => {
+                                    const Icon = notificationIcons[notif.type] || Bell;
+                                    return (
+                                        <DropdownMenuItem key={notif.id} asChild>
+                                            <Link href={notif.link} className="flex items-start gap-3">
+                                                <div className="relative">
+                                                    <Icon className="h-4 w-4 mt-1" />
+                                                    {!notif.isRead && <div className="absolute -right-1 top-0 h-1.5 w-1.5 rounded-full bg-accent" />}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <p className="text-sm whitespace-normal">{notif.message}</p>
+                                                    <p className="text-xs text-muted-foreground mt-1">
+                                                        {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: es })}
+                                                    </p>
+                                                </div>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    )
+                                }) : (
+                                    <p className="p-4 text-sm text-center text-muted-foreground">No tienes notificaciones.</p>
+                                )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="rounded-full">
+                            <Avatar>
+                                <AvatarImage src={user.avatar} alt={user.name} />
+                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <Link href={`/profile/${user.id}`}>
+                            <DropdownMenuItem>
+                                <UserIcon className="mr-2 h-4 w-4" />
+                                <span>Perfil</span>
+                            </DropdownMenuItem>
+                            </Link>
+                            <DropdownMenuItem onClick={handleLogout}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            <span>Cerrar Sesión</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                        </DropdownMenu>
+                    </>
                 ) : (
                     <Link href="/login">
                         <Button>Iniciar Sesión</Button>

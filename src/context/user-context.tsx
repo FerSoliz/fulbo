@@ -5,18 +5,33 @@ import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { initialNotifications, initialUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 interface UserContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, pass: string) => boolean;
-  logout: () => void;
-  setUser: (user: User | null) => void;
+  logout: () => Promise<void>;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
+
+const defaultVisitor: User = {
+    id: 'visitor',
+    name: 'VISITANTE',
+    role: 'user', 
+    avatar: 'https://avatar.vercel.sh/visitor.png',
+    isVerified: false,
+    isBlocked: false,
+    location: '',
+    sudpoints: 0,
+    baseSudpoints: 0,
+    league: 'Bronce',
+    division: 4,
+    stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+};
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
@@ -26,85 +41,67 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Cargar usuarios desde localStorage o inicializarlos si no existen
-    const storedUsers = localStorage.getItem('users');
-    if (!storedUsers) {
-      localStorage.setItem('users', JSON.stringify([])); // Start with empty array for custom users
-    }
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        // User is signed in. Find them in our user data.
+        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+        const allUsers = [...initialUsers, ...storedUsers];
+        let foundUser = allUsers.find((u: User) => u.email === firebaseUser.email);
 
-    // Cargar el usuario actual de la sesión
-    const currentUserJSON = localStorage.getItem('currentUser');
-    if (currentUserJSON) {
-      const loggedInUser = JSON.parse(currentUserJSON);
-      setUserState(loggedInUser);
-      // Cargar notificaciones para el usuario logueado
-      const storedNotifications = localStorage.getItem(`notifications_${loggedInUser.id}`);
-      setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
-    }
-    setLoading(false);
+        if (!foundUser) {
+          // If not in our DB, create a basic profile
+          foundUser = {
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || 'Nuevo Usuario',
+            email: firebaseUser.email!,
+            role: 'user',
+            avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
+            isVerified: true,
+            isBlocked: false,
+            location: 'Desconocida',
+            sudpoints: 0,
+            baseSudpoints: 0,
+            league: 'Bronce',
+            division: 4,
+            stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+          };
+          const updatedStoredUsers = [...storedUsers, foundUser];
+          localStorage.setItem('users', JSON.stringify(updatedStoredUsers));
+        }
+
+        setUserState(foundUser);
+        
+        const storedNotifications = localStorage.getItem(`notifications_${foundUser.id}`);
+        setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
+        
+      } else {
+        // User is signed out.
+        setUserState(defaultVisitor);
+        setNotifications([]);
+      }
+      setLoading(false);
+    });
+    
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
-    // Persistir notificaciones cuando cambian
-    if (user?.id) {
+    // Persist notifications when they change
+    if (user && user.id !== 'visitor') {
       localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
     }
-  }, [notifications, user?.id]);
+  }, [notifications, user]);
 
-  const login = (email: string, pass: string): boolean => {
-    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    const allUsers = [...initialUsers, ...storedUsers];
-    const foundUser = allUsers.find((u: User) => u.email === email && u.password === pass);
-
-    if (foundUser) {
-      if (foundUser.isBlocked) {
-        toast({
-          title: "Acceso Denegado",
-          description: "Esta cuenta ha sido bloqueada por un administrador.",
-          variant: "destructive"
-        });
-        return false;
-      }
-      localStorage.setItem('currentUser', JSON.stringify(foundUser));
-      setUserState(foundUser);
-      // Cargar notificaciones para el nuevo usuario que inicia sesión
-      const storedNotifications = localStorage.getItem(`notifications_${foundUser.id}`);
-      setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
-      return true;
-    }
-    return false;
-  };
-
-  const logout = () => {
-    localStorage.removeItem('currentUser');
-    setUserState(null);
+  const logout = async () => {
+    await auth.signOut();
+    setUserState(defaultVisitor);
     setNotifications([]);
-    router.push('/login');
     toast({ title: 'Sesión Cerrada' });
   };
 
-  const setUser = (updatedUser: User | null) => {
-    setUserState(updatedUser);
-    if (updatedUser) {
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      // Actualizar también la lista completa de usuarios en localStorage
-      const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-      const updatedUsers = storedUsers.map((u: User) => (u.id === updatedUser.id ? updatedUser : u));
-      // If user not found in stored, add them (for initial users being updated)
-      if (!updatedUsers.some((u: User) => u.id === updatedUser.id)) {
-          // But only add if it's not one of the initial users
-          if(!initialUsers.some(iu => iu.id === updatedUser.id)) {
-            updatedUsers.push(updatedUser);
-          }
-      }
-      localStorage.setItem('users', JSON.stringify(updatedUsers.filter((u:User) => !initialUsers.some(iu => iu.id === u.id))));
-    } else {
-      localStorage.removeItem('currentUser');
-    }
-  };
 
   return (
-    <UserContext.Provider value={{ user, loading, login, logout, setUser, notifications, setNotifications }}>
+    <UserContext.Provider value={{ user, loading, logout, notifications, setNotifications }}>
       {children}
     </UserContext.Provider>
   );

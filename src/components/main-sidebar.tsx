@@ -13,7 +13,6 @@ import {
   Trophy,
   User as UserIcon,
   BarChart2,
-  UserCog,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -30,7 +29,7 @@ import { useRouter } from 'next/navigation';
 
 const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
-    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', roles: ['admin', 'editor'] },
+    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', adminOnly: true },
     { href: '/leagues', icon: Trophy, label: 'LIGAS EN CURSO' },
     { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
@@ -50,20 +49,25 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const { user, loading, logout } = useUser();
   const router = useRouter();
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    if (user?.name === 'VISITANTE') {
+        router.push('/login');
+    } else {
+        await logout();
+        router.push('/login');
+    }
   }
 
   const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)[]) => {
     return items.map((item) => {
-      if ('roles' in item && !item.roles.includes(user?.role || '')) {
+      if ('adminOnly' in item && item.adminOnly && user?.role !== 'admin' && user?.role !== 'editor') {
         return null;
       }
       
       let finalHref = item.href;
-      if(item.label === 'MI PERFIL' && user) {
+      if(item.label === 'MI PERFIL' && user && user.name !== 'VISITANTE') {
           finalHref = `/profile/${user.id}`;
-      } else if (item.label === 'MI PERFIL' && !user) {
+      } else if (item.label === 'MI PERFIL' && (!user || user.name === 'VISITANTE')) {
           finalHref = '/login'; // Redirect visitor to login
       }
 
@@ -118,7 +122,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 </>
             ) : user ? (
                 <>
-                    <Link href={`/profile/${user.id}`}>
+                    <Link href={user.name === 'VISITANTE' ? '/login' : `/profile/${user.id}`}>
                         <AnimatedAvatar>
                             <Avatar className="w-12 h-12">
                                 <AvatarImage src={user.avatar} alt="User avatar" />
@@ -128,18 +132,10 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                     </Link>
                     <div className="flex flex-col overflow-hidden">
                         <span className="font-semibold truncate">{user.name}</span>
-                        <span className="text-sm text-muted-foreground truncate">@{user.name.split(' ')[0].toLowerCase()}</span>
+                        {user.name !== 'VISITANTE' && <span className="text-sm text-muted-foreground truncate">@{user.name === 'Lucio Mingrone' ? 'luccio' : user.name.split(' ')[0].toLowerCase()}</span>}
                     </div>
                 </>
-            ) : (
-                 <>
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-[100px]" />
-                        <Skeleton className="h-4 w-[80px]" />
-                    </div>
-                </>
-            )}
+            ) : null}
         </div>
 
         <nav className="flex flex-1 flex-col">
@@ -147,7 +143,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 {renderMenuItems(menuItems)}
             </ul>
             <ul className="mt-auto flex flex-col gap-1 border-t p-2">
-                {user && renderMenuItems(footerMenuItems)}
+                {user?.name !== 'VISITANTE' && renderMenuItems(footerMenuItems)}
                  <li>
                     <Button
                         variant="ghost"
@@ -156,7 +152,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                         disabled={loading}
                     >
                         <LogOut className="h-5 w-5" />
-                        <span className="lg:text-base">{user ? 'CERRAR SESIÓN' : 'INICIAR SESIÓN'}</span>
+                        <span className="lg:text-base">{user?.name === 'VISITANTE' ? 'INICIAR SESIÓN' : 'CERRAR SESIÓN'}</span>
                     </Button>
                 </li>
             </ul>

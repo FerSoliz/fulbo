@@ -15,13 +15,11 @@ export default function HomePage() {
 
   // Cargar datos desde localStorage al montar el componente
   useEffect(() => {
-    // Cargar todos los usuarios (iniciales + almacenados)
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const combinedUsers = [...initialUsers, ...storedUsers];
     const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
     setAllUsers(uniqueUsers);
 
-    // Cargar publicaciones o establecer las iniciales si no hay ninguna guardada
     const savedPosts = localStorage.getItem('posts');
     if (savedPosts) {
       setPosts(JSON.parse(savedPosts));
