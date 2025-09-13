@@ -16,9 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
-import { auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { Eye, EyeOff, Loader2, X } from 'lucide-react';
+import { useUser } from '@/context/user-context';
+import type { User } from '@/lib/data';
 
 const GoogleIcon = () => (
     <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
@@ -45,6 +45,8 @@ const GoogleIcon = () => (
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { allUsers, setAllUsers, login } = useUser();
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -63,54 +65,72 @@ export default function RegisterPage() {
       });
       return;
     }
-    setIsLoading(true);
-    try {
-      await createUserWithEmailAndPassword(auth, email, password);
+     if (password.length < 6) {
       toast({
-        title: "¡Cuenta Creada!",
-        description: "Tu cuenta ha sido creada exitosamente. Serás redirigido.",
+        title: 'Contraseña Débil',
+        description: 'La contraseña debe tener al menos 6 caracteres.',
+        variant: 'destructive',
       });
-      router.push('/');
-    } catch (error: any) {
-      console.error(error);
-      let errorMessage = "Ocurrió un error al registrar la cuenta.";
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "Este correo electrónico ya está en uso.";
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = "La contraseña debe tener al menos 6 caracteres.";
-      } else {
-        errorMessage = `Error: ${error.code}`
-      }
-      toast({
-        title: "Error de registro",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+      return;
     }
+    if (allUsers.find(u => u.email === email)) {
+        toast({
+            title: 'Error de Registro',
+            description: 'Este correo electrónico ya está en uso.',
+            variant: 'destructive',
+        });
+        return;
+    }
+
+    setIsLoading(true);
+
+    const newUser: User = {
+        id: `user-${Date.now()}`,
+        name,
+        email,
+        password, // Storing plain text password - NOT FOR PRODUCTION
+        role: 'user',
+        avatar: `https://avatar.vercel.sh/${name}.png`,
+        isVerified: false,
+        isBlocked: false,
+        location: 'Desconocida',
+        sudpoints: 0,
+        baseSudpoints: 0,
+        league: 'Bronce',
+        division: 4,
+        stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+    };
+
+    setAllUsers(prev => [...prev, newUser]);
+    
+    // Auto-login after registration
+    const success = await login(email, password);
+    
+    if (success) {
+        toast({
+            title: "¡Cuenta Creada!",
+            description: "Tu cuenta ha sido creada exitosamente. Serás redirigido.",
+        });
+        router.push('/');
+    } else {
+        toast({
+            title: "Error",
+            description: "Ocurrió un error inesperado durante el inicio de sesión.",
+            variant: "destructive",
+        });
+    }
+
+    setIsLoading(false);
   };
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
-    try {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        toast({
-            title: "¡Bienvenido!",
-            description: "Tu cuenta ha sido creada con Google.",
-        });
-        router.push('/');
-    } catch (error: any) {
-        console.error("Google sign-in error", error);
-        toast({
-            title: "Error de registro con Google",
-            description: `Error: ${error.code}`,
-            variant: "destructive",
-        });
-    } finally {
-        setIsGoogleLoading(false);
-    }
+    toast({
+        title: "Función no disponible",
+        description: "El inicio de sesión con Google se habilitará próximamente.",
+        variant: "default",
+    });
+    setIsGoogleLoading(false);
   }
 
   return (
@@ -141,6 +161,18 @@ export default function RegisterPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nombre Completo</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Ej: Lionel Messi"
+                  required
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={isLoading || isGoogleLoading}
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Correo Electrónico</Label>
                 <Input

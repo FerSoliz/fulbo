@@ -16,9 +16,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
-import { auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
-import { signInWithEmailAndPassword } from 'firebase/auth';
 import { Eye, EyeOff, Loader2 } from 'lucide-react';
+import { useUser } from '@/context/user-context';
 
 const GoogleIcon = () => (
     <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
@@ -46,6 +45,7 @@ const GoogleIcon = () => (
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { login } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -55,51 +55,33 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
+    
+    const success = await login(email, password);
+
+    if (success) {
       toast({
         title: "¡Bienvenido de vuelta!",
         description: "Has iniciado sesión correctamente.",
       });
       router.push('/');
-    } catch (error: any) {
-      console.error(error);
-      let errorMessage = "Ocurrió un error al iniciar sesión.";
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        errorMessage = "El correo electrónico o la contraseña son incorrectos.";
-      } else {
-        errorMessage = `Error: ${error.code}`
-      }
+    } else {
       toast({
         title: "Error de inicio de sesión",
-        description: errorMessage,
+        description: "El correo electrónico o la contraseña son incorrectos.",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
+    setIsLoading(false);
   };
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
-    try {
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        toast({
-            title: "¡Bienvenido!",
-            description: "Has iniciado sesión con Google.",
-        });
-        router.push('/');
-    } catch (error: any) {
-        console.error("Google sign-in error", error);
-        toast({
-            title: "Error de inicio de sesión con Google",
-            description: `Error: ${error.code}`,
-            variant: "destructive",
-        });
-    } finally {
-        setIsGoogleLoading(false);
-    }
+    toast({
+        title: "Función no disponible",
+        description: "El inicio de sesión con Google se habilitará próximamente.",
+        variant: "default",
+    });
+    setIsGoogleLoading(false);
   }
 
   return (

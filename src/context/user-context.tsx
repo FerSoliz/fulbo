@@ -5,14 +5,13 @@ import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { initialNotifications, initialUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
-import { auth } from '@/lib/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
 
 interface UserContextType {
   user: User | null;
   allUsers: User[];
   setAllUsers: React.Dispatch<React.SetStateAction<User[]>>;
   loading: boolean;
+  login: (email: string, pass: string) => Promise<boolean>;
   logout: () => Promise<void>;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
@@ -44,89 +43,75 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Load all users from storage/initial data
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const combinedUsers = [...initialUsers, ...storedUsers];
     const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
     setAllUsers(uniqueUsers);
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setLoading(true);
-      if (firebaseUser) {
-        let foundUser = uniqueUsers.find((u: User) => u.email === firebaseUser.email);
-
-        if (!foundUser) {
-          foundUser = {
-            id: firebaseUser.uid,
-            name: firebaseUser.displayName || 'Nuevo Usuario',
-            email: firebaseUser.email!,
-            role: 'user',
-            avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
-            isVerified: true, 
-            isBlocked: false,
-            location: 'Desconocida',
-            sudpoints: 0,
-            baseSudpoints: 0,
-            league: 'Bronce',
-            division: 4,
-            stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-          };
-          const updatedStoredUsers = [...storedUsers, foundUser];
-          localStorage.setItem('users', JSON.stringify(updatedStoredUsers));
-          setAllUsers(prev => [...prev, foundUser]);
+    // Check for a logged-in user in localStorage
+    const loggedInUserId = localStorage.getItem('loggedInUserId');
+    if (loggedInUserId) {
+        const foundUser = uniqueUsers.find((u: User) => u.id === loggedInUserId);
+        if (foundUser) {
+            setUserState(foundUser);
+            // Load user-specific notifications
+            const storedNotifications = localStorage.getItem(`notifications_${foundUser.id}`);
+            setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
+        } else {
+            // If user in localStorage not found, default to visitor
+            setUserState(defaultVisitor);
+            setNotifications([]);
         }
-
-        setUserState(foundUser);
-        
-        const storedNotifications = localStorage.getItem(`notifications_${foundUser.id}`);
-        const currentNotifications = storedNotifications ? JSON.parse(storedNotifications) : initialNotifications;
-        
-        // Check for pending friend requests on login
-        const friendRequests = JSON.parse(localStorage.getItem(`friendRequests_${foundUser.id}`) || '[]');
-        friendRequests.forEach((req: any) => {
-             const notificationExists = currentNotifications.some((n: Notification) => n.actions?.some(a => a.action.includes(req.from)));
-             if (!notificationExists) {
-                currentNotifications.unshift({
-                    id: `fr-${req.from}-${Date.now()}`,
-                    type: 'friend_request',
-                    message: `${req.name} te ha enviado una solicitud de amistad.`,
-                    link: `/profile/${req.from}`,
-                    isRead: false,
-                    createdAt: new Date().toISOString(),
-                    actions: [
-                        { label: 'Aceptar', action: `accept_friend_${req.from}`},
-                        { label: 'Rechazar', action: `reject_friend_${req.from}`}
-                    ]
-                })
-             }
-        });
-        setNotifications(currentNotifications);
-        
-      } else {
+    } else {
+        // No user logged in, default to visitor
         setUserState(defaultVisitor);
         setNotifications([]);
-      }
-      setLoading(false);
-    });
-    
-    return () => unsubscribe();
+    }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
+    // Persist allUsers whenever it changes, filtering out initial ones
+    if(allUsers.length > 0) {
+        const customUsers = allUsers.filter(u => !initialUsers.some(iu => iu.id === u.id));
+        localStorage.setItem('users', JSON.stringify(customUsers));
+    }
+  }, [allUsers]);
+
+  useEffect(() => {
+    // Persist notifications when they change for the logged-in user
     if (user && user.id !== 'visitor') {
       localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
     }
   }, [notifications, user]);
 
+  const login = async (email: string, pass: string): Promise<boolean> => {
+    const foundUser = allUsers.find(u => u.email === email && u.password === pass);
+    if (foundUser) {
+      if (foundUser.isBlocked) {
+        toast({ title: "Cuenta Bloqueada", description: "Esta cuenta ha sido bloqueada.", variant: "destructive"});
+        return false;
+      }
+      localStorage.setItem('loggedInUserId', foundUser.id);
+      setUserState(foundUser);
+      const storedNotifications = localStorage.getItem(`notifications_${foundUser.id}`);
+      setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
+      return true;
+    }
+    return false;
+  };
+
   const logout = async () => {
-    await auth.signOut();
+    localStorage.removeItem('loggedInUserId');
     setUserState(defaultVisitor);
     setNotifications([]);
     toast({ title: 'Sesión Cerrada' });
+    router.push('/login');
   };
 
-
   return (
-    <UserContext.Provider value={{ user, allUsers, setAllUsers, loading, logout, notifications, setNotifications }}>
+    <UserContext.Provider value={{ user, allUsers, setAllUsers, loading, login, logout, notifications, setNotifications }}>
       {children}
     </UserContext.Provider>
   );

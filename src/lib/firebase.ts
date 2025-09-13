@@ -1,16 +1,20 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp, getApp, getApps } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { getStorage } from "firebase/storage";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+// This file is intentionally left with mock data as Firebase is not being used for authentication.
+// You can remove this file or repurpose it if you decide to use other Firebase services.
 
-// Your web app's Firebase configuration will be populated here automatically by Firebase App Hosting.
-const firebaseConfig = {"apiKey":"your-api-key","authDomain":"sudonesite2.firebaseapp.com","projectId":"sudonesite2","storageBucket":"sudonesite2.appspot.com","messagingSenderId":"397488055627","appId":"1:397488055627:web:2120b08053c30623348039"};
+const firebaseConfig = {
+    apiKey: "mock-key",
+    authDomain: "mock-domain.firebaseapp.com",
+    projectId: "mock-project",
+    storageBucket: "mock-project.appspot.com",
+    messagingSenderId: "mock-sender-id",
+    appId: "mock-app-id"
+};
 
-// Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const storage = getStorage(app);
+// Mock Firebase services if needed elsewhere to avoid crashes
+const app = {};
+const auth = {};
+const storage = {};
+const GoogleAuthProvider = function() {};
+const signInWithPopup = () => Promise.reject("Firebase auth is not configured.");
 
 export { app, auth, storage, GoogleAuthProvider, signInWithPopup };
