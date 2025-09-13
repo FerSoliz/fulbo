@@ -77,7 +77,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await signOut(auth);
     // onAuthStateChanged se encargará de establecer el usuario a null
-    localStorage.removeItem('user');
     router.push('/login');
     toast({ title: 'Sesión Cerrada' });
   };
