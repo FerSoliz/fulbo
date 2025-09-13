@@ -93,8 +93,10 @@ export function PageHeader() {
                     </SheetContent>
                 </Sheet>
             </div>
-            <div className="hidden md:flex flex-1 justify-center items-center gap-2">
-                <GlobalSearch />
+             <div className="hidden md:flex flex-1 items-center gap-2">
+                <div className="flex-1">
+                    <GlobalSearch />
+                </div>
                  <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
@@ -121,7 +123,7 @@ export function PageHeader() {
                   </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-            <div className="flex flex-1 items-center justify-end gap-2">
+            <div className="flex flex-shrink-0 items-center justify-end gap-2">
                 <Link href="/collectibles">
                     <Button variant="ghost" className="flex items-center gap-2">
                         <Layers className="h-6 w-6 text-destructive" />

@@ -82,7 +82,7 @@ export function GlobalSearch() {
         <PopoverTrigger asChild>
           <Button
             variant="outline"
-            className="relative h-9 w-full justify-start rounded-full text-sm text-muted-foreground sm:pr-12 md:w-80 lg:w-[40rem]"
+            className="relative h-9 w-full justify-start rounded-full text-sm text-muted-foreground sm:pr-12"
           >
             <Search className="h-4 w-4 mr-2" />
             <span className="hidden lg:inline-flex">Buscar...</span>
