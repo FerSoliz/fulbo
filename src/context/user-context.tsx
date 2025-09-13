@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { defaultVisitor, users as initialUsers, initialNotifications } from '@/lib/data';
 import { auth } from '@/lib/firebase';
@@ -21,40 +21,33 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
-  const [authLoading, setAuthLoading] = useState(true); // Separate state for auth readiness
+  const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      setAuthLoading(true);
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
-        // User is signed in
-        const storedUsersJSON = localStorage.getItem('users') || '[]';
-        const allKnownUsers = [...initialUsers, ...JSON.parse(storedUsersJSON)];
+        // User is signed in.
+        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+        const allKnownUsers: User[] = [...initialUsers, ...storedUsers];
         let foundUser = allKnownUsers.find(u => u.id === firebaseUser.uid);
 
         if (foundUser) {
-          // Update existing user with latest from Firebase
-           const updatedUser = {
-                ...foundUser,
-                name: firebaseUser.displayName || foundUser.name,
-                email: firebaseUser.email || foundUser.email,
-                avatar: firebaseUser.photoURL || foundUser.avatar,
-                isVerified: firebaseUser.emailVerified || foundUser.isVerified,
-            };
-            setUserState(updatedUser);
-            localStorage.setItem('currentUser', JSON.stringify(updatedUser));
+          // Existing user, update session.
+          setUserState(foundUser);
         } else {
-          // New user, create a profile
+          // New user (registered). Create a local profile.
           const userName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Nuevo Usuario';
           const newUser: User = {
             id: firebaseUser.uid,
             name: userName,
             email: firebaseUser.email || '',
-            role: 'user',
             avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${userName.replace(/\s+/g, '')}.png`,
+            role: 'user', // Default role
             location: 'Desconocida',
             isVerified: firebaseUser.emailVerified,
             sudpoints: 0,
@@ -63,43 +56,55 @@ export function UserProvider({ children }: { children: ReactNode }) {
             division: 4,
             stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
           };
-          
-          const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+
+          // Save new user to localStorage
           localStorage.setItem('users', JSON.stringify([...storedUsers, newUser]));
           setUserState(newUser);
-          localStorage.setItem('currentUser', JSON.stringify(newUser));
         }
+        
+        // Redirect if they are on an auth page
+        if (pathname === '/login' || pathname === '/register') {
+            toast({ title: '¡Bienvenido!', description: 'Has iniciado sesión correctamente.' });
+            router.push('/');
+        }
+
       } else {
-        // User is signed out
+        // User is signed out.
         setUserState(defaultVisitor);
-        localStorage.setItem('currentUser', JSON.stringify(defaultVisitor));
       }
-      setAuthLoading(false);
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, router]);
 
   const logout = async () => {
     await signOut(auth);
-    setUserState(defaultVisitor);
-    localStorage.setItem('currentUser', JSON.stringify(defaultVisitor)); // Set to visitor on logout
+    // onAuthStateChanged will handle setting the user to visitor
     router.push('/login');
     toast({ title: 'Sesión Cerrada', description: 'Has cerrado sesión correctamente.' });
   };
   
+  // This function is for manual updates to user profile, e.g. linking account
   const setUser = (updatedUser: User | null) => {
       setUserState(updatedUser);
-      if(updatedUser){
-          localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      } else {
-          // This case should ideally not happen, fallback to visitor
-          localStorage.setItem('currentUser', JSON.stringify(defaultVisitor));
+      // Persist this manual change
+      if (updatedUser) {
+        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+        const userExists = storedUsers.some((u: User) => u.id === updatedUser.id);
+        let newStoredUsers;
+        if(userExists) {
+            newStoredUsers = storedUsers.map((u: User) => u.id === updatedUser.id ? updatedUser : u);
+        } else {
+            newStoredUsers = [...storedUsers, updatedUser];
+        }
+        localStorage.setItem('users', JSON.stringify(newStoredUsers));
       }
   }
 
   return (
-    <UserContext.Provider value={{ user, loading: authLoading, logout, setUser, notifications, setNotifications }}>
+    <UserContext.Provider value={{ user, loading, logout, setUser, notifications, setNotifications }}>
       {children}
     </UserContext.Provider>
   );
