@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -76,7 +77,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
-    // onAuthStateChanged se encargará de establecer el usuario a null
+    setUserState(null);
     router.push('/login');
     toast({ title: 'Sesión Cerrada' });
   };
