@@ -49,14 +49,14 @@ export function FloatingActionButtons() {
             <Tooltip>
                  <TooltipTrigger asChild>
                     <Button 
-                        className="rounded-full h-14 w-14 shadow-lg bg-yellow-500 hover:bg-yellow-600 text-white" 
+                        className="rounded-full h-11 w-11 shadow-lg bg-yellow-500 hover:bg-yellow-600 text-white" 
                         size="icon"
                         onClick={() => setIsReportOpen(true)}
                     >
-                        <Bug className="h-7 w-7" />
+                        <Bug className="h-6 w-6" />
                     </Button>
                 </TooltipTrigger>
-                 <TooltipContent side="top">
+                 <TooltipContent side="left">
                     <p>Reportar un Error</p>
                 </TooltipContent>
             </Tooltip>
@@ -65,14 +65,14 @@ export function FloatingActionButtons() {
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button 
-                        className="rounded-full h-14 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground px-6" 
+                        className="rounded-full h-11 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground px-6" 
                         onClick={() => router.push('/messages')}
                     >
-                        <Send className="h-6 w-6 mr-2" />
-                        <span className="font-bold text-lg">MENSAJES</span>
+                        <Send className="h-5 w-5 mr-2" />
+                        <span className="font-bold text-base">MENSAJES</span>
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top">
+                <TooltipContent side="left">
                     <p>Abrir Mensajes</p>
                 </TooltipContent>
             </Tooltip>
