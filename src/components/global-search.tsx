@@ -58,6 +58,7 @@ export function GlobalSearch() {
     const down = (e: KeyboardEvent) => {
         if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
+            inputRef.current?.focus();
             setOpen(o => !o);
         }
     }
@@ -86,11 +87,10 @@ export function GlobalSearch() {
   }
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    if (e.target.value.length > 0 && !open) {
+    const term = e.target.value;
+    setSearchTerm(term);
+    if (term.length > 0 && !open) {
       setOpen(true);
-    } else if (e.target.value.length === 0 && open) {
-      setOpen(false);
     }
   }
 
@@ -105,13 +105,14 @@ export function GlobalSearch() {
                 className="w-full rounded-full pl-10"
                 value={searchTerm}
                 onChange={handleInputChange}
+                onFocus={() => searchTerm.length > 0 && setOpen(true)}
             />
              <kbd className="absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100 sm:flex">
                 <span className="text-xs">⌘</span>K
             </kbd>
         </div>
       </PopoverTrigger>
-      <PopoverContent className="p-0 w-[--radix-popover-trigger-width] mt-2" align="start">
+      <PopoverContent className="p-0 w-[--radix-popover-trigger-width] mt-2" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
         <Command shouldFilter={false}>
           <CommandList>
             {filteredData.length === 0 && searchTerm.length > 0 && (
