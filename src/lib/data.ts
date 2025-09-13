@@ -218,8 +218,8 @@ export const initialProducts: Product[] = [
     price: 79000,
     stock: 15,
     images: [
-      'https://i.postimg.cc/yYxSjD0h/camiseta-titular-frente.png',
-      'https://i.postimg.cc/pL3kSzY9/camiseta-titular-espalda.png',
+      'https://i.postimg.cc/k4g3r8bJ/camiseta-titular-frente.webp',
+      'https://i.postimg.cc/SsnC521r/camiseta-titular-espalda.webp',
     ],
     isInitial: true,
   },
@@ -242,7 +242,7 @@ export const initialProducts: Product[] = [
     price: 49000,
     stock: 20,
     images: [
-      'https://i.postimg.cc/Wb7gMLHh/short-titular.png',
+      'https://i.postimg.cc/D0c9PZz4/short-titular.webp',
     ],
     isInitial: true,
   },
@@ -253,7 +253,7 @@ export const initialProducts: Product[] = [
     price: 49000,
     stock: 0,
     images: [
-      'https://i.postimg.cc/3wH2tXWb/short-suplente.png',
+      'https://i.postimg.cc/GpKxbrx8/short-suplente.webp',
     ],
     isInitial: true,
   },
