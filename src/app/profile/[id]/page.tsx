@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { DivisionBadge } from '@/components/division-badge';
-import { User, PlayerDetails, sudpointConfig, leagues } from '@/lib/data';
+import { User, initialUsers, PlayerDetails, sudpointConfig, leagues } from '@/lib/data';
 import { Medal, Shield, Swords, ShieldAlert, Calendar, Trophy, Link2, Star, Loader2, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -49,9 +49,11 @@ export default function ProfilePage() {
     // Load initial data from localStorage
     useEffect(() => {
         const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        setAllUsers(storedUsers);
+        const combinedUsers = [...initialUsers, ...storedUsers];
+        const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
+        setAllUsers(uniqueUsers);
 
-        const targetUser = storedUsers.find((u:User) => u.id === userId);
+        const targetUser = uniqueUsers.find((u:User) => u.id === userId);
         setProfileUser(targetUser || null);
         
         setLoading(false);
@@ -352,3 +354,5 @@ export default function ProfilePage() {
         </div>
     );
 }
+
+    
