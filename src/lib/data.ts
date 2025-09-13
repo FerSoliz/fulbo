@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -117,6 +118,21 @@ export const leagues = [
     { name: 'HISTORICO', divisions: 1, color: '#9d00ff', icon: 'Crown', nextLeague: 'Leyenda del Fútbol' },
     { name: 'Leyenda del Fútbol', divisions: 1, color: '#ff4500', icon: 'Star', nextLeague: null },
 ];
+
+export const defaultVisitor: User = {
+    id: 'visitor',
+    name: 'VISITANTE',
+    role: 'user', 
+    avatar: 'https://avatar.vercel.sh/visitor.png',
+    isVerified: false,
+    isBlocked: false,
+    location: '',
+    sudpoints: 0,
+    baseSudpoints: 0,
+    league: 'Bronce',
+    division: 4,
+    stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+};
 
 export const initialUsers: User[] = [
   {
@@ -247,3 +263,5 @@ export const initialNotifications: Notification[] = [
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // hace 8 horas
     },
 ];
+
+    

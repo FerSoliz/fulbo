@@ -1,45 +1,27 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { auth, isMocked as isMockConfig } from '@/lib/firebase';
 import type { User, Notification } from '@/lib/data';
-import { initialNotifications, initialUsers } from '@/lib/data';
+import { initialNotifications, initialUsers, defaultVisitor } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 
 interface UserContextType {
   user: User | null;
-  firebaseUser: FirebaseUser | null;
   allUsers: User[];
   setAllUsers: React.Dispatch<React.SetStateAction<User[]>>;
   loading: boolean;
   login: (email: string, pass: string) => Promise<boolean>;
-  logout: () => Promise<void>;
+  logout: () => void;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-const defaultVisitor: User = {
-    id: 'visitor',
-    name: 'VISITANTE',
-    role: 'user', 
-    avatar: 'https://avatar.vercel.sh/visitor.png',
-    isVerified: false,
-    isBlocked: false,
-    location: '',
-    sudpoints: 0,
-    baseSudpoints: 0,
-    league: 'Bronce',
-    division: 4,
-    stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-};
-
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -47,78 +29,35 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load all non-Firebase user data from storage/initial data
+    // Load all user data from storage/initial data
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const combinedUsers = [...initialUsers, ...storedUsers];
     const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
     setAllUsers(uniqueUsers);
 
-    if (isMockConfig) {
-      console.log("Using mock auth flow.");
-      const loggedInUserId = localStorage.getItem('loggedInUserId');
-      if (loggedInUserId) {
+    // Check for a logged-in user
+    const loggedInUserId = localStorage.getItem('loggedInUserId');
+    if (loggedInUserId) {
         const foundUser = uniqueUsers.find((u:User) => u.id === loggedInUserId);
         if (foundUser) {
           setUser(foundUser);
           const storedNotifications = localStorage.getItem(`notifications_${foundUser.id}`);
           setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
         } else {
-          setUser(defaultVisitor);
+            // If user in localStorage is not found, default to visitor
+            setUser(defaultVisitor);
+            localStorage.removeItem('loggedInUserId');
         }
-      } else {
+    } else {
         setUser(defaultVisitor);
-      }
-      setLoading(false);
-      return;
     }
-
-    const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
-      setFirebaseUser(fbUser);
-      if (fbUser) {
-        // User is signed in. Find matching user in our data or create a new one.
-        let appUser = uniqueUsers.find((u: User) => u.email === fbUser.email);
-        
-        if (!appUser) {
-          appUser = {
-            id: fbUser.uid,
-            name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Nuevo Usuario',
-            email: fbUser.email || '',
-            role: 'user',
-            avatar: fbUser.photoURL || `https://avatar.vercel.sh/${fbUser.uid}.png`,
-            isVerified: fbUser.emailVerified,
-            isBlocked: false,
-            location: 'Desconocida',
-            sudpoints: 0,
-            baseSudpoints: 0,
-            league: 'Bronce',
-            division: 4,
-            stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-          };
-          const newAllUsers = [...allUsers, appUser];
-          setAllUsers(newAllUsers);
-        }
-        
-        setUser(appUser);
-        const storedNotifications = localStorage.getItem(`notifications_${appUser.id}`);
-        setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
-        localStorage.setItem('loggedInUserId', appUser.id);
-      } else {
-        // User is signed out
-        setUser(defaultVisitor);
-        setFirebaseUser(null);
-        setNotifications([]);
-        localStorage.removeItem('loggedInUserId');
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
+    setLoading(false);
   }, []);
 
   useEffect(() => {
-    // Persist allUsers whenever it changes, filtering out initial ones
+    // Persist allUsers whenever it changes, filtering out initial ones that haven't been modified
     if(allUsers.length > 0) {
-        const customUsers = allUsers.filter(u => !initialUsers.some(iu => iu.id === u.id));
+        const customUsers = allUsers.filter(u => !initialUsers.some(iu => iu.id === u.id && JSON.stringify(iu) === JSON.stringify(u)));
         localStorage.setItem('users', JSON.stringify(customUsers));
     }
   }, [allUsers]);
@@ -131,7 +70,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [notifications, user]);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
-    // This function is now only for the mock flow, as onAuthStateChanged handles real login
     const foundUser = allUsers.find(u => u.email === email && u.password === pass);
     if (foundUser) {
       if (foundUser.isBlocked) {
@@ -147,11 +85,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
-  const logout = async () => {
-    if (!isMockConfig) {
-      await auth.signOut();
-    }
-    // The onAuthStateChanged listener will handle resetting the state
+  const logout = () => {
     setUser(defaultVisitor);
     setNotifications([]);
     localStorage.removeItem('loggedInUserId');
@@ -161,7 +95,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const contextValue = {
       user,
-      firebaseUser,
       allUsers,
       setAllUsers,
       loading,
@@ -186,3 +119,5 @@ export function useUser() {
   }
   return context;
 }
+
+    
