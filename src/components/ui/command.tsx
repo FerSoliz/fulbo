@@ -122,9 +122,13 @@ const CommandItem = React.forwardRef<
     )}
     {...props}
     onMouseDown={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        (e.currentTarget as HTMLDivElement).click();
+      // Fix for click not working on items
+      e.preventDefault();
+      e.stopPropagation();
+    }}
+    onClickCapture={(e) => {
+      // Ensure the click is registered
+      (e.currentTarget as HTMLDivElement).click();
     }}
   />
 ))
