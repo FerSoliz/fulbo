@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import {
@@ -16,7 +15,8 @@ import {
   Users,
   FileText,
   ShieldAlert,
-  ArrowRight
+  ArrowRight,
+  UserCog,
 } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@/lib/data';
@@ -37,6 +37,13 @@ const adminActions = [
     icon: Settings,
     href: '/admin/manage-tournaments',
     color: 'bg-blue-500 hover:bg-blue-600',
+  },
+  {
+    title: 'Administrar Usuarios',
+    description: 'Gestiona roles, permisos y acceso de todos los usuarios de la plataforma.',
+    icon: UserCog,
+    href: '/admin/manage-users',
+    color: 'bg-orange-500 hover:bg-orange-600',
   },
   {
     title: 'Cargar Resultados',
@@ -64,7 +71,7 @@ const adminActions = [
 export default function AdminPage() {
   const { user: currentUser, loading } = useUser();
 
-  const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'editor';
+  const isAdmin = currentUser?.role === 'admin';
 
   if (loading) {
     return <div className="p-8 text-center">Cargando...</div>;
@@ -96,31 +103,35 @@ export default function AdminPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {adminActions.map((action) => (
-            <Card key={action.title} className="flex flex-col">
-              <CardHeader className="flex-row items-center gap-4">
-                <div className={`p-3 rounded-lg ${action.color}`}>
-                   <action.icon className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                    <CardTitle>{action.title}</CardTitle>
-                    <CardDescription className="mt-1">{action.description}</CardDescription>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-grow"></CardContent>
-              <CardContent>
-                 <Link href={action.href}>
-                  <Button className={`w-full ${action.color}`}>
-                    Ir a {action.title}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
+          {adminActions.map((action) => {
+            if (action.title === 'Administrar Usuarios' && currentUser?.role !== 'admin') {
+                return null;
+            }
+            return (
+                <Card key={action.title} className="flex flex-col">
+                <CardHeader className="flex-row items-center gap-4">
+                    <div className={`p-3 rounded-lg ${action.color}`}>
+                    <action.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                        <CardTitle>{action.title}</CardTitle>
+                        <CardDescription className="mt-1">{action.description}</CardDescription>
+                    </div>
+                </CardHeader>
+                <CardContent className="flex-grow"></CardContent>
+                <CardContent>
+                    <Link href={action.href}>
+                    <Button className={`w-full ${action.color}`}>
+                        Ir a {action.title}
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                    </Link>
+                </CardContent>
+                </Card>
+            )
+          })}
         </div>
       </div>
     </div>
   );
 }
-

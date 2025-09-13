@@ -7,6 +7,7 @@ export interface User {
   password?: string;
   role: 'user' | 'editor' | 'admin';
   avatar: string;
+  isBlocked?: boolean;
   uniqueCode?: string;
   sudpoints: number;
   baseSudpoints: number;
@@ -118,56 +119,72 @@ export const leagues = [
     { name: 'Leyenda del Fútbol', divisions: 1, color: '#ff4500', icon: 'Star', nextLeague: null },
 ];
 
-// Se eliminan los usuarios iniciales para depender únicamente de Firebase
-export const users: User[] = [];
+export const users: User[] = [
+  {
+    id: 'admin-user',
+    name: 'Lucio Mingrone',
+    email: 'admin@sudone.com',
+    password: 'password123',
+    avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
+    location: 'Buenos Aires, Argentina',
+    isVerified: true,
+    role: 'admin',
+    isBlocked: false,
+    sudpoints: 100,
+    baseSudpoints: 0,
+    league: 'Diamante',
+    division: 1,
+    uniqueCode: 'SUD-ADMIN',
+    stats: { partidosJugados: 100, victorias: 80, empates: 10, derrotas: 10, goles: 150, asistencias: 50, amarillas: 2, rojas: 0, mvps: 40 },
+  },
+  {
+    id: 'editor-user',
+    name: 'Leo Messi',
+    email: 'editor@sudone.com',
+    password: 'password123',
+    avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg',
+    location: 'Rosario, Argentina',
+    isVerified: true,
+    role: 'editor',
+    isBlocked: false,
+    sudpoints: 80,
+    baseSudpoints: 0,
+    league: 'Oro',
+    division: 2,
+    uniqueCode: 'MESSI10',
+    stats: { partidosJugados: 10, victorias: 8, empates: 1, derrotas: 1, goles: 15, asistencias: 5, amarillas: 0, rojas: 0, mvps: 7 },
+  },
+];
 
-// Las publicaciones y notificaciones iniciales pueden permanecer si son contenido de ejemplo
 export const posts: Post[] = [
     {
         id: 1,
-        authorId: 'U84vcxnngCNqPQ2mfDUtHpep76522',
+        authorId: 'admin-user',
         title: "¡Arrancó la Liga Anual 2024!",
         content: "Estamos muy emocionados de anunciar el comienzo de la Liga Anual de SUDONE. Prepárense para competir y demostrar quién es el mejor. ¡Mucha suerte a todos los participantes!",
         media: [
             { type: "image", url: "https://i.postimg.cc/NfHBrS60/liga-anual.png" },
         ],
-        likes: ['user-2', 'user-3'],
+        likes: ['editor-user'],
         comments: [
-            { id: 1, authorId: 'user-2', content: "¡Vamos con todo!", createdAt: "2024-05-20T11:00:00Z" }
+            { id: 1, authorId: 'editor-user', content: "¡Vamos con todo!", createdAt: "2024-05-20T11:00:00Z" }
         ],
         createdAt: "2024-05-20T10:00:00Z"
     },
     {
         id: 2,
-        authorId: 'user-2',
+        authorId: 'editor-user',
         title: "Recordando la final del mundo",
         content: "Un momento inolvidable para todos los argentinos. Comparto este video del resumen del partido. ¿Cuál fue su momento favorito?",
         media: [
             { type: "video", url: "https://img.youtube.com/vi/FG_wffPU-yM/maxresdefault.jpg" },
         ],
-        likes: ['U84vcxnngCNqPQ2mfDUtHpep76522', 'user-3'],
+        likes: ['admin-user'],
         comments: [
-             { id: 2, authorId: 'user-3', content: "La atajada en el último minuto. ¡Gracias Dibu!", createdAt: "2024-05-21T15:30:00Z" },
-             { id: 3, authorId: 'U84vcxnngCNqPQ2mfDUtHpep76522', content: "El gol de Fideo. ¡Qué locura!", createdAt: "2024-05-21T16:00:00Z" }
+             { id: 3, authorId: 'admin-user', content: "El gol de Fideo. ¡Qué locura!", createdAt: "2024-05-21T16:00:00Z" }
         ],
         createdAt: "2024-05-21T14:00:00Z"
     },
-    {
-        id: 3,
-        authorId: 'user-3',
-        title: "Algunas fotos del último entrenamiento",
-        content: "Dejándolo todo en la cancha para lo que se viene. ¡Vamos equipo!",
-        media: [
-            { type: "image", url: "https://i.postimg.cc/VLZz1sN1/dibu-training-1.jpg" },
-            { type: "image", url: "https://i.postimg.cc/jSgWc4pD/dibu-training-2.jpg" },
-            { type: "image", url: "https://i.postimg.cc/6pRf05s3/dibu-training-3.jpg" },
-            { type: "image", url: "https://i.postimg.cc/y8BmcX33/dibu-training-4.jpg" },
-            { type: "image", url: "https://i.postimg.cc/Z5xLQrG6/dibu-training-5.jpg" },
-        ],
-        likes: ['U84vcxnngCNqPQ2mfDUtHpep76522'],
-        comments: [],
-        createdAt: "2024-05-22T09:00:00Z"
-    }
 ];
 
 export const initialProducts: Product[] = [
@@ -225,7 +242,7 @@ export const initialNotifications: Notification[] = [
         id: '0',
         type: 'post',
         message: '¡Bienvenido! Siéntete libre de explorar la página, editar tu perfil o lo que quieras hacer.',
-        link: '/profile/U84vcxnngCNqPQ2mfDUtHpep76522',
+        link: '/profile/admin-user',
         isRead: false,
         createdAt: new Date().toISOString(),
     },
@@ -241,7 +258,7 @@ export const initialNotifications: Notification[] = [
         id: '2',
         type: 'sudpoints',
         message: '¡Ganaste 25 Sudpoints por tu victoria!',
-        link: '/profile/U84vcxnngCNqPQ2mfDUtHpep76522',
+        link: '/profile/admin-user',
         isRead: false,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // hace 2 horas
     },
@@ -252,21 +269,5 @@ export const initialNotifications: Notification[] = [
         link: '/',
         isRead: false,
         createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(), // hace 8 horas
-    },
-    {
-        id: '4',
-        type: 'pack',
-        message: '¡Tu sobre diario gratuito está listo para abrir!',
-        link: '/collectibles',
-        isRead: true,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // hace 1 día
-    },
-    {
-        id: '5',
-        type: 'team',
-        message: 'Se han actualizado los resultados de la "Liga Anual 2024".',
-        link: '/leagues',
-        isRead: true,
-        createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // hace 2 días
     },
 ];

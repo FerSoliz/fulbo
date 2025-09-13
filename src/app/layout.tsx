@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import type { Metadata } from "next";
@@ -45,7 +44,6 @@ export default function RootLayout({
 function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
 
-    // Check if we are on login, register or forgot-password page
     const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
 
     if (isAuthPage) {
@@ -65,7 +63,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <main>{children}</main>
             </div>
             <Toaster />
-            <FloatingActionButtons />
+            {/* <FloatingActionButtons /> */}
         </div>
     );
 }
