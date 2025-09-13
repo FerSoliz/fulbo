@@ -121,6 +121,11 @@ const CommandItem = React.forwardRef<
       className
     )}
     {...props}
+    onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        (e.currentTarget as HTMLDivElement).click();
+    }}
   />
 ))
 
