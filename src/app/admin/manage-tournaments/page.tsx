@@ -199,7 +199,7 @@ export default function ManageTournamentsPage() {
                         Equipos: {tournament.teamCount}
                       </p>
                     </CardContent>
-                    <CardFooter className="grid grid-cols-2 gap-2">
+                    <CardFooter className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       <Button asChild variant="outline">
                         <Link
                           href={`/admin/tournaments/${tournament.id}`}
