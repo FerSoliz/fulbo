@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -140,7 +141,6 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
           <Link href={`/profile/${author.id}`} className="hover:underline">
             <div className="flex items-center gap-1">
                 <p className="font-semibold text-sm">{author.name}</p>
-                {author.isVerified && <Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={16} height={16} />}
             </div>
           </Link>
           <p className="text-xs text-muted-foreground">{author.location} · {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: es })}</p>
@@ -215,3 +215,5 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
     </Card>
   );
 }
+
+    
