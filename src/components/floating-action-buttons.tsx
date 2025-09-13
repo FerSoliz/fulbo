@@ -26,7 +26,7 @@ import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import type { Conversation } from '@/lib/data';
+import type { Conversation, Message } from '@/lib/data';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { format, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -53,15 +53,55 @@ export function FloatingActionButtons() {
   }
   
   const handleReportSubmit = () => {
-    if(!reportText.trim()) {
-        toast({ title: "Error", description: "Por favor, describe el error.", variant: "destructive" });
-        return;
+    if (!reportText.trim()) {
+      toast({ title: "Error", description: "Por favor, describe el error.", variant: "destructive" });
+      return;
     }
-    console.log('Error Report Submitted:', reportText);
-    toast({ title: "¡Gracias!", description: "Tu reporte de error ha sido enviado." });
+  
+    const adminUser = allUsers.find(u => u.role === 'admin');
+    if (!adminUser) {
+      toast({ title: "Error", description: "No se pudo encontrar al administrador para enviar el reporte.", variant: "destructive" });
+      return;
+    }
+  
+    const conversationId = [currentUser.id, adminUser.id].sort().join('-');
+    const savedConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
+    let conversation = savedConversations.find((c: Conversation) => c.id === conversationId);
+  
+    const newMessage: Message = {
+      id: `msg-${Date.now()}`,
+      senderId: currentUser.id,
+      text: `REPORTE DE ERROR: ${reportText}`,
+      timestamp: Date.now(),
+    };
+  
+    let updatedConversations;
+    if (conversation) {
+      // Add message to existing conversation
+      conversation.messages.push(newMessage);
+      conversation.lastMessage = { text: newMessage.text, timestamp: newMessage.timestamp };
+      updatedConversations = savedConversations.map((c: Conversation) => c.id === conversationId ? conversation : c);
+    } else {
+      // Create new conversation
+      const newConversation: Conversation = {
+        id: conversationId,
+        participants: [currentUser.id, adminUser.id],
+        messages: [newMessage],
+        lastMessage: { text: newMessage.text, timestamp: newMessage.timestamp },
+      };
+      updatedConversations = [...savedConversations, newConversation];
+    }
+  
+    localStorage.setItem('conversations', JSON.stringify(updatedConversations));
+    
+    // Update local state if needed for reactivity
+    const userConversations = updatedConversations.filter((c: Conversation) => c.participants.includes(currentUser.id));
+    setConversations(userConversations);
+  
+    toast({ title: "¡Gracias!", description: "Tu reporte de error ha sido enviado al administrador." });
     setReportText('');
     setIsReportOpen(false);
-  }
+  };
   
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp);
