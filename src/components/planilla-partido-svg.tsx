@@ -12,17 +12,18 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
     
     const PlayerRow = ({ index }: { index: number }) => (
         <>
+            {/* Home Team Row */}
             <rect x="10" y={200 + index * 25} width="30" height="25" fill="#f0f0f0" stroke="#ccc" />
             <text x="25" y={217 + index * 25} fontFamily="Arial" fontSize="12" textAnchor="middle">{index + 1}</text>
-            <rect x="40" y={200 + index * 25} width="160" height="25" stroke="#ccc" fill="white" />
-            <rect x="200" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
-            <rect x="230" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
-            <rect x="260" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
+            <rect x="40" y={200 + index * 25} width="255" height="25" stroke="#ccc" fill="white" />
+            <rect x="295" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
+            <rect x="325" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
+            <rect x="355" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
 
             {/* Away team */}
-            <rect x="500" y={200 + index * 25} width="30" height="25" fill="#f0f0f0" stroke="#ccc" />
-            <text x="515" y={217 + index * 25} fontFamily="Arial" fontSize="12" textAnchor="middle">{index + 1}</text>
-            <rect x="530" y={200 + index * 25} width="160" height="25" stroke="#ccc" fill="white" />
+            <rect x="405" y={200 + index * 25} width="30" height="25" fill="#f0f0f0" stroke="#ccc" />
+            <text x="420" y={217 + index * 25} fontFamily="Arial" fontSize="12" textAnchor="middle">{index + 1}</text>
+            <rect x="435" y={200 + index * 25} width="255" height="25" stroke="#ccc" fill="white" />
             <rect x="690" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
             <rect x="720" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
             <rect x="750" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
@@ -36,8 +37,8 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
 
                 {/* Header */}
                 <rect x="10" y="10" width="780" height="80" stroke="black" fill="#f0f0f0" />
-                <text x="325" y="45" fontFamily="Arial" fontSize="24" fontWeight="bold" textAnchor="middle">Planilla de Partido</text>
-                <text x="325" y="75" fontFamily="Arial" fontSize="16" textAnchor="middle">SUDONE Torneos</text>
+                <text x="400" y="45" fontFamily="Arial" fontSize="24" fontWeight="bold" textAnchor="middle">Planilla de Partido</text>
+                <text x="400" y="75" fontFamily="Arial" fontSize="16" textAnchor="middle">SUDONE Torneos</text>
                 
                 {/* QR Code and Match ID */}
                 {qrCodeUrl && <image href={qrCodeUrl} x="680" y="15" height="70" width="70" />}
@@ -64,14 +65,14 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
 
                 {/* Home Team Table Header */}
                 <text x="25" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">N°</text>
-                <text x="120" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">Nombre del Jugador</text>
-                <text x="215" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">G</text>
-                <text x="245" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">A</text>
-                <text x="275" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">R</text>
+                <text x="167.5" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">Nombre del Jugador</text>
+                <text x="310" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">G</text>
+                <text x="340" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">A</text>
+                <text x="370" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">R</text>
                 
                 {/* Away Team Table Header */}
-                <text x="515" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">N°</text>
-                <text x="610" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">Nombre del Jugador</text>
+                <text x="420" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">N°</text>
+                <text x="562.5" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">Nombre del Jugador</text>
                 <text x="705" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">G</text>
                 <text x="735" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">A</text>
                 <text x="765" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">R</text>
@@ -80,14 +81,14 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
                 {Array.from({ length: 11 }).map((_, i) => <PlayerRow key={`player-row-${i}`} index={i} />)}
                 
                 {/* Totals */}
-                <rect x="10" y="475" width="190" height="30" stroke="black" fill="#e0e0e0" />
-                <text x="105" y="495" fontFamily="Arial" fontSize="14" fontWeight="bold" textAnchor="middle">TOTALES</text>
-                <rect x="200" y="475" width="30" height="30" stroke="black" fill="white" />
-                <rect x="230" y="475" width="30" height="30" stroke="black" fill="white" />
-                <rect x="260" y="475" width="30" height="30" stroke="black" fill="white" />
+                <rect x="10" y="475" width="285" height="30" stroke="black" fill="#e0e0e0" />
+                <text x="152.5" y="495" fontFamily="Arial" fontSize="14" fontWeight="bold" textAnchor="middle">TOTALES</text>
+                <rect x="295" y="475" width="30" height="30" stroke="black" fill="white" />
+                <rect x="325" y="475" width="30" height="30" stroke="black" fill="white" />
+                <rect x="355" y="475" width="30" height="30" stroke="black" fill="white" />
 
-                <rect x="500" y="475" width="190" height="30" stroke="black" fill="#e0e0e0" />
-                <text x="595" y="495" fontFamily="Arial" fontSize="14" fontWeight="bold" textAnchor="middle">TOTALES</text>
+                <rect x="405" y="475" width="285" height="30" stroke="black" fill="#e0e0e0" />
+                <text x="547.5" y="495" fontFamily="Arial" fontSize="14" fontWeight="bold" textAnchor="middle">TOTALES</text>
                 <rect x="690" y="475" width="30" height="30" stroke="black" fill="white" />
                 <rect x="720" y="475" width="30" height="30" stroke="black" fill="white" />
                 <rect x="750" y="475" width="30" height="30" stroke="black" fill="white" />
