@@ -95,7 +95,7 @@ export function GlobalSearch() {
           <CommandEmpty>No se encontraron resultados.</CommandEmpty>
            <CommandGroup heading="Usuarios">
             {allData.filter(i => i.type === 'USUARIO').map(item => (
-                 <CommandItem key={item.id} value={`user-${item.id}`} onSelect={() => runCommand(() => router.push(item.path))}>
+                 <CommandItem key={item.id} value={`user-${item.name}-${item.id}`} onSelect={() => runCommand(() => router.push(item.path))}>
                     <Avatar className="h-6 w-6 mr-2">
                         <AvatarImage src={item.avatar}/>
                         <AvatarFallback>{item.name.charAt(0)}</AvatarFallback>
@@ -106,7 +106,7 @@ export function GlobalSearch() {
            </CommandGroup>
            <CommandGroup heading="Torneos">
              {allData.filter(i => i.type === 'TORNEO').map(item => (
-                 <CommandItem key={item.id} value={`tournament-${item.id}`} onSelect={() => runCommand(() => router.push(item.path))}>
+                 <CommandItem key={item.id} value={`tournament-${item.name}-${item.id}`} onSelect={() => runCommand(() => router.push(item.path))}>
                     {getIcon(item.type)}
                     {item.name}
                 </CommandItem>
@@ -114,7 +114,7 @@ export function GlobalSearch() {
            </CommandGroup>
            <CommandGroup heading="Otras Páginas">
              {allData.filter(i => i.type === 'PÁGINA' || i.type === 'JUEGO').map(item => (
-                 <CommandItem key={item.id} value={`page-${item.id}`} onSelect={() => runCommand(() => router.push(item.path))}>
+                 <CommandItem key={item.id} value={`page-${item.name}-${item.id}`} onSelect={() => runCommand(() => router.push(item.path))}>
                     {getIcon(item.type)}
                     {item.name}
                 </CommandItem>
