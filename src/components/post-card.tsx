@@ -28,6 +28,7 @@ interface PostCardProps {
 export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUsers }: PostCardProps) {
   const author = allUsers.find(u => u.id === post.authorId);
   const [commentText, setCommentText] = useState('');
+  const [showComments, setShowComments] = useState(false);
 
   if (!author) return null;
 
@@ -50,10 +51,11 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
     };
     onUpdatePost({ ...post, comments: [...post.comments, newComment] });
     setCommentText('');
+    setShowComments(true); // Ensure comments are visible after adding a new one
   };
 
   const isLiked = currentUser && post.likes.includes(currentUser.id);
-  const canEditOrDelete = currentUser?.id === post.authorId || currentUser?.role === 'admin';
+  const canEditOrDelete = currentUser?.id === post.authorId || currentUser?.role === 'admin' || currentUser?.role === 'editor';
   const isVisitor = currentUser?.name === 'VISITANTE';
 
   const renderMedia = () => {
@@ -141,7 +143,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
           <Link href={`/profile/${author.id}`} className="hover:underline">
             <div className="flex items-center gap-1">
                 <p className="font-semibold text-sm">{author.name}</p>
-                {(author.role === 'admin' || author.role === 'editor') && (
+                 {(author.role === 'admin' || author.role === 'editor') && (
                     <Image src="https://i.postimg.cc/SQM9LfMY/verificado.png" alt="Editor" width={16} height={16} />
                 )}
             </div>
@@ -173,13 +175,13 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
         {renderMedia()}
       </CardContent>
       <CardFooter className="flex-col items-start">
-        <div className="flex justify-between w-full mb-2">
+        <div className="flex justify-between w-full pb-2 border-b">
             <div className="flex items-center gap-4">
               <Button variant="ghost" size="sm" onClick={handleLike} disabled={isVisitor}>
                 <Heart className={cn("h-5 w-5", isLiked && 'text-red-500 fill-current')} />
                 <span className="ml-2 text-sm">{post.likes.length}</span>
               </Button>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={() => setShowComments(!showComments)}>
                 <MessageSquare className="h-5 w-5" />
                 <span className="ml-2 text-sm">{post.comments.length}</span>
               </Button>
@@ -188,16 +190,32 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
                 <Bookmark className="h-5 w-5" />
             </Button>
         </div>
-        <div className="w-full space-y-2 pt-2 border-t">
-          {post.comments.map(comment => {
-            const commentAuthor = allUsers.find(u => u.id === comment.authorId);
-            return (
-              <div key={comment.id} className="text-sm">
-                <span className="font-semibold">{commentAuthor?.name || 'Usuario'}</span>: {comment.content}
-              </div>
-            )
-          })}
-        </div>
+        {showComments && (
+            <div className="w-full space-y-4 pt-4">
+            {post.comments.map(comment => {
+                const commentAuthor = allUsers.find(u => u.id === comment.authorId);
+                return commentAuthor ? (
+                <div key={comment.id} className="flex items-start gap-3">
+                    <Avatar className="h-8 w-8">
+                        <AvatarImage src={commentAuthor.avatar} />
+                        <AvatarFallback>{commentAuthor.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="bg-muted p-3 rounded-lg w-full">
+                        <div className="flex items-center gap-2">
+                             <Link href={`/profile/${commentAuthor.id}`} className="hover:underline">
+                                <span className="font-semibold text-sm">{commentAuthor.name}</span>
+                             </Link>
+                            {(commentAuthor.role === 'admin' || commentAuthor.role === 'editor') && (
+                                <Image src="https://i.postimg.cc/SQM9LfMY/verificado.png" alt="Editor" width={14} height={14} />
+                            )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{comment.content}</p>
+                    </div>
+                </div>
+                ) : null;
+            })}
+            </div>
+        )}
         {currentUser && !isVisitor && (
             <div className="flex w-full items-center gap-2 pt-4">
                 <Avatar className="h-8 w-8">
