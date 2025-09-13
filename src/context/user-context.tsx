@@ -62,14 +62,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setUserState(foundUser);
             localStorage.setItem('currentUser', JSON.stringify(foundUser));
         } else {
+            const userName = firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Nuevo Usuario';
+            const userAvatar = firebaseUser.photoURL || `https://avatar.vercel.sh/${userName}.png`;
             const newUser: User = {
-              id: `user-${Date.now()}`,
-              name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Nuevo Usuario',
+              id: firebaseUser.uid,
+              name: userName,
               email: firebaseUser.email || '',
               role: 'user',
-              avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
+              avatar: userAvatar,
               location: 'Desconocida',
-              isVerified: false,
+              isVerified: firebaseUser.emailVerified,
               sudpoints: 0,
               baseSudpoints: 0,
               league: 'Bronce',
