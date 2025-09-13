@@ -18,10 +18,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const GoogleIcon = () => (
-    <svg className="h-5 w-5" viewBox="0 0 24 24">
+    <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
       <path
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
         fill="#4285F4"
@@ -57,32 +57,34 @@ export default function RegisterPage() {
     e.preventDefault();
     if (password !== confirmPassword) {
       toast({
-        title: "Error",
+        title: "Error de Contraseña",
         description: "Las contraseñas no coinciden.",
         variant: "destructive",
       });
       return;
     }
+    if (password.length < 6) {
+        toast({
+            title: "Contraseña Débil",
+            description: "La contraseña debe tener al menos 6 caracteres.",
+            variant: "destructive",
+        });
+        return;
+    }
+
     setIsLoading(true);
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      toast({
-        title: "¡Cuenta Creada!",
-        description: "Tu cuenta ha sido creada exitosamente. Serás redirigido.",
-      });
       router.push('/');
+      router.refresh();
     } catch (error: any) {
-      console.error(error);
+      console.error("Register error:", error.code);
       let errorMessage = "Ocurrió un error al registrar la cuenta.";
       if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "Este correo electrónico ya está en uso.";
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = "La contraseña debe tener al menos 6 caracteres.";
-      } else {
-        errorMessage = `Error: ${error.code}`
+        errorMessage = "Este correo electrónico ya está en uso por otra cuenta.";
       }
       toast({
-        title: "Error de registro",
+        title: "Error de Registro",
         description: errorMessage,
         variant: "destructive",
       });
@@ -93,19 +95,16 @@ export default function RegisterPage() {
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
+    const provider = new GoogleAuthProvider();
     try {
-        const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
-        toast({
-            title: "¡Bienvenido!",
-            description: "Tu cuenta ha sido creada con Google.",
-        });
         router.push('/');
+        router.refresh();
     } catch (error: any) {
         console.error("Google sign-in error", error);
         toast({
-            title: "Error de registro con Google",
-            description: `Error: ${error.code}`,
+            title: "Error con Google",
+            description: "No se pudo crear la cuenta con Google. Intenta de nuevo.",
             variant: "destructive",
         });
     } finally {
@@ -149,7 +148,7 @@ export default function RegisterPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Contraseña</Label>
+                <Label htmlFor="password">Contraseña (mín. 6 caracteres)</Label>
                  <div className="relative">
                     <Input
                         id="password"
@@ -195,6 +194,7 @@ export default function RegisterPage() {
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
               <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoading ? "Creando cuenta..." : "Registrarse"}
               </Button>
               <div className="relative w-full flex items-center justify-center">
@@ -206,7 +206,8 @@ export default function RegisterPage() {
                   </span>
               </div>
                <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin} disabled={isLoading || isGoogleLoading}>
-                {isGoogleLoading ? "Cargando..." : <> <GoogleIcon /> Continuar con Google </>}
+                {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+                {isGoogleLoading ? "Redirigiendo..." : "Continuar con Google"}
               </Button>
                <p className="text-center text-sm text-muted-foreground">
                     ¿Ya tienes una cuenta?{" "}

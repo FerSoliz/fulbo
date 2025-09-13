@@ -18,10 +18,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Loader2 } from 'lucide-react';
 
 const GoogleIcon = () => (
-    <svg className="h-5 w-5" viewBox="0 0 24 24">
+    <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
       <path
         d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
         fill="#4285F4"
@@ -57,18 +57,13 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      toast({
-        title: "¡Bienvenido de vuelta!",
-        description: "Has iniciado sesión correctamente.",
-      });
       router.push('/');
+      router.refresh(); // Force a refresh to update user state across the app
     } catch (error: any) {
-      console.error(error);
+      console.error("Login error:", error.code);
       let errorMessage = "Ocurrió un error al iniciar sesión.";
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         errorMessage = "El correo electrónico o la contraseña son incorrectos.";
-      } else {
-        errorMessage = `Error: ${error.code}`
       }
       toast({
         title: "Error de inicio de sesión",
@@ -82,19 +77,16 @@ export default function LoginPage() {
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
+    const provider = new GoogleAuthProvider();
     try {
-        const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
-        toast({
-            title: "¡Bienvenido!",
-            description: "Has iniciado sesión con Google.",
-        });
         router.push('/');
+        router.refresh();
     } catch (error: any) {
         console.error("Google sign-in error", error);
         toast({
-            title: "Error de inicio de sesión con Google",
-            description: `Error: ${error.code}`,
+            title: "Error con Google",
+            description: "No se pudo iniciar sesión con Google. Intenta de nuevo.",
             variant: "destructive",
         });
     } finally {
@@ -170,6 +162,7 @@ export default function LoginPage() {
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
               <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoading ? "Ingresando..." : "Iniciar Sesión"}
               </Button>
               <div className="relative w-full flex items-center justify-center">
@@ -181,7 +174,8 @@ export default function LoginPage() {
                   </span>
               </div>
                <Button variant="outline" className="w-full" type="button" onClick={handleGoogleLogin} disabled={isLoading || isGoogleLoading}>
-                {isGoogleLoading ? "Cargando..." : <> <GoogleIcon /> Continuar con Google </>}
+                {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
+                {isGoogleLoading ? "Redirigiendo..." : "Continuar con Google"}
               </Button>
                <p className="text-center text-sm text-muted-foreground">
                     ¿No tienes una cuenta?{" "}

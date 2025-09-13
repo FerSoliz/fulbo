@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import type { User, Notification } from '@/lib/data';
 import { defaultVisitor, users as initialUsers, initialNotifications } from '@/lib/data';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut, User as FirebaseUser } from 'firebase/auth';
 
 interface UserContextType {
   user: User | null;
@@ -20,15 +20,41 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [notifications, setNotifications] = useState<Notification[]>(initialNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
 
   useEffect(() => {
+    // Cargar datos del usuario desde localStorage para una carga inicial más rápida
+    try {
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            setUserState(JSON.parse(savedUser));
+        } else {
+            setUserState(defaultVisitor);
+        }
+        const savedNotifications = localStorage.getItem('notifications');
+        setNotifications(savedNotifications ? JSON.parse(savedNotifications) : initialNotifications);
+    } catch (e) {
+        console.error("Failed to parse from localStorage", e);
+        setUserState(defaultVisitor);
+        setNotifications(initialNotifications);
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      setLoading(true);
+      handleUserChange(firebaseUser);
+    });
+    
+    setLoading(false);
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+      localStorage.setItem('notifications', JSON.stringify(notifications));
+  }, [notifications]);
+
+  const handleUserChange = (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        // User is signed in.
-        const allKnownUsersJSON = localStorage.getItem('users') || '[]';
-        const allKnownUsers = [...initialUsers, ...JSON.parse(allKnownUsersJSON)];
+        const storedUsersJSON = localStorage.getItem('users') || '[]';
+        const allKnownUsers = [...initialUsers, ...JSON.parse(storedUsersJSON)];
         
         let foundUser = allKnownUsers.find(u => u.email === firebaseUser.email);
         
@@ -36,7 +62,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setUserState(foundUser);
             localStorage.setItem('currentUser', JSON.stringify(foundUser));
         } else {
-            // This is a new Firebase user not in our mock data. Create a basic profile.
             const newUser: User = {
               id: `user-${Date.now()}`,
               name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Nuevo Usuario',
@@ -57,21 +82,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
             localStorage.setItem('currentUser', JSON.stringify(newUser));
         }
       } else {
-        // User is signed out.
         setUserState(defaultVisitor);
         localStorage.removeItem('currentUser');
       }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
+  }
   
   const logout = async () => {
-    await signOut(auth); 
-    setUserState(defaultVisitor); // Set to visitor immediately
+    await signOut(auth);
+    setUserState(defaultVisitor);
     localStorage.removeItem('currentUser');
-    window.location.reload();
+    localStorage.removeItem('users');
+    localStorage.removeItem('posts');
+    window.location.href = '/login';
   };
   
   const setUser = (updatedUser: User | null) => {
