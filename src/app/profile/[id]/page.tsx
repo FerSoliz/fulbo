@@ -238,6 +238,18 @@ export default function ProfilePage() {
                             
                              <div className="flex items-center gap-2 pt-4">
                                 <CardTitle className="text-2xl">{name}</CardTitle>
+                                {isVerified && (
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                                <Image src="https://i.postimg.cc/SQM9LfMY/verificado.png" alt="Verificado" width={24} height={24} />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Usuario Verificado</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                )}
                              </div>
                             <CardDescription className="capitalize text-sm">
                                 {role === 'admin' || role === 'editor' ? 'Administrador' : 'Jugador'}
@@ -342,7 +354,3 @@ export default function ProfilePage() {
         </div>
     );
 }
-
-    
-
-    
