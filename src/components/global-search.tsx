@@ -70,10 +70,13 @@ export function GlobalSearch() {
     ? allData.filter(item => item.name.toLowerCase().includes(searchTerm.toLowerCase()))
     : [];
 
-  const handleSelect = (path: string) => {
-    router.push(path);
-    setOpen(false);
-    setSearchTerm('');
+  const handleSelect = (value: string) => {
+    const selectedItem = allData.find(item => `${item.type}-${item.id}` === value);
+    if(selectedItem) {
+        router.push(selectedItem.path);
+        setOpen(false);
+        setSearchTerm('');
+    }
   };
   
   const getIcon = (type: SearchResult['type']) => {
@@ -91,8 +94,6 @@ export function GlobalSearch() {
     setSearchTerm(term);
     if (term.length > 0 && !open) {
       setOpen(true);
-    } else if (term.length === 0 && open) {
-        // Keep it open if the user is clearing the search, but don't open it if it was already closed.
     }
   }
 
@@ -115,13 +116,13 @@ export function GlobalSearch() {
         </div>
       </PopoverTrigger>
       <PopoverContent className="p-0 w-[--radix-popover-trigger-width] mt-2" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
-        <Command shouldFilter={false}>
+        <Command shouldFilter={false} onValueChange={handleSelect}>
           <CommandList>
             {filteredData.length === 0 && searchTerm.length > 0 && (
                 <CommandEmpty>No se encontraron resultados.</CommandEmpty>
             )}
             {filteredData.map(item => (
-              <CommandItem key={`${item.type}-${item.id}`} onSelect={() => handleSelect(item.path)} value={item.name}>
+              <CommandItem key={`${item.type}-${item.id}`} value={`${item.type}-${item.id}`}>
                 <div className="flex items-center gap-3 flex-1">
                     {item.avatar ? (
                         <Avatar className="h-6 w-6">
