@@ -64,7 +64,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
     }
   }
 
-  const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)) => {
+  const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)[]) => {
     return items.map((item) => {
       if ('adminOnly' in item && item.adminOnly && user?.role !== 'admin' && user?.role !== 'editor') {
         return null;
@@ -149,7 +149,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 {renderMenuItems(menuItems)}
             </ul>
             <ul className="mt-auto flex flex-col gap-1 border-t p-2">
-                <div className="flex justify-center gap-2 py-2">
+                <div className="flex justify-start gap-2 py-2">
                     {socialItems.map(item => (
                         <li key={item.href}>
                              <Link href={item.href} passHref target="_blank">
