@@ -49,17 +49,20 @@ import {
   Trash2,
   Shield,
   Pencil,
+  Search,
 } from 'lucide-react';
 import { useUser } from '@/context/user-context';
 import type { User } from '@/lib/data';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 
 export default function ManageUsersPage() {
   const { user: currentUser, loading: userLoading } = useUser();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -103,6 +106,11 @@ export default function ManageUsersPage() {
       variant: 'destructive',
     });
   };
+  
+  const filteredUsers = users.filter(user => 
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
 
   if (loading || userLoading) {
     return <div className="p-8 text-center">Cargando usuarios...</div>;
@@ -140,6 +148,17 @@ export default function ManageUsersPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-4">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                    <Input 
+                        placeholder="Buscar por nombre o email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                    />
+                </div>
+            </div>
             <div className="rounded-lg border">
               <Table>
                 <TableHeader>
@@ -152,7 +171,7 @@ export default function ManageUsersPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {users.map((user) => (
+                  {filteredUsers.map((user) => (
                     <TableRow key={user.id} className={cn(user.isBlocked && 'bg-destructive/10')}>
                       <TableCell>
                         <div className="flex items-center gap-3">
