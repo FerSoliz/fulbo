@@ -71,9 +71,9 @@ export function GlobalSearch() {
     : [];
 
   const handleSelect = (path: string) => {
+    router.push(path);
     setOpen(false);
     setSearchTerm('');
-    router.push(path);
   };
   
   const getIcon = (type: SearchResult['type']) => {
@@ -91,6 +91,8 @@ export function GlobalSearch() {
     setSearchTerm(term);
     if (term.length > 0 && !open) {
       setOpen(true);
+    } else if (term.length === 0 && open) {
+        // Keep it open if the user is clearing the search, but don't open it if it was already closed.
     }
   }
 
