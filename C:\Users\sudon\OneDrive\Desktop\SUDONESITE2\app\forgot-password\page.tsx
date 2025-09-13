@@ -56,7 +56,7 @@ export default function ForgotPasswordPage() {
         <div className="flex justify-center">
             <Link href="/">
                 <Image
-                src="src/images/sudone-titulo.png"
+                src="/images/sudone-titulo.png"
                 alt="SUDONE Logo"
                 width={200}
                 height={60}
