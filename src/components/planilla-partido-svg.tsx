@@ -111,10 +111,13 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
                 <rect x="830" y="475" width="30" height="30" stroke="black" fill="white" />
                 <rect x="860" y="475" width="30" height="30" stroke="black" fill="white" />
 
-                {/* MVP Section */}
+                {/* MVP & Penalty Section */}
                 <rect x="10" y="520" width="870" height="50" stroke="black" fill="#fafafa" />
                 <text x="30" y="550" fontFamily="Arial" fontSize="14" fontWeight="bold">MVP del Partido:</text>
                 <line x1="160" y1="552" x2="450" y2="552" stroke="black" />
+                <text x="470" y="550" fontFamily="Arial" fontSize="14" fontWeight="bold">Resultado Torneo de Penales:</text>
+                <line x1="720" y1="552" x2="870" y2="552" stroke="black" />
+
 
                 {/* Observations */}
                 <text x="10" y="590" fontFamily="Arial" fontSize="14" fontWeight="bold">Observaciones:</text>
@@ -122,11 +125,12 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
                 
                  {/* AI Instructions Box */}
                 <g>
-                    <rect x="20" y="610" width="230" height="80" stroke="#aaa" strokeDasharray="4 2" fill="#fafafa" rx="5" />
-                    <text x="135" y="625" fontFamily="Arial" fontSize="12" fontWeight="bold" textAnchor="middle">Instrucciones Carga IA</text>
+                    <rect x="20" y="610" width="260" height="95" stroke="#aaa" strokeDasharray="4 2" fill="#fafafa" rx="5" />
+                    <text x="150" y="625" fontFamily="Arial" fontSize="12" fontWeight="bold" textAnchor="middle">Instrucciones Carga IA</text>
                     <text x="25" y="645" fontFamily="Arial" fontSize="11" fill="#333">· Goles (G): Anotar número.</text>
                     <text x="25" y="660" fontFamily="Arial" fontSize="11" fill="#333">· Tarjetas (A/R): Marcar con "X".</text>
                     <text x="25" y="675" fontFamily="Arial" fontSize="11" fill="#333">· MVP: Escribir nombre del jugador.</text>
+                    <text x="25" y="690" fontFamily="Arial" fontSize="11" fill="#333">· Torneo de Penales: Anotar resultado (Ej: 2-1).</text>
                 </g>
 
                 {/* Signatures */}
