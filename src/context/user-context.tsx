@@ -38,14 +38,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const updateUserAndStorage = (firebaseUser: FirebaseUser | null) => {
-    if (firebaseUser) {
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const combinedUsers = [...initialUsers, ...storedUsers];
-        const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
-        setAllUsers(uniqueUsers);
+  const loadInitialData = () => {
+    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+    const combinedUsers = [...initialUsers, ...storedUsers];
+    const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
+    setAllUsers(uniqueUsers);
+    return uniqueUsers;
+  };
 
-        let appUser = uniqueUsers.find((u: User) => u.email === firebaseUser.email);
+  const updateUserAndStorage = (firebaseUser: FirebaseUser | null, allUsersList: User[]) => {
+    if (firebaseUser) {
+        let appUser = allUsersList.find((u: User) => u.email === firebaseUser.email);
 
         if (appUser) {
             if (appUser.isBlocked) {
@@ -78,7 +81,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setNotifications(initialNotifications);
         }
     } else {
-        // User is signed out
+        // User is signed out, set to visitor
         setUser(defaultVisitor);
         setNotifications([]);
         localStorage.removeItem('loggedInUserId');
@@ -87,7 +90,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, updateUserAndStorage);
+    const allUsersList = loadInitialData();
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      updateUserAndStorage(firebaseUser, allUsersList);
+    });
     return () => unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -108,6 +114,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const login = async (email: string, pass: string): Promise<boolean> => {
     try {
       await signInWithEmailAndPassword(auth, email, pass);
+      router.push('/');
       return true;
     } catch (error: any) {
       console.error(error);
