@@ -27,7 +27,7 @@ export const allCards: Card[] = [
     rarity: 'legendary',
     stats: { vel: 88, tir: 52, rit: 85, reg: 58, def: 90, fis: 85 },
     rating: 90,
-    playerImageUrl: 'https://i.postimg.cc/9MQJ2s5J/CARTA-DIBU.png',
+    playerImageUrl: 'https://firebasestorage.googleapis.com/v0/b/studio-1084069868-b52ab.appspot.com/o/%231%20EMILIANO%20MARTINEZ.png?alt=media',
     clubImageUrl: 'https://i.postimg.cc/02xFDW9Y/aston-villa.png',
     countryImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1a/Flag_of_Argentina.svg',
   },
