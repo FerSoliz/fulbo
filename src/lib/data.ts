@@ -4,7 +4,6 @@ export interface User {
   id: string;
   name: string;
   email?: string;
-  password?: string;
   role: 'user' | 'editor' | 'admin';
   avatar: string;
   isBlocked?: boolean;
@@ -140,7 +139,6 @@ export const initialUsers: User[] = [
     id: 'admin-user',
     name: 'Lucio Mingrone',
     email: 'admin@sudone.com',
-    password: 'password123',
     avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
     location: 'Buenos Aires, Argentina',
     isVerified: true,
@@ -157,7 +155,6 @@ export const initialUsers: User[] = [
     id: 'editor-user',
     name: 'Leo Messi',
     email: 'editor@sudone.com',
-    password: 'password123',
     avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg',
     location: 'Rosario, Argentina',
     isVerified: true,
