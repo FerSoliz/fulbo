@@ -56,7 +56,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
 
   const isLiked = currentUser && post.likes.includes(currentUser.id);
   const canEditOrDelete = currentUser?.id === post.authorId || currentUser?.role === 'admin' || currentUser?.role === 'editor';
-  const isVisitor = currentUser?.name === 'VISITANTE';
+  const isVisitor = !currentUser || currentUser.name === 'VISITANTE';
 
   const renderMedia = () => {
     const { media } = post;
@@ -216,7 +216,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
             })}
             </div>
         )}
-        {currentUser && !isVisitor && (
+        {!isVisitor && (
             <div className="flex w-full items-center gap-2 pt-4">
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={currentUser.avatar} />

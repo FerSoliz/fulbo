@@ -179,7 +179,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                         </li>
                     ))}
                 </div>
-                {user?.name !== 'VISITANTE' && renderMenuItems(footerMenuItems)}
+                {user && user.name !== 'VISITANTE' && renderMenuItems(footerMenuItems)}
                  <li>
                     <Button
                         variant="ghost"
