@@ -153,7 +153,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                     </Link>
                     <div className="flex flex-col overflow-hidden">
                         <span className="font-semibold truncate">{user.name}</span>
-                        {user.name !== 'VISITANTE' && <span className="text-sm text-muted-foreground truncate">@{user.name === 'Lucio Mingrone' ? 'luccio' : user.name.split(' ')[0].toLowerCase()}</span>}
+                        {user.name !== 'VISITANTE' && <span className="text-sm text-muted-foreground truncate">@{user.username}</span>}
                     </div>
                 </>
             ) : null}

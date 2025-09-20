@@ -23,6 +23,7 @@ interface UserContextType {
   setAllUsers: React.Dispatch<React.SetStateAction<User[]>>;
   loading: boolean;
   login: (email: string, pass: string) => Promise<boolean>;
+  register: (name: string, username: string, email: string, pass: string) => Promise<boolean>;
   logout: () => Promise<void>;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
@@ -61,9 +62,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
         } else {
             // New user signed up (e.g., via Google)
+            const username = firebaseUser.email?.split('@')[0] || `user${Date.now()}`;
             const newUser: User = {
                 id: firebaseUser.uid,
-                name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'Nuevo Usuario',
+                name: firebaseUser.displayName || 'Nuevo Usuario',
+                username: username,
                 email: firebaseUser.email!,
                 role: 'user',
                 avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.uid}.png`,
@@ -112,6 +115,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [notifications, user]);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
+    setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, pass);
       router.push('/');
@@ -123,7 +127,54 @@ export function UserProvider({ children }: { children: ReactNode }) {
         errorMessage = "El correo electrónico o la contraseña son incorrectos.";
       }
       toast({ title: "Error de inicio de sesión", description: errorMessage, variant: "destructive" });
+      setLoading(false);
       return false;
+    }
+  };
+  
+  const register = async (name: string, username: string, email: string, password: string):Promise<boolean> => {
+    setLoading(true);
+     try {
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(userCredential.user, {
+            displayName: name,
+            photoURL: `https://avatar.vercel.sh/${username.replace(/\s+/g, '')}.png`
+        });
+
+        // Add user to our internal list
+        const newUser: User = {
+            id: userCredential.user.uid,
+            name: name,
+            username: username,
+            email: email,
+            role: 'user',
+            avatar: userCredential.user.photoURL!,
+            isVerified: false,
+            isBlocked: false,
+            location: 'Desconocida',
+            sudpoints: 0,
+            baseSudpoints: 0,
+            league: 'Bronce',
+            division: 4,
+            stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+        };
+        setAllUsers(prevUsers => [...prevUsers, newUser]);
+
+        toast({ title: "¡Cuenta Creada!", description: "Tu cuenta ha sido creada exitosamente." });
+        router.push('/');
+        return true;
+
+    } catch (error: any) {
+        console.error(error);
+        let errorMessage = "Ocurrió un error al registrar la cuenta.";
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = "Este correo electrónico ya está en uso.";
+        } else if (error.code === 'auth/weak-password') {
+            errorMessage = "La contraseña debe tener al menos 6 caracteres.";
+        }
+        toast({ title: "Error de registro", description: errorMessage, variant: "destructive" });
+        setLoading(false);
+        return false;
     }
   };
 
@@ -133,12 +184,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   };
 
-  const contextValue = {
+  const contextValue: UserContextType = {
       user,
       allUsers,
       setAllUsers,
       loading,
       login,
+      register,
       logout,
       notifications,
       setNotifications,

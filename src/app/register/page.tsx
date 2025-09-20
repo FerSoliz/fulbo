@@ -17,11 +17,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Loader2, X } from 'lucide-react';
+import { Eye, EyeOff, Loader2, X, AtSign } from 'lucide-react';
 import { useUser } from '@/context/user-context';
-import { User } from '@/lib/data';
-import { auth, GoogleAuthProvider, signInWithPopup } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 const GoogleIcon = () => (
     <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
@@ -49,8 +48,9 @@ const GoogleIcon = () => (
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user, setAllUsers, loading: userLoading } = useUser();
+  const { user, register, loading: userLoading } = useUser();
   const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -73,46 +73,9 @@ export default function RegisterPage() {
     }
     
     setIsLoading(true);
-
-    try {
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, {
-            displayName: name,
-            photoURL: `https://avatar.vercel.sh/${name.replace(/\s+/g, '')}.png`
-        });
-
-        // Add user to our internal list
-        const newUser: User = {
-            id: userCredential.user.uid,
-            name: name,
-            email: email,
-            role: 'user',
-            avatar: userCredential.user.photoURL!,
-            isVerified: false,
-            isBlocked: false,
-            location: 'Desconocida',
-            sudpoints: 0,
-            baseSudpoints: 0,
-            league: 'Bronce',
-            division: 4,
-            stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-        };
-        setAllUsers(prevUsers => [...prevUsers, newUser]);
-
-        toast({ title: "¡Cuenta Creada!", description: "Tu cuenta ha sido creada exitosamente." });
-        router.push('/');
-
-    } catch (error: any) {
-        console.error(error);
-        let errorMessage = "Ocurrió un error al registrar la cuenta.";
-        if (error.code === 'auth/email-already-in-use') {
-            errorMessage = "Este correo electrónico ya está en uso.";
-        } else if (error.code === 'auth/weak-password') {
-            errorMessage = "La contraseña debe tener al menos 6 caracteres.";
-        }
-        toast({ title: "Error de registro", description: errorMessage, variant: "destructive" });
-    } finally {
-        setIsLoading(false);
+    const success = await register(name, username, email, password);
+    if (!success) {
+      setIsLoading(false);
     }
   };
 
@@ -167,12 +130,12 @@ export default function RegisterPage() {
             <CardHeader className="text-center pt-12">
               <CardTitle className="text-2xl">Crear una Cuenta</CardTitle>
               <CardDescription>
-                Ingresa tu email y contraseña para registrarte
+                Ingresa tus datos para registrarte
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Nombre Completo</Label>
+                <Label htmlFor="name">Nombre y Apellido</Label>
                 <Input
                   id="name"
                   type="text"
@@ -182,6 +145,22 @@ export default function RegisterPage() {
                   onChange={(e) => setName(e.target.value)}
                   disabled={isLoading || isGoogleLoading}
                 />
+              </div>
+               <div className="space-y-2">
+                <Label htmlFor="username">Nombre de Usuario</Label>
+                 <div className="relative">
+                    <AtSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="username"
+                      type="text"
+                      placeholder="Ej: leomessi"
+                      required
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
+                      disabled={isLoading || isGoogleLoading}
+                      className="pl-9"
+                    />
+                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Correo Electrónico</Label>

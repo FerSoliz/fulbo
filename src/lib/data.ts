@@ -3,6 +3,7 @@
 export interface User {
   id: string;
   name: string;
+  username: string;
   email?: string;
   role: 'user' | 'editor' | 'admin';
   avatar: string;
@@ -122,6 +123,7 @@ export const leagues = [
 export const defaultVisitor: User = {
     id: 'visitor',
     name: 'VISITANTE',
+    username: 'visitante',
     role: 'user', 
     avatar: 'https://avatar.vercel.sh/visitor.png',
     isVerified: false,
@@ -138,6 +140,7 @@ export const initialUsers: User[] = [
   {
     id: 'admin-user',
     name: 'Lucio Mingrone',
+    username: 'luccio',
     email: 'admin@sudone.com',
     avatar: 'https://i.postimg.cc/xTT3zpg1/MARADONA-Y-EL-PURO-e1630357319461.jpg',
     location: 'Buenos Aires, Argentina',
@@ -154,6 +157,7 @@ export const initialUsers: User[] = [
   {
     id: 'editor-user',
     name: 'Leo Messi',
+    username: 'leomessi',
     email: 'editor@sudone.com',
     avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg',
     location: 'Rosario, Argentina',
