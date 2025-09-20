@@ -46,13 +46,8 @@ const notificationIcons: { [key: string]: React.ElementType } = {
   friend_request: UserCheck,
 };
 
-interface PageHeaderProps {
-    user: User | null;
-    loading: boolean;
-}
-
-export function PageHeader({ user, loading }: PageHeaderProps) {
-  const { logout, notifications, setNotifications } = useUser();
+export function PageHeader() {
+  const { user, loading, logout, notifications, setNotifications } = useUser();
   const router = useRouter();
   
   const hasUnreadNotifications = notifications.some(n => !n.isRead);
@@ -94,7 +89,7 @@ export function PageHeader({ user, loading }: PageHeaderProps) {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="p-0 w-64">
-                       <MainSidebar user={user} loading={loading} isMobile={true}/>
+                       <MainSidebar isMobile={true}/>
                     </SheetContent>
                 </Sheet>
             </div>

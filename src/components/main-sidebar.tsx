@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -28,7 +27,6 @@ import { cn } from '@/lib/utils';
 import * as React from "react";
 import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
-import { User } from '@/lib/data';
 
 
 const menuItems = [
@@ -64,15 +62,10 @@ const footerMenuItems = [
     { href: '/profile', icon: UserIcon, label: 'MI PERFIL' },
 ];
 
-interface MainSidebarProps {
-  user: User | null;
-  loading: boolean;
-  isMobile?: boolean;
-}
 
-export function MainSidebar({ user, loading, isMobile = false }: MainSidebarProps) {
+export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
-  const { logout } = useUser();
+  const { user, loading, logout } = useUser();
   const router = useRouter();
 
   const handleLogout = async () => {

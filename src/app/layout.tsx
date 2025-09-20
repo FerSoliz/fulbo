@@ -44,8 +44,7 @@ export default function RootLayout({
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
-    const { user, loading } = useUser();
-
+    
     const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
 
     if (isAuthPage) {
@@ -59,9 +58,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="flex">
-            <MainSidebar user={user} loading={loading} />
+            <MainSidebar />
             <div className="flex flex-1 flex-col md:ml-64">
-                <PageHeader user={user} loading={loading} />
+                <PageHeader />
                 <main>{children}</main>
             </div>
             <Toaster />
