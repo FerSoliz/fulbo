@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils';
 import * as React from "react";
 import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
-import { useRouter } from 'next/navigation';
+import { User } from '@/lib/data';
 
 
 const menuItems = [
@@ -64,10 +64,15 @@ const footerMenuItems = [
     { href: '/profile', icon: UserIcon, label: 'MI PERFIL' },
 ];
 
+interface MainSidebarProps {
+  user: User | null;
+  loading: boolean;
+  isMobile?: boolean;
+}
 
-export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
+export function MainSidebar({ user, loading, isMobile = false }: MainSidebarProps) {
   const pathname = usePathname();
-  const { user, loading, logout } = useUser();
+  const { logout } = useUser();
   const router = useRouter();
 
   const handleLogout = async () => {

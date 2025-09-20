@@ -6,7 +6,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { MainSidebar } from "@/components/main-sidebar";
 import { PageHeader } from "@/components/page-header";
 import type { User } from "@/lib/data";
-import { UserProvider } from '@/context/user-context';
+import { UserProvider, useUser } from '@/context/user-context';
 import { usePathname } from 'next/navigation';
 import { FloatingActionButtons } from '@/components/floating-action-buttons';
 
@@ -44,6 +44,7 @@ export default function RootLayout({
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const { user, loading } = useUser();
 
     const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
 
@@ -58,9 +59,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
     return (
         <div className="flex">
-            <MainSidebar />
+            <MainSidebar user={user} loading={loading} />
             <div className="flex flex-1 flex-col md:ml-64">
-                <PageHeader />
+                <PageHeader user={user} loading={loading} />
                 <main>{children}</main>
             </div>
             <Toaster />

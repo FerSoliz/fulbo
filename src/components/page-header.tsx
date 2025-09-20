@@ -22,7 +22,7 @@ import {
 import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
 import { useRouter } from 'next/navigation';
-import { Notification } from '@/lib/data';
+import { User, Notification } from '@/lib/data';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { MainSidebar } from './main-sidebar';
@@ -46,8 +46,13 @@ const notificationIcons: { [key: string]: React.ElementType } = {
   friend_request: UserCheck,
 };
 
-export function PageHeader() {
-  const { user, loading, logout, notifications, setNotifications } = useUser();
+interface PageHeaderProps {
+    user: User | null;
+    loading: boolean;
+}
+
+export function PageHeader({ user, loading }: PageHeaderProps) {
+  const { logout, notifications, setNotifications } = useUser();
   const router = useRouter();
   
   const hasUnreadNotifications = notifications.some(n => !n.isRead);
@@ -89,7 +94,7 @@ export function PageHeader() {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="p-0 w-64">
-                       <MainSidebar isMobile={true}/>
+                       <MainSidebar user={user} loading={loading} isMobile={true}/>
                     </SheetContent>
                 </Sheet>
             </div>
