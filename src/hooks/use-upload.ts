@@ -1,3 +1,4 @@
+'use client';
 import { useState } from 'react';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
@@ -111,5 +112,15 @@ export function useUpload() {
       }
   }
 
-  return { isUploading, progress, uploadFile, uploadMultipleFiles };
+  // Converts a file to a base64 Data URL
+  const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  }
+
+  return { isUploading, progress, uploadFile, uploadMultipleFiles, fileToDataUrl };
 }

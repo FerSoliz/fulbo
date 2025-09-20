@@ -36,7 +36,7 @@ export default function ProfilePage() {
     const userId = params.id as string;
     const { toast } = useToast();
     const { user: currentUser, allUsers, setAllUsers, updateUser, loading: userLoading, setNotifications } = useUser();
-    const { uploadFile, isUploading, progress } = useUpload();
+    const { fileToDataUrl, isUploading, progress } = useUpload();
     
     const [profileUser, setProfileUser] = useState<User | null>(null);
     const [isFavorite, setIsFavorite] = useState(false);
@@ -48,7 +48,14 @@ export default function ProfilePage() {
 
     useEffect(() => {
         const targetUser = allUsers.find((u:User) => u.id === userId);
-        setProfileUser(targetUser || null);
+        
+        if (targetUser) {
+            const avatarFromStorage = localStorage.getItem(`avatar_${targetUser.id}`);
+            setProfileUser(avatarFromStorage ? {...targetUser, avatar: avatarFromStorage} : targetUser);
+        } else {
+            setProfileUser(null);
+        }
+
         setLoading(false);
 
         if (currentUser && targetUser) {
@@ -180,15 +187,22 @@ export default function ProfilePage() {
         if (e.target.files && e.target.files[0] && profileUser) {
             const file = e.target.files[0];
             try {
-                const uploadedUrl = await uploadFile(file, `avatars/${profileUser.id}`);
-                await updateUser(profileUser.id, { avatar: uploadedUrl });
-                setProfileUser(prev => prev ? {...prev, avatar: uploadedUrl } : null);
+                const dataUrl = await fileToDataUrl(file);
+                localStorage.setItem(`avatar_${profileUser.id}`, dataUrl);
+                await updateUser(profileUser.id, { avatar: dataUrl });
+                
+                setProfileUser(prev => prev ? {...prev, avatar: dataUrl } : null);
+
                 toast({
                     title: "¡Avatar Actualizado!",
                     description: "Tu nueva foto de perfil ha sido guardada."
                 });
             } catch (error) {
-                // The useUpload hook already shows a toast on error
+                 toast({
+                    title: "Error al cargar la imagen",
+                    description: "No se pudo procesar la imagen seleccionada.",
+                    variant: "destructive"
+                });
             }
         }
     };

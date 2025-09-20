@@ -44,17 +44,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const combinedUsers = [...initialUsers, ...storedUsers];
     const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
+    
+    uniqueUsers.forEach(u => {
+        const avatarFromStorage = localStorage.getItem(`avatar_${u.id}`);
+        if(avatarFromStorage) {
+            u.avatar = avatarFromStorage;
+        }
+    })
     setAllUsers(uniqueUsers);
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const appUser = allUsers.find(u => u.id === firebaseUser.uid);
+        let appUser = allUsers.find(u => u.id === firebaseUser.uid);
          if (appUser) {
              if (appUser.isBlocked) {
                 toast({ title: "Cuenta Bloqueada", description: "Esta cuenta ha sido bloqueada.", variant: "destructive"});
                 signOut(auth);
                 setUser(defaultVisitor);
              } else {
+                const avatarFromStorage = localStorage.getItem(`avatar_${appUser.id}`);
+                if (avatarFromStorage) {
+                    appUser.avatar = avatarFromStorage;
+                }
                 setUser(appUser);
                 const notifs = JSON.parse(localStorage.getItem(`notifications_${appUser.id}`) || 'null');
                 setNotifications(notifs || initialNotifications);
@@ -185,10 +196,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
         if (auth.currentUser && auth.currentUser.uid === userId) {
             if(dataToUpdate.name || dataToUpdate.avatar) {
-               await updateProfile(auth.currentUser, {
-                  displayName: dataToUpdate.name,
-                  photoURL: dataToUpdate.avatar,
-                });
+               // Only update Firebase Auth profile if the URL is not a data URL
+               if (dataToUpdate.avatar && !dataToUpdate.avatar.startsWith('data:')) {
+                 await updateProfile(auth.currentUser, {
+                    displayName: dataToUpdate.name,
+                    photoURL: dataToUpdate.avatar,
+                  });
+               } else if (dataToUpdate.name) {
+                 await updateProfile(auth.currentUser, {
+                    displayName: dataToUpdate.name,
+                  });
+               }
             }
          }
      } catch (error) {
