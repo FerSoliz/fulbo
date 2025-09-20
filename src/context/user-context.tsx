@@ -14,7 +14,7 @@ import {
   updateProfile,
   User as FirebaseUser
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, getDocs, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 
 interface UserContextType {
@@ -41,50 +41,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Listener for all users
-    const usersCollectionRef = collection(db, "users");
-    const unsubscribeUsers = onSnapshot(usersCollectionRef, (snapshot) => {
-      const usersData = snapshot.docs.map(doc => doc.data() as User);
-      setAllUsers(usersData);
-      
-      // Update current user state if they are in the updated list
-      if (auth.currentUser) {
-        const updatedCurrentUser = usersData.find(u => u.id === auth.currentUser!.uid);
-        if (updatedCurrentUser) {
-          setUser(updatedCurrentUser);
-        }
-      }
-    });
+    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
+    const combinedUsers = [...initialUsers, ...storedUsers];
+    const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
+    setAllUsers(uniqueUsers);
 
-    // Listener for Auth state
-    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        setLoading(true);
-        const userRef = doc(db, "users", firebaseUser.uid);
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          const appUser = userSnap.data() as User;
-          if (appUser.isBlocked) {
-              toast({ title: "Cuenta Bloqueada", description: "Esta cuenta ha sido bloqueada.", variant: "destructive"});
-              signOut(auth);
-              setUser(defaultVisitor);
-          } else {
-              setUser(appUser);
-              // Load notifications for the logged-in user
-              const notifs = JSON.parse(localStorage.getItem(`notifications_${appUser.id}`) || 'null');
-              setNotifications(notifs || initialNotifications);
-          }
-        } else {
-           // This case handles users created via Google Sign-In for the first time
-           const username = firebaseUser.email?.split('@')[0] || `user${Date.now()}`;
-           const newUser: User = {
+        const appUser = allUsers.find(u => u.id === firebaseUser.uid);
+         if (appUser) {
+             if (appUser.isBlocked) {
+                toast({ title: "Cuenta Bloqueada", description: "Esta cuenta ha sido bloqueada.", variant: "destructive"});
+                signOut(auth);
+                setUser(defaultVisitor);
+             } else {
+                setUser(appUser);
+                const notifs = JSON.parse(localStorage.getItem(`notifications_${appUser.id}`) || 'null');
+                setNotifications(notifs || initialNotifications);
+             }
+         } else {
+            // New user signed in (e.g. via Google), but not yet in our allUsers state
+            const newUser: User = {
                 id: firebaseUser.uid,
                 name: firebaseUser.displayName || 'Nuevo Usuario',
-                username: username,
+                username: firebaseUser.email?.split('@')[0] || `user${Date.now()}`,
                 email: firebaseUser.email!,
                 role: 'user',
-                avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${username}.png`,
+                avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email?.split('@')[0]}.png`,
                 isVerified: firebaseUser.emailVerified,
                 isBlocked: false,
                 location: 'Desconocida',
@@ -94,10 +77,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 division: 4,
                 stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
             };
-            await setDoc(userRef, newUser);
             setUser(newUser);
+            setAllUsers(prev => [...prev, newUser]);
             setNotifications(initialNotifications);
-        }
+         }
       } else {
         setUser(defaultVisitor);
         setNotifications([]);
@@ -105,12 +88,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    return () => {
-      unsubscribeAuth();
-      unsubscribeUsers();
-    };
+    return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
+  useEffect(() => {
+    // Persist all non-initial users to localStorage whenever allUsers changes
+    const usersToStore = allUsers.filter(u => !initialUsers.some(iu => iu.id === u.id));
+    if(usersToStore.length > 0 || localStorage.getItem('users')) {
+      localStorage.setItem('users', JSON.stringify(usersToStore));
+    }
+  }, [allUsers]);
+
   useEffect(() => {
     if (user && user.id !== 'visitor') {
       localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
@@ -140,13 +129,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const avatarUrl = `https://avatar.vercel.sh/${username.replace(/\s+/g, '')}.png`;
         
-        // Update Firebase Auth Profile
         await updateProfile(userCredential.user, {
             displayName: name,
             photoURL: avatarUrl
         });
 
-        // Create user document in Firestore
         const newUser: User = {
             id: userCredential.user.uid,
             name: name,
@@ -163,7 +150,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
             division: 4,
             stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
         };
-        await setDoc(doc(db, "users", newUser.id), newUser);
+        
+        setUser(newUser);
+        setAllUsers(prev => [...prev, newUser]);
         
         toast({ title: "¡Cuenta Creada!", description: "Tu cuenta ha sido creada exitosamente." });
         return true;
@@ -189,11 +178,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
   
   const updateUser = async (userId: string, dataToUpdate: Partial<Omit<User, 'id'>>) => {
      try {
-        // Update Firestore document
-        const userRef = doc(db, "users", userId);
-        await setDoc(userRef, dataToUpdate, { merge: true });
+        setAllUsers(prev => prev.map(u => u.id === userId ? {...u, ...dataToUpdate} : u));
+        if (currentUser?.id === userId) {
+            setUser(prev => prev ? {...prev, ...dataToUpdate} : null);
+        }
 
-        // Also update Firebase Auth profile if name or avatar is changed
         if (auth.currentUser && auth.currentUser.uid === userId) {
             if(dataToUpdate.name || dataToUpdate.avatar) {
                await updateProfile(auth.currentUser, {
@@ -202,7 +191,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 });
             }
          }
-         // The onSnapshot listener will automatically update the local state
      } catch (error) {
         console.error("Error updating user:", error);
         toast({ title: 'Error', description: 'No se pudo actualizar el perfil.', variant: 'destructive'})
