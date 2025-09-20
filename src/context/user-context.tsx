@@ -12,8 +12,6 @@ import {
   createUserWithEmailAndPassword, 
   signOut,
   updateProfile,
-  GoogleAuthProvider,
-  signInWithPopup,
   User as FirebaseUser
 } from 'firebase/auth';
 
@@ -25,6 +23,7 @@ interface UserContextType {
   login: (email: string, pass: string) => Promise<boolean>;
   register: (name: string, username: string, email: string, pass: string) => Promise<boolean>;
   logout: () => Promise<void>;
+  updateUser: (userId: string, userData: Partial<Omit<User, 'id'>>) => Promise<void>;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
 }
@@ -49,7 +48,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const updateUserAndStorage = (firebaseUser: FirebaseUser | null, allUsersList: User[]) => {
     if (firebaseUser) {
-        let appUser = allUsersList.find((u: User) => u.email === firebaseUser.email);
+        let appUser = allUsersList.find((u: User) => u.id === firebaseUser.uid);
 
         if (appUser) {
             if (appUser.isBlocked) {
@@ -57,7 +56,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 signOut(auth);
                 return;
             }
-            setUser(appUser);
+             // Sync Firebase Auth data with local data if it's different
+            const updatedAppUser = {
+                ...appUser,
+                name: firebaseUser.displayName || appUser.name,
+                avatar: firebaseUser.photoURL || appUser.avatar,
+                email: firebaseUser.email || appUser.email,
+            };
+            setUser(updatedAppUser);
+
             const storedNotifications = localStorage.getItem(`notifications_${appUser.id}`);
             setNotifications(storedNotifications ? JSON.parse(storedNotifications) : initialNotifications);
         } else {
@@ -69,7 +76,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 username: username,
                 email: firebaseUser.email!,
                 role: 'user',
-                avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.uid}.png`,
+                avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${username}.png`,
                 isVerified: firebaseUser.emailVerified,
                 isBlocked: false,
                 location: 'Desconocida',
@@ -84,10 +91,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setNotifications(initialNotifications);
         }
     } else {
-        // User is signed out, set to visitor
         setUser(defaultVisitor);
         setNotifications([]);
-        localStorage.removeItem('loggedInUserId');
     }
     setLoading(false);
   }
@@ -118,7 +123,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      router.push('/');
       return true;
     } catch (error: any) {
       console.error(error);
@@ -142,8 +146,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             displayName: name,
             photoURL: avatarUrl
         });
-
-        // Add user to our internal list
+        
         const newUser: User = {
             id: userCredential.user.uid,
             name: name,
@@ -160,10 +163,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
             division: 4,
             stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
         };
+        
         setAllUsers(prevUsers => [...prevUsers, newUser]);
+        setUser(newUser);
 
         toast({ title: "¡Cuenta Creada!", description: "Tu cuenta ha sido creada exitosamente." });
-        router.push('/');
         return true;
 
     } catch (error: any) {
@@ -182,9 +186,32 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
-    toast({ title: 'Sesión Cerrada' });
-    router.push('/login');
   };
+  
+  const updateUser = async (userId: string, dataToUpdate: Partial<Omit<User, 'id'>>) => {
+     if (auth.currentUser && auth.currentUser.id === userId) {
+        if(dataToUpdate.name || dataToUpdate.avatar) {
+           await updateProfile(auth.currentUser, {
+              displayName: dataToUpdate.name,
+              photoURL: dataToUpdate.avatar,
+            });
+        }
+     }
+     
+     let updatedUser: User | null = null;
+     const newAllUsers = allUsers.map(u => {
+        if(u.id === userId) {
+            updatedUser = { ...u, ...dataToUpdate };
+            return updatedUser;
+        }
+        return u;
+     });
+     setAllUsers(newAllUsers);
+
+     if(user && user.id === userId && updatedUser) {
+        setUser(updatedUser);
+     }
+  }
 
   const contextValue: UserContextType = {
       user,
@@ -194,6 +221,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       login,
       register,
       logout,
+      updateUser,
       notifications,
       setNotifications,
   };

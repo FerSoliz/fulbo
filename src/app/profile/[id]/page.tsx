@@ -11,7 +11,7 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { DivisionBadge } from '@/components/division-badge';
-import { User, initialUsers, PlayerDetails, sudpointConfig, leagues, Notification } from '@/lib/data';
+import { User, PlayerDetails, sudpointConfig, leagues, Notification } from '@/lib/data';
 import { Medal, Shield, Swords, ShieldAlert, Calendar, Trophy, Link2, Star, Loader2, MessageSquare, UserPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -35,7 +35,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const userId = params.id as string;
     const { toast } = useToast();
-    const { user: currentUser, allUsers, setAllUsers, loading: userLoading, setNotifications } = useUser();
+    const { user: currentUser, allUsers, setAllUsers, updateUser, loading: userLoading, setNotifications } = useUser();
     const { uploadFile, isUploading, progress } = useUpload();
     
     const [profileUser, setProfileUser] = useState<User | null>(null);
@@ -139,38 +139,31 @@ export default function ProfilePage() {
         }
         
         const updatedUser = {
-            ...profileUser,
             stats: calculatedStats,
             sudpoints: Math.floor(totalSudpoints),
             league: leagues[currentLeagueIndex].name,
             division: currentDivision,
         };
 
-        setProfileUser(updatedUser);
-        updateUserInStorage(updatedUser);
+        updateUser(profileUser.id, updatedUser);
+        setProfileUser(prev => prev ? {...prev, ...updatedUser} : null);
     }
 
-    const updateUserInStorage = (updatedUser: User) => {
-         const newAllUsers = allUsers.map(u => u.id === updatedUser.id ? updatedUser : u);
-         setAllUsers(newAllUsers);
-    }
-
-    const handleLinkAccount = () => {
+    const handleLinkAccount = async () => {
         if (!profileUser) return;
         const playerDetailsJSON = localStorage.getItem("playerDetails");
         const playerDetails = playerDetailsJSON ? JSON.parse(playerDetailsJSON) : {};
         const player: PlayerDetails = playerDetails[uniqueCodeInput.toUpperCase()];
 
         if (player) {
-            const updatedUser: User = {
-                ...profileUser,
+            const updatedUserData: Partial<User> = {
                 name: `${player.name} ${player.lastName}`,
                 email: player.email,
                 uniqueCode: player.uniqueCode,
                 baseSudpoints: profileUser.sudpoints, // Save current points as base
             };
-            setProfileUser(updatedUser);
-            updateUserInStorage(updatedUser);
+            await updateUser(profileUser.id, updatedUserData);
+            setProfileUser(prev => prev ? {...prev, ...updatedUserData} : null);
             toast({ title: "¡Cuenta Vinculada!", description: "Tu perfil ahora está conectado a tus estadísticas de jugador." });
         } else {
             toast({ title: "Error", description: "El código de jugador no es válido.", variant: "destructive" });
@@ -188,9 +181,8 @@ export default function ProfilePage() {
             const file = e.target.files[0];
             try {
                 const uploadedUrl = await uploadFile(file, `avatars/${profileUser.id}`);
-                const updatedUser = { ...profileUser, avatar: uploadedUrl };
-                setProfileUser(updatedUser);
-                updateUserInStorage(updatedUser);
+                await updateUser(profileUser.id, { avatar: uploadedUrl });
+                setProfileUser(prev => prev ? {...prev, avatar: uploadedUrl } : null);
                 toast({
                     title: "¡Avatar Actualizado!",
                     description: "Tu nueva foto de perfil ha sido guardada."
