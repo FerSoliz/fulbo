@@ -38,7 +38,6 @@ const menuItems = [
     { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
     { href: '/store', icon: Store, label: 'TIENDA' },
-    { href: '/botines', icon: Footprints, label: 'BOTINES'},
     { href: '/collectibles', icon: Swords, label: 'COLECCIONABLES' },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
 ];
