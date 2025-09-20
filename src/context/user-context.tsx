@@ -136,9 +136,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setLoading(true);
      try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const avatarUrl = `https://avatar.vercel.sh/${username.replace(/\s+/g, '')}.png`;
+        
         await updateProfile(userCredential.user, {
             displayName: name,
-            photoURL: `https://avatar.vercel.sh/${username.replace(/\s+/g, '')}.png`
+            photoURL: avatarUrl
         });
 
         // Add user to our internal list
@@ -148,7 +150,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             username: username,
             email: email,
             role: 'user',
-            avatar: userCredential.user.photoURL!,
+            avatar: avatarUrl,
             isVerified: false,
             isBlocked: false,
             location: 'Desconocida',
