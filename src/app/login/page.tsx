@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -47,12 +47,18 @@ const GoogleIcon = () => (
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { login } = useUser();
+  const { user, login, loading: userLoading } = useUser();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  useEffect(() => {
+    if (!userLoading && user && user.id !== 'visitor') {
+      router.push('/');
+    }
+  }, [user, userLoading, router]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +94,10 @@ export default function LoginPage() {
     } finally {
         setIsGoogleLoading(false);
     }
+  }
+
+  if (userLoading || (user && user.id !== 'visitor')) {
+    return <div className="w-full min-h-screen flex items-center justify-center p-4 bg-background"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
 
