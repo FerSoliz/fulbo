@@ -55,7 +55,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        let appUser = allUsers.find(u => u.id === firebaseUser.uid);
+        const docRef = doc(db, "users", firebaseUser.uid);
+        const docSnap = await getDoc(docRef);
+
+        let appUser: User | null = null;
+        if(docSnap.exists()){
+            appUser = docSnap.data() as User;
+        }
+
          if (appUser) {
              if (appUser.isBlocked) {
                 toast({ title: "Cuenta Bloqueada", description: "Esta cuenta ha sido bloqueada.", variant: "destructive"});
@@ -71,7 +78,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 setNotifications(notifs || initialNotifications);
              }
          } else {
-            // New user signed in (e.g. via Google), but not yet in our allUsers state
+            // New user signed in (e.g. via Google), but not yet in our DB
             const newUser: User = {
                 id: firebaseUser.uid,
                 name: firebaseUser.displayName || 'Nuevo Usuario',
@@ -88,8 +95,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 division: 4,
                 stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
             };
+            await setDoc(doc(db, "users", newUser.id), newUser);
             setUser(newUser);
-            setAllUsers(prev => [...prev, newUser]);
+            setAllUsers(prev => [...prev.filter(u => u.id !== newUser.id), newUser]);
             setNotifications(initialNotifications);
          }
       } else {
@@ -104,12 +112,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, []);
   
   useEffect(() => {
-    // Persist all non-initial users to localStorage whenever allUsers changes
-    const usersToStore = allUsers.filter(u => !initialUsers.some(iu => iu.id === u.id));
-    if(usersToStore.length > 0 || localStorage.getItem('users')) {
-      localStorage.setItem('users', JSON.stringify(usersToStore));
+    // Persist all users to localStorage whenever allUsers changes. 
+    // This is a temporary solution until full migration to Firestore for all data.
+    if (allUsers.length > 0) {
+      localStorage.setItem('users', JSON.stringify(allUsers));
     }
   }, [allUsers]);
+
 
   useEffect(() => {
     if (user && user.id !== 'visitor') {
@@ -162,6 +171,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
             stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
         };
         
+        await setDoc(doc(db, "users", newUser.id), newUser);
+        
         setUser(newUser);
         setAllUsers(prev => [...prev, newUser]);
         
@@ -189,26 +200,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
   
   const updateUser = async (userId: string, dataToUpdate: Partial<Omit<User, 'id'>>) => {
      try {
+        // Optimistic UI update in state and localStorage
+        if (dataToUpdate.avatar) {
+            localStorage.setItem(`avatar_${userId}`, dataToUpdate.avatar);
+        }
         setAllUsers(prev => prev.map(u => u.id === userId ? {...u, ...dataToUpdate} : u));
-        if (currentUser?.id === userId) {
+        if (user?.id === userId) {
             setUser(prev => prev ? {...prev, ...dataToUpdate} : null);
         }
 
+        // Update Firebase Auth for persistence
         if (auth.currentUser && auth.currentUser.uid === userId) {
-            if(dataToUpdate.name || dataToUpdate.avatar) {
-               // Only update Firebase Auth profile if the URL is not a data URL
-               if (dataToUpdate.avatar && !dataToUpdate.avatar.startsWith('data:')) {
-                 await updateProfile(auth.currentUser, {
-                    displayName: dataToUpdate.name,
-                    photoURL: dataToUpdate.avatar,
-                  });
-               } else if (dataToUpdate.name) {
-                 await updateProfile(auth.currentUser, {
-                    displayName: dataToUpdate.name,
-                  });
-               }
-            }
-         }
+            await updateProfile(auth.currentUser, {
+                displayName: dataToUpdate.name,
+                photoURL: dataToUpdate.avatar,
+            });
+        }
+        
+        // Update Firestore for persistence
+        const userDocRef = doc(db, 'users', userId);
+        await setDoc(userDocRef, dataToUpdate, { merge: true });
+
      } catch (error) {
         console.error("Error updating user:", error);
         toast({ title: 'Error', description: 'No se pudo actualizar el perfil.', variant: 'destructive'})

@@ -35,7 +35,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const userId = params.id as string;
     const { toast } = useToast();
-    const { user: currentUser, allUsers, setAllUsers, updateUser, loading: userLoading, setNotifications } = useUser();
+    const { user: currentUser, allUsers, updateUser, loading: userLoading } = useUser();
     const { fileToDataUrl, isUploading, progress } = useUpload();
     
     const [profileUser, setProfileUser] = useState<User | null>(null);
@@ -50,8 +50,7 @@ export default function ProfilePage() {
         const targetUser = allUsers.find((u:User) => u.id === userId);
         
         if (targetUser) {
-            const avatarFromStorage = localStorage.getItem(`avatar_${targetUser.id}`);
-            setProfileUser(avatarFromStorage ? {...targetUser, avatar: avatarFromStorage} : targetUser);
+            setProfileUser(targetUser);
         } else {
             setProfileUser(null);
         }
@@ -145,15 +144,14 @@ export default function ProfilePage() {
             }
         }
         
-        const updatedUser = {
+        const updatedUserData = {
             stats: calculatedStats,
             sudpoints: Math.floor(totalSudpoints),
             league: leagues[currentLeagueIndex].name,
             division: currentDivision,
         };
 
-        updateUser(profileUser.id, updatedUser);
-        setProfileUser(prev => prev ? {...prev, ...updatedUser} : null);
+        updateUser(profileUser.id, updatedUserData);
     }
 
     const handleLinkAccount = async () => {
@@ -170,7 +168,6 @@ export default function ProfilePage() {
                 baseSudpoints: profileUser.sudpoints, // Save current points as base
             };
             await updateUser(profileUser.id, updatedUserData);
-            setProfileUser(prev => prev ? {...prev, ...updatedUserData} : null);
             toast({ title: "¡Cuenta Vinculada!", description: "Tu perfil ahora está conectado a tus estadísticas de jugador." });
         } else {
             toast({ title: "Error", description: "El código de jugador no es válido.", variant: "destructive" });
@@ -188,11 +185,8 @@ export default function ProfilePage() {
             const file = e.target.files[0];
             try {
                 const dataUrl = await fileToDataUrl(file);
-                localStorage.setItem(`avatar_${profileUser.id}`, dataUrl);
                 await updateUser(profileUser.id, { avatar: dataUrl });
                 
-                setProfileUser(prev => prev ? {...prev, avatar: dataUrl } : null);
-
                 toast({
                     title: "¡Avatar Actualizado!",
                     description: "Tu nueva foto de perfil ha sido guardada."
