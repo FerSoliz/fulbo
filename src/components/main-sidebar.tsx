@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -15,6 +16,7 @@ import {
   BarChart2,
   Youtube,
   Instagram,
+  Footprints,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -36,13 +38,26 @@ const menuItems = [
     { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
     { href: '/store', icon: Store, label: 'TIENDA' },
+    { href: '/botines', icon: Footprints, label: 'BOTINES'},
     { href: '/collectibles', icon: Swords, label: 'COLECCIONABLES' },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
 ];
 
+const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    {...props}
+  >
+    <path d="M16.6 14c-.2-.1-1.5-0.7-1.7-0.8-.2-.1-.4-.1-.6 0.1s-.6 0.8-.8 1c-.1 0.2-.3 0.2-.5 0.1-1-0.3-1.9-0.9-2.7-1.7-0.6-0.6-1.1-1.4-1.2-1.6-.1-.2 0-.4 0.1-.5 0.1-.1 0.2-.3 0.4-.4 0.1-.1 0.2-.2 0.2-.3 0.1-.1 0.1-.3 0-0.4C9.5 8.8 9.1 7.8 8.9 7.4c-.2-.4-.4-.3-.6-.3h-.5c-.2 0-.5 0.1-.7 0.3-0.2 0.2-.8 0.8-.8 1.9s0.8 2.2 1 2.4c0.1 0.2 1.5 2.3 3.7 3.2 0.5 0.2 0.9 0.4 1.2 0.5 0.7 0.2 1.3 0.2 1.8 0.1 0.5-.1 1.5-0.6 1.7-1.2 0.2-.5 0.2-1 0.1-1.1s-.2-.2-.4-.3z M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z" />
+  </svg>
+);
+
 const socialItems = [
     { href: 'https://www.youtube.com/@ORGANIZACIONSUDONE', icon: Youtube, label: 'YOUTUBE' },
     { href: 'https://www.instagram.com/liga.sudone/', icon: Instagram, label: 'INSTAGRAM' },
+    { href: 'https://wa.me/5491139027578', icon: WhatsAppIcon, label: 'WHATSAPP' },
 ];
 
 const footerMenuItems = [
