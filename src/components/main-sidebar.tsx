@@ -152,8 +152,14 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                         </AnimatedAvatar>
                     </Link>
                     <div className="flex flex-col overflow-hidden">
-                        <span className="font-semibold truncate">{user.name}</span>
-                        {user.name !== 'VISITANTE' && <span className="text-sm text-muted-foreground truncate">@{user.username}</span>}
+                        {user.name !== 'VISITANTE' ? (
+                          <>
+                            <span className="font-semibold truncate">@{user.username}</span>
+                            <span className="text-sm text-muted-foreground truncate">{user.name}</span>
+                          </>
+                        ) : (
+                           <span className="font-semibold truncate">{user.name}</span>
+                        )}
                     </div>
                 </>
             ) : null}
