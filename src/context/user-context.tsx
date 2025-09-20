@@ -189,7 +189,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
   
   const updateUser = async (userId: string, dataToUpdate: Partial<Omit<User, 'id'>>) => {
-     if (auth.currentUser && auth.currentUser.id === userId) {
+     if (auth.currentUser && auth.currentUser.uid === userId) {
         if(dataToUpdate.name || dataToUpdate.avatar) {
            await updateProfile(auth.currentUser, {
               displayName: dataToUpdate.name,
