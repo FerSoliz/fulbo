@@ -6,7 +6,7 @@ import type { User, Notification } from '@/lib/data';
 import { initialNotifications, initialUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
-import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 
 const defaultVisitor: User = {
@@ -171,7 +171,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     setLoading(true);
-    await auth.signOut();
+    await signOut(auth);
     setUser(defaultVisitor);
     setNotifications([]);
     router.push('/login');
