@@ -35,7 +35,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const userId = params.id as string;
     const { toast } = useToast();
-    const { user: currentUser, allUsers, updateUser, loading: userLoading } = useUser();
+    const { user: currentUser, allUsers, updateUser: updateUserContext, loading: userLoading } = useUser();
     const { fileToDataUrl, isUploading, progress } = useUpload();
     
     const [profileUser, setProfileUser] = useState<User | null>(null);
@@ -151,7 +151,7 @@ export default function ProfilePage() {
             division: currentDivision,
         };
 
-        updateUser(profileUser.id, updatedUserData);
+        updateUserContext(profileUser.id, updatedUserData);
     }
 
     const handleLinkAccount = async () => {
@@ -167,7 +167,7 @@ export default function ProfilePage() {
                 uniqueCode: player.uniqueCode,
                 baseSudpoints: profileUser.sudpoints, // Save current points as base
             };
-            await updateUser(profileUser.id, updatedUserData);
+            await updateUserContext(profileUser.id, updatedUserData);
             toast({ title: "¡Cuenta Vinculada!", description: "Tu perfil ahora está conectado a tus estadísticas de jugador." });
         } else {
             toast({ title: "Error", description: "El código de jugador no es válido.", variant: "destructive" });
@@ -185,7 +185,7 @@ export default function ProfilePage() {
             const file = e.target.files[0];
             try {
                 const dataUrl = await fileToDataUrl(file);
-                await updateUser(profileUser.id, { avatar: dataUrl });
+                await updateUserContext(profileUser.id, { avatar: dataUrl });
                 
                 toast({
                     title: "¡Avatar Actualizado!",
