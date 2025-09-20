@@ -25,7 +25,6 @@ interface UserContextType {
   login: (email: string, pass: string) => Promise<boolean>;
   register: (name: string, username: string, email: string, pass: string) => Promise<boolean>;
   logout: () => Promise<void>;
-  updateUser: (userId: string, userData: Partial<Omit<User, 'id'>>) => Promise<void>;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
 }
@@ -41,7 +40,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Load users from localStorage (this will be replaced by Firestore later)
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const combinedUsers = [...initialUsers, ...storedUsers];
     const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
@@ -54,8 +52,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     })
     setAllUsers(uniqueUsers);
 
-    // Listener for Auth state
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      setLoading(true);
       if (firebaseUser) {
         const docRef = doc(db, "users", firebaseUser.uid);
         const docSnap = await getDoc(docRef);
@@ -68,7 +66,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
          if (appUser) {
              if (appUser.isBlocked) {
                 toast({ title: "Cuenta Bloqueada", description: "Esta cuenta ha sido bloqueada.", variant: "destructive"});
-                signOut(auth);
+                await signOut(auth);
                 setUser(defaultVisitor);
              } else {
                 const avatarFromStorage = localStorage.getItem(`avatar_${appUser.id}`);
@@ -80,7 +78,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 setNotifications(notifs || initialNotifications);
              }
          } else {
-            // New user signed in (e.g. via Google), but not yet in our DB
             const newUser: User = {
                 id: firebaseUser.uid,
                 name: firebaseUser.displayName || 'Nuevo Usuario',
@@ -113,13 +110,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, []);
   
   useEffect(() => {
-    // Persist all users to localStorage whenever allUsers changes. 
-    // This is a temporary solution until full migration to Firestore for all data.
     if (allUsers.length > 0) {
       localStorage.setItem('users', JSON.stringify(allUsers));
     }
   }, [allUsers]);
-
 
   useEffect(() => {
     if (user && user.id !== 'visitor') {
@@ -150,13 +144,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const avatarUrl = `https://avatar.vercel.sh/${username.replace(/\s+/g, '')}.png`;
         
-        // Update Firebase Auth Profile
         await updateProfile(userCredential.user, {
             displayName: name,
             photoURL: avatarUrl
         });
 
-        // Create user document in Firestore
         const newUser: User = {
             id: userCredential.user.uid,
             name: name,
@@ -177,7 +169,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         await setDoc(doc(db, "users", newUser.id), newUser);
         
         setUser(newUser);
-        setAllUsers(prev => [...prev, newUser]);
+        setAllUsers(prev => [...prev.filter(u => u.id !== newUser.id), newUser]);
         
         toast({ title: "¡Cuenta Creada!", description: "Tu cuenta ha sido creada exitosamente." });
         return true;
@@ -201,35 +193,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     await signOut(auth);
   };
   
-  const updateUser = async (userId: string, dataToUpdate: Partial<Omit<User, 'id'>>) => {
-     try {
-        // Optimistic UI update in state and localStorage
-        if (dataToUpdate.avatar) {
-            localStorage.setItem(`avatar_${userId}`, dataToUpdate.avatar);
-        }
-        setAllUsers(prev => prev.map(u => u.id === userId ? {...u, ...dataToUpdate} : u));
-        if (user?.id === userId) {
-            setUser(prev => prev ? {...prev, ...dataToUpdate} : null);
-        }
-
-        // Update Firebase Auth for persistence
-        if (auth.currentUser && auth.currentUser.uid === userId) {
-            await updateProfile(auth.currentUser, {
-                displayName: dataToUpdate.name,
-                photoURL: dataToUpdate.avatar,
-            });
-        }
-        
-        // Update Firestore for persistence
-        const userDocRef = doc(db, 'users', userId);
-        await setDoc(userDocRef, dataToUpdate, { merge: true });
-
-     } catch (error) {
-        console.error("Error updating user:", error);
-        toast({ title: 'Error', description: 'No se pudo actualizar el perfil.', variant: 'destructive'})
-     }
-  }
-
   const contextValue: UserContextType = {
       user,
       allUsers,
@@ -238,11 +201,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       login,
       register,
       logout,
-      updateUser,
       notifications,
       setNotifications,
   };
-
 
   return (
     <UserContext.Provider value={contextValue}>

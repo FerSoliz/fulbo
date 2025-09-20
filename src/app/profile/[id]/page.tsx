@@ -35,7 +35,7 @@ export default function ProfilePage() {
     const router = useRouter();
     const userId = params.id as string;
     const { toast } = useToast();
-    const { user: currentUser, allUsers, updateUser: updateUserContext, loading: userLoading } = useUser();
+    const { user: currentUser, allUsers, setAllUsers, loading: userLoading } = useUser();
     const { fileToDataUrl, isUploading, progress } = useUpload();
     
     const [profileUser, setProfileUser] = useState<User | null>(null);
@@ -151,10 +151,18 @@ export default function ProfilePage() {
             division: currentDivision,
         };
 
-        updateUserContext(profileUser.id, updatedUserData);
+        updateUser(profileUser.id, updatedUserData);
+    }
+    
+    const updateUser = (userId: string, dataToUpdate: Partial<Omit<User, 'id'>>) => {
+        if (dataToUpdate.avatar) {
+            localStorage.setItem(`avatar_${userId}`, dataToUpdate.avatar);
+        }
+        setAllUsers(prev => prev.map(u => u.id === userId ? {...u, ...dataToUpdate} : u));
     }
 
-    const handleLinkAccount = async () => {
+
+    const handleLinkAccount = () => {
         if (!profileUser) return;
         const playerDetailsJSON = localStorage.getItem("playerDetails");
         const playerDetails = playerDetailsJSON ? JSON.parse(playerDetailsJSON) : {};
@@ -167,7 +175,7 @@ export default function ProfilePage() {
                 uniqueCode: player.uniqueCode,
                 baseSudpoints: profileUser.sudpoints, // Save current points as base
             };
-            await updateUserContext(profileUser.id, updatedUserData);
+            updateUser(profileUser.id, updatedUserData);
             toast({ title: "¡Cuenta Vinculada!", description: "Tu perfil ahora está conectado a tus estadísticas de jugador." });
         } else {
             toast({ title: "Error", description: "El código de jugador no es válido.", variant: "destructive" });
@@ -175,7 +183,7 @@ export default function ProfilePage() {
     };
 
     const handleAvatarClick = () => {
-        if (friendStatus === 'self' && !isUploading) {
+        if (currentUser?.id === userId && !isUploading) {
             fileInputRef.current?.click();
         }
     };
@@ -185,8 +193,7 @@ export default function ProfilePage() {
             const file = e.target.files[0];
             try {
                 const dataUrl = await fileToDataUrl(file);
-                await updateUserContext(profileUser.id, { avatar: dataUrl });
-                
+                updateUser(profileUser.id, { avatar: dataUrl });
                 toast({
                     title: "¡Avatar Actualizado!",
                     description: "Tu nueva foto de perfil ha sido guardada."
