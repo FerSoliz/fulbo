@@ -41,6 +41,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Load users from localStorage (this will be replaced by Firestore later)
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const combinedUsers = [...initialUsers, ...storedUsers];
     const uniqueUsers = Array.from(new Map(combinedUsers.map(u => [u.id, u])).values());
@@ -53,6 +54,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     })
     setAllUsers(uniqueUsers);
 
+    // Listener for Auth state
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const docRef = doc(db, "users", firebaseUser.uid);
@@ -82,10 +84,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
             const newUser: User = {
                 id: firebaseUser.uid,
                 name: firebaseUser.displayName || 'Nuevo Usuario',
-                username: firebaseUser.email?.split('@')[0] || `user${Date.now()}`,
+                username: `user${Date.now().toString().slice(-4)}`,
                 email: firebaseUser.email!,
                 role: 'user',
-                avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email?.split('@')[0]}.png`,
+                avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.uid}.png`,
                 isVerified: firebaseUser.emailVerified,
                 isBlocked: false,
                 location: 'Desconocida',
@@ -99,7 +101,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setUser(newUser);
             setAllUsers(prev => [...prev.filter(u => u.id !== newUser.id), newUser]);
             setNotifications(initialNotifications);
-         }
+        }
       } else {
         setUser(defaultVisitor);
         setNotifications([]);
@@ -108,7 +110,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   
   useEffect(() => {
@@ -149,11 +150,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const avatarUrl = `https://avatar.vercel.sh/${username.replace(/\s+/g, '')}.png`;
         
+        // Update Firebase Auth Profile
         await updateProfile(userCredential.user, {
             displayName: name,
             photoURL: avatarUrl
         });
 
+        // Create user document in Firestore
         const newUser: User = {
             id: userCredential.user.uid,
             name: name,

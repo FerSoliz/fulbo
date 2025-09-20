@@ -50,15 +50,11 @@ export function MatchStatsDialog({
 
   useEffect(() => {
     // Load rosters from localStorage
-    const homeTeamId = localStorage.getItem(`teams_${tournamentId}`)?.includes(match.home) ? match.home : `team_${tournamentId}_${match.home}`;
-    const awayTeamId = localStorage.getItem(`teams_${tournamentId}`)?.includes(match.away) ? match.away : `team_${tournamentId}_${match.away}`;
-
-
     const homeRosterData: Player[] = JSON.parse(
-      localStorage.getItem(`roster_${tournamentId}_${homeTeamId}`) || '[]'
+      localStorage.getItem(`roster_${tournamentId}_${match.home}`) || '[]'
     ).map((p: any) => ({ id: p.uniqueCode, name: `${p.name} ${p.lastName}`.trim() }));
     const awayRosterData: Player[] = JSON.parse(
-      localStorage.getItem(`roster_${tournamentId}_${awayTeamId}`) || '[]'
+      localStorage.getItem(`roster_${tournamentId}_${match.away}`) || '[]'
     ).map((p: any) => ({ id: p.uniqueCode, name: `${p.name} ${p.lastName}`.trim() }));
     
     setHomeRoster(homeRosterData);

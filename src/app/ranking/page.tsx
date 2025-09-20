@@ -104,7 +104,8 @@ export default function RankingPage() {
                     </TableCell>
                     <TableCell className="text-right">
                         <Badge variant="outline" className="text-base">{user.sudpoints}</Badge>
-                    </TableCell>                  </TableRow>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
                 <TableRow>

@@ -96,7 +96,7 @@ export default function LoginPage() {
     }
   }
 
-  if (userLoading || (user && user.id !== 'visitor')) {
+  if (userLoading || (!userLoading && user && user.id !== 'visitor')) {
     return <div className="w-full min-h-screen flex items-center justify-center p-4 bg-background"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
 
