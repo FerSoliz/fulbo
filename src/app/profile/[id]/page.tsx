@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -78,7 +79,7 @@ const mockHistory = [
 const MatchHistory = () => (
     <div className="relative w-full h-auto">
         <Image
-            src="https://i.postimg.cc/m2cZ1XRT/contenedor-historial.png"
+            src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png"
             alt="Contenedor de historial de partidos"
             width={800}
             height={600}
