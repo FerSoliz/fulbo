@@ -86,9 +86,9 @@ const MatchHistory = () => (
             quality={100}
         />
         <div className="absolute inset-0 p-8 text-white flex flex-col justify-center h-full">
-             <div className="grid grid-rows-4 h-full py-12 gap-y-2">
+             <div className="grid grid-rows-4 h-full py-12 gap-y-4">
                 {mockHistory.map((match) => (
-                    <div key={match.id} className="grid grid-cols-12 items-center text-sm font-semibold">
+                    <div key={match.id} className="grid grid-cols-12 items-center text-base font-semibold">
                         {/* Resultado */}
                         <div className="col-span-5 grid grid-cols-5 items-center">
                             <span className="col-span-2 text-right truncate pr-2">{match.teamA}</span>
@@ -96,11 +96,11 @@ const MatchHistory = () => (
                             <span className="col-span-2 text-left truncate pl-2">{match.teamB}</span>
                         </div>
                         {/* Torneo */}
-                        <div className="col-span-4 text-center truncate px-2 text-sm">
+                        <div className="col-span-4 text-center truncate px-2">
                             <span>{match.tournament}</span>
                         </div>
                         {/* Fecha */}
-                        <div className="col-span-3 text-center text-sm">
+                        <div className="col-span-3 text-center">
                             <span>{match.date}</span>
                         </div>
                     </div>
@@ -549,5 +549,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
