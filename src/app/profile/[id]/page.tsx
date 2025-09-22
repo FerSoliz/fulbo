@@ -93,7 +93,7 @@ const MatchHistory = () => (
             <div className="flex-1 flex flex-col justify-around">
                 {puertoFcHistory.slice(0, 4).map((match, index) => (
                     <div key={match.id} className="w-full border-b border-white/20 pb-1 last:border-b-0">
-                        <div className="grid grid-cols-3 items-center text-center text-base">
+                        <div className="grid grid-cols-3 items-center text-center text-sm">
                             <span className="text-right truncate font-semibold">{match.teamA}</span>
                             <span className="font-bold">{match.scoreA} - {match.scoreB}</span>
                             <span className="text-left truncate font-semibold">{match.teamB}</span>
@@ -134,10 +134,12 @@ const NextMatch = () => {
                      <p className="text-2xl font-bold">{nextMatchData.team} vs {nextMatchData.rival}</p>
                      <p className="text-amber-400">{nextMatchData.tournament} - {nextMatchData.instance}</p>
                  </div>
-                 <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
-                     <div className="flex items-center gap-2"><Calendar className="w-5 h-5"/> <span>{nextMatchData.date}</span></div>
-                     <div className="flex items-center gap-2"><Clock className="w-5 h-5"/> <span>{nextMatchData.time}</span></div>
-                     <div className="flex items-center gap-2 col-span-2 justify-center"><UserCircle className="w-5 h-5"/> Árbitro: <span>{nextMatchData.referee}</span></div>
+                 <div className="space-y-2 text-sm">
+                     <div className="flex items-center justify-center gap-6">
+                        <div className="flex items-center gap-2"><Calendar className="w-5 h-5"/> <span>{nextMatchData.date}</span></div>
+                        <div className="flex items-center gap-2"><Clock className="w-5 h-5"/> <span>{nextMatchData.time}</span></div>
+                     </div>
+                     <div className="flex items-center gap-2 justify-center pt-2"><UserCircle className="w-5 h-5"/> Árbitro: <span>{nextMatchData.referee}</span></div>
                  </div>
             </div>
         </div>
@@ -595,3 +597,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
