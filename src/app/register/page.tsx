@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Loader2, X, AtSign } from 'lucide-react';
+import { Eye, EyeOff, Loader2, X, AtSign, FileText } from 'lucide-react';
 import { useUser } from '@/context/user-context';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -52,6 +52,7 @@ export default function RegisterPage() {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [dni, setDni] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -73,7 +74,7 @@ export default function RegisterPage() {
     }
     
     setIsLoading(true);
-    const success = await register(name, username, email, password);
+    const success = await register(name, username, email, password, dni);
     if (!success) {
       setIsLoading(false);
     }
@@ -173,6 +174,22 @@ export default function RegisterPage() {
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading || isGoogleLoading}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dni">DNI</Label>
+                 <div className="relative">
+                    <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="dni"
+                      type="number"
+                      placeholder="Sin puntos ni espacios"
+                      required
+                      value={dni}
+                      onChange={(e) => setDni(e.target.value)}
+                      disabled={isLoading || isGoogleLoading}
+                      className="pl-9"
+                    />
+                 </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>

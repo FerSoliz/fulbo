@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
@@ -32,7 +33,7 @@ interface UserContextType {
   setAllUsers: React.Dispatch<React.SetStateAction<User[]>>;
   loading: boolean;
   login: (email: string, pass: string) => Promise<boolean>;
-  register: (name: string, username: string, email: string, pass: string) => Promise<boolean>;
+  register: (name: string, username: string, email: string, pass: string, dni: string) => Promise<boolean>;
   logout: () => Promise<void>;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
@@ -123,7 +124,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
   
-  const register = async (name: string, username: string, email: string, pass: string): Promise<boolean> => {
+  const register = async (name: string, username: string, email: string, pass: string, dni: string): Promise<boolean> => {
     setLoading(true);
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
@@ -132,6 +133,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             name: name,
             username: username,
             email: email,
+            dni: dni,
             avatar: `https://avatar.vercel.sh/${username}.png`,
             role: 'user',
             isVerified: false,

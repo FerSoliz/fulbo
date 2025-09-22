@@ -5,6 +5,7 @@ export interface User {
   name: string;
   username: string;
   email?: string;
+  dni?: string;
   role: 'user' | 'editor' | 'admin';
   avatar: string;
   isBlocked?: boolean;
