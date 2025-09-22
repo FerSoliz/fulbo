@@ -86,27 +86,26 @@ const MatchHistory = () => (
             className="w-full h-auto"
             quality={100}
         />
-        <div className="absolute inset-0 p-4 py-8 md:p-12 flex flex-col text-white">
-            <h2 className="text-center text-3xl font-bold uppercase tracking-widest mb-6" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
+        <div className="absolute inset-0 py-5 px-12 flex flex-col text-white">
+             <h2 className="text-center text-xl font-bold uppercase tracking-widest mb-2" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
                 Historial de Partidos
             </h2>
-            <div className="flex-1 flex flex-col justify-between gap-y-5">
+            <div className="flex-1 flex flex-col justify-around">
                 {puertoFcHistory.map((match) => (
-                    <div key={match.id} className="w-full border-b border-white/20 pb-2">
-                        <div className="grid grid-cols-3 items-center text-center text-base">
+                    <div key={match.id} className="w-full border-b border-white/20 pb-1">
+                        <div className="grid grid-cols-3 items-center text-center text-sm">
                             {/* Equipos y Resultado */}
-                            <div className="grid grid-cols-3 items-center text-base">
-                                <span className="col-span-1 text-right truncate">{match.teamA}</span>
+                            <div className="grid grid-cols-3 items-center">
+                                <span className="col-span-1 text-right truncate font-semibold">{match.teamA}</span>
                                 <span className="col-span-1 font-bold">{match.scoreA} - {match.scoreB}</span>
-                                <span className="col-span-1 text-left truncate">{match.teamB}</span>
+                                <span className="col-span-1 text-left truncate font-semibold">{match.teamB}</span>
                             </div>
                             {/* Torneo e Instancia */}
-                            <div className="flex flex-col">
-                                <span className="font-bold uppercase truncate">{match.tournament}</span>
-                                <span className="text-sm opacity-80">{match.stage}</span>
+                            <div className="flex flex-col items-center">
+                                <span className="font-semibold uppercase truncate">{match.tournament} - {match.stage}</span>
                             </div>
                             {/* Fecha */}
-                            <div className="font-bold">
+                            <div className="font-semibold">
                                 {match.date}
                             </div>
                         </div>
@@ -556,5 +555,7 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
