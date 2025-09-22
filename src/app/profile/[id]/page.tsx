@@ -463,6 +463,15 @@ export default function ProfilePage() {
                   className="cursor-pointer scale-105 transition-transform"
                 />
               </div>
+              <div className="absolute top-2 right-2 z-10">
+                <Image
+                    src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png"
+                    alt="Configuracion"
+                    width={82}
+                    height={103}
+                    className="cursor-pointer scale-105 transition-transform"
+                />
+              </div>
               <Image
                 src="https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png"
                 alt="Interfaz de menú de perfil"
