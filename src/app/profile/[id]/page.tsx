@@ -434,7 +434,7 @@ export default function ProfilePage() {
                   alt="Historial"
                   width={82}
                   height={103}
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 cursor-pointer hover:scale-105 transition-transform"
+                  className="absolute left-0 top-0 z-10 cursor-pointer hover:scale-105 transition-transform"
                 />
               <Image
                 src="https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png"
