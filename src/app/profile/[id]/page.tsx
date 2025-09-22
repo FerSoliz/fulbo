@@ -38,6 +38,8 @@ import {
   Star,
   Loader2,
   MessageSquare,
+  Clock,
+  UserCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -69,10 +71,10 @@ const StatItem = ({
 );
 
 const puertoFcHistory = [
-    { id: 1, teamA: 'PUERTO F.C.', teamB: 'La Naranja Mecánica', scoreA: 3, scoreB: 1, tournament: 'Liga Anual 2024', stage: 'Final', date: '20/05' },
-    { id: 2, teamA: 'Deportivo Vencer', teamB: 'PUERTO F.C.', scoreA: 0, scoreB: 2, tournament: 'Liga Anual 2024', stage: 'Semifinal', date: '13/05' },
-    { id: 3, teamA: 'PUERTO F.C.', teamB: 'Tiki Taka', scoreA: 4, scoreB: 0, tournament: 'Liga Anual 2024', stage: 'Fecha 10', date: '06/05' },
-    { id: 4, teamA: 'Real Sudone', teamB: 'PUERTO F.C.', scoreA: 1, scoreB: 1, tournament: 'Copa Verano', stage: 'Fase de Grupos', date: '29/04' },
+    { id: 1, teamA: 'PUERTO F.C.', teamB: 'La Naranja Mecánica', scoreA: 3, scoreB: 1, date: '20/05' },
+    { id: 2, teamA: 'Deportivo Vencer', teamB: 'PUERTO F.C.', scoreA: 2, scoreB: 2, date: '13/05' },
+    { id: 3, teamA: 'PUERTO F.C.', teamB: 'Tiki Taka', scoreA: 4, scoreB: 0, date: '06/05' },
+    { id: 4, teamA: 'Real Sudone', teamB: 'PUERTO F.C.', scoreA: 1, scoreB: 2, date: '29/04' },
 ];
 
 
@@ -87,20 +89,15 @@ const MatchHistory = () => (
             quality={100}
         />
         <div className="absolute inset-0 py-5 px-12 flex flex-col text-white">
+             <h2 className="text-xl font-bold uppercase text-center mb-2">Historial de Partidos</h2>
             <div className="flex-1 flex flex-col justify-around">
-                {puertoFcHistory.slice(0, 4).map((match) => (
-                    <div key={match.id} className="w-full border-b border-white/20 pb-1">
+                {puertoFcHistory.slice(0, 4).map((match, index) => (
+                    <div key={match.id} className="w-full border-b border-white/20 pb-1 last:border-b-0">
                         <div className="grid grid-cols-3 items-center text-center text-base">
-                            {/* Equipos y Resultado */}
-                            <div className="col-span-2 grid grid-cols-3 items-center">
-                                <span className="text-right truncate font-semibold">{match.teamA}</span>
-                                <span className="font-bold">{match.scoreA} - {match.scoreB}</span>
-                                <span className="text-left truncate font-semibold">{match.teamB}</span>
-                            </div>
-                            {/* Fecha */}
-                            <div className="col-span-1 font-semibold text-right">
-                                {match.date}
-                            </div>
+                            <span className="text-right truncate font-semibold">{match.teamA}</span>
+                            <span className="font-bold">{match.scoreA} - {match.scoreB}</span>
+                            <span className="text-left truncate font-semibold">{match.teamB}</span>
+                             <span className="text-right col-span-3 text-xs opacity-80">{match.date}</span>
                         </div>
                     </div>
                 ))}
@@ -108,6 +105,44 @@ const MatchHistory = () => (
         </div>
     </div>
 );
+
+
+const NextMatch = () => {
+    const nextMatchData = {
+        team: 'PUERTO F.C.',
+        rival: 'Los Magos',
+        date: '30/05/2024',
+        time: '21:00 hs',
+        tournament: 'Liga Anual 2024',
+        instance: 'Fecha 11',
+        referee: 'Javier Castrilli'
+    };
+
+    return (
+        <div className="relative w-full h-auto">
+            <Image
+                src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png"
+                alt="Contenedor de próximo partido"
+                width={800}
+                height={600}
+                className="w-full h-auto"
+                quality={100}
+            />
+            <div className="absolute inset-0 py-5 px-12 flex flex-col text-white justify-center">
+                 <h2 className="text-xl font-bold uppercase text-center mb-4">Próximo Partido</h2>
+                 <div className="text-center mb-4">
+                     <p className="text-2xl font-bold">{nextMatchData.team} vs {nextMatchData.rival}</p>
+                     <p className="text-amber-400">{nextMatchData.tournament} - {nextMatchData.instance}</p>
+                 </div>
+                 <div className="grid grid-cols-2 gap-x-8 gap-y-4 text-sm">
+                     <div className="flex items-center gap-2"><Calendar className="w-5 h-5"/> <span>{nextMatchData.date}</span></div>
+                     <div className="flex items-center gap-2"><Clock className="w-5 h-5"/> <span>{nextMatchData.time}</span></div>
+                     <div className="flex items-center gap-2 col-span-2 justify-center"><UserCircle className="w-5 h-5"/> Árbitro: <span>{nextMatchData.referee}</span></div>
+                 </div>
+            </div>
+        </div>
+    );
+};
 
 
 export default function ProfilePage() {
@@ -129,6 +164,7 @@ export default function ProfilePage() {
   const [uniqueCodeInput, setUniqueCodeInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [showNextMatch, setShowNextMatch] = useState(false);
 
   // Load initial data from localStorage
   useEffect(() => {
@@ -481,6 +517,7 @@ export default function ProfilePage() {
                   alt="Proximo Partido"
                   width={82}
                   height={103}
+                  onClick={() => {setShowNextMatch(!showNextMatch); setShowHistory(false);}}
                   className="cursor-pointer hover:scale-105 transition-transform"
                 />
                 <div className="flex flex-row gap-2">
@@ -489,7 +526,7 @@ export default function ProfilePage() {
                     alt="Historial"
                     width={82}
                     height={103}
-                    onClick={() => setShowHistory(!showHistory)}
+                    onClick={() => {setShowHistory(!showHistory); setShowNextMatch(false);}}
                     className="cursor-pointer hover:scale-105 transition-transform"
                   />
                    <Image
@@ -539,6 +576,16 @@ export default function ProfilePage() {
                 transition={{ duration: 0.3 }}
               >
                 <MatchHistory />
+              </motion.div>
+            )}
+             {showNextMatch && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <NextMatch />
               </motion.div>
             )}
           </AnimatePresence>
