@@ -87,25 +87,22 @@ const MatchHistory = () => (
             quality={100}
         />
         <div className="absolute inset-0 py-5 px-12 flex flex-col text-white">
-            <h2 className="text-center text-xl font-bold uppercase tracking-widest" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
-                Historial de Partidos
-            </h2>
             <div className="flex-1 flex flex-col justify-around">
-                {puertoFcHistory.map((match) => (
+                {puertoFcHistory.slice(0, 4).map((match) => (
                     <div key={match.id} className="w-full border-b border-white/20 pb-1">
-                        <div className="grid grid-cols-3 items-center text-center text-base">
+                        <div className="grid grid-cols-4 items-center text-center text-base">
                             {/* Equipos y Resultado */}
-                            <div className="grid grid-cols-3 items-center">
-                                <span className="col-span-1 text-right truncate font-semibold">{match.teamA}</span>
-                                <span className="col-span-1 font-bold">{match.scoreA} - {match.scoreB}</span>
-                                <span className="col-span-1 text-left truncate font-semibold">{match.teamB}</span>
+                            <div className="col-span-2 grid grid-cols-3 items-center">
+                                <span className="text-right truncate font-semibold">{match.teamA}</span>
+                                <span className="font-bold">{match.scoreA} - {match.scoreB}</span>
+                                <span className="text-left truncate font-semibold">{match.teamB}</span>
                             </div>
                             {/* Torneo e Instancia */}
-                            <div className="flex flex-col items-center">
+                            <div className="col-span-1 flex flex-col items-center">
                                 <span className="font-semibold uppercase truncate">{match.tournament} - {match.stage}</span>
                             </div>
                             {/* Fecha */}
-                            <div className="font-semibold">
+                            <div className="col-span-1 font-semibold text-right">
                                 {match.date}
                             </div>
                         </div>
@@ -555,9 +552,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
-
-    
-
-    
