@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -493,16 +494,16 @@ export default function ProfilePage() {
           </Card>
 
           {showHistory && (
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-center text-xl font-bold uppercase tracking-widest">
-                        Historial de Partidos
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {/* El contenido dinámico del historial irá aquí */}
-                </CardContent>
-            </Card>
+            <div className="mt-6">
+              <Image
+                src="https://i.postimg.cc/JnBKkCTb/contenedor-historial.png"
+                alt="Contenedor de historial de partidos"
+                width={800}
+                height={600}
+                className="w-full h-auto"
+                quality={100}
+              />
+            </div>
           )}
 
         </div>
@@ -510,3 +511,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
