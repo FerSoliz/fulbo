@@ -167,6 +167,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showNextMatch, setShowNextMatch] = useState(false);
+  const [showStats, setShowStats] = useState(false);
 
   // Load initial data from localStorage
   useEffect(() => {
@@ -519,7 +520,7 @@ export default function ProfilePage() {
                   alt="Proximo Partido"
                   width={82}
                   height={103}
-                  onClick={() => {setShowNextMatch(!showNextMatch); setShowHistory(false);}}
+                  onClick={() => {setShowNextMatch(!showNextMatch); setShowHistory(false); setShowStats(false);}}
                   className="cursor-pointer hover:scale-105 transition-transform"
                 />
                 <div className="flex flex-row gap-2">
@@ -528,7 +529,7 @@ export default function ProfilePage() {
                     alt="Historial"
                     width={82}
                     height={103}
-                    onClick={() => {setShowHistory(!showHistory); setShowNextMatch(false);}}
+                    onClick={() => {setShowHistory(!showHistory); setShowNextMatch(false); setShowStats(false);}}
                     className="cursor-pointer hover:scale-105 transition-transform"
                   />
                    <Image
@@ -536,6 +537,7 @@ export default function ProfilePage() {
                     alt="Estadisticas"
                     width={82}
                     height={103}
+                    onClick={() => {setShowStats(!showStats); setShowHistory(false); setShowNextMatch(false);}}
                     className="cursor-pointer hover:scale-105 transition-transform"
                   />
                 </div>
@@ -588,6 +590,28 @@ export default function ProfilePage() {
                 transition={{ duration: 0.3 }}
               >
                 <NextMatch />
+              </motion.div>
+            )}
+             {showStats && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="relative w-full h-auto">
+                    <Image
+                        src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png"
+                        alt="Contenedor vacio"
+                        width={800}
+                        height={600}
+                        className="w-full h-auto"
+                        quality={100}
+                    />
+                    <div className="absolute inset-0 p-5">
+                       {/* Contenido irá aquí */}
+                    </div>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
