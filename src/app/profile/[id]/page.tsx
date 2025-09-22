@@ -429,13 +429,22 @@ export default function ProfilePage() {
         <div className="md:col-span-2 space-y-6">
           <Card>
             <CardContent className="p-0 relative">
-               <Image
+              <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
+                <Image
                   src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
                   alt="Historial"
                   width={82}
                   height={103}
-                  className="absolute left-2 top-2 z-10 cursor-pointer scale-105 transition-transform"
+                  className="cursor-pointer scale-105 transition-transform"
                 />
+                <Image
+                  src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png"
+                  alt="Proximo Partido"
+                  width={82}
+                  height={103}
+                  className="cursor-pointer scale-105 transition-transform"
+                />
+              </div>
               <Image
                 src="https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png"
                 alt="Interfaz de menú de perfil"
