@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -85,14 +86,12 @@ const MatchHistory = () => (
             className="w-full h-auto"
             quality={100}
         />
-        <div className="absolute inset-0 p-8 text-white flex flex-col justify-center h-full">
-             <div className="flex flex-col h-full py-12 justify-between">
-                {Array.from({ length: 6 }).map((_, index) => (
-                    <div key={index} className="h-full border-b border-white/20 last:border-b-0 flex items-center">
-                       {/* El contenido del partido irá aquí */}
-                    </div>
-                ))}
-            </div>
+        <div className="absolute inset-0 py-12 px-8 text-white flex flex-col gap-y-5">
+            {Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="flex-1 border-b border-white/20 flex items-center">
+                   {/* El contenido del partido irá aquí */}
+                </div>
+            ))}
         </div>
     </div>
 );
