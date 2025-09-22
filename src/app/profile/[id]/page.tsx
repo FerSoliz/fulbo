@@ -432,7 +432,7 @@ export default function ProfilePage() {
               <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
                 <div className="flex items-start gap-2">
                   <Image
-                    src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
+                    src="https://i.postimg.cc/xTc9mJ0M/boton-historial.png"
                     alt="Historial"
                     width={82}
                     height={103}
@@ -467,8 +467,8 @@ export default function ProfilePage() {
                 <Image
                     src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png"
                     alt="Configuracion"
-                    width={82}
-                    height={103}
+                    width={41}
+                    height={51}
                     className="cursor-pointer scale-105 transition-transform"
                 />
               </div>
