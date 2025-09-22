@@ -438,30 +438,30 @@ export default function ProfilePage() {
           <Card>
             <CardContent className="p-0 relative">
               <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
-                 <Image
-                    src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png"
-                    alt="Proximo Partido"
+                <Image
+                  src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png"
+                  alt="Proximo Partido"
+                  width={82}
+                  height={103}
+                  className="cursor-pointer hover:scale-105 transition-transform"
+                />
+                <div className="flex flex-row gap-2">
+                  <Image
+                    src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
+                    alt="Historial"
+                    width={82}
+                    height={103}
+                    onClick={() => setShowHistory(!showHistory)}
+                    className="cursor-pointer hover:scale-105 transition-transform"
+                  />
+                   <Image
+                    src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png"
+                    alt="Estadisticas"
                     width={82}
                     height={103}
                     className="cursor-pointer hover:scale-105 transition-transform"
                   />
-                  <div className="flex flex-row gap-2">
-                    <Image
-                      src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
-                      alt="Historial"
-                      width={82}
-                      height={103}
-                      onClick={() => setShowHistory(!showHistory)}
-                      className="cursor-pointer hover:scale-105 transition-transform"
-                    />
-                    <Image
-                      src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png"
-                      alt="Estadisticas"
-                      width={82}
-                      height={103}
-                      className="cursor-pointer hover:scale-105 transition-transform"
-                    />
-                  </div>
+                </div>
               </div>
               <div className="absolute right-2 bottom-2 z-10">
                 <Image
@@ -500,28 +500,7 @@ export default function ProfilePage() {
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {mockHistory.map((match) => (
-                        <div key={match.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
-                           <div className="flex items-center gap-3 w-2/5">
-                               <Avatar>
-                                   <AvatarImage src={match.teamALogo} />
-                                   <AvatarFallback>{match.teamA.charAt(0)}</AvatarFallback>
-                               </Avatar>
-                               <span className="font-semibold truncate">{match.teamA}</span>
-                           </div>
-                            <div className="text-center">
-                                <p className="text-2xl font-bold">{match.scoreA} - {match.scoreB}</p>
-                                <p className="text-xs text-muted-foreground">{match.date}</p>
-                            </div>
-                           <div className="flex items-center gap-3 w-2/5 justify-end">
-                                <span className="font-semibold truncate text-right">{match.teamB}</span>
-                               <Avatar>
-                                   <AvatarImage src={match.teamBLogo} />
-                                   <AvatarFallback>{match.teamB.charAt(0)}</AvatarFallback>
-                               </Avatar>
-                           </div>
-                        </div>
-                    ))}
+                    {/* El contenido dinámico del historial irá aquí */}
                 </CardContent>
             </Card>
           )}
