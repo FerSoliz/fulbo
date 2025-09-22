@@ -432,13 +432,6 @@ export default function ProfilePage() {
               <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
                 <div className="flex items-start gap-2">
                   <Image
-                    src="https://i.postimg.cc/xTc9mJ0M/boton-historial.png"
-                    alt="Historial"
-                    width={82}
-                    height={103}
-                    className="cursor-pointer scale-105 transition-transform"
-                  />
-                  <Image
                     src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png"
                     alt="Estadisticas"
                     width={82}
@@ -484,13 +477,9 @@ export default function ProfilePage() {
           </Card>
           <Card>
             <CardHeader>
-              <Image
-                src="https://i.postimg.cc/xTc9mJ0M/boton-historial.png"
-                alt="Historial"
-                width={82}
-                height={103}
-                className="cursor-pointer hover:scale-105 transition-transform"
-              />
+              <CardTitle className="text-4xl font-bold uppercase tracking-wider text-center">
+                Estadisticas
+              </CardTitle>
             </CardHeader>
             <CardContent>
               {uniqueCode ? (
