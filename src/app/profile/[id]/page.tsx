@@ -430,29 +430,29 @@ export default function ProfilePage() {
           <Card>
             <CardContent className="p-0 relative">
               <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
+                 <div className="relative">
+                    <Image
+                      src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
+                      alt="Historial"
+                      width={82}
+                      height={103}
+                      className="cursor-pointer scale-105 transition-transform"
+                    />
+                    <Image
+                        src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png"
+                        alt="Estadisticas"
+                        width={82}
+                        height={103}
+                        className="cursor-pointer scale-105 transition-transform absolute top-0 right-0"
+                    />
+                </div>
                 <Image
-                  src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
-                  alt="Historial"
+                  src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png"
+                  alt="Proximo Partido"
                   width={82}
                   height={103}
                   className="cursor-pointer scale-105 transition-transform"
                 />
-                <div className="flex gap-2">
-                  <Image
-                    src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png"
-                    alt="Proximo Partido"
-                    width={82}
-                    height={103}
-                    className="cursor-pointer scale-105 transition-transform"
-                  />
-                  <Image
-                    src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png"
-                    alt="Estadisticas"
-                    width={82}
-                    height={103}
-                    className="cursor-pointer scale-105 transition-transform"
-                  />
-                </div>
               </div>
               <Image
                 src="https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png"
