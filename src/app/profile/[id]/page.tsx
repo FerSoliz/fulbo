@@ -430,7 +430,7 @@ export default function ProfilePage() {
           <Card>
             <CardContent className="p-0 relative">
               <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
-                 <div className="relative">
+                 <div className="flex items-start gap-0">
                     <Image
                       src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
                       alt="Historial"
@@ -443,7 +443,7 @@ export default function ProfilePage() {
                         alt="Estadisticas"
                         width={82}
                         height={103}
-                        className="cursor-pointer scale-105 transition-transform absolute top-0 right-0"
+                        className="cursor-pointer scale-105 transition-transform"
                     />
                 </div>
                 <Image
