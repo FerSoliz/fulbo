@@ -455,7 +455,7 @@ export default function ProfilePage() {
                 />
               </div>
               <div className="absolute right-2 bottom-2 z-10 flex flex-col gap-2">
-                 <Image
+                <Image
                   src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png"
                   alt="Pase de Batalla"
                   width={82}
@@ -465,11 +465,11 @@ export default function ProfilePage() {
               </div>
               <div className="absolute top-2 right-2 z-10">
                 <Image
-                    src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png"
-                    alt="Configuracion"
-                    width={41}
-                    height={51}
-                    className="cursor-pointer scale-105 transition-transform"
+                  src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png"
+                  alt="Configuracion"
+                  width={41}
+                  height={51}
+                  className="cursor-pointer scale-105 transition-transform"
                 />
               </div>
               <Image
