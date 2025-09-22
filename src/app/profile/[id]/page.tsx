@@ -427,29 +427,16 @@ export default function ProfilePage() {
 
         {/* Columna Derecha */}
         <div className="md:col-span-2 space-y-6">
-           <Card>
-            <CardContent className="p-0 flex">
-                <div className="flex flex-col space-y-2 p-2">
-                    <Image
-                        src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
-                        alt="Botón de Historial"
-                        width={140}
-                        height={70}
-                        quality={100}
-                        className="rounded-lg cursor-pointer"
-                    />
-                    {/* Add more buttons here in the future */}
-                </div>
-                <div className="flex-1">
-                     <Image
-                      src="https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png"
-                      alt="Interfaz de menú de perfil"
-                      width={800}
-                      height={200}
-                      quality={100}
-                      className="w-full h-auto object-cover rounded-r-lg"
-                    />
-                </div>
+          <Card>
+            <CardContent className="p-0">
+              <Image
+                src="https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png"
+                alt="Interfaz de menú de perfil"
+                width={800}
+                height={200}
+                quality={100}
+                className="w-full h-auto object-cover rounded-lg"
+              />
             </CardContent>
           </Card>
           <Card>
