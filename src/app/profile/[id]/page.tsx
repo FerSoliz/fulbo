@@ -86,15 +86,13 @@ const MatchHistory = () => (
             quality={100}
         />
         <div className="absolute inset-0 p-8 text-white flex flex-col justify-center h-full">
-             <div className="grid grid-rows-4 h-full py-12">
+             <div className="grid grid-rows-4 h-full py-12 gap-y-2">
                 {mockHistory.map((match) => (
                     <div key={match.id} className="grid grid-cols-12 items-center text-sm font-semibold">
                         {/* Resultado */}
                         <div className="col-span-5 grid grid-cols-5 items-center">
                             <span className="col-span-2 text-right truncate pr-2">{match.teamA}</span>
-                            <span className="col-span-1 text-center text-sm font-bold">
-                                {match.scoreA} - {match.scoreB}
-                            </span>
+                            <span className="col-span-1 text-center font-bold">{match.scoreA} - {match.scoreB}</span>
                             <span className="col-span-2 text-left truncate pl-2">{match.teamB}</span>
                         </div>
                         {/* Torneo */}
