@@ -454,7 +454,7 @@ export default function ProfilePage() {
                   className="cursor-pointer scale-105 transition-transform"
                 />
               </div>
-              <div className="absolute right-2 top-2 z-10">
+              <div className="absolute right-2 top-2 z-10 flex flex-col gap-2">
                  <Image
                   src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png"
                   alt="Pase de Batalla"
