@@ -435,7 +435,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Columna Derecha */}
-        <div className="md:col-span-2 space-y-6">
+        <div className="md:col-span-2 space-y-2">
           <Card>
             <CardContent className="p-0 relative">
               <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
@@ -511,5 +511,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
