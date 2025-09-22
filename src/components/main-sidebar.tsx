@@ -31,7 +31,7 @@ import { useUser } from '@/context/user-context';
 
 const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
-    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', adminOnly: true },
+    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN' },
     { href: '/leagues', icon: Trophy, label: 'LIGAS EN CURSO' },
     { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
@@ -78,10 +78,6 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
 
   const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)[]) => {
     return items.map((item) => {
-      if ('adminOnly' in item && item.adminOnly && user?.role !== 'admin' && user?.role !== 'editor') {
-        return null;
-      }
-      
       let finalHref = item.href;
       if('label' in item && item.label === 'MI PERFIL' && user && user.name !== 'VISITANTE') {
           finalHref = `/profile/${user.id}`;

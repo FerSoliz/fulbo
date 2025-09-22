@@ -116,21 +116,6 @@ export default function ManageUsersPage() {
     return <div className="p-8 text-center">Cargando usuarios...</div>;
   }
 
-  if (currentUser?.role !== 'admin') {
-    return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center p-4">
-        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
-        <h1 className="text-3xl font-bold">Acceso Denegado</h1>
-        <p className="text-muted-foreground mt-2">
-          Solo los administradores pueden acceder a esta sección.
-        </p>
-        <Link href="/admin">
-          <Button className="mt-6">Volver al Panel</Button>
-        </Link>
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
@@ -208,7 +193,7 @@ export default function ManageUsersPage() {
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" disabled={user.id === currentUser.id}>
+                            <Button variant="ghost" size="icon" disabled={currentUser ? user.id === currentUser.id : false}>
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>

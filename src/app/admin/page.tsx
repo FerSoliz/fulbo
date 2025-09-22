@@ -71,25 +71,8 @@ const adminActions = [
 export default function AdminPage() {
   const { user: currentUser, loading } = useUser();
 
-  const isAdmin = currentUser?.role === 'admin';
-
   if (loading) {
     return <div className="p-8 text-center">Cargando...</div>;
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-200px)] text-center p-4">
-        <ShieldAlert className="w-16 h-16 text-destructive mb-4" />
-        <h1 className="text-3xl font-bold">Acceso Denegado</h1>
-        <p className="text-muted-foreground mt-2">
-          No tienes los permisos necesarios para acceder a esta sección.
-        </p>
-        <Link href="/">
-          <Button className="mt-6">Volver al Inicio</Button>
-        </Link>
-      </div>
-    );
   }
 
   return (
@@ -104,9 +87,6 @@ export default function AdminPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {adminActions.map((action) => {
-            if (action.title === 'Administrar Usuarios' && currentUser?.role !== 'admin') {
-                return null;
-            }
             return (
                 <Card key={action.title} className="flex flex-col">
                 <CardHeader className="flex-row items-center gap-4">
