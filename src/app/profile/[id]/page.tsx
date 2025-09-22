@@ -90,16 +90,12 @@ const MatchHistory = () => (
             <div className="flex-1 flex flex-col justify-around">
                 {puertoFcHistory.slice(0, 4).map((match) => (
                     <div key={match.id} className="w-full border-b border-white/20 pb-1">
-                        <div className="grid grid-cols-4 items-center text-center text-base">
+                        <div className="grid grid-cols-3 items-center text-center text-base">
                             {/* Equipos y Resultado */}
                             <div className="col-span-2 grid grid-cols-3 items-center">
                                 <span className="text-right truncate font-semibold">{match.teamA}</span>
                                 <span className="font-bold">{match.scoreA} - {match.scoreB}</span>
                                 <span className="text-left truncate font-semibold">{match.teamB}</span>
-                            </div>
-                            {/* Torneo e Instancia */}
-                            <div className="col-span-1 flex flex-col items-center">
-                                <span className="font-semibold uppercase truncate">{match.tournament} - {match.stage}</span>
                             </div>
                             {/* Fecha */}
                             <div className="col-span-1 font-semibold text-right">
