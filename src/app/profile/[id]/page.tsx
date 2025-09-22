@@ -496,7 +496,7 @@ export default function ProfilePage() {
           {showHistory && (
             <div className="mt-6">
               <Image
-                src="https://i.postimg.cc/JnBKkCTb/contenedor-historial.png"
+                src="https://i.postimg.cc/m2cZ1XRT/contenedor-historial.png"
                 alt="Contenedor de historial de partidos"
                 width={800}
                 height={600}
