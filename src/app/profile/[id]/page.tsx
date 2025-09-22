@@ -131,7 +131,7 @@ const NextMatch = () => {
             <div className="absolute inset-0 py-5 px-12 flex flex-col text-white justify-center">
                  <h2 className="text-xl font-bold uppercase text-center mb-4">Próximo Partido</h2>
                  <div className="text-center mb-4">
-                     <p className="text-2xl font-bold">{nextMatchData.team} vs {nextMatchData.rival}</p>
+                     <p className="text-2xl font-bold">{nextMatchData.team.toUpperCase()} vs {nextMatchData.rival.toUpperCase()}</p>
                      <p className="text-amber-400">{nextMatchData.tournament} - {nextMatchData.instance}</p>
                  </div>
                  <div className="space-y-2 text-sm">
@@ -597,5 +597,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
