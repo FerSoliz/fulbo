@@ -87,13 +87,13 @@ const MatchHistory = () => (
             quality={100}
         />
         <div className="absolute inset-0 py-5 px-12 flex flex-col text-white">
-             <h2 className="text-center text-xl font-bold uppercase tracking-widest mb-2" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
+            <h2 className="text-center text-xl font-bold uppercase tracking-widest" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
                 Historial de Partidos
             </h2>
             <div className="flex-1 flex flex-col justify-around">
                 {puertoFcHistory.map((match) => (
                     <div key={match.id} className="w-full border-b border-white/20 pb-1">
-                        <div className="grid grid-cols-3 items-center text-center text-sm">
+                        <div className="grid grid-cols-3 items-center text-center text-base">
                             {/* Equipos y Resultado */}
                             <div className="grid grid-cols-3 items-center">
                                 <span className="col-span-1 text-right truncate font-semibold">{match.teamA}</span>
@@ -555,6 +555,8 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
 
