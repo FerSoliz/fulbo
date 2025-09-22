@@ -68,11 +68,13 @@ const StatItem = ({
   </div>
 );
 
-const mockHistory = [
-    { id: 1, teamA: 'Los Cracks FC', teamB: 'La Naranja Mecánica', scoreA: 3, scoreB: 1, tournament: 'Liga Anual 2024', date: '20/05' },
-    { id: 2, teamA: 'Los Cracks FC', teamB: 'Deportivo Vencer', scoreA: 2, scoreB: 2, tournament: 'Copa Verano', date: '13/05' },
-    { id: 3, teamA: 'Tiki Taka', teamB: 'Los Cracks FC', scoreA: 0, scoreB: 4, tournament: 'Liga Anual 2024', date: '06/05' },
-    { id: 4, teamA: 'Real Sudone', teamB: 'Los Cracks FC', scoreA: 1, scoreB: 2, tournament: 'Copa Verano', date: '29/04' },
+const puertoFcHistory = [
+    { id: 1, teamA: 'PUERTO F.C.', teamB: 'La Naranja Mecánica', scoreA: 3, scoreB: 1, tournament: 'Liga Anual 2024', stage: 'Final', date: '20/05' },
+    { id: 2, teamA: 'Deportivo Vencer', teamB: 'PUERTO F.C.', scoreA: 0, scoreB: 2, tournament: 'Liga Anual 2024', stage: 'Semifinal', date: '13/05' },
+    { id: 3, teamA: 'PUERTO F.C.', teamB: 'Tiki Taka', scoreA: 4, scoreB: 0, tournament: 'Liga Anual 2024', stage: 'Fecha 10', date: '06/05' },
+    { id: 4, teamA: 'Real Sudone', teamB: 'PUERTO F.C.', scoreA: 1, scoreB: 1, tournament: 'Copa Verano', stage: 'Fase de Grupos', date: '29/04' },
+    { id: 5, teamA: 'PUERTO F.C.', teamB: 'Los Gladiadores', scoreA: 5, scoreB: 2, tournament: 'Copa Verano', stage: 'Fase de Grupos', date: '22/04' },
+    { id: 6, teamA: 'PUERTO F.C.', teamB: 'Atlético Pura Garra', scoreA: 2, scoreB: 3, tournament: 'Liga Anual 2024', stage: 'Fecha 9', date: '15/04' },
 ];
 
 
@@ -86,12 +88,33 @@ const MatchHistory = () => (
             className="w-full h-auto"
             quality={100}
         />
-        <div className="absolute inset-0 py-12 px-8 text-white flex flex-col gap-y-5">
-            {Array.from({ length: 6 }).map((_, index) => (
-                <div key={index} className="flex-1 border-b border-white/20 flex items-center">
-                   {/* El contenido del partido irá aquí */}
-                </div>
-            ))}
+        <div className="absolute inset-0 p-4 py-8 md:p-12 flex flex-col text-white">
+            <h2 className="text-center text-3xl font-bold uppercase tracking-widest mb-6" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
+                Historial de Partidos
+            </h2>
+            <div className="flex-1 flex flex-col justify-between gap-y-5">
+                {puertoFcHistory.map((match) => (
+                    <div key={match.id} className="w-full border-b border-white/20 pb-2">
+                        <div className="grid grid-cols-3 items-center text-center text-base">
+                            {/* Equipos y Resultado */}
+                            <div className="grid grid-cols-3 items-center text-base">
+                                <span className="col-span-1 text-right truncate">{match.teamA}</span>
+                                <span className="col-span-1 font-bold">{match.scoreA} - {match.scoreB}</span>
+                                <span className="col-span-1 text-left truncate">{match.teamB}</span>
+                            </div>
+                            {/* Torneo e Instancia */}
+                            <div className="flex flex-col">
+                                <span className="font-bold uppercase truncate">{match.tournament}</span>
+                                <span className="text-sm opacity-80">{match.stage}</span>
+                            </div>
+                            {/* Fecha */}
+                            <div className="font-bold">
+                                {match.date}
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
         </div>
     </div>
 );
