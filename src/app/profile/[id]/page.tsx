@@ -73,8 +73,6 @@ const puertoFcHistory = [
     { id: 2, teamA: 'Deportivo Vencer', teamB: 'PUERTO F.C.', scoreA: 0, scoreB: 2, tournament: 'Liga Anual 2024', stage: 'Semifinal', date: '13/05' },
     { id: 3, teamA: 'PUERTO F.C.', teamB: 'Tiki Taka', scoreA: 4, scoreB: 0, tournament: 'Liga Anual 2024', stage: 'Fecha 10', date: '06/05' },
     { id: 4, teamA: 'Real Sudone', teamB: 'PUERTO F.C.', scoreA: 1, scoreB: 1, tournament: 'Copa Verano', stage: 'Fase de Grupos', date: '29/04' },
-    { id: 5, teamA: 'PUERTO F.C.', teamB: 'Los Gladiadores', scoreA: 5, scoreB: 2, tournament: 'Copa Verano', stage: 'Fase de Grupos', date: '22/04' },
-    { id: 6, teamA: 'PUERTO F.C.', teamB: 'Atlético Pura Garra', scoreA: 2, scoreB: 3, tournament: 'Liga Anual 2024', stage: 'Fecha 9', date: '15/04' },
 ];
 
 
