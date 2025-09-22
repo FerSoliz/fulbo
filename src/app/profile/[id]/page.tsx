@@ -68,10 +68,54 @@ const StatItem = ({
 );
 
 const mockHistory = [
-    { id: 1, teamA: 'Los Cracks FC', teamB: 'La Naranja Mecánica', scoreA: 3, scoreB: 1, date: '20/05/2024', teamALogo: 'https://avatar.vercel.sh/cracks.png', teamBLogo: 'https://avatar.vercel.sh/naranja.png' },
-    { id: 2, teamA: 'Los Cracks FC', teamB: 'Deportivo Vencer', scoreA: 2, scoreB: 2, date: '13/05/2024', teamALogo: 'https://avatar.vercel.sh/cracks.png', teamBLogo: 'https://avatar.vercel.sh/vencer.png' },
-    { id: 3, teamA: 'Tiki Taka', teamB: 'Los Cracks FC', scoreA: 0, scoreB: 4, date: '06/05/2024', teamALogo: 'https://avatar.vercel.sh/tiki.png', teamBLogo: 'https://avatar.vercel.sh/cracks.png' },
+    { id: 1, teamA: 'Los Cracks FC', teamB: 'La Naranja Mecánica', scoreA: 3, scoreB: 1, tournament: 'Liga Anual 2024', date: '20/05' },
+    { id: 2, teamA: 'Los Cracks FC', teamB: 'Deportivo Vencer', scoreA: 2, scoreB: 2, tournament: 'Copa Verano', date: '13/05' },
+    { id: 3, teamA: 'Tiki Taka', teamB: 'Los Cracks FC', scoreA: 0, scoreB: 4, tournament: 'Liga Anual 2024', date: '06/05' },
+    { id: 4, teamA: 'Real Sudone', teamB: 'Los Cracks FC', scoreA: 1, scoreB: 2, tournament: 'Copa Verano', date: '29/04' },
 ];
+
+
+const MatchHistory = () => (
+    <div className="relative w-full h-auto">
+        <Image
+            src="https://i.postimg.cc/m2cZ1XRT/contenedor-historial.png"
+            alt="Contenedor de historial de partidos"
+            width={800}
+            height={600}
+            className="w-full h-auto"
+            quality={100}
+        />
+        <div className="absolute inset-0 p-8 text-white">
+             <div className="flex flex-col h-full">
+                <h2 className="text-center text-3xl font-bold uppercase tracking-widest mb-6" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
+                    Historial de Partidos
+                </h2>
+                <div className="flex-grow space-y-3.5 mt-2">
+                    {mockHistory.map((match, index) => (
+                        <div key={match.id} className="grid grid-cols-12 items-center text-sm font-semibold">
+                            {/* Resultado */}
+                            <div className="col-span-5 grid grid-cols-5 items-center">
+                                <span className="col-span-2 text-right truncate pr-2">{match.teamA}</span>
+                                <span className="col-span-1 text-center text-lg font-bold bg-black/30 rounded-md py-1">
+                                    {match.scoreA} - {match.scoreB}
+                                </span>
+                                <span className="col-span-2 text-left truncate pl-2">{match.teamB}</span>
+                            </div>
+                            {/* Torneo */}
+                            <div className="col-span-4 text-center truncate px-2">
+                                <span>{match.tournament}</span>
+                            </div>
+                            {/* Fecha */}
+                            <div className="col-span-3 text-center">
+                                <span>{match.date}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    </div>
+);
 
 
 export default function ProfilePage() {
@@ -465,21 +509,21 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
+              <div className="absolute right-0 top-0 z-10">
+                <Image
+                  src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png"
+                  alt="Configuracion"
+                  width={41}
+                  height={51}
+                  className="cursor-pointer hover:scale-105 transition-transform"
+                />
+              </div>
               <div className="absolute right-2 bottom-2 z-10">
                 <Image
                   src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png"
                   alt="Pase de Batalla"
                   width={82}
                   height={103}
-                  className="cursor-pointer hover:scale-105 transition-transform"
-                />
-              </div>
-              <div className="absolute top-0 right-0 z-10">
-                <Image
-                  src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png"
-                  alt="Configuracion"
-                  width={41}
-                  height={51}
                   className="cursor-pointer hover:scale-105 transition-transform"
                 />
               </div>
@@ -502,14 +546,7 @@ export default function ProfilePage() {
                 exit={{ opacity: 0, y: -20 }}
                 transition={{ duration: 0.3 }}
               >
-                <Image
-                  src="https://i.postimg.cc/m2cZ1XRT/contenedor-historial.png"
-                  alt="Contenedor de historial de partidos"
-                  width={800}
-                  height={600}
-                  className="w-full h-auto"
-                  quality={100}
-                />
+                <MatchHistory />
               </motion.div>
             )}
           </AnimatePresence>
