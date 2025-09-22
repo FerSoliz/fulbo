@@ -430,7 +430,7 @@ export default function ProfilePage() {
            <Card>
             <CardContent className="p-0">
               <Image
-                src="https://i.postimg.cc/t4W94K5x/interfaz-menu-png-1.png"
+                src="https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png"
                 alt="Interfaz de menú de perfil"
                 width={800}
                 height={200}
