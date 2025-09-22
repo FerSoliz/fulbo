@@ -432,6 +432,13 @@ export default function ProfilePage() {
               <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
                 <div className="flex items-start gap-2">
                   <Image
+                    src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png"
+                    alt="Proximo Partido"
+                    width={82}
+                    height={103}
+                    className="cursor-pointer scale-105 transition-transform"
+                  />
+                  <Image
                     src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png"
                     alt="Estadisticas"
                     width={82}
@@ -439,13 +446,6 @@ export default function ProfilePage() {
                     className="cursor-pointer scale-105 transition-transform"
                   />
                 </div>
-                <Image
-                  src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png"
-                  alt="Proximo Partido"
-                  width={82}
-                  height={103}
-                  className="cursor-pointer scale-105 transition-transform"
-                />
               </div>
               <div className="absolute right-2 bottom-2 z-10 flex flex-col gap-2">
                 <Image
