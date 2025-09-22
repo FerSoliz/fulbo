@@ -65,6 +65,13 @@ const StatItem = ({
   </div>
 );
 
+const mockHistory = [
+    { id: 1, teamA: 'Los Cracks FC', teamB: 'La Naranja Mecánica', scoreA: 3, scoreB: 1, date: '20/05/2024', teamALogo: 'https://avatar.vercel.sh/cracks.png', teamBLogo: 'https://avatar.vercel.sh/naranja.png' },
+    { id: 2, teamA: 'Los Cracks FC', teamB: 'Deportivo Vencer', scoreA: 2, scoreB: 2, date: '13/05/2024', teamALogo: 'https://avatar.vercel.sh/cracks.png', teamBLogo: 'https://avatar.vercel.sh/vencer.png' },
+    { id: 3, teamA: 'Tiki Taka', teamB: 'Los Cracks FC', scoreA: 0, scoreB: 4, date: '06/05/2024', teamALogo: 'https://avatar.vercel.sh/tiki.png', teamBLogo: 'https://avatar.vercel.sh/cracks.png' },
+];
+
+
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -83,6 +90,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [uniqueCodeInput, setUniqueCodeInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   // Load initial data from localStorage
   useEffect(() => {
@@ -430,29 +438,30 @@ export default function ProfilePage() {
           <Card>
             <CardContent className="p-0 relative">
               <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
-                <Image
-                  src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png"
-                  alt="Proximo Partido"
-                  width={82}
-                  height={103}
-                  className="cursor-pointer hover:scale-105 transition-transform"
-                />
-                <div className="flex flex-row gap-2">
-                  <Image
-                    src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
-                    alt="Historial"
+                 <Image
+                    src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png"
+                    alt="Proximo Partido"
                     width={82}
                     height={103}
                     className="cursor-pointer hover:scale-105 transition-transform"
                   />
-                  <Image
-                    src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png"
-                    alt="Estadisticas"
-                    width={82}
-                    height={103}
-                    className="cursor-pointer hover:scale-105 transition-transform"
-                  />
-                </div>
+                  <div className="flex flex-row gap-2">
+                    <Image
+                      src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
+                      alt="Historial"
+                      width={82}
+                      height={103}
+                      onClick={() => setShowHistory(!showHistory)}
+                      className="cursor-pointer hover:scale-105 transition-transform"
+                    />
+                    <Image
+                      src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png"
+                      alt="Estadisticas"
+                      width={82}
+                      height={103}
+                      className="cursor-pointer hover:scale-105 transition-transform"
+                    />
+                  </div>
               </div>
               <div className="absolute right-2 bottom-2 z-10">
                 <Image
@@ -482,6 +491,41 @@ export default function ProfilePage() {
               />
             </CardContent>
           </Card>
+
+          {showHistory && (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="text-center text-xl font-bold uppercase tracking-widest">
+                        Historial de Partidos
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {mockHistory.map((match) => (
+                        <div key={match.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                           <div className="flex items-center gap-3 w-2/5">
+                               <Avatar>
+                                   <AvatarImage src={match.teamALogo} />
+                                   <AvatarFallback>{match.teamA.charAt(0)}</AvatarFallback>
+                               </Avatar>
+                               <span className="font-semibold truncate">{match.teamA}</span>
+                           </div>
+                            <div className="text-center">
+                                <p className="text-2xl font-bold">{match.scoreA} - {match.scoreB}</p>
+                                <p className="text-xs text-muted-foreground">{match.date}</p>
+                            </div>
+                           <div className="flex items-center gap-3 w-2/5 justify-end">
+                                <span className="font-semibold truncate text-right">{match.teamB}</span>
+                               <Avatar>
+                                   <AvatarImage src={match.teamBLogo} />
+                                   <AvatarFallback>{match.teamB.charAt(0)}</AvatarFallback>
+                               </Avatar>
+                           </div>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+          )}
+
         </div>
       </div>
     </div>
