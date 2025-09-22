@@ -426,7 +426,18 @@ export default function ProfilePage() {
         </div>
 
         {/* Columna Derecha */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-2 space-y-6">
+           <Card>
+            <CardContent className="p-0">
+              <Image
+                src="https://i.postimg.cc/t4W94K5x/interfaz-menu-png-1.png"
+                alt="Interfaz de menú de perfil"
+                width={800}
+                height={200}
+                className="w-full h-auto object-cover rounded-lg"
+              />
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle className="text-4xl font-bold uppercase tracking-wider text-center">
