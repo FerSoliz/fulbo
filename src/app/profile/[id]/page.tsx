@@ -429,7 +429,7 @@ export default function ProfilePage() {
         <div className="md:col-span-2 space-y-6">
           <Card>
             <CardContent className="p-0 relative">
-              <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
+              <div className="absolute left-1 top-1 z-10 flex flex-col gap-2">
                 <Image
                   src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png"
                   alt="Proximo Partido"
