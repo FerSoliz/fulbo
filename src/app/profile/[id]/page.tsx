@@ -430,7 +430,7 @@ export default function ProfilePage() {
           <Card>
             <CardContent className="p-0 relative">
               <div className="absolute left-2 top-2 z-10 flex flex-col gap-2">
-                 <div className="flex items-start gap-0">
+                 <div className="flex items-start gap-2">
                     <Image
                       src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
                       alt="Historial"
