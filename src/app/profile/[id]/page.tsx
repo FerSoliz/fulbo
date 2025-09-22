@@ -49,6 +49,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useUser } from "@/context/user-context";
 import { useUpload } from "@/hooks/use-upload";
+import { motion, AnimatePresence } from "framer-motion";
 
 const StatItem = ({
   icon: Icon,
@@ -493,18 +494,25 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
 
-          {showHistory && (
-            <div className="mt-6">
-              <Image
-                src="https://i.postimg.cc/m2cZ1XRT/contenedor-historial.png"
-                alt="Contenedor de historial de partidos"
-                width={800}
-                height={600}
-                className="w-full h-auto"
-                quality={100}
-              />
-            </div>
-          )}
+          <AnimatePresence>
+            {showHistory && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Image
+                  src="https://i.postimg.cc/m2cZ1XRT/contenedor-historial.png"
+                  alt="Contenedor de historial de partidos"
+                  width={800}
+                  height={600}
+                  className="w-full h-auto"
+                  quality={100}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
 
         </div>
       </div>
