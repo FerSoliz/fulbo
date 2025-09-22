@@ -463,7 +463,7 @@ export default function ProfilePage() {
                   className="cursor-pointer hover:scale-105 transition-transform"
                 />
               </div>
-              <div className="absolute top-2 right-2 z-10">
+              <div className="absolute top-0 right-0 z-10">
                 <Image
                   src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png"
                   alt="Configuracion"
