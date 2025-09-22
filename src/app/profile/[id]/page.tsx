@@ -484,9 +484,13 @@ export default function ProfilePage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="text-4xl font-bold uppercase tracking-wider text-center">
-                Estadisticas
-              </CardTitle>
+              <Image
+                src="https://i.postimg.cc/xTc9mJ0M/boton-historial.png"
+                alt="Historial"
+                width={82}
+                height={103}
+                className="cursor-pointer hover:scale-105 transition-transform"
+              />
             </CardHeader>
             <CardContent>
               {uniqueCode ? (
