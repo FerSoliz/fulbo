@@ -89,7 +89,7 @@ const MatchHistory = () => (
              <h2 className="text-center text-3xl font-bold uppercase tracking-widest mb-6" style={{textShadow: '2px 2px 4px rgba(0,0,0,0.5)'}}>
                  Historial de Partidos
              </h2>
-             <div className="grid grid-rows-4 gap-y-3.5 -mt-2">
+             <div className="grid grid-rows-4 -mt-2">
                 {mockHistory.map((match) => (
                     <div key={match.id} className="grid grid-cols-12 items-center text-sm font-semibold">
                         {/* Resultado */}
