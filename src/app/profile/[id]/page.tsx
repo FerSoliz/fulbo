@@ -437,15 +437,24 @@ export default function ProfilePage() {
                   height={103}
                   className="cursor-pointer hover:scale-105 transition-transform"
                 />
-                <Image
-                  src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
-                  alt="Historial"
-                  width={82}
-                  height={103}
-                  className="cursor-pointer hover:scale-105 transition-transform"
-                />
+                <div className="flex flex-row gap-2">
+                  <Image
+                    src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
+                    alt="Historial"
+                    width={82}
+                    height={103}
+                    className="cursor-pointer hover:scale-105 transition-transform"
+                  />
+                  <Image
+                    src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png"
+                    alt="Estadisticas"
+                    width={82}
+                    height={103}
+                    className="cursor-pointer hover:scale-105 transition-transform"
+                  />
+                </div>
               </div>
-              <div className="absolute right-2 bottom-2 z-10 flex flex-col gap-2">
+              <div className="absolute right-2 bottom-2 z-10">
                 <Image
                   src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png"
                   alt="Pase de Batalla"
