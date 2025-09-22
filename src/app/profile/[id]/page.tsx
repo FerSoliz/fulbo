@@ -428,7 +428,14 @@ export default function ProfilePage() {
         {/* Columna Derecha */}
         <div className="md:col-span-2 space-y-6">
           <Card>
-            <CardContent className="p-0">
+            <CardContent className="p-0 relative">
+               <Image
+                  src="https://i.postimg.cc/kMNbHH8f/boton-1.png"
+                  alt="Historial"
+                  width={82}
+                  height={103}
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-10 cursor-pointer hover:scale-105 transition-transform"
+                />
               <Image
                 src="https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png"
                 alt="Interfaz de menú de perfil"
