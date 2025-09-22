@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -87,23 +86,10 @@ const MatchHistory = () => (
             quality={100}
         />
         <div className="absolute inset-0 p-8 text-white flex flex-col justify-center h-full">
-             <div className="grid grid-rows-4 h-full py-12 gap-y-4">
-                {mockHistory.map((match) => (
-                    <div key={match.id} className="grid grid-cols-12 items-center text-base font-semibold">
-                        {/* Resultado */}
-                        <div className="col-span-5 grid grid-cols-5 items-center">
-                            <span className="col-span-2 text-right truncate pr-2">{match.teamA}</span>
-                            <span className="col-span-1 text-center font-bold">{match.scoreA} - {match.scoreB}</span>
-                            <span className="col-span-2 text-left truncate pl-2">{match.teamB}</span>
-                        </div>
-                        {/* Torneo */}
-                        <div className="col-span-4 text-center truncate px-2">
-                            <span>{match.tournament}</span>
-                        </div>
-                        {/* Fecha */}
-                        <div className="col-span-3 text-center">
-                            <span>{match.date}</span>
-                        </div>
+             <div className="flex flex-col h-full py-12 justify-between">
+                {Array.from({ length: 6 }).map((_, index) => (
+                    <div key={index} className="h-full border-b border-white/20 last:border-b-0 flex items-center">
+                       {/* El contenido del partido irá aquí */}
                     </div>
                 ))}
             </div>
@@ -550,3 +536,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
