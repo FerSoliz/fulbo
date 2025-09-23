@@ -245,11 +245,11 @@ const BackgroundChangerDialog = ({
 
 
 const mockMatchHistory = [
-    { id: 1, myTeam: "SUDONE FC", opponent: "Los Rivales", myScore: 3, opponentScore: 1, tournament: "Liga Anual" },
-    { id: 2, myTeam: "SUDONE FC", opponent: "Deportivo Fracaso", myScore: 2, opponentScore: 2, tournament: "Copa de Verano" },
-    { id: 3, myTeam: "SUDONE FC", opponent: "La Naranja Mecánica", myScore: 1, opponentScore: 4, tournament: "Liga Anual" },
-    { id: 4, myTeam: "SUDONE FC", opponent: "Atlas", myScore: 5, opponentScore: 0, tournament: "Amistoso" },
-    { id: 5, myTeam: "SUDONE FC", opponent: "Real Mandril", myScore: 0, opponentScore: 1, tournament: "Liga Anual" },
+    { id: 1, myTeam: "SUDONE FC", opponent: "Los Rivales", myScore: 3, opponentScore: 1, tournament: "Liga Anual", date: "24/05" },
+    { id: 2, myTeam: "SUDONE FC", opponent: "Deportivo Fracaso", myScore: 2, opponentScore: 2, tournament: "Copa de Verano", date: "17/05" },
+    { id: 3, myTeam: "SUDONE FC", opponent: "La Naranja Mecánica", myScore: 1, opponentScore: 4, tournament: "Liga Anual", date: "10/05" },
+    { id: 4, myTeam: "SUDONE FC", opponent: "Atlas", myScore: 5, opponentScore: 0, tournament: "Amistoso", date: "03/05" },
+    { id: 5, myTeam: "SUDONE FC", opponent: "Real Mandril", myScore: 0, opponentScore: 1, tournament: "Liga Anual", date: "26/04" },
 ]
 
 
@@ -533,30 +533,30 @@ export default function ProfilePage() {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
-                        className="space-y-2"
+                        className="space-y-3"
                      >
                         <Button variant="ghost" size="sm" onClick={() => setView('buttons')} className="absolute -top-2 left-0 text-muted-foreground"><ArrowLeft className="mr-1 h-4 w-4"/> Volver</Button>
                         <h3 className="text-center font-bold text-lg pt-4">HISTORIAL DE PARTIDOS</h3>
-                        {mockMatchHistory.map(match => {
-                            const result = match.myScore > match.opponentScore ? 'VICTORIA' : match.myScore < match.opponentScore ? 'DERROTA' : 'EMPATE';
-                            const resultColor = result === 'VICTORIA' ? 'text-green-400' : result === 'DERROTA' ? 'text-red-400' : 'text-yellow-400';
-                            return (
-                                <div key={match.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
-                                    <div className="text-right">
-                                        <p className="font-semibold">{match.myTeam}</p>
-                                        <p className="text-xs text-muted-foreground">{match.tournament}</p>
-                                    </div>
-                                    <div className={cn("px-4 py-1 rounded-md text-center", resultColor)}>
-                                        <p className="font-bold text-xl">{match.myScore} - {match.opponentScore}</p>
-                                        <p className="text-xs font-semibold">{result}</p>
-                                    </div>
-                                    <div className="text-left">
-                                        <p className="font-semibold">{match.opponent}</p>
-                                        <p className="text-xs text-muted-foreground">{match.tournament}</p>
-                                    </div>
-                                </div>
-                            )
-                        })}
+                        <div className="space-y-3 px-2">
+                            {mockMatchHistory.map((match, index) => {
+                                const result = match.myScore > match.opponentScore ? 'V' : match.myScore < match.opponentScore ? 'D' : 'E';
+                                const resultColor = result === 'V' ? 'text-green-400' : result === 'D' ? 'text-red-400' : 'text-yellow-400';
+                                return (
+                                    <React.Fragment key={match.id}>
+                                        <div className="flex justify-between items-center text-sm py-1">
+                                            <span className="w-1/4 text-left font-mono">{match.date}</span>
+                                            <div className="w-2/4 flex justify-center items-center gap-2">
+                                                <span>{match.myTeam}</span>
+                                                <span className="font-bold">{match.myScore} - {match.opponentScore}</span>
+                                                <span>{match.opponent}</span>
+                                            </div>
+                                            <span className={cn("w-1/4 text-right font-bold", resultColor)}>{result}</span>
+                                        </div>
+                                        {index < mockMatchHistory.length - 1 && <Separator />}
+                                    </React.Fragment>
+                                )
+                            })}
+                        </div>
                      </motion.div>
                 )}
 
