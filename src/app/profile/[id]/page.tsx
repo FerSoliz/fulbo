@@ -390,6 +390,10 @@ export default function ProfilePage() {
     finalStats.partidosJugados > 0
       ? Math.round((finalStats.victorias / finalStats.partidosJugados) * 100)
       : 0;
+  const goalAverage = 
+    finalStats.partidosJugados > 0
+      ? (finalStats.goles / finalStats.partidosJugados).toFixed(2)
+      : '0.00';
 
   const currentCrest = profileBackground ? crestMap[profileBackground] : null;
 
@@ -531,10 +535,6 @@ export default function ProfilePage() {
               </Button>
             )}
           </CardContent>
-
-          <CardContent className="px-6 space-y-4">
-              {/* New empty container */}
-          </CardContent>
         </Card>
         
         <Card className="relative z-10 -mt-12">
@@ -573,11 +573,11 @@ export default function ProfilePage() {
             <CardHeader>
                 <CardTitle className="text-center">Historial de Partidos</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 px-4">
-                {mockMatchHistory.map((match, index) => (
+            <CardContent className="space-y-3 px-2">
+                 {mockMatchHistory.map((match, index) => (
                     <Fragment key={match.id}>
-                        <div className="flex justify-between items-center text-sm py-2">
-                           <span className="w-12 text-muted-foreground">{match.date}</span>
+                        <div className="flex justify-between items-center text-sm py-2 px-1">
+                           <span className="w-1/6 text-muted-foreground">{match.date}</span>
                            <span className="font-semibold truncate text-right flex-1">{match.myTeam}</span>
                            <span className="font-bold text-lg mx-3">{match.myScore} - {match.opponentScore}</span>
                            <span className="font-semibold truncate text-left flex-1">{match.opponent}</span>
@@ -599,26 +599,54 @@ export default function ProfilePage() {
               <CardHeader>
                 <CardTitle className="text-center">Estadísticas del Jugador</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                      <div className="p-2 bg-muted/50 rounded-md">
-                          <p className="text-sm text-muted-foreground">Partidos</p>
-                          <p className="text-2xl font-bold">{finalStats.partidosJugados}</p>
-                      </div>
-                      <div className="p-2 bg-muted/50 rounded-md">
-                          <p className="text-sm text-muted-foreground">Victorias</p>
-                          <p className="text-2xl font-bold">{finalStats.victorias}</p>
-                      </div>
-                      <div className="p-2 bg-muted/50 rounded-md">
-                          <p className="text-sm text-muted-foreground">Goles</p>
-                          <p className="text-2xl font-bold">{finalStats.goles}</p>
-                      </div>
-                      <div className="p-2 bg-muted/50 rounded-md">
-                          <p className="text-sm text-muted-foreground">MVPs</p>
-                          <p className="text-2xl font-bold">{finalStats.mvps}</p>
-                      </div>
+              <CardContent className="space-y-4 text-white">
+                <div className="text-center">
+                  <p className="text-sm uppercase text-muted-foreground">Winrate</p>
+                  <p className="text-5xl font-bold">{winrate}%</p>
+                </div>
+                <Separator />
+                <div className="grid grid-cols-4 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold">{finalStats.partidosJugados}</p>
+                    <p className="text-xs text-muted-foreground">JUGADOS</p>
                   </div>
-                  <div className="text-center text-sm text-muted-foreground">Winrate: {winrate}%</div>
+                  <div>
+                    <p className="text-2xl font-bold">{finalStats.victorias}</p>
+                    <p className="text-xs text-muted-foreground">GANADOS</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{finalStats.empates}</p>
+                    <p className="text-xs text-muted-foreground">EMPATADOS</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{finalStats.derrotas}</p>
+                    <p className="text-xs text-muted-foreground">PERDIDOS</p>
+                  </div>
+                </div>
+                <Separator />
+                <div className="grid grid-cols-4 gap-4 text-center">
+                  <div>
+                    <p className="text-2xl font-bold">{finalStats.goles}</p>
+                    <p className="text-xs text-muted-foreground">GOLES</p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold">{finalStats.mvps}</p>
+                    <p className="text-xs text-muted-foreground">MVPs</p>
+                  </div>
+                   <div>
+                    <p className="text-2xl font-bold">{finalStats.amarillas}</p>
+                    <p className="text-xs text-muted-foreground">AMARILLAS</p>
+                  </div>
+                   <div>
+                    <p className="text-2xl font-bold">{finalStats.rojas}</p>
+                    <p className="text-xs text-muted-foreground">ROJAS</p>
+                  </div>
+                </div>
+                <Separator />
+                 <div className="text-center">
+                  <p className="text-sm uppercase text-muted-foreground">Promedio de Gol</p>
+                  <p className="text-5xl font-bold">{goalAverage}</p>
+                </div>
               </CardContent>
                <CardFooter>
                   <Button variant="ghost" onClick={() => setView('buttons')} className="w-full">
