@@ -217,7 +217,7 @@ export function PageHeader() {
                 )}
             </div>
         </div>
-        <div className="md:hidden px-4 pb-2">
+        <div className="border-t border-border/50 px-4 pt-2 pb-3 md:hidden">
            <GlobalSearch />
         </div>
          <div className="px-4 pb-2">
