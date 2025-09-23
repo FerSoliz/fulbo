@@ -97,6 +97,9 @@ type PlanillaData = {
     qrCodeUrl: string;
     homeRoster: Player[];
     awayRoster: Player[];
+    date?: string;
+    time?: string;
+    referee?: string;
 };
 
 
@@ -385,6 +388,7 @@ export default function TournamentDetailsPage() {
 
   const handleDownloadPlanilla = async (match: { home: string; away: string }, roundIndex: number, matchIndex: number) => {
       const matchId = `${tournamentId}-R${roundIndex + 1}-M${matchIndex + 1}`;
+      const details = matchDetails[`r${roundIndex}m${matchIndex}`] || {};
       
       const getTeamId = (teamName: string) => {
           const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
@@ -407,6 +411,9 @@ export default function TournamentDetailsPage() {
               qrCodeUrl: qrCodeUrl,
               homeRoster,
               awayRoster,
+              date: details.date,
+              time: details.time,
+              referee: details.referee,
           });
       } catch (err) {
           console.error("Failed to generate QR code", err);
@@ -520,6 +527,9 @@ export default function TournamentDetailsPage() {
                   qrCodeUrl={planillaData.qrCodeUrl}
                   homeRoster={planillaData.homeRoster}
                   awayRoster={planillaData.awayRoster}
+                  date={planillaData.date}
+                  time={planillaData.time}
+                  referee={planillaData.referee}
               />
           )}
         </div>

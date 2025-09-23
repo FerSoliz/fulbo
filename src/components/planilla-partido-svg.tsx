@@ -15,16 +15,20 @@ interface PlanillaProps {
   qrCodeUrl?: string;
   homeRoster?: Player[];
   awayRoster?: Player[];
+  date?: string;
+  time?: string;
+  referee?: string;
 }
 
-export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ homeTeam = "Equipo Local", awayTeam = "Equipo Visitante", matchId, qrCodeUrl, homeRoster = [], awayRoster = [] }, ref) => {
+export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ homeTeam = "Equipo Local", awayTeam = "Equipo Visitante", matchId, qrCodeUrl, homeRoster = [], awayRoster = [], date, time, referee }, ref) => {
     
-    const PlayerRow = ({ index, player }: { index: number, player?: Player }) => {
+    const PlayerRow = ({ index, player, isHome }: { index: number, player?: Player, isHome: boolean }) => {
         const playerName = player ? `${player.name} ${player.lastName}` : '';
+        const xBase = isHome ? 0 : 440;
         return (
             <>
-                <text x="25" y={217 + index * 25} fontFamily="Arial" fontSize="12" textAnchor="middle">{index + 1}</text>
-                <text x="45" y={217 + index * 25} fontFamily="Arial" fontSize="12">{playerName}</text>
+                <text x={25 + xBase} y={217 + index * 25} fontFamily="Arial" fontSize="12" textAnchor="middle">{index + 1}</text>
+                <text x={45 + xBase} y={217 + index * 25} fontFamily="Arial" fontSize="12">{playerName}</text>
             </>
         );
     };
@@ -47,13 +51,13 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
                 {/* Match Info */}
                 <rect x="10" y="100" width="870" height="50" stroke="black" fill="#fafafa" />
                 <text x="30" y="130" fontFamily="Arial" fontSize="14">Fecha:</text>
-                <line x1="80" y1="132" x2="180" y2="132" stroke="black" />
-                <text x="210" y="130" fontFamily="Arial" fontSize="14">Cancha:</text>
-                <line x1="270" y1="132" x2="400" y2="132" stroke="black" />
-                <text x="430" y="130" fontFamily="Arial" fontSize="14">Árbitro:</text>
-                <line x1="490" y1="132" x2="620" y2="132" stroke="black" />
-                <text x="650" y="130" fontFamily="Arial" fontSize="14">Resultado Final:</text>
-                <line x1="760" y1="132" x2="870" y2="132" stroke="black" />
+                <text x="80" y="130" fontFamily="Arial" fontSize="14" fontWeight="bold">{date || '___/___/___'}</text>
+                <text x="210" y="130" fontFamily="Arial" fontSize="14">Hora:</text>
+                <text x="255" y="130" fontFamily="Arial" fontSize="14" fontWeight="bold">{time || '__:__'}</text>
+                <text x="350" y="130" fontFamily="Arial" fontSize="14">Cancha:</text>
+                <line x1="410" y1="132" x2="520" y2="132" stroke="black" />
+                <text x="540" y="130" fontFamily="Arial" fontSize="14">Árbitro:</text>
+                <text x="605" y="130" fontFamily="Arial" fontSize="14" fontWeight="bold">{referee || '_________________'}</text>
                 
                 {/* Team Headers */}
                 <rect x="10" y="160" width="430" height="40" stroke="black" fill="#e0e0e0" />
@@ -62,19 +66,16 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
                 <rect x="450" y="160" width="430" height="40" stroke="black" fill="#e0e0e0" />
                 <text x="665" y="185" fontFamily="Arial" fontSize="16" fontWeight="bold" textAnchor="middle">{awayTeam}</text>
 
-                {/* Home Team Table Header */}
-                <text x="25" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">N°</text>
-                <text x="195" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">Nombre del Jugador</text>
-                <text x="375" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">G</text>
-                <text x="405" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">A</text>
-                <text x="435" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">R</text>
-                
-                {/* Away Team Table Header */}
-                <text x="465" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">N°</text>
-                <text x="635" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">Nombre del Jugador</text>
-                <text x="815" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">G</text>
-                <text x="845" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">A</text>
-                <text x="875" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">R</text>
+                {/* Table Headers (repeated for both teams) */}
+                {[0, 440].map(xBase => (
+                     <g key={xBase}>
+                        <text x={25 + xBase} y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">N°</text>
+                        <text x={195 + xBase} y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">Nombre del Jugador</text>
+                        <text x={375 + xBase} y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">G</text>
+                        <text x={405 + xBase} y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">A</text>
+                        <text x={435 + xBase} y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">R</text>
+                     </g>
+                ))}
 
                 {/* Player Rows */}
                 {Array.from({ length: 11 }).map((_, i) => (
@@ -85,7 +86,7 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
                         <rect x="360" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
                         <rect x="390" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
                         <rect x="420" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
-                        <PlayerRow index={i} player={homeRoster[i]} />
+                        <PlayerRow index={i} player={homeRoster[i]} isHome={true}/>
 
 
                         {/* Away Team Row */}
@@ -94,7 +95,7 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
                         <rect x="800" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
                         <rect x="830" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
                         <rect x="860" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
-                         <PlayerRow index={i} player={awayRoster[i]} />
+                         <PlayerRow index={i} player={awayRoster[i]} isHome={false} />
                     </React.Fragment>
                 ))}
                 
