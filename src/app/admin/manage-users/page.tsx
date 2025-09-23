@@ -52,6 +52,7 @@ import {
   Search,
   PackageOpen,
   MousePointerClick,
+  Loader2
 } from 'lucide-react';
 import { useUser } from '@/context/user-context';
 import type { User } from '@/lib/data';
@@ -59,54 +60,73 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+
 
 export default function ManageUsersPage() {
-  const { user: currentUser, loading: userLoading, allUsers, setAllUsers } = useUser();
-  const [loading, setLoading] = useState(true);
+  const { user: currentUser, allUsers, setAllUsers, loading: contextLoading } = useUser();
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
-  useEffect(() => {
-    // allUsers from context is now the source of truth
-    setLoading(false);
-  }, [allUsers]);
+  const handleToggleBlock = async (userId: string) => {
+    const userToUpdate = allUsers.find((u) => u.id === userId);
+    if (!userToUpdate) return;
+    
+    const newBlockedState = !userToUpdate.isBlocked;
 
-  const saveUsers = (updatedUsers: User[]) => {
-    setAllUsers(updatedUsers);
-    // Filter out initial users before saving to localStorage
-    const usersToStore = updatedUsers.filter(u => u.id !== 'admin-user' && u.id !== 'editor-user');
-    localStorage.setItem('users', JSON.stringify(usersToStore));
+    try {
+        const userRef = doc(db, "users", userId);
+        await updateDoc(userRef, { isBlocked: newBlockedState });
+        
+        const updatedUsers = allUsers.map((u) =>
+          u.id === userId ? { ...u, isBlocked: newBlockedState } : u
+        );
+        setAllUsers(updatedUsers);
+        toast({
+          title: `Usuario ${newBlockedState ? 'bloqueado' : 'desbloqueado'}`,
+        });
+
+    } catch (error) {
+        console.error("Error toggling block state: ", error);
+        toast({ title: 'Error', description: 'No se pudo actualizar el estado del usuario.', variant: 'destructive' });
+    }
   };
 
-  const handleToggleBlock = (userId: string) => {
-    const updatedUsers = allUsers.map((u) =>
-      u.id === userId ? { ...u, isBlocked: !u.isBlocked } : u
-    );
-    saveUsers(updatedUsers);
-    toast({
-      title: `Usuario ${allUsers.find(u=>u.id===userId)?.isBlocked ? 'desbloqueado' : 'bloqueado'}`,
-    });
+  const handleChangeRole = async (userId: string, newRole: 'user' | 'editor' | 'admin') => {
+    try {
+        const userRef = doc(db, "users", userId);
+        await updateDoc(userRef, { role: newRole });
+
+        const updatedUsers = allUsers.map((u) =>
+          u.id === userId ? { ...u, role: newRole } : u
+        );
+        setAllUsers(updatedUsers);
+        toast({
+          title: 'Rol actualizado',
+          description: `El usuario ahora tiene el rol de ${newRole}.`,
+        });
+
+    } catch (error) {
+        console.error("Error changing role: ", error);
+        toast({ title: 'Error', description: 'No se pudo cambiar el rol del usuario.', variant: 'destructive' });
+    }
   };
 
-  const handleChangeRole = (userId: string, newRole: 'user' | 'editor' | 'admin') => {
-    const updatedUsers = allUsers.map((u) =>
-      u.id === userId ? { ...u, role: newRole } : u
-    );
-    saveUsers(updatedUsers);
-    toast({
-      title: 'Rol actualizado',
-      description: `El usuario ahora tiene el rol de ${newRole}.`,
-    });
-  };
-
-  const handleDeleteUser = (userId: string) => {
-    const updatedUsers = allUsers.filter((u) => u.id !== userId);
-    saveUsers(updatedUsers);
-     toast({
-      title: 'Usuario Eliminado',
-      description: 'El usuario ha sido eliminado permanentemente.',
-      variant: 'destructive',
-    });
+  const handleDeleteUser = async (userId: string) => {
+     try {
+        await deleteDoc(doc(db, "users", userId));
+        const updatedUsers = allUsers.filter((u) => u.id !== userId);
+        setAllUsers(updatedUsers);
+         toast({
+          title: 'Usuario Eliminado',
+          description: 'El usuario ha sido eliminado permanentemente.',
+          variant: 'destructive',
+        });
+     } catch (error) {
+         console.error("Error deleting user: ", error);
+         toast({ title: 'Error', description: 'No se pudo eliminar al usuario.', variant: 'destructive' });
+     }
   };
   
   const filteredUsers = allUsers.filter(user => 
@@ -114,8 +134,8 @@ export default function ManageUsersPage() {
     (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  if (loading || userLoading) {
-    return <div className="p-8 text-center">Cargando usuarios...</div>;
+  if (contextLoading) {
+    return <div className="p-8 text-center flex items-center justify-center"><Loader2 className="mr-2 h-6 w-6 animate-spin" /> Cargando usuarios...</div>;
   }
 
   return (
@@ -259,7 +279,7 @@ export default function ManageUsersPage() {
                                     ¿Estás seguro de eliminar a {user.name}?
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Esta acción no se puede deshacer. Se eliminarán permanentemente los datos del usuario.
+                                    Esta acción no se puede deshacer. Se eliminarán permanentemente los datos del usuario de Firestore.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

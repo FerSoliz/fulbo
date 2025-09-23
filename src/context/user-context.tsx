@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -6,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { initialNotifications, initialUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
-import { auth } from '@/lib/firebase';
+import { auth, db, collection, getDocs } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
@@ -62,13 +61,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { toast } = useToast();
   
-  useEffect(() => {
-    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    setAllUsers(prev => {
-        const combined = [...initialUsers, ...storedUsers];
-        return Array.from(new Map(combined.map(u => [u.id, u])).values());
-    });
+  const fetchAllUsers = useCallback(async () => {
+    try {
+        const querySnapshot = await getDocs(collection(db, "users"));
+        const usersFromDb = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        
+        // Combine with initial static users, ensuring no duplicates
+        const combined = [...initialUsers, ...usersFromDb];
+        const uniqueUsers = Array.from(new Map(combined.map(u => [u.id, u])).values());
+        
+        setAllUsers(uniqueUsers);
+    } catch (error) {
+        console.error("Error fetching all users:", error);
+        // Fallback to initial users on error
+        setAllUsers(initialUsers);
+    }
   }, []);
+
+
+  useEffect(() => {
+    fetchAllUsers();
+  }, [fetchAllUsers]);
 
   const updateUserInStorage = (updatedUser: User) => {
     const newAllUsers = allUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u));
@@ -77,7 +90,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const usersToStore = newAllUsers.filter(
       (u) => !initialUsers.some((iu) => iu.id === u.id)
     );
-    localStorage.setItem("users", JSON.stringify(usersToStore));
+    // This is now handled by Firestore, but we can keep it for local caching if needed
+    // localStorage.setItem("users", JSON.stringify(usersToStore));
   };
 
 
@@ -85,17 +99,32 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const combinedUsers = [...initialUsers, ...storedUsers];
-        let foundUser = combinedUsers.find(u => u.id === firebaseUser.uid || u.email === firebaseUser.email);
+        // Find user in the already-fetched list of all users
+        let foundUser = allUsers.find(u => u.id === firebaseUser.uid || u.email === firebaseUser.email);
         
-        // Ensure admin user always gets correct role and data from initialUsers
         if (firebaseUser.email === 'admin@sudone.com') {
             foundUser = initialUsers.find(u => u.role === 'admin');
         }
 
-        if (!foundUser) {
-            foundUser = {
+        if (foundUser) {
+            setUser(foundUser);
+            // Load user-specific data
+            const notifs = JSON.parse(localStorage.getItem(`notifications_${foundUser.id}`) || 'null');
+            setNotifications(notifs || initialNotifications);
+
+            const savedPacksData = localStorage.getItem(`userCardPacksData_${foundUser.id}`);
+            if (savedPacksData) {
+                const { packs, timestamp } = JSON.parse(savedPacksData);
+                setAvailablePacks(packs);
+                setNextPackTimestamp(timestamp);
+            } else {
+                setAvailablePacks(1);
+                setNextPackTimestamp(null);
+            }
+        } else {
+            // This case handles a newly signed-up user via Google that is not yet in our 'users' collection
+            // We can create a temporary profile or wait for the registration flow to complete
+             const tempUser: User = {
                 id: firebaseUser.uid,
                 name: firebaseUser.displayName || 'Nuevo Usuario',
                 username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now()}`,
@@ -113,24 +142,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 interactions: 0,
                 packsOpened: 0,
             };
-            const updatedUsers = [...storedUsers, foundUser];
-            localStorage.setItem('users', JSON.stringify(updatedUsers));
-            setAllUsers(prev => [...prev, foundUser!]);
-        }
-        
-        setUser(foundUser!);
-        const notifs = JSON.parse(localStorage.getItem(`notifications_${foundUser!.id}`) || 'null');
-        setNotifications(notifs || initialNotifications);
-
-        // Load packs data for the logged-in user
-        const savedPacksData = localStorage.getItem(`userCardPacksData_${foundUser!.id}`);
-        if (savedPacksData) {
-            const { packs, timestamp } = JSON.parse(savedPacksData);
-            setAvailablePacks(packs);
-            setNextPackTimestamp(timestamp);
-        } else {
-            setAvailablePacks(1); // Start with 1 free pack
-            setNextPackTimestamp(null);
+            setUser(tempUser);
+            // New users shouldn't have old notifications
+            setNotifications([]);
         }
 
       } else {
@@ -144,8 +158,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [allUsers]);
 
 
   useEffect(() => {
@@ -154,7 +167,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user, notifications]);
 
-  // Packs logic moved from collectibles page
   useEffect(() => {
     if (!user || user.id === 'visitor') return;
 
@@ -175,7 +187,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             if (newPacks < 2) {
               setNextPackTimestamp(now + SIX_HOURS_IN_MS);
             } else {
-              setNextPackTimestamp(null); // Stop timer if max packs reached
+              setNextPackTimestamp(null);
             }
             return newPacks;
           });
@@ -198,7 +210,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
         await signInWithEmailAndPassword(auth, email, pass);
-        // onAuthStateChanged will handle setting the user
         return true;
     } catch(error: any) {
         console.error(error);
@@ -235,11 +246,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
             interactions: 0,
             packsOpened: 0,
         };
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const updatedUsers = [...storedUsers, newUser];
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
+        // Save new user to Firestore
+        await setDoc(doc(db, "users", newUser.id), newUser);
+        
         setAllUsers(prev => [...prev, newUser]);
         setUser(newUser);
+
         toast({
           title: "¡Cuenta Creada!",
           description: "Tu cuenta ha sido creada exitosamente.",
