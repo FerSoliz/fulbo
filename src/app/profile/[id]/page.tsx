@@ -493,18 +493,18 @@ export default function ProfilePage() {
       
       <Card>
         <CardContent className="p-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-4 gap-4">
                  <button className="transition-transform hover:scale-105">
-                  <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={300} height={100} className="rounded-lg w-full h-auto" />
+                  <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
                 </button>
                 <button className="transition-transform hover:scale-105">
-                  <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={300} height={100} className="rounded-lg w-full h-auto" />
+                  <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} className="rounded-lg w-full h-auto" />
                 </button>
                 <button className="transition-transform hover:scale-105">
-                  <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={300} height={100} className="rounded-lg w-full h-auto" />
+                  <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} className="rounded-lg w-full h-auto" />
                 </button>
                 <button className="transition-transform hover:scale-105">
-                  <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={300} height={100} className="rounded-lg w-full h-auto" />
+                  <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
                 </button>
             </div>
         </CardContent>
