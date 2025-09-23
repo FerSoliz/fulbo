@@ -137,8 +137,20 @@ export default function TournamentDetailsPage() {
     ],
     final: [{ team1: '', team2: '' }],
   });
+
   const planillaRef = useRef<HTMLDivElement>(null);
   const [planillaData, setPlanillaData] = useState<PlanillaData | null>(null);
+
+  const getTeamId = (teamName: string) => {
+    const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
+    const index = teamNames.indexOf(teamName);
+    if (index !== -1) {
+        return `team_${tournamentId}_${teamName.replace(/\s+/g, '_') || index}`;
+    }
+    // Fallback for teams not in the list, though this shouldn't happen with valid fixtures.
+    return `team_${tournamentId}_${teamName.replace(/\s+/g, '_')}`;
+  }
+
 
   const loadStats = () => {
     const savedPositions = JSON.parse(localStorage.getItem(`positions_${tournamentId}`) || '[]');
@@ -249,11 +261,13 @@ export default function TournamentDetailsPage() {
     let allRosters: {[key: string]: Player[]} = {};
     const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
 
-    teamNames.forEach((teamName: string, index: number) => {
-        const teamId = `team_${tournamentId}_${teamName.replace(/\s+/g, '_') || index}`;
-        const rosterKey = `roster_${tournamentId}_${teamId}`;
-        const storedRoster = localStorage.getItem(rosterKey);
-        allRosters[teamName] = storedRoster ? JSON.parse(storedRoster) : [];
+    teamNames.forEach((teamName: string) => {
+        const teamId = getTeamId(teamName);
+        if (teamId) {
+            const rosterKey = `roster_${tournamentId}_${teamId}`;
+            const storedRoster = localStorage.getItem(rosterKey);
+            allRosters[teamName] = storedRoster ? JSON.parse(storedRoster) : [];
+        }
     });
 
     const stats: { [team: string]: any } = teams.reduce((acc, team) => {
@@ -265,9 +279,23 @@ export default function TournamentDetailsPage() {
 
     const playerStats: { [dni: string]: { player: string, team: string, goals: number, yellow: number, red: number, suspendedMatches: number, nationality: string } } = {};
     
-    // Load previously served suspension matches to avoid double counting
-    const servedSuspensions = JSON.parse(localStorage.getItem(`served_suspensions_${tournamentId}`) || '{}');
-
+    // Pre-populate playerStats with all players from all rosters to ensure nationality is captured.
+    for (const teamName in allRosters) {
+        const roster = allRosters[teamName];
+        if (roster) {
+            roster.forEach(player => {
+                if(player && player.dni && !playerStats[player.dni]) {
+                    playerStats[player.dni] = {
+                        player: `${player.name} ${player.lastName}`,
+                        team: teamName,
+                        goals: 0, yellow: 0, red: 0, suspendedMatches: 0,
+                        nationality: player.nationality || ''
+                    };
+                }
+            });
+        }
+    }
+    
     const penaltyTable: { [team: string]: any } = teams.reduce((acc, team) => {
         if (team !== 'BYE') {
           acc[team] = { rank: 0, team, played: 0, won: 0, lost: 0, points: 0 };
@@ -285,16 +313,6 @@ export default function TournamentDetailsPage() {
         const matchIdForStats = `${tournamentId}_${matchId}`;
         const isFinished = currentFinishedMatches.has(matchId);
         
-        const homeRoster = allRosters[match.home] || [];
-        const awayRoster = allRosters[match.away] || [];
-        const playerRoster: Player[] = [...homeRoster, ...awayRoster];
-
-        playerRoster.forEach(player => {
-            if (!playerStats[player.dni]) {
-                playerStats[player.dni] = { player: `${player.name} ${player.lastName}`, team: teams.find(t => allRosters[t]?.some((p:any) => p.dni === player.dni)) || 'N/A', goals: 0, yellow: 0, red: 0, suspendedMatches: 0, nationality: player.nationality };
-            }
-        });
-
         if (isFinished && match.home && match.away && match.home !== 'BYE' && match.away !== 'BYE') {
           const result = matchResults[matchId] || {};
           const homeScore = parseInt(result.home, 10) || 0;
@@ -421,12 +439,6 @@ export default function TournamentDetailsPage() {
   const handleDownloadPlanilla = async (match: { home: string; away: string }, roundIndex: number, matchIndex: number) => {
       const matchId = `${tournamentId}-R${roundIndex + 1}-M${matchIndex + 1}`;
       const details = matchDetails[`r${roundIndex}m${matchIndex}`] || {};
-      
-      const getTeamId = (teamName: string) => {
-          const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
-          const index = teamNames.indexOf(teamName);
-          return index !== -1 ? `team_${tournamentId}_${teamName.replace(/\s+/g, '_') || index}` : null;
-      }
       
       const homeTeamId = getTeamId(match.home);
       const awayTeamId = getTeamId(match.away);
