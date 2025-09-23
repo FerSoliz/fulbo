@@ -41,6 +41,7 @@ import {
   Clock,
   UserCircle,
   Foot,
+  Goal,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -388,6 +389,7 @@ export default function ProfilePage() {
   };
   const finalStats = (uniqueCode && stats) ? stats : exampleStats;
   const winrate = finalStats.partidosJugados > 0 ? Math.round((finalStats.victorias / finalStats.partidosJugados) * 100) : 0;
+  const goalAverage = finalStats.partidosJugados > 0 ? (finalStats.goles / finalStats.partidosJugados).toFixed(2) : '0.00';
 
 
   return (
@@ -624,16 +626,16 @@ export default function ProfilePage() {
                                         className="w-full h-auto"
                                         quality={100}
                                     />
-                                    <div className="absolute inset-0 py-5 px-6 flex items-center text-white">
-                                        <div className="flex-1 text-center pr-4">
+                                    <div className="absolute inset-0 py-5 px-4 flex items-center text-white">
+                                        <div className="flex-1 text-center">
                                             <h3 className="text-xs font-bold uppercase text-gray-400">Winrate</h3>
                                             <p className="text-5xl font-bold">{winrate}<span className="text-2xl">%</span></p>
                                             <p className="text-xs text-gray-400">Promedio de Victoria</p>
                                         </div>
                                         
-                                        <div className="h-full w-px bg-white/20"></div>
+                                        <div className="h-full w-px bg-white/20 mx-2"></div>
 
-                                        <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-2 px-4">
+                                        <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-1">
                                             <div className="bg-black/20 p-1 rounded-md text-center">
                                                 <p className="text-[10px] uppercase text-gray-400">Jugados</p>
                                                 <p className="text-xl font-bold">{finalStats.partidosJugados}</p>
@@ -652,9 +654,9 @@ export default function ProfilePage() {
                                             </div>
                                         </div>
 
-                                        <div className="h-full w-px bg-white/20"></div>
+                                        <div className="h-full w-px bg-white/20 mx-2"></div>
                                         
-                                        <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-2 pl-4">
+                                        <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-1">
                                             <div className="bg-black/20 p-1 rounded-md text-center">
                                                 <p className="text-[10px] uppercase text-gray-400">Goles</p>
                                                 <p className="text-xl font-bold">{finalStats.goles}</p>
@@ -671,6 +673,12 @@ export default function ProfilePage() {
                                                 <p className="text-[10px] uppercase text-gray-400">Rojas</p>
                                                 <p className="text-xl font-bold text-red-500">{finalStats.rojas}</p>
                                             </div>
+                                        </div>
+
+                                        <div className="flex-1 text-center">
+                                            <h3 className="text-xs font-bold uppercase text-gray-400">Prom. de Gol</h3>
+                                            <p className="text-5xl font-bold">{goalAverage}</p>
+                                            <p className="text-xs text-gray-400">Goles por Partido</p>
                                         </div>
                                     </div>
                                 </div>
