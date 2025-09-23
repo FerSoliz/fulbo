@@ -49,6 +49,7 @@ import {
   Lock,
   CheckCircle2,
   ArrowLeft,
+  MapPin,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -253,6 +254,16 @@ const mockMatchHistory = [
     { id: 5, myTeam: "SUDONE FC", opponent: "Real Mandril", myScore: 0, opponentScore: 1, tournament: "Liga Anual", date: "26/04" },
 ]
 
+const mockNextMatch = {
+    myTeam: "SUDONE FC",
+    opponent: "AC Milan",
+    time: "22:00 hs",
+    date: "31 de Mayo",
+    referee: "Néstor Pitana",
+    instance: "Fecha 5 - Liga Anual",
+    location: "Complejo San Cristóbal"
+}
+
 
 export default function ProfilePage() {
   const params = useParams();
@@ -272,7 +283,7 @@ export default function ProfilePage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [view, setView] = useState<'buttons' | 'history' | 'stats'>('buttons');
+  const [view, setView] = useState<'buttons' | 'history' | 'stats' | 'next_match'>('buttons');
 
   useEffect(() => {
     const targetUser = allUsers.find((u) => u.id === userId);
@@ -532,7 +543,7 @@ export default function ProfilePage() {
                   <button className="transition-transform hover:scale-105" onClick={() => setView('history')}>
                       <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
                   </button>
-                  <button className="transition-transform hover:scale-105">
+                  <button className="transition-transform hover:scale-105" onClick={() => setView('next_match')}>
                       <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} className="rounded-lg w-full h-auto" />
                   </button>
                   <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}>
@@ -566,10 +577,10 @@ export default function ProfilePage() {
                 {mockMatchHistory.map((match, index) => (
                     <Fragment key={match.id}>
                         <div className="flex justify-between items-center text-sm py-2">
-                            <span className="text-muted-foreground">{match.date}</span>
-                            <span className="font-semibold truncate text-right flex-1">{match.myTeam}</span>
-                            <span className="font-bold text-lg mx-3">{match.myScore} - {match.opponentScore}</span>
-                            <span className="font-semibold truncate text-left flex-1">{match.opponent}</span>
+                           <span className="w-12 text-muted-foreground">{match.date}</span>
+                           <span className="font-semibold truncate text-right flex-1">{match.myTeam}</span>
+                           <span className="font-bold text-lg mx-3">{match.myScore} - {match.opponentScore}</span>
+                           <span className="font-semibold truncate text-left flex-1">{match.opponent}</span>
                         </div>
                         {index < mockMatchHistory.length - 1 && <Separator />}
                     </Fragment>
@@ -614,6 +625,48 @@ export default function ProfilePage() {
                       Volver
                   </Button>
               </CardFooter>
+          </OverlayView>
+        )}
+        {view === 'next_match' && (
+          <OverlayView>
+            <CardHeader>
+                <CardTitle className="text-center text-2xl">Próximo Partido</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 px-4">
+               <div className="text-center my-4">
+                   <p className="text-xl font-bold">{mockNextMatch.myTeam}</p>
+                   <p className="text-muted-foreground text-sm my-1">vs</p>
+                   <p className="text-xl font-bold">{mockNextMatch.opponent}</p>
+               </div>
+               <Separator />
+               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 text-sm">
+                   <div className="flex items-center gap-3">
+                       <MapPin className="w-5 h-5 text-muted-foreground" />
+                       <div><span className="font-semibold">Sede:</span> {mockNextMatch.location}</div>
+                   </div>
+                    <div className="flex items-center gap-3">
+                       <Trophy className="w-5 h-5 text-muted-foreground" />
+                       <div><span className="font-semibold">Instancia:</span> {mockNextMatch.instance}</div>
+                   </div>
+                   <div className="flex items-center gap-3">
+                       <Calendar className="w-5 h-5 text-muted-foreground" />
+                       <div><span className="font-semibold">Fecha:</span> {mockNextMatch.date}</div>
+                   </div>
+                   <div className="flex items-center gap-3">
+                       <Clock className="w-5 h-5 text-muted-foreground" />
+                       <div><span className="font-semibold">Hora:</span> {mockNextMatch.time}</div>
+                   </div>
+                   <div className="flex items-center gap-3 sm:col-span-2">
+                       <UserCircle className="w-5 h-5 text-muted-foreground" />
+                       <div><span className="font-semibold">Árbitro:</span> {mockNextMatch.referee}</div>
+                   </div>
+               </div>
+            </CardContent>
+             <CardFooter>
+                <Button variant="ghost" onClick={() => setView('buttons')} className="w-full">
+                    Volver
+                </Button>
+            </CardFooter>
           </OverlayView>
         )}
       </AnimatePresence>
