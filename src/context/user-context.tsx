@@ -74,13 +74,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
         let foundUser = [...initialUsers, ...storedUsers].find(u => u.email === firebaseUser.email);
         
         if (!foundUser) {
+            const isAdmin = firebaseUser.email === 'admin@sudone.com';
             foundUser = {
                 id: firebaseUser.uid,
                 name: firebaseUser.displayName || 'Nuevo Usuario',
                 username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now()}`,
                 email: firebaseUser.email!,
                 avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
-                role: 'user',
+                role: isAdmin ? 'admin' : 'user',
                 isVerified: firebaseUser.emailVerified,
                 isBlocked: false,
                 location: 'Desconocida',
@@ -95,6 +96,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
             setAllUsers(prev => [...prev, foundUser]);
         }
         
+        // Ensure admin role is always correctly assigned for the owner
+        if (foundUser.email === 'admin@sudone.com' && foundUser.role !== 'admin') {
+            foundUser.role = 'admin';
+        }
+
         setUser(foundUser);
         const notifs = JSON.parse(localStorage.getItem(`notifications_${foundUser.id}`) || 'null');
         setNotifications(notifs || initialNotifications);
