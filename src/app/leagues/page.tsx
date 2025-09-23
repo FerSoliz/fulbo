@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Trophy, ShieldQuestion, Star, Crown, ShieldCheck, Shield } from 'lucide-react';
+import { Trophy, ShieldQuestion, Star, Crown, ShieldCheck, Shield, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Accordion,
@@ -56,6 +56,7 @@ interface Scorer {
     player: string;
     team: string;
     goals: number;
+    nationality: string;
 }
 
 interface Sanction {
@@ -269,6 +270,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                             <TableHead className="w-[50px]">#</TableHead>
                             <TableHead>Jugador</TableHead>
                             <TableHead>Equipo</TableHead>
+                            <TableHead>Nacionalidad</TableHead>
                             <TableHead className="text-right">Goles</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -278,6 +280,12 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                               <TableCell className="font-bold flex items-center gap-1">{index + 1 === 1 && <Crown className="w-4 h-4 text-amber-400"/>}{index + 1}</TableCell>
                               <TableCell>{scorer.player}</TableCell>
                               <TableCell>{scorer.team}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                    <Flag className="w-4 h-4 text-muted-foreground"/> 
+                                    {scorer.nationality?.substring(0,3).toUpperCase() || 'N/A'}
+                                </div>
+                              </TableCell>
                               <TableCell className="text-right font-bold">{scorer.goals}</TableCell>
                             </TableRow>
                           ))}

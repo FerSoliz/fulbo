@@ -28,7 +28,8 @@ import {
   ShieldCheck,
   Download,
   AlertTriangle,
-  Crown
+  Crown,
+  Flag,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -86,10 +87,10 @@ const generateFixture = (teams: string[]) => {
 
 type ManualMatch = { home: string; away: string };
 interface Position { rank: number; team: string; played: number; won: number; drawn: number; lost: number; points: number; gf: number; gc: number; dg: number; }
-interface Scorer { player: string; team: string; goals: number; }
+interface Scorer { player: string; team: string; goals: number; nationality: string; }
 interface Sanction { player: string; team: string; yellow: number; red: number; }
 interface PenaltyPosition { rank: number; team: string; played: number; won: number; lost: number; points: number; }
-interface Player { id: string; name: string; lastName: string; dni: string; }
+interface Player { id: string; name: string; lastName: string; dni: string; nationality: string; }
 type PlanillaData = {
     home: string;
     away: string;
@@ -245,24 +246,14 @@ export default function TournamentDetailsPage() {
   const calculateAllTournamentStats = (currentFinishedMatches: Set<string>) => {
     if (!teams || teams.length === 0) return;
 
-    let allRosters: {[key: string]: any[]} = {};
-    teams.forEach(teamId => {
-        const teamKey = `team_${tournamentId}_${teamId.replace(/\s+/g, '_')}`;
-        const rosterKey = `roster_${teamKey}`;
+    let allRosters: {[key: string]: Player[]} = {};
+    const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
+
+    teamNames.forEach((teamName: string, index: number) => {
+        const teamId = `team_${tournamentId}_${teamName.replace(/\s+/g, '_') || index}`;
+        const rosterKey = `roster_${tournamentId}_${teamId}`;
         const storedRoster = localStorage.getItem(rosterKey);
-        if (storedRoster) {
-          allRosters[teamId] = JSON.parse(storedRoster);
-        } else {
-           const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
-           const index = teamNames.indexOf(teamId);
-           const legacyTeamId = `team_${tournamentId}_${teamId.replace(/\s+/g, '_') || index}`;
-           const legacyRoster = localStorage.getItem(`roster_${tournamentId}_${legacyTeamId}`);
-           if (legacyRoster) {
-             allRosters[teamId] = JSON.parse(legacyRoster);
-           } else {
-             allRosters[teamId] = [];
-           }
-        }
+        allRosters[teamName] = storedRoster ? JSON.parse(storedRoster) : [];
     });
 
     const stats: { [team: string]: any } = teams.reduce((acc, team) => {
@@ -272,7 +263,7 @@ export default function TournamentDetailsPage() {
       return acc;
     }, {} as { [team: string]: any });
 
-    const playerStats: { [dni: string]: { player: string, team: string, goals: number, yellow: number, red: number, suspendedMatches: number } } = {};
+    const playerStats: { [dni: string]: { player: string, team: string, goals: number, yellow: number, red: number, suspendedMatches: number, nationality: string } } = {};
     
     // Load previously served suspension matches to avoid double counting
     const servedSuspensions = JSON.parse(localStorage.getItem(`served_suspensions_${tournamentId}`) || '{}');
@@ -296,11 +287,11 @@ export default function TournamentDetailsPage() {
         
         const homeRoster = allRosters[match.home] || [];
         const awayRoster = allRosters[match.away] || [];
-        const playerRoster = [...homeRoster, ...awayRoster];
+        const playerRoster: Player[] = [...homeRoster, ...awayRoster];
 
         playerRoster.forEach(player => {
             if (!playerStats[player.dni]) {
-                playerStats[player.dni] = { player: `${player.name} ${player.lastName}`, team: teams.find(t => allRosters[t]?.some((p:any) => p.dni === player.dni)) || 'N/A', goals: 0, yellow: 0, red: 0, suspendedMatches: 0 };
+                playerStats[player.dni] = { player: `${player.name} ${player.lastName}`, team: teams.find(t => allRosters[t]?.some((p:any) => p.dni === player.dni)) || 'N/A', goals: 0, yellow: 0, red: 0, suspendedMatches: 0, nationality: player.nationality };
             }
         });
 
@@ -828,6 +819,7 @@ export default function TournamentDetailsPage() {
                         <TableHead className="w-[50px]">#</TableHead>
                         <TableHead>Jugador</TableHead>
                         <TableHead>Equipo</TableHead>
+                        <TableHead>Nacionalidad</TableHead>
                         <TableHead className="text-right">Goles</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -837,6 +829,12 @@ export default function TournamentDetailsPage() {
                           <TableCell className="font-bold flex items-center gap-1">{index + 1 === 1 && <Crown className="w-4 h-4 text-amber-400"/>}{index + 1}</TableCell>
                           <TableCell>{scorer.player}</TableCell>
                           <TableCell>{scorer.team}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                                <Flag className="w-4 h-4 text-muted-foreground"/> 
+                                {scorer.nationality?.substring(0,3).toUpperCase() || 'N/A'}
+                            </div>
+                          </TableCell>
                           <TableCell className="text-right font-bold">{scorer.goals}</TableCell>
                         </TableRow>
                       ))}
