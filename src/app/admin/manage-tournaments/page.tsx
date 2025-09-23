@@ -19,6 +19,7 @@ import {
   Users,
   Pen,
   Check,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -34,6 +35,10 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { collection, getDocs, doc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface Tournament {
   id: string;
@@ -46,18 +51,35 @@ interface Tournament {
 
 export default function ManageTournamentsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [loading, setLoading] = useState(true);
   const [editingTournamentId, setEditingTournamentId] = useState<string | null>(
     null
   );
   const [editingName, setEditingName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const fetchTournaments = async () => {
+    setLoading(true);
+    try {
+        const querySnapshot = await getDocs(collection(db, 'tournaments'));
+        const tournamentsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Tournament));
+        setTournaments(tournamentsData);
+    } catch (error) {
+        console.error("Error fetching tournaments: ", error);
+        toast({
+            title: "Error al cargar torneos",
+            description: "No se pudieron obtener los torneos desde la base de datos.",
+            variant: "destructive"
+        });
+    } finally {
+        setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const savedTournaments = JSON.parse(
-      localStorage.getItem('tournaments') || '[]'
-    );
-    setTournaments(savedTournaments);
+    fetchTournaments();
   }, []);
 
   useEffect(() => {
@@ -66,12 +88,26 @@ export default function ManageTournamentsPage() {
     }
   }, [editingTournamentId]);
 
-  const handleDeleteTournament = (tournamentId: string) => {
-    const updatedTournaments = tournaments.filter((t) => t.id !== tournamentId);
-    setTournaments(updatedTournaments);
-    localStorage.setItem('tournaments', JSON.stringify(updatedTournaments));
-    // Also remove associated teams
-    localStorage.removeItem(`teams_${tournamentId}`);
+  const handleDeleteTournament = async (tournamentId: string) => {
+    try {
+        // Here you could also delete subcollections, but it's more complex.
+        // For simplicity, we just delete the tournament doc.
+        await deleteDoc(doc(db, 'tournaments', tournamentId));
+        
+        setTournaments(tournaments.filter((t) => t.id !== tournamentId));
+        
+        toast({
+            title: "Torneo eliminado",
+            description: "El torneo ha sido eliminado de la base de datos.",
+        });
+    } catch (error) {
+        console.error("Error deleting tournament: ", error);
+         toast({
+            title: "Error al eliminar",
+            description: "Hubo un problema al eliminar el torneo.",
+            variant: "destructive"
+        });
+    }
   };
 
   const handleEditClick = (tournament: Tournament) => {
@@ -79,13 +115,36 @@ export default function ManageTournamentsPage() {
     setEditingName(tournament.name);
   };
 
-  const handleSaveName = (tournamentId: string) => {
-    const updatedTournaments = tournaments.map((t) =>
-      t.id === tournamentId ? { ...t, name: editingName } : t
-    );
-    setTournaments(updatedTournaments);
-    localStorage.setItem('tournaments', JSON.stringify(updatedTournaments));
-    setEditingTournamentId(null);
+  const handleSaveName = async (tournamentId: string) => {
+    const originalName = tournaments.find(t => t.id === tournamentId)?.name;
+    if (originalName === editingName) {
+        setEditingTournamentId(null);
+        return;
+    }
+
+    try {
+        const tournamentRef = doc(db, 'tournaments', tournamentId);
+        await updateDoc(tournamentRef, { name: editingName });
+
+        setTournaments(tournaments.map((t) =>
+          t.id === tournamentId ? { ...t, name: editingName } : t
+        ));
+
+        toast({
+            title: "Nombre actualizado",
+            description: "El nombre del torneo se ha guardado correctamente.",
+        });
+
+    } catch (error) {
+        console.error("Error updating tournament name: ", error);
+        toast({
+            title: "Error al guardar",
+            description: "No se pudo actualizar el nombre del torneo.",
+            variant: "destructive"
+        });
+    } finally {
+        setEditingTournamentId(null);
+    }
   };
 
   const handleInputKeyDown = (
@@ -117,7 +176,12 @@ export default function ManageTournamentsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {tournaments.length > 0 ? (
+            {loading ? (
+                 <div className="flex justify-center items-center py-10">
+                    <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+                    <span>Cargando torneos...</span>
+                </div>
+            ) : tournaments.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {tournaments.map((tournament) => (
                   <Card key={tournament.id} className="flex flex-col">
