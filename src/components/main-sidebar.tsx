@@ -51,10 +51,22 @@ const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
+const DiscordIcon = (props: React.SVGProps<SVGSVGElement>) => (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 28 28"
+      fill="currentColor"
+      {...props}
+    >
+        <path d="M20.8,3.2c-1.7-0.6-3.5-1-5.3-1.2C15.3,2,15.2,2,15,2.1c-0.2,0-0.3-0.1-0.5-0.1c-1.8,0.2-3.6,0.6-5.3,1.2	C4.9,4.7,3.5,8.2,3,11.8c-0.1,0.5-0.1,1,0,1.5c0.5,4.7,2.2,8.4,5.4,11.2c1.4,1.2,3.1,2.2,4.9,2.8c0.2,0.1,0.4,0.1,0.6,0.1c0.2,0,0.4,0,0.6-0.1c1.8-0.6,3.5-1.5,4.9-2.8c3.2-2.8,4.9-6.5,5.4-11.2c0.1-0.5,0.1-1,0-1.5C24.5,8.2,23.1,4.7,20.8,3.2z M12.2,19.2c-1.4,0-2.6-1.1-2.6-2.6c0-1.4,1.2-2.6,2.6-2.6c1.4,0,2.6,1.2,2.6,2.6S13.6,19.2,12.2,19.2z M18.4,19.2c-1.4,0-2.6-1.1-2.6-2.6c0-1.4,1.2-2.6,2.6-2.6c1.4,0,2.6,1.2,2.6,2.6S19.8,19.2,18.4,19.2z"/>
+    </svg>
+);
+
 const socialItems = [
     { href: 'https://www.youtube.com/@ORGANIZACIONSUDONE', icon: Youtube, label: 'YOUTUBE' },
     { href: 'https://www.instagram.com/liga.sudone/', icon: Instagram, label: 'INSTAGRAM' },
     { href: 'https://wa.me/5491139027578', icon: WhatsAppIcon, label: 'WHATSAPP' },
+    { href: 'https://discord.gg/H8tuKK5c', icon: DiscordIcon, label: 'DISCORD' }
 ];
 
 const footerMenuItems = [
