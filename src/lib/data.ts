@@ -17,6 +17,8 @@ export interface User {
   isVerified: boolean;
   location: string;
   profileBackground?: string;
+  sudonepassLevel?: number;
+  sudonepassExp?: number;
   stats: {
     partidosJugados: number;
     victorias: number;
@@ -156,6 +158,8 @@ export const initialUsers: User[] = [
     division: 1,
     uniqueCode: 'SUD-ADMIN',
     profileBackground: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png',
+    sudonepassLevel: 15,
+    sudonepassExp: 45,
     stats: { partidosJugados: 100, victorias: 80, empates: 10, derrotas: 10, goles: 150, asistencias: 50, amarillas: 2, rojas: 0, mvps: 40 },
   },
   {
@@ -174,6 +178,8 @@ export const initialUsers: User[] = [
     division: 2,
     uniqueCode: 'MESSI10',
     profileBackground: 'https://i.postimg.cc/1RfWNTCC/lusail.png',
+    sudonepassLevel: 8,
+    sudonepassExp: 90,
     stats: { partidosJugados: 10, victorias: 8, empates: 1, derrotas: 1, goles: 15, asistencias: 5, amarillas: 0, rojas: 0, mvps: 7 },
   },
 ];
