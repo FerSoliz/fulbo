@@ -485,6 +485,10 @@ export default function ProfilePage() {
             </Button>
           )}
         </CardContent>
+
+        <CardContent className="px-6 space-y-4">
+            {/* New empty container */}
+        </CardContent>
       </Card>
       
       <Card>
@@ -543,3 +547,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
