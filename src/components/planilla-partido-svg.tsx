@@ -1,34 +1,33 @@
 'use client';
 import React, { forwardRef } from 'react';
 
+interface Player {
+  id: string;
+  name: string;
+  lastName: string;
+  dni: string;
+}
+
 interface PlanillaProps {
   homeTeam?: string;
   awayTeam?: string;
   matchId?: string;
   qrCodeUrl?: string;
+  homeRoster?: Player[];
+  awayRoster?: Player[];
 }
 
-export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ homeTeam = "Equipo Local", awayTeam = "Equipo Visitante", matchId, qrCodeUrl }, ref) => {
+export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ homeTeam = "Equipo Local", awayTeam = "Equipo Visitante", matchId, qrCodeUrl, homeRoster = [], awayRoster = [] }, ref) => {
     
-    const PlayerRow = ({ index }: { index: number }) => (
-        <>
-            {/* Home Team Row */}
-            <rect x="10" y={200 + index * 25} width="30" height="25" fill="#f0f0f0" stroke="#ccc" />
-            <text x="25" y={217 + index * 25} fontFamily="Arial" fontSize="12" textAnchor="middle">{index + 1}</text>
-            <rect x="40" y={200 + index * 25} width="255" height="25" stroke="#ccc" fill="white" />
-            <rect x="295" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
-            <rect x="325" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
-            <rect x="355" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
-
-            {/* Away team */}
-            <rect x="405" y={200 + index * 25} width="30" height="25" fill="#f0f0f0" stroke="#ccc" />
-            <text x="420" y={217 + index * 25} fontFamily="Arial" fontSize="12" textAnchor="middle">{index + 1}</text>
-            <rect x="435" y={200 + index * 25} width="355" height="25" stroke="#ccc" fill="white" />
-            <rect x="790" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
-            <rect x="820" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
-            <rect x="850" y={200 + index * 25} width="30" height="25" stroke="#ccc" fill="white" />
-        </>
-    );
+    const PlayerRow = ({ index, player }: { index: number, player?: Player }) => {
+        const playerName = player ? `${player.name} ${player.lastName}` : '';
+        return (
+            <>
+                <text x="25" y={217 + index * 25} fontFamily="Arial" fontSize="12" textAnchor="middle">{index + 1}</text>
+                <text x="45" y={217 + index * 25} fontFamily="Arial" fontSize="12">{playerName}</text>
+            </>
+        );
+    };
 
     return (
         <div ref={ref} style={{ width: '890px', height: '1131px', backgroundColor: 'white' }}>
@@ -65,14 +64,14 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
 
                 {/* Home Team Table Header */}
                 <text x="25" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">N°</text>
-                <text x="212.5" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">Nombre del Jugador</text>
+                <text x="195" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">Nombre del Jugador</text>
                 <text x="375" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">G</text>
                 <text x="405" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">A</text>
                 <text x="435" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">R</text>
                 
                 {/* Away Team Table Header */}
                 <text x="465" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">N°</text>
-                <text x="652.5" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">Nombre del Jugador</text>
+                <text x="635" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">Nombre del Jugador</text>
                 <text x="815" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">G</text>
                 <text x="845" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">A</text>
                 <text x="875" y="195" fontFamily="Arial" fontSize="10" textAnchor="middle">R</text>
@@ -82,19 +81,20 @@ export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ h
                     <React.Fragment key={`player-row-${i}`}>
                         {/* Home Team Row */}
                         <rect x="10" y={200 + i * 25} width="30" height="25" fill="#f0f0f0" stroke="#ccc" />
-                        <text x="25" y={217 + i * 25} fontFamily="Arial" fontSize="12" textAnchor="middle">{i + 1}</text>
                         <rect x="40" y={200 + i * 25} width="320" height="25" stroke="#ccc" fill="white" />
                         <rect x="360" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
                         <rect x="390" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
                         <rect x="420" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
+                        <PlayerRow index={i} player={homeRoster[i]} />
+
 
                         {/* Away Team Row */}
                         <rect x="450" y={200 + i * 25} width="30" height="25" fill="#f0f0f0" stroke="#ccc" />
-                        <text x="465" y={217 + i * 25} fontFamily="Arial" fontSize="12" textAnchor="middle">{i + 1}</text>
                         <rect x="480" y={200 + i * 25} width="320" height="25" stroke="#ccc" fill="white" />
                         <rect x="800" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
                         <rect x="830" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
                         <rect x="860" y={200 + i * 25} width="30" height="25" stroke="#ccc" fill="white" />
+                         <PlayerRow index={i} player={awayRoster[i]} />
                     </React.Fragment>
                 ))}
                 
