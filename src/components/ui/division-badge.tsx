@@ -40,8 +40,8 @@ export function DivisionBadge({ league, division }: DivisionBadgeProps) {
                 // @ts-ignore
                 src={leagueInfo.badgeImageUrl}
                 alt={`${leagueInfo.name} badge`}
-                layout="fill"
-                objectFit="contain"
+                fill
+                className="object-contain"
             />
             <span className="relative text-white font-bold text-lg" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.7)' }}>
                 {romanDivision}
