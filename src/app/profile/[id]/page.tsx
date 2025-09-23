@@ -539,23 +539,19 @@ export default function ProfilePage() {
                         <Button variant="ghost" size="sm" onClick={() => setView('buttons')} className="absolute -top-2 left-0 text-muted-foreground"><ArrowLeft className="mr-1 h-4 w-4"/> Volver</Button>
                         <h3 className="text-center font-bold text-lg pt-4">HISTORIAL DE PARTIDOS</h3>
                         <div className="space-y-2 px-2">
-                           {mockMatchHistory.map((match, index) => {
-                                const result = match.myScore > match.opponentScore ? 'V' : match.myScore < match.opponentScore ? 'D' : 'E';
-                                return (
-                                    <React.Fragment key={match.id}>
-                                        <div className="flex justify-between items-center text-sm py-1">
-                                            <span className="w-1/4 text-left">{match.date}</span>
-                                            <div className="w-2/4 flex justify-center items-center gap-2">
-                                                <span>{match.myTeam}</span>
-                                                <span>{match.myScore} - {match.opponentScore}</span>
-                                                <span>{match.opponent}</span>
-                                            </div>
-                                            <span className="w-1/4 text-right">{result}</span>
+                           {mockMatchHistory.map((match, index) => (
+                                <React.Fragment key={match.id}>
+                                    <div className="flex justify-between items-center text-sm py-1">
+                                        <span className="w-1/4 text-left">{match.date}</span>
+                                        <div className="w-full flex justify-center items-center gap-2">
+                                            <span className="truncate text-right flex-1">{match.myTeam}</span>
+                                            <span className="font-bold">{match.myScore} - {match.opponentScore}</span>
+                                            <span className="truncate text-left flex-1">{match.opponent}</span>
                                         </div>
-                                        {index < mockMatchHistory.length - 1 && <Separator />}
-                                    </React.Fragment>
-                                )
-                            })}
+                                    </div>
+                                    {index < mockMatchHistory.length - 1 && <Separator />}
+                                </React.Fragment>
+                            ))}
                         </div>
                      </motion.div>
                 )}
