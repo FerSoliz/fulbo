@@ -663,7 +663,7 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-              <div className="absolute right-0 top-0 z-10 flex items-start">
+              <div className="absolute right-0 top-0 z-10 flex items-start gap-0">
                  {currentBackgroundData && (
                     <Image
                         src={currentBackgroundData.crestUrl}
@@ -763,7 +763,9 @@ export default function ProfilePage() {
                               quality={100}
                           />
                           <div className="absolute inset-0 py-5 px-4 flex flex-col text-white">
-                               <h2 className="text-xl font-bold uppercase text-center mb-2">Estadisticas</h2>
+                               <div className="flex justify-center items-center mb-2">
+                                <h2 className="text-xl font-bold uppercase text-center">Estadisticas</h2>
+                               </div>
                                <div className="w-full h-px bg-white/20 mb-4"></div>
                                {dni ? (
                                 <div className="flex flex-1 items-center">
