@@ -377,7 +377,6 @@ export default function ProfilePage() {
           <div className="absolute top-4 right-4 z-10 flex gap-2">
             {profileUser.id === 'admin-user' && (
                 <div className="w-16 h-16">
-                    <Image src="https://i.postimg.cc/50jZytQp/escudito-de-boca.png" width={80} height={80} alt="Escudo Boca" className="object-contain" />
                 </div>
             )}
             {currentUser && !isOwnProfile && (
@@ -475,74 +474,52 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
       
-        <div className="relative w-full aspect-[16/9] max-w-4xl mx-auto">
-            <Image
-                src="https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png"
-                alt="Interfaz de perfil de jugador"
-                layout="fill"
-                className="object-contain"
-            />
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-                
-                <div className="absolute top-[35%] left-[8%] transform -translate-y-1/2 flex flex-col gap-3">
-                     <button onClick={() => setActiveTab('stats')} className="hover:scale-105 transition-transform">
-                        <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" width={180} height={50} alt="Boton Estadisticas" />
-                    </button>
-                    <button onClick={() => setActiveTab('history')} className="hover:scale-105 transition-transform">
-                        <Image src="https://i.postimg.cc/xTc9mJ0M/boton-historial.png" width={180} height={50} alt="Boton Historial" />
-                    </button>
-                     <button className="hover:scale-105 transition-transform">
-                        <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" width={180} height={50} alt="Boton Proximo Partido" />
-                    </button>
-                </div>
-                
-                <div className="absolute bottom-[8%] left-1/2 transform -translate-x-1/2 flex items-end gap-2">
-                    <button className="hover:scale-105 transition-transform">
-                        <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" width={120} height={120} alt="Pase" />
-                    </button>
-                    <button className="hover:scale-105 transition-transform">
-                        <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" width={120} height={120} alt="SUDONE PASS" />
-                    </button>
-                     <button className="hover:scale-105 transition-transform">
-                        <Image src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png" width={60} height={60} alt="Configuracion" />
-                    </button>
-                </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Estadísticas del Jugador</CardTitle>
+          <CardDescription>Resumen del rendimiento en torneos.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-y-6">
+          <div className="text-center">
+            <p className="text-2xl font-bold">{finalStats.partidosJugados}</p>
+            <p className="text-sm text-muted-foreground">Partidos</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold">{finalStats.victorias}</p>
+            <p className="text-sm text-muted-foreground">Victorias</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold text-green-400">{winrate}%</p>
+            <p className="text-sm text-muted-foreground">Winrate</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold">{finalStats.goles}</p>
+            <p className="text-sm text-muted-foreground">Goles</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold">{finalStats.asistencias}</p>
+            <p className="text-sm text-muted-foreground">Asistencias</p>
+          </div>
+          <div className="text-center">
+            <p className="text-2xl font-bold">{finalStats.mvps}</p>
+            <p className="text-sm text-muted-foreground">MVPs</p>
+          </div>
+           <div className="text-center">
+            <p className="text-2xl font-bold text-amber-400">{finalStats.amarillas}</p>
+            <p className="text-sm text-muted-foreground">Amarillas</p>
+          </div>
+           <div className="text-center">
+            <p className="text-2xl font-bold text-destructive">{finalStats.rojas}</p>
+            <p className="text-sm text-muted-foreground">Rojas</p>
+          </div>
+        </CardContent>
+        {!dni &&
+            <CardFooter>
+                <p className="text-xs text-muted-foreground text-center w-full">Vincula tu DNI en "Editar Perfil" para ver tus estadísticas.</p>
+            </CardFooter>
+        }
+      </Card>
 
-                <div className="absolute top-[28%] right-[8%] w-[55%] h-[55%]">
-                    {activeTab === 'stats' && (
-                         <div className="w-full h-full p-4 grid grid-cols-2 gap-4 text-center">
-                            <div className="bg-black/30 p-2 rounded-lg">
-                                <p className="text-xs font-bold text-gray-300">PARTIDOS</p>
-                                <p className="text-3xl font-black">{finalStats.partidosJugados}</p>
-                            </div>
-                            <div className="bg-black/30 p-2 rounded-lg">
-                                <p className="text-xs font-bold text-gray-300">VICTORIAS</p>
-                                <p className="text-3xl font-black">{finalStats.victorias}</p>
-                            </div>
-                            <div className="bg-black/30 p-2 rounded-lg">
-                                <p className="text-xs font-bold text-gray-300">GOLES</p>
-                                <p className="text-3xl font-black">{finalStats.goles}</p>
-                            </div>
-                             <div className="bg-black/30 p-2 rounded-lg">
-                                <p className="text-xs font-bold text-gray-300">MVPs</p>
-                                <p className="text-3xl font-black">{finalStats.mvps}</p>
-                            </div>
-                         </div>
-                    )}
-                     {activeTab === 'history' && (
-                         <div className="w-full h-full relative">
-                            <Image src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png" layout="fill" objectFit="contain" alt="Historial" />
-                             <div className="absolute inset-0 p-4 pt-8 text-black text-center text-xs overflow-y-auto">
-                                <p>Club de Amigos 2 - 1 La Naranja</p>
-                                <p>Club de Amigos 0 - 3 Los Cracks</p>
-                                <p>Club de Amigos 5 - 2 Real Cohólicos</p>
-                             </div>
-                         </div>
-                    )}
-                </div>
-            </div>
-        </div>
-      
       <input
         type="file"
         ref={fileInputRef}
