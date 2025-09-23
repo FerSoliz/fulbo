@@ -96,7 +96,7 @@ const MatchHistory = () => {
             />
             <div className="absolute inset-0 py-5 px-12 flex flex-col text-white">
                 <h2 className="text-xl font-bold uppercase text-center mb-2">Historial de Partidos</h2>
-                <div className="flex-1 flex flex-col justify-around">
+                <div className="flex-1 flex flex-col justify-around py-2">
                     {puertoFcHistory.slice(0, 4).map((match) => (
                         <div key={match.id} className="w-full border-b border-white/20 pb-1 last:border-b-0">
                              <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center text-center text-sm gap-4">
@@ -216,9 +216,9 @@ const EditProfileDialog = ({ user, onSave, children }: { user: User, onSave: (up
 }
 
 const backgroundOptions = [
-    { name: 'La Bombonera', url: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png', crestUrl: 'https://i.postimg.cc/d1wV1W1j/boca-escudo.png' },
+    { name: 'La Bombonera', url: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png', crestUrl: 'https://i.postimg.cc/50jZytQp/escudito-de-boca.png' },
     { name: 'Lusail', url: 'https://i.postimg.cc/1RfWNTCC/lusail.png', crestUrl: 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png' },
-    { name: 'El Monumental', url: 'https://i.postimg.cc/L4wxkTGH/monumental.png', crestUrl: 'https://i.postimg.cc/tTW2fcQP/river-escudo.png' },
+    { name: 'El Monumental', url: 'https://i.postimg.cc/L4wxkTGH/monumental.png', crestUrl: 'https://i.postimg.cc/3wts3GNd/escudito-river.png' },
 ]
 
 const CustomizeBackgroundDialog = ({ user, onSave, children }: { user: User, onSave: (updatedUser: User) => void, children: React.ReactNode }) => {
