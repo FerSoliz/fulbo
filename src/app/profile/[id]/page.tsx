@@ -48,6 +48,7 @@ import {
   Gift,
   Lock,
   CheckCircle2,
+  ArrowLeft,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -243,6 +244,15 @@ const BackgroundChangerDialog = ({
 };
 
 
+const mockMatchHistory = [
+    { id: 1, myTeam: "SUDONE FC", opponent: "Los Rivales", myScore: 3, opponentScore: 1, tournament: "Liga Anual" },
+    { id: 2, myTeam: "SUDONE FC", opponent: "Deportivo Fracaso", myScore: 2, opponentScore: 2, tournament: "Copa de Verano" },
+    { id: 3, myTeam: "SUDONE FC", opponent: "La Naranja Mecánica", myScore: 1, opponentScore: 4, tournament: "Liga Anual" },
+    { id: 4, myTeam: "SUDONE FC", opponent: "Atlas", myScore: 5, opponentScore: 0, tournament: "Amistoso" },
+    { id: 5, myTeam: "SUDONE FC", opponent: "Real Mandril", myScore: 0, opponentScore: 1, tournament: "Liga Anual" },
+]
+
+
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -261,7 +271,7 @@ export default function ProfilePage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeTab, setActiveTab] = useState('stats');
+  const [view, setView] = useState('buttons');
 
   useEffect(() => {
     const targetUser = allUsers.find((u) => u.id === userId);
@@ -492,23 +502,99 @@ export default function ProfilePage() {
       </Card>
       
       <Card>
-        <CardContent className="p-4">
-            <div className="grid grid-cols-4 gap-4">
-                 <button className="transition-transform hover:scale-105">
-                  <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
-                </button>
-                <button className="transition-transform hover:scale-105">
-                  <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} className="rounded-lg w-full h-auto" />
-                </button>
-                <button className="transition-transform hover:scale-105">
-                  <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} className="rounded-lg w-full h-auto" />
-                </button>
-                <button className="transition-transform hover:scale-105">
-                  <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
-                </button>
-            </div>
+        <CardContent className="p-4 relative">
+             <AnimatePresence mode="wait">
+                {view === 'buttons' && (
+                    <motion.div 
+                        key="buttons"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="grid grid-cols-4 gap-4"
+                    >
+                        <button className="transition-transform hover:scale-105" onClick={() => setView('history')}>
+                            <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
+                        </button>
+                        <button className="transition-transform hover:scale-105">
+                            <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} className="rounded-lg w-full h-auto" />
+                        </button>
+                        <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}>
+                            <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} className="rounded-lg w-full h-auto" />
+                        </button>
+                        <button className="transition-transform hover:scale-105">
+                            <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
+                        </button>
+                    </motion.div>
+                )}
+
+                {view === 'history' && (
+                     <motion.div 
+                        key="history"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="space-y-2"
+                     >
+                        <Button variant="ghost" size="sm" onClick={() => setView('buttons')} className="absolute -top-2 left-0 text-muted-foreground"><ArrowLeft className="mr-1 h-4 w-4"/> Volver</Button>
+                        <h3 className="text-center font-bold text-lg pt-4">HISTORIAL DE PARTIDOS</h3>
+                        {mockMatchHistory.map(match => {
+                            const result = match.myScore > match.opponentScore ? 'VICTORIA' : match.myScore < match.opponentScore ? 'DERROTA' : 'EMPATE';
+                            const resultColor = result === 'VICTORIA' ? 'text-green-400' : result === 'DERROTA' ? 'text-red-400' : 'text-yellow-400';
+                            return (
+                                <div key={match.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                                    <div className="text-right">
+                                        <p className="font-semibold">{match.myTeam}</p>
+                                        <p className="text-xs text-muted-foreground">{match.tournament}</p>
+                                    </div>
+                                    <div className={cn("px-4 py-1 rounded-md text-center", resultColor)}>
+                                        <p className="font-bold text-xl">{match.myScore} - {match.opponentScore}</p>
+                                        <p className="text-xs font-semibold">{result}</p>
+                                    </div>
+                                    <div className="text-left">
+                                        <p className="font-semibold">{match.opponent}</p>
+                                        <p className="text-xs text-muted-foreground">{match.tournament}</p>
+                                    </div>
+                                </div>
+                            )
+                        })}
+                     </motion.div>
+                )}
+
+                {view === 'stats' && (
+                     <motion.div 
+                        key="stats"
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        className="space-y-4"
+                     >
+                        <Button variant="ghost" size="sm" onClick={() => setView('buttons')} className="absolute -top-2 left-0 text-muted-foreground"><ArrowLeft className="mr-1 h-4 w-4"/> Volver</Button>
+                        <h3 className="text-center font-bold text-lg pt-4">ESTADÍSTICAS DEL JUGADOR</h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                            <div className="p-2 bg-muted/50 rounded-md">
+                                <p className="text-sm text-muted-foreground">Partidos</p>
+                                <p className="text-2xl font-bold">{finalStats.partidosJugados}</p>
+                            </div>
+                             <div className="p-2 bg-muted/50 rounded-md">
+                                <p className="text-sm text-muted-foreground">Victorias</p>
+                                <p className="text-2xl font-bold">{finalStats.victorias}</p>
+                            </div>
+                             <div className="p-2 bg-muted/50 rounded-md">
+                                <p className="text-sm text-muted-foreground">Goles</p>
+                                <p className="text-2xl font-bold">{finalStats.goles}</p>
+                            </div>
+                             <div className="p-2 bg-muted/50 rounded-md">
+                                <p className="text-sm text-muted-foreground">MVPs</p>
+                                <p className="text-2xl font-bold">{finalStats.mvps}</p>
+                            </div>
+                        </div>
+                         <div className="text-center text-sm text-muted-foreground">Winrate: {winrate}%</div>
+                     </motion.div>
+                )}
+            </AnimatePresence>
         </CardContent>
       </Card>
+
 
       <input
         type="file"
