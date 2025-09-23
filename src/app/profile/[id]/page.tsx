@@ -492,48 +492,6 @@ export default function ProfilePage() {
       </Card>
       
       <Card>
-        <CardHeader>
-          <CardTitle>Estadísticas del Jugador</CardTitle>
-          <CardDescription>Resumen del rendimiento en torneos.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-y-6">
-          <div className="text-center">
-            <p className="text-2xl font-bold">{finalStats.partidosJugados}</p>
-            <p className="text-sm text-muted-foreground">Partidos</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{finalStats.victorias}</p>
-            <p className="text-sm text-muted-foreground">Victorias</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold text-green-400">{winrate}%</p>
-            <p className="text-sm text-muted-foreground">Winrate</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{finalStats.goles}</p>
-            <p className="text-sm text-muted-foreground">Goles</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{finalStats.asistencias}</p>
-            <p className="text-sm text-muted-foreground">Asistencias</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-bold">{finalStats.mvps}</p>
-            <p className="text-sm text-muted-foreground">MVPs</p>
-          </div>
-           <div className="text-center">
-            <p className="text-2xl font-bold text-amber-400">{finalStats.amarillas}</p>
-            <p className="text-sm text-muted-foreground">Amarillas</p>
-          </div>
-           <div className="text-center">
-            <p className="text-2xl font-bold text-destructive">{finalStats.rojas}</p>
-            <p className="text-sm text-muted-foreground">Rojas</p>
-          </div>
-        </CardContent>
-        {!dni &&
-            <CardFooter>
-            </CardFooter>
-        }
       </Card>
 
       <input
@@ -547,4 +505,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
