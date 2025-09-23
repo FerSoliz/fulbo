@@ -663,7 +663,7 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-              <div className="absolute right-0 top-0 z-10 flex items-center">
+              <div className="absolute right-0 top-0 z-10 flex items-start">
                  {currentBackgroundData && (
                     <Image
                         src={currentBackgroundData.crestUrl}
