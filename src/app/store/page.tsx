@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -6,70 +5,90 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { ProductCard } from '@/components/product-card';
 import { AddProductDialog } from '@/components/add-product-dialog';
-import { Product, User, initialProducts } from '@/lib/data';
+import { Product, User } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-context';
+import { collection, getDocs, doc, deleteDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { Loader2 } from 'lucide-react';
 
 
 export default function StorePage() {
   const { user: currentUser } = useUser();
   const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const deletedProducts = JSON.parse(localStorage.getItem('deleted_products') || '[]');
-    const availableInitialProducts = initialProducts.filter(p => !deletedProducts.includes(p.id));
-    
-    const customProducts = JSON.parse(localStorage.getItem('products_v2') || '[]');
-    setProducts([...availableInitialProducts, ...customProducts]);
+  const fetchProducts = async () => {
+    setLoading(true);
+    try {
+        const querySnapshot = await getDocs(collection(db, 'products'));
+        const productsData = querySnapshot.docs.map(doc => doc.data() as Product);
+        setProducts(productsData);
+    } catch (error) {
+        console.error("Error fetching products: ", error);
+        toast({
+            title: "Error al cargar productos",
+            description: "No se pudieron obtener los productos desde la base de datos.",
+            variant: "destructive"
+        });
+    } finally {
+        setLoading(false);
+    }
+  }
 
+  useEffect(() => {
+    fetchProducts();
   }, []);
 
-  const handleSaveProduct = (productData: Product) => {
-    let updatedProducts: Product[];
-    if (productToEdit) { // Editing existing product
-        updatedProducts = products.map(p => p.id === productData.id ? productData : p);
-    } else { // Adding new product
-        updatedProducts = [...products, productData];
+  const handleSaveProduct = async (productData: Product) => {
+    try {
+        const productRef = doc(db, 'products', productData.id);
+        await setDoc(productRef, productData, { merge: true });
+
+        if (productToEdit) {
+            setProducts(products.map(p => p.id === productData.id ? productData : p));
+        } else {
+            setProducts([...products, productData]);
+        }
+        
+        setProductToEdit(null);
+        toast({
+            title: '¡Éxito!',
+            description: `El producto "${productData.name}" se ha guardado correctamente.`,
+        });
+    } catch (error) {
+        console.error("Error saving product: ", error);
+        toast({
+          title: "Error al guardar",
+          description: "Hubo un problema al guardar el producto.",
+          variant: "destructive"
+        });
     }
-    
-    setProducts(updatedProducts);
-
-    // Persist only non-initial products to localStorage
-    const customProducts = updatedProducts.filter(p => !p.isInitial);
-    localStorage.setItem('products_v2', JSON.stringify(customProducts));
-
-    setProductToEdit(null);
-    toast({
-        title: '¡Éxito!',
-        description: `El producto "${productData.name}" se ha guardado correctamente.`,
-    });
   };
 
-  const handleDeleteProduct = (productId: string) => {
+  const handleDeleteProduct = async (productId: string) => {
     const productToDelete = products.find(p => p.id === productId);
     if (!productToDelete) return;
 
-    // If it's an initial product, add its ID to a "deleted" list
-    // Otherwise, filter it out from custom products
-    if(productToDelete.isInitial) {
-        const deletedProducts = JSON.parse(localStorage.getItem('deleted_products') || '[]');
-        localStorage.setItem('deleted_products', JSON.stringify([...deletedProducts, productId]));
-    } else {
-        const customProducts = JSON.parse(localStorage.getItem('products_v2') || '[]')
-        const updatedCustomProducts = customProducts.filter((p: Product) => p.id !== productId);
-        localStorage.setItem('products_v2', JSON.stringify(updatedCustomProducts));
+    try {
+        await deleteDoc(doc(db, 'products', productId));
+        setProducts(products.filter(p => p.id !== productId));
+        toast({
+            title: 'Producto Eliminado',
+            description: `El producto "${productToDelete.name}" ha sido eliminado.`,
+            variant: 'destructive',
+        });
+    } catch (error) {
+        console.error("Error deleting product: ", error);
+        toast({
+          title: "Error al eliminar",
+          description: "Hubo un problema al eliminar el producto.",
+          variant: "destructive"
+        });
     }
-    
-    setProducts(products.filter(p => p.id !== productId));
-    
-    toast({
-        title: 'Producto Eliminado',
-        description: `El producto "${productToDelete.name}" ha sido eliminado.`,
-        variant: 'destructive',
-    });
   };
 
   const handleEditProduct = (product: Product) => {
@@ -96,17 +115,24 @@ export default function StorePage() {
             </Button>
           )}
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <ProductCard 
-                key={product.id} 
-                product={product}
-                isAdmin={isAdmin}
-                onDelete={handleDeleteProduct}
-                onEdit={handleEditProduct}
-            />
-          ))}
-        </div>
+        {loading ? (
+            <div className="flex justify-center items-center py-20">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <span className="ml-4">Cargando productos...</span>
+            </div>
+        ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {products.map((product) => (
+                <ProductCard 
+                    key={product.id} 
+                    product={product}
+                    isAdmin={isAdmin}
+                    onDelete={handleDeleteProduct}
+                    onEdit={handleEditProduct}
+                />
+            ))}
+            </div>
+        )}
       </div>
       <AddProductDialog
         isOpen={isAddDialogOpen}
