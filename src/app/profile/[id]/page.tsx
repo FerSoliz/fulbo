@@ -177,6 +177,19 @@ const EditProfileDialog = ({
   );
 };
 
+const backgrounds = [
+    'https://i.postimg.cc/1RfWNTCC/lusail.png', // Lusail -> AFA
+    'https://i.postimg.cc/L4wxkTGH/monumental.png', // Monumental -> River
+    'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png' // Interfaz -> Boca
+];
+
+const crestMap: { [key: string]: string } = {
+    'https://i.postimg.cc/1RfWNTCC/lusail.png': 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png',
+    'https://i.postimg.cc/L4wxkTGH/monumental.png': 'https://i.postimg.cc/3wts3GNd/escudito-river.png',
+    'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png': 'https://i.postimg.cc/50jZytQp/escudito-de-boca.png'
+};
+
+
 const BackgroundChangerDialog = ({
   user,
   onSave,
@@ -186,11 +199,6 @@ const BackgroundChangerDialog = ({
   onSave: (updatedUser: User) => void;
   children: React.ReactNode;
 }) => {
-  const backgrounds = [
-    'https://i.postimg.cc/1RfWNTCC/lusail.png',
-    'https://i.postimg.cc/L4wxkTGH/monumental.png',
-    'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png'
-  ];
 
   const handleSelect = (url: string) => {
     onSave({ ...user, profileBackground: url });
@@ -361,6 +369,8 @@ export default function ProfilePage() {
       ? Math.round((finalStats.victorias / finalStats.partidosJugados) * 100)
       : 0;
 
+  const currentCrest = profileBackground ? crestMap[profileBackground] : null;
+
   return (
      <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
       <Card>
@@ -376,10 +386,10 @@ export default function ProfilePage() {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent rounded-t-lg" />
           
-          <div className="absolute top-4 right-4 z-10 flex gap-2">
-            {profileUser.id === 'admin-user' && (
-                <div className="w-16 h-16">
-                   <Image src="https://i.postimg.cc/50jZytQp/escudito-de-boca.png" alt="Escudo BOCA" width={64} height={64} />
+          <div className="absolute top-4 right-4 z-10 flex gap-2 items-center">
+             {currentCrest && (
+                <div className="w-10 h-10">
+                   <Image src={currentCrest} alt="Escudo de equipo" width={40} height={40} />
                 </div>
             )}
             {currentUser && !isOwnProfile && (
