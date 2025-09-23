@@ -173,28 +173,27 @@ const GamePass = () => {
                 quality={100}
             />
             <div className="absolute inset-0 py-5 px-8 flex flex-col text-white">
-                <h2 className="text-xl font-bold uppercase text-center mb-4">Pase de Juego</h2>
+                <h2 className="text-xl font-bold uppercase text-center mb-4">SUDONEPASS</h2>
                 <ScrollArea className="w-full whitespace-nowrap">
-                    <div className="flex space-x-4 pb-4">
+                    <div className="flex space-x-2 pb-4">
                         {Array.from({ length: totalLevels }).map((_, index) => {
                             const level = index + 1;
                             const isClaimed = level < currentLevel;
                             const isCurrent = level === currentLevel;
                             const isLocked = level > currentLevel;
                             return (
-                                <div key={level} className={cn("flex flex-col items-center justify-between w-20 h-24 rounded-lg p-1 border-2",
+                                <div key={level} className={cn("relative flex flex-col items-center justify-between w-20 h-28 rounded-lg p-1 border-2 transition-all",
                                     isClaimed && "border-green-500 bg-green-500/20",
-                                    isCurrent && "border-amber-400 bg-amber-400/30",
+                                    isCurrent && "border-amber-400 bg-amber-400/30 ring-2 ring-amber-400",
                                     isLocked && "border-gray-600 bg-black/30"
                                 )}>
-                                    <div className="text-center">
-                                        <p className="font-bold text-base">{level}</p>
-                                        <div className="relative w-8 h-8 mx-auto my-1">
-                                            <Gift className={cn("w-full h-full", isLocked ? "text-gray-500" : "text-yellow-400")} />
-                                            {isLocked && <Lock className="absolute bottom-0 right-0 w-3 h-3 text-gray-400 bg-black/50 rounded-full p-0.5" />}
-                                        </div>
+                                    <Image src="https://i.postimg.cc/P5yX8PNk/giftcard.png" alt={`Recompensa nivel ${level}`} width={80} height={112} className="absolute inset-0 w-full h-full object-cover rounded-md" />
+                                    <div className="relative z-10 w-full h-full flex flex-col justify-between items-center">
+                                      <p className="font-bold text-base text-shadow-lg [text-shadow:_1px_1px_2px_rgb(0_0_0_/_80%)]">{level}</p>
+                                      
+                                       {isClaimed && <CheckCircle2 className="w-5 h-5 text-green-400 [filter:drop-shadow(0_0_2px_#000)]" />}
+                                       {isLocked && <Lock className="w-5 h-5 text-gray-400 [filter:drop-shadow(0_0_2px_#000)]" />}
                                     </div>
-                                    {isClaimed && <CheckCircle2 className="w-4 h-4 text-green-400" />}
                                 </div>
                             );
                         })}
@@ -909,3 +908,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
