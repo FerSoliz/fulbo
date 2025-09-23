@@ -8,21 +8,25 @@ import { CollectibleCard } from '@/components/collectible-card';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useUser } from '@/context/user-context';
 
 export default function CollectionPage() {
   const [userCollection, setUserCollection] = useState<CardType[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
+  const { user } = useUser();
 
   useEffect(() => {
     setIsClient(true);
-    const savedCollection = localStorage.getItem('userCardCollection');
-    if (savedCollection) {
-      setUserCollection(JSON.parse(savedCollection));
+    if (user && user.id !== 'visitor') {
+      const savedCollection = localStorage.getItem(`userCardCollection_${user.id}`);
+      if (savedCollection) {
+        setUserCollection(JSON.parse(savedCollection));
+      }
     }
-  }, []);
+  }, [user]);
 
-  const collectionPercentage = (userCollection.length / allCards.length) * 100;
+  const collectionPercentage = allCards.length > 0 ? (userCollection.length / allCards.length) * 100 : 0;
 
   const collectionCards = allCards
     .map(card => ({

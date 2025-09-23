@@ -46,32 +46,35 @@ export default function CollectibleCardsPage() {
 
   useEffect(() => {
     setIsClient(true);
-    // Cargar colección y equipo del localStorage
-    const savedCollection = localStorage.getItem('userCardCollection');
-    const savedTeam = localStorage.getItem('userCardTeam');
+    if (user && user.id !== 'visitor') {
+      const savedCollection = localStorage.getItem(`userCardCollection_${user.id}`);
+      const savedTeam = localStorage.getItem(`userCardTeam_${user.id}`);
 
-    if (savedCollection) {
-      setUserCollection(JSON.parse(savedCollection));
+      if (savedCollection) {
+        setUserCollection(JSON.parse(savedCollection));
+      } else {
+        setUserCollection([]); // Start with 0 cards
+      }
+
+      if (savedTeam) {
+        setUserTeam(JSON.parse(savedTeam));
+      }
     } else {
-       // Dar 5 cartas iniciales aleatorias
-       const initialCards = allCards.sort(() => 0.5 - Math.random()).slice(0, 5);
-       setUserCollection(initialCards);
-       localStorage.setItem('userCardCollection', JSON.stringify(initialCards));
+        setUserCollection([]);
+        setUserTeam(initialTeam);
     }
-
-    if (savedTeam) {
-      setUserTeam(JSON.parse(savedTeam));
-    }
-  }, []);
+  }, [user]);
 
   const saveCollection = (collection: CardType[]) => {
+    if (!user || user.id === 'visitor') return;
     setUserCollection(collection);
-    localStorage.setItem('userCardCollection', JSON.stringify(collection));
+    localStorage.setItem(`userCardCollection_${user.id}`, JSON.stringify(collection));
   };
 
   const saveTeam = (team: typeof initialTeam) => {
+    if (!user || user.id === 'visitor') return;
     setUserTeam(team);
-    localStorage.setItem('userCardTeam', JSON.stringify(team));
+    localStorage.setItem(`userCardTeam_${user.id}`, JSON.stringify(team));
   }
 
   const handleOpenPack = () => {
@@ -214,7 +217,7 @@ const MainMenu = ({ onOpenPack, setView, user }: { onOpenPack: () => void, setVi
       <div className="grid grid-cols-1 md:grid-cols-3">
         <div className="relative md:col-span-1 h-64 md:h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-r-none">
           <Image
-               src="https://i.postimg.cc/QMqLDWsL/BANNER_GAME.png"
+               src="https://i.postimg.cc/QMqLDWsL/BANNER-GAME.png"
                alt="Banner del juego de cartas coleccionables"
                fill
                className="object-cover"
