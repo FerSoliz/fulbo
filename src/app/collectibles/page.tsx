@@ -45,7 +45,7 @@ export default function CollectibleCardsPage() {
   const [userTeam, setUserTeam] = useState(initialTeam);
   const [lastOpenedPack, setLastOpenedPack] = useState<CardType[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const { user, availablePacks, setAvailablePacks, nextPackTimestamp, setNextPackTimestamp, countdown } = useUser();
+  const { user, availablePacks, setAvailablePacks, nextPackTimestamp, setNextPackTimestamp, countdown, trackPackOpening } = useUser();
 
 
   useEffect(() => {
@@ -117,6 +117,7 @@ export default function CollectibleCardsPage() {
     });
     
     saveCollection(updatedCollection);
+    trackPackOpening(); // Track the opened pack
 
     const newPackCount = availablePacks - 1;
     setAvailablePacks(newPackCount);

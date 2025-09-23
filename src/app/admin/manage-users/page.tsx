@@ -50,6 +50,8 @@ import {
   Shield,
   Pencil,
   Search,
+  PackageOpen,
+  MousePointerClick,
 } from 'lucide-react';
 import { useUser } from '@/context/user-context';
 import type { User } from '@/lib/data';
@@ -59,35 +61,33 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 
 export default function ManageUsersPage() {
-  const { user: currentUser, loading: userLoading } = useUser();
-  const [users, setUsers] = useState<User[]>([]);
+  const { user: currentUser, loading: userLoading, allUsers, setAllUsers } = useUser();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    setUsers(storedUsers);
+    // allUsers from context is now the source of truth
     setLoading(false);
-  }, []);
+  }, [allUsers]);
 
   const saveUsers = (updatedUsers: User[]) => {
-    setUsers(updatedUsers);
+    setAllUsers(updatedUsers);
     localStorage.setItem('users', JSON.stringify(updatedUsers));
   };
 
   const handleToggleBlock = (userId: string) => {
-    const updatedUsers = users.map((u) =>
+    const updatedUsers = allUsers.map((u) =>
       u.id === userId ? { ...u, isBlocked: !u.isBlocked } : u
     );
     saveUsers(updatedUsers);
     toast({
-      title: `Usuario ${users.find(u=>u.id===userId)?.isBlocked ? 'desbloqueado' : 'bloqueado'}`,
+      title: `Usuario ${allUsers.find(u=>u.id===userId)?.isBlocked ? 'desbloqueado' : 'bloqueado'}`,
     });
   };
 
   const handleChangeRole = (userId: string, newRole: 'user' | 'editor' | 'admin') => {
-    const updatedUsers = users.map((u) =>
+    const updatedUsers = allUsers.map((u) =>
       u.id === userId ? { ...u, role: newRole } : u
     );
     saveUsers(updatedUsers);
@@ -98,7 +98,7 @@ export default function ManageUsersPage() {
   };
 
   const handleDeleteUser = (userId: string) => {
-    const updatedUsers = users.filter((u) => u.id !== userId);
+    const updatedUsers = allUsers.filter((u) => u.id !== userId);
     saveUsers(updatedUsers);
      toast({
       title: 'Usuario Eliminado',
@@ -107,7 +107,7 @@ export default function ManageUsersPage() {
     });
   };
   
-  const filteredUsers = users.filter(user => 
+  const filteredUsers = allUsers.filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
@@ -118,7 +118,7 @@ export default function ManageUsersPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto">
         <Link href="/admin">
           <Button variant="outline" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -152,6 +152,8 @@ export default function ManageUsersPage() {
                     <TableHead className="hidden sm:table-cell">Email</TableHead>
                     <TableHead>Rol</TableHead>
                     <TableHead className="text-center">Estado</TableHead>
+                    <TableHead className="text-center">Interacciones</TableHead>
+                    <TableHead className="text-center">Sobres Abiertos</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -189,6 +191,18 @@ export default function ManageUsersPage() {
                         ) : (
                           <Badge variant="default" className="bg-green-500">Activo</Badge>
                         )}
+                      </TableCell>
+                       <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-2">
+                             <MousePointerClick className="w-4 h-4 text-muted-foreground" />
+                             <span className="font-bold">{user.interactions || 0}</span>
+                          </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <PackageOpen className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-bold">{user.packsOpened || 0}</span>
+                          </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>

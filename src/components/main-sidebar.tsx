@@ -140,7 +140,7 @@ const AdminAuthDialog = ({ isOpen, onOpenChange, onAuthorized }: { isOpen: boole
 
 export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
-  const { user, loading, logout, setUser, setAllUsers, allUsers } = useUser();
+  const { user, loading, logout, setUser, setAllUsers, allUsers, trackInteraction } = useUser();
   const router = useRouter();
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
 
@@ -148,7 +148,15 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
       if (user?.role !== 'admin' && user?.role !== 'editor') {
           e.preventDefault();
           setIsAuthDialogOpen(true);
+      } else {
+        trackInteraction();
       }
+  }
+  
+  const handleMenuClick = () => {
+    if (user?.id !== 'visitor') {
+      trackInteraction();
+    }
   }
 
   const handleAuthorization = () => {
@@ -189,7 +197,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
 
       return (
         <li key={item.href}>
-          <Link href={finalHref} passHref onClick={isPanelAdmin ? handleAdminPanelClick : undefined}>
+          <Link href={finalHref} passHref onClick={isPanelAdmin ? handleAdminPanelClick : handleMenuClick}>
             <Button
               variant='ghost'
               className={cn(

@@ -29,6 +29,8 @@ export interface User {
     rojas: number;
     mvps: number;
   };
+  interactions?: number;
+  packsOpened?: number;
 }
 
 export interface PlayerDetails {
@@ -138,6 +140,8 @@ export const defaultVisitor: User = {
     league: 'Bronce',
     division: 4,
     stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+    interactions: 0,
+    packsOpened: 0,
 };
 
 export const initialUsers: User[] = [
@@ -160,6 +164,8 @@ export const initialUsers: User[] = [
     sudonepassLevel: 15,
     sudonepassExp: 45,
     stats: { partidosJugados: 100, victorias: 80, empates: 10, derrotas: 10, goles: 150, asistencias: 50, amarillas: 2, rojas: 0, mvps: 40 },
+    interactions: 0,
+    packsOpened: 0,
   },
   {
     id: 'editor-user',
@@ -180,6 +186,8 @@ export const initialUsers: User[] = [
     sudonepassLevel: 8,
     sudonepassExp: 90,
     stats: { partidosJugados: 10, victorias: 8, empates: 1, derrotas: 1, goles: 15, asistencias: 5, amarillas: 0, rojas: 0, mvps: 7 },
+    interactions: 0,
+    packsOpened: 0,
   },
 ];
 
