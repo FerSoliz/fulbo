@@ -89,7 +89,7 @@ type ManualMatch = { home: string; away: string };
 interface Position { rank: number; team: string; played: number; won: number; drawn: number; lost: number; points: number; gf: number; gc: number; dg: number; }
 interface Scorer { player: string; team: string; goals: number; nationality: string; }
 interface Sanction { player: string; team: string; yellow: number; red: number; }
-interface PenaltyPosition { rank: number; team: string; played: number; won: number; lost: number; points: number; }
+interface PenaltyPosition { rank: number; team: string; played: number; won: number; lost: number; points: number; drawn: number; }
 interface Player { id: string; name: string; lastName: string; dni: string; nationality: string; }
 type PlanillaData = {
     home: string;
@@ -147,7 +147,7 @@ export default function TournamentDetailsPage() {
     if (index !== -1) {
         return `team_${tournamentId}_${teamName.replace(/\s+/g, '_') || index}`;
     }
-    return `team_${tournamentId}_${teamName.replace(/\s+/g, '_')}`;
+    return null;
   }
 
 
@@ -278,7 +278,6 @@ export default function TournamentDetailsPage() {
 
     const playerStats: { [dni: string]: { player: string, team: string, goals: number, yellow: number, red: number, suspendedMatches: number, nationality: string } } = {};
     
-    // Pre-populate playerStats with all players from all rosters to ensure nationality is captured.
     for (const teamName in allRosters) {
         const roster = allRosters[teamName];
         if (roster) {
@@ -297,12 +296,11 @@ export default function TournamentDetailsPage() {
     
     const penaltyTable: { [team: string]: any } = teams.reduce((acc, team) => {
         if (team !== 'BYE') {
-          acc[team] = { rank: 0, team, played: 0, won: 0, lost: 0, points: 0 };
+          acc[team] = { rank: 0, team, played: 0, won: 0, drawn: 0, lost: 0, points: 0 };
         }
         return acc;
     }, {} as { [team: string]: any });
     
-    // Reset suspensions for this calculation
     const newSuspensions: SuspensionInfo = {};
 
 
@@ -317,7 +315,6 @@ export default function TournamentDetailsPage() {
           const homeScore = parseInt(result.home, 10) || 0;
           const awayScore = parseInt(result.away, 10) || 0;
 
-          // Main Table Stats
           stats[match.home].played++;
           stats[match.away].played++;
           stats[match.home].gf += homeScore;
@@ -342,7 +339,6 @@ export default function TournamentDetailsPage() {
             stats[match.away].points += 1;
           }
 
-          // Individual Player Stats & Suspension Logic
           const matchPlayerStats = JSON.parse(localStorage.getItem(`matchStats_${matchIdForStats}`) || '{}');
           if (matchPlayerStats.stats) {
             for (const dni in matchPlayerStats.stats) {
@@ -353,12 +349,12 @@ export default function TournamentDetailsPage() {
                   
                   if (pData.red) {
                       playerStats[dni].red++;
-                      playerStats[dni].yellow = 0; // Red card clears yellow cards
+                      playerStats[dni].yellow = 0;
                       newSuspensions[dni] = { nextMatchSuspended: true };
                   } else if (pData.yellow) {
                       playerStats[dni].yellow++;
                       if (playerStats[dni].yellow >= 5) {
-                          playerStats[dni].yellow -= 5; // Reset after suspension
+                          playerStats[dni].yellow -= 5;
                           newSuspensions[dni] = { nextMatchSuspended: true };
                       }
                   }
@@ -366,7 +362,6 @@ export default function TournamentDetailsPage() {
             }
           }
           
-           // Penalty Table Stats
            if(matchPlayerStats.penaltyScore) {
                const homePenalty = matchPlayerStats.penaltyScore.home;
                const awayPenalty = matchPlayerStats.penaltyScore.away;
@@ -381,6 +376,11 @@ export default function TournamentDetailsPage() {
                        penaltyTable[match.away].won++;
                        penaltyTable[match.home].lost++;
                        penaltyTable[match.away].points += 3;
+                   } else {
+                        penaltyTable[match.home].drawn++;
+                        penaltyTable[match.away].drawn++;
+                        penaltyTable[match.home].points += 1;
+                        penaltyTable[match.away].points += 1;
                    }
                }
            }
@@ -396,6 +396,7 @@ export default function TournamentDetailsPage() {
     const sortedSanctions = Object.values(playerStats).filter(p => p.yellow > 0 || p.red > 0).sort((a, b) => b.red - a.red || b.yellow - a.yellow);
 
     const sortedPenalties = Object.values(penaltyTable).sort((a, b) => b.points - a.points);
+    sortedPenalties.forEach((team, index) => team.rank = index + 1);
 
 
     localStorage.setItem(`positions_${tournamentId}`, JSON.stringify(sortedTeams));
@@ -891,6 +892,7 @@ export default function TournamentDetailsPage() {
                                <TableHead>Equipo</TableHead>
                                <TableHead className="text-center">PJ</TableHead>
                                <TableHead className="text-center">G</TableHead>
+                               <TableHead className="text-center">E</TableHead>
                                <TableHead className="text-center">P</TableHead>
                                <TableHead className="text-right">Puntos</TableHead>
                            </TableRow>
@@ -902,6 +904,7 @@ export default function TournamentDetailsPage() {
                                    <TableCell>{p.team}</TableCell>
                                    <TableCell className="text-center">{p.played}</TableCell>
                                    <TableCell className="text-center">{p.won}</TableCell>
+                                   <TableCell className="text-center">{p.drawn}</TableCell>
                                    <TableCell className="text-center">{p.lost}</TableCell>
                                    <TableCell className="text-right font-bold">{p.points}</TableCell>
                                </TableRow>

@@ -193,7 +193,7 @@ export function MatchStatsDialog({
 
         <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-                <h3 className="font-semibold text-sm">Tanda de Penales:</h3>
+                <h3 className="font-semibold text-sm">Torneo de Penales:</h3>
                 <div className="flex items-center justify-center gap-2">
                      <span className="text-sm font-medium w-16 text-right truncate">{match.home}</span>
                     <Input type="number" min="0" className="w-12 h-8 text-center" placeholder="-" value={penaltyScore.home ?? ''} onChange={(e) => setPenaltyScore(p => ({...p, home: e.target.value === '' ? null : Number(e.target.value)}))} disabled={isFinished}/>
@@ -205,7 +205,7 @@ export function MatchStatsDialog({
             <div className="flex gap-2">
                  <DialogClose asChild>
                     <Button type="button" variant="secondary">Cerrar</Button>
-                </DialogClose>
+                 </DialogClose>
                 {!isFinished && (
                   <Button onClick={handleSaveStats}>
                     <Save className="mr-2 h-4 w-4"/> Guardar

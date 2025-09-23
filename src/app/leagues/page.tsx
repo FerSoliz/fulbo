@@ -71,6 +71,7 @@ interface PenaltyPosition {
     team: string;
     played: number;
     won: number;
+    drawn: number;
     lost: number;
     points: number;
 }
@@ -337,6 +338,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                                    <TableHead>Equipo</TableHead>
                                    <TableHead className="text-center">PJ</TableHead>
                                    <TableHead className="text-center">G</TableHead>
+                                   <TableHead className="text-center">E</TableHead>
                                    <TableHead className="text-center">P</TableHead>
                                    <TableHead className="text-right">Puntos</TableHead>
                                </TableRow>
@@ -348,6 +350,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                                        <TableCell>{p.team}</TableCell>
                                        <TableCell className="text-center">{p.played}</TableCell>
                                        <TableCell className="text-center">{p.won}</TableCell>
+                                       <TableCell className="text-center">{p.drawn}</TableCell>
                                        <TableCell className="text-center">{p.lost}</TableCell>
                                        <TableCell className="text-right font-bold">{p.points}</TableCell>
                                    </TableRow>
