@@ -342,20 +342,25 @@ export default function ProfilePage() {
       : 0;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
-      <Card>
-        <div className="relative h-32 md:h-48 w-full">
-            {profileBackground && (
+     <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+      {/* This container will stack cards on mobile and show them in columns on desktop */}
+      <div className="grid grid-cols-1 md:grid-cols-3 md:gap-6 space-y-6 md:space-y-0">
+        
+        {/* Left Column on Desktop / First Card on Mobile */}
+        <div className="md:col-span-1 space-y-6">
+          <Card>
+            <div className="relative h-32 w-full">
+              {profileBackground && (
                 <Image
-                    src={profileBackground}
-                    alt="Imagen de fondo del perfil"
-                    layout="fill"
-                    className="object-cover rounded-t-lg"
+                  src={profileBackground}
+                  alt="Imagen de fondo del perfil"
+                  layout="fill"
+                  className="object-cover rounded-t-lg"
                 />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-
-             <div className="absolute top-4 right-4 z-10">
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+              
+              <div className="absolute top-4 right-4 z-10">
                 {currentUser && !isOwnProfile && (
                   <Button
                     variant="secondary"
@@ -367,146 +372,137 @@ export default function ProfilePage() {
                   </Button>
                 )}
               </div>
-
-            <div className="absolute bottom-0 left-6 translate-y-1/2">
+              
+              <div className="absolute bottom-0 left-6 translate-y-1/2">
                 <div
-                    className={cn('relative group', isOwnProfile && 'cursor-pointer hover:opacity-80 transition-opacity')}
-                    onClick={handleAvatarClick}
+                  className={cn('relative group', isOwnProfile && 'cursor-pointer hover:opacity-80 transition-opacity')}
+                  onClick={handleAvatarClick}
                 >
-                    <AnimatedAvatar>
-                        <Avatar className="w-24 h-24 md:w-32 md:h-32 text-4xl border-4 border-background">
-                            <AvatarImage src={avatar} alt={name} />
-                            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                    </AnimatedAvatar>
-                    {isUploading && (
+                  <AnimatedAvatar>
+                    <Avatar className="w-24 h-24 text-4xl border-4 border-background">
+                      <AvatarImage src={avatar} alt={name} />
+                      <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                  </AnimatedAvatar>
+                  {isUploading && (
                     <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center">
-                        <Loader2 className="w-8 h-8 animate-spin text-white" />
-                        <p className="text-white text-xs mt-2">{Math.round(progress)}%</p>
+                      <Loader2 className="w-8 h-8 animate-spin text-white" />
+                      <p className="text-white text-xs mt-2">{Math.round(progress)}%</p>
                     </div>
-                    )}
+                  )}
                 </div>
+              </div>
             </div>
-        </div>
 
-        <CardHeader className="pt-16 pb-4 px-6">
-          <div className="flex flex-col md:flex-row justify-between items-start">
-             <div>
+            <CardHeader className="pt-14 pb-4 px-6">
+              <div className="flex flex-col items-start">
                 <div className="flex items-center gap-2">
-                    <CardTitle className="text-2xl">{name}</CardTitle>
-                    {isVerified && (
+                  <CardTitle className="text-2xl">{name}</CardTitle>
+                  {isVerified && (
                     <TooltipProvider>
-                        <Tooltip>
+                      <Tooltip>
                         <TooltipTrigger>
-                            <Image
-                            src="https://i.postimg.cc/8cm263zS/verificado.png"
-                            alt="Verificado"
-                            width={24}
-                            height={24}
-                            />
+                          <Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={24} height={24} />
                         </TooltipTrigger>
                         <TooltipContent><p>Usuario Verificado</p></TooltipContent>
-                        </Tooltip>
+                      </Tooltip>
                     </TooltipProvider>
-                    )}
+                  )}
                 </div>
                 <CardDescription>@{username} · {role === 'admin' || role === 'editor' ? 'Administrador' : 'Jugador'}</CardDescription>
-             </div>
-
-             <div className="flex gap-2 mt-4 md:mt-0">
-                {isOwnProfile ? (
-                    <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
-                        <Button variant="outline">
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Editar Perfil
-                        </Button>
-                    </EditProfileDialog>
-                ) : (
-                    <Button onClick={handleSendMessage}>
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Enviar Mensaje
-                    </Button>
-                )}
-            </div>
-          </div>
-          
-           <div className="flex items-center gap-4 pt-4">
-            <DivisionBadge league={league} division={division} />
-            <div className="w-full max-w-xs">
+              </div>
+            </CardHeader>
+            
+            <CardContent className="px-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <DivisionBadge league={league} division={division} />
+              </div>
+              <div className="w-full">
                 <Progress value={sudpoints} className="h-2 my-1 bg-[#201538]" />
                 <div className="flex justify-between">
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Siguiente división
-                    </p>
-                    <p className="text-sm font-semibold">
-                      {sudpoints} / 100 SP
-                    </p>
+                  <p className="text-xs text-muted-foreground mt-1">Siguiente división</p>
+                  <p className="text-sm font-semibold">{sudpoints} / 100 SP</p>
                 </div>
-            </div>
-          </div>
-        </CardHeader>
+              </div>
+              {isOwnProfile ? (
+                <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
+                  <Button variant="outline" className="w-full">
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Editar Perfil y Vincular DNI
+                  </Button>
+                </EditProfileDialog>
+              ) : (
+                <Button onClick={handleSendMessage} className="w-full">
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Enviar Mensaje
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
         
-        <CardContent className="px-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Estadísticas del Jugador</CardTitle>
-                    <CardDescription>Resumen del rendimiento en torneos.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     {dni ? (
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-6 text-center">
-                            <div className="flex flex-col items-center gap-1">
-                                <p className="text-4xl font-bold">{finalStats.partidosJugados}</p>
-                                <p className="text-sm text-muted-foreground">Partidos</p>
-                            </div>
-                            <div className="flex flex-col items-center gap-1">
-                                <p className="text-4xl font-bold text-green-400">{finalStats.victorias}</p>
-                                <p className="text-sm text-muted-foreground">Victorias</p>
-                            </div>
-                            <div className="flex flex-col items-center gap-1">
-                                <p className="text-4xl font-bold text-yellow-400">{finalStats.empates}</p>
-                                <p className="text-sm text-muted-foreground">Empates</p>
-                            </div>
-                             <div className="flex flex-col items-center gap-1">
-                                <p className="text-4xl font-bold text-red-500">{finalStats.derrotas}</p>
-                                <p className="text-sm text-muted-foreground">Derrotas</p>
-                            </div>
-
-                             <div className="flex flex-col items-center gap-1">
-                                <p className="text-4xl font-bold">{finalStats.goles}</p>
-                                <p className="text-sm text-muted-foreground">Goles</p>
-                            </div>
-                            <div className="flex flex-col items-center gap-1">
-                                <p className="text-4xl font-bold">{finalStats.mvps}</p>
-                                <p className="text-sm text-muted-foreground">MVPs</p>
-                            </div>
-                             <div className="flex flex-col items-center gap-1">
-                                <p className="text-4xl font-bold text-yellow-400">{finalStats.amarillas}</p>
-                                <p className="text-sm text-muted-foreground">Amarillas</p>
-                            </div>
-                             <div className="flex flex-col items-center gap-1">
-                                <p className="text-4xl font-bold text-red-500">{finalStats.rojas}</p>
-                                <p className="text-sm text-muted-foreground">Rojas</p>
-                            </div>
-                        </div>
-                     ) : (
-                        <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                            <p className="text-muted-foreground">Vincula tu DNI en "Editar Perfil" para ver tus estadísticas.</p>
-                        </div>
-                     )}
-                </CardContent>
-            </Card>
-        </CardContent>
-      </Card>
+        {/* Right Column on Desktop / Second Card on Mobile */}
+        <div className="md:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Estadísticas del Jugador</CardTitle>
+              <CardDescription>Resumen del rendimiento en torneos.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {dni ? (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-6 text-center">
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-4xl font-bold">{finalStats.partidosJugados}</p>
+                    <p className="text-sm text-muted-foreground">Partidos</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-4xl font-bold text-green-400">{finalStats.victorias}</p>
+                    <p className="text-sm text-muted-foreground">Victorias</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-4xl font-bold text-yellow-400">{finalStats.empates}</p>
+                    <p className="text-sm text-muted-foreground">Empates</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-4xl font-bold text-red-500">{finalStats.derrotas}</p>
+                    <p className="text-sm text-muted-foreground">Derrotas</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-4xl font-bold">{finalStats.goles}</p>
+                    <p className="text-sm text-muted-foreground">Goles</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-4xl font-bold">{finalStats.mvps}</p>
+                    <p className="text-sm text-muted-foreground">MVPs</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-4xl font-bold text-yellow-400">{finalStats.amarillas}</p>
+                    <p className="text-sm text-muted-foreground">Amarillas</p>
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <p className="text-4xl font-bold text-red-500">{finalStats.rojas}</p>
+                    <p className="text-sm text-muted-foreground">Rojas</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                  <p className="text-muted-foreground">Vincula tu DNI en "Editar Perfil" para ver tus estadísticas.</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+        
+      </div>
       
-       <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleAvatarChange}
-            className="hidden"
-            accept="image/*"
-            disabled={isUploading}
-        />
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleAvatarChange}
+        className="hidden"
+        accept="image/*"
+        disabled={isUploading}
+      />
     </div>
   );
 }
