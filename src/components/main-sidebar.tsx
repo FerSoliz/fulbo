@@ -44,7 +44,7 @@ const menuItems = [
     { href: '/collectibles', icon: Swords, label: 'COLECCIONABLES' },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
     { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
-    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN' },
+    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', adminOnly: true },
 ];
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -168,7 +168,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
       setAllUsers(updatedAllUsers);
       
       const usersToStore = updatedAllUsers.filter(
-        (u) => u.id !== 'admin-user' && u.id !== 'editor-user' // Assuming these are initial users
+        (u) => !initialUsers.some((iu) => iu.id === u.id)
       );
       localStorage.setItem('users', JSON.stringify(usersToStore));
 
@@ -183,8 +183,12 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
     }
   }
 
-  const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)[]) => {
+  const renderMenuItems = (items: (typeof menuItems)[]) => {
     return items.map((item) => {
+      if ('adminOnly' in item && item.adminOnly && user?.role !== 'admin' && user?.role !== 'editor') {
+        return null;
+      }
+      
       let finalHref = item.href;
       if(item.label === 'MI PERFIL' && user && user.id !== 'visitor') {
           finalHref = `/profile/${user.id}`;
