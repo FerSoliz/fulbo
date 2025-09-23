@@ -90,6 +90,7 @@ import {
   collectionGroup,
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import React from 'react';
 
 const EditProfileDialog = ({
   user,
@@ -502,7 +503,7 @@ export default function ProfilePage() {
       </Card>
       
       <Card>
-        <CardContent className="p-4 relative">
+        <CardContent className="p-4 relative min-h-[140px]">
              <AnimatePresence mode="wait">
                 {view === 'buttons' && (
                     <motion.div 
@@ -537,20 +538,19 @@ export default function ProfilePage() {
                      >
                         <Button variant="ghost" size="sm" onClick={() => setView('buttons')} className="absolute -top-2 left-0 text-muted-foreground"><ArrowLeft className="mr-1 h-4 w-4"/> Volver</Button>
                         <h3 className="text-center font-bold text-lg pt-4">HISTORIAL DE PARTIDOS</h3>
-                        <div className="space-y-3 px-2">
-                            {mockMatchHistory.map((match, index) => {
+                        <div className="space-y-2 px-2">
+                           {mockMatchHistory.map((match, index) => {
                                 const result = match.myScore > match.opponentScore ? 'V' : match.myScore < match.opponentScore ? 'D' : 'E';
-                                const resultColor = result === 'V' ? 'text-green-400' : result === 'D' ? 'text-red-400' : 'text-yellow-400';
                                 return (
                                     <React.Fragment key={match.id}>
                                         <div className="flex justify-between items-center text-sm py-1">
-                                            <span className="w-1/4 text-left font-mono">{match.date}</span>
+                                            <span className="w-1/4 text-left">{match.date}</span>
                                             <div className="w-2/4 flex justify-center items-center gap-2">
                                                 <span>{match.myTeam}</span>
-                                                <span className="font-bold">{match.myScore} - {match.opponentScore}</span>
+                                                <span>{match.myScore} - {match.opponentScore}</span>
                                                 <span>{match.opponent}</span>
                                             </div>
-                                            <span className={cn("w-1/4 text-right font-bold", resultColor)}>{result}</span>
+                                            <span className="w-1/4 text-right">{result}</span>
                                         </div>
                                         {index < mockMatchHistory.length - 1 && <Separator />}
                                     </React.Fragment>
