@@ -611,79 +611,83 @@ export default function ProfilePage() {
               </motion.div>
             )}
              {showStats && (
-                            <motion.div
-                                initial={{ opacity: 0, y: -20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -20 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <div className="relative w-full h-auto">
-                                    <Image
-                                        src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png"
-                                        alt="Contenedor de estadisticas"
-                                        width={800}
-                                        height={600}
-                                        className="w-full h-auto"
-                                        quality={100}
-                                    />
-                                    <div className="absolute inset-0 py-5 px-4 flex items-center text-white">
-                                        <div className="flex-1 text-center">
-                                            <h3 className="text-xs font-bold uppercase text-gray-400">Winrate</h3>
-                                            <p className="text-5xl font-bold">{winrate}<span className="text-2xl">%</span></p>
-                                            <p className="text-xs text-gray-400">Promedio de Victoria</p>
-                                        </div>
-                                        
-                                        <div className="h-full w-px bg-white/20 mx-2"></div>
+                  <motion.div
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                  >
+                      <div className="relative w-full h-auto">
+                          <Image
+                              src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png"
+                              alt="Contenedor de estadisticas"
+                              width={800}
+                              height={600}
+                              className="w-full h-auto"
+                              quality={100}
+                          />
+                          <div className="absolute inset-0 py-5 px-4 flex flex-col text-white">
+                               <h2 className="text-xl font-bold uppercase text-center mb-2">Estadisticas</h2>
+                               <div className="w-full h-px bg-white/20 mb-4"></div>
+                               <div className="flex flex-1 items-center">
+                                  <div className="flex-1 text-center">
+                                      <h3 className="text-xs font-bold uppercase text-gray-400">Winrate</h3>
+                                      <p className="text-5xl font-bold">{winrate}<span className="text-2xl">%</span></p>
+                                      <p className="text-xs text-gray-400">Promedio de Victoria</p>
+                                  </div>
+                                  
+                                  <div className="h-full w-px bg-white/20 mx-2"></div>
 
-                                        <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-1">
-                                            <div className="bg-black/20 p-1 rounded-md text-center">
-                                                <p className="text-[10px] uppercase text-gray-400">Jugados</p>
-                                                <p className="text-xl font-bold">{finalStats.partidosJugados}</p>
-                                            </div>
-                                            <div className="bg-black/20 p-1 rounded-md text-center">
-                                                <p className="text-[10px] uppercase text-gray-400">Ganados</p>
-                                                <p className="text-xl font-bold text-green-400">{finalStats.victorias}</p>
-                                            </div>
-                                            <div className="bg-black/20 p-1 rounded-md text-center">
-                                                <p className="text-[10px] uppercase text-gray-400">Empatados</p>
-                                                <p className="text-xl font-bold text-yellow-400">{finalStats.empates}</p>
-                                            </div>
-                                            <div className="bg-black/20 p-1 rounded-md text-center">
-                                                <p className="text-[10px] uppercase text-gray-400">Perdidos</p>
-                                                <p className="text-xl font-bold text-red-500">{finalStats.derrotas}</p>
-                                            </div>
-                                        </div>
+                                  <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-1">
+                                      <div className="bg-black/20 p-1 rounded-md text-center">
+                                          <p className="text-[10px] uppercase text-gray-400">Jugados</p>
+                                          <p className="text-xl font-bold">{finalStats.partidosJugados}</p>
+                                      </div>
+                                      <div className="bg-black/20 p-1 rounded-md text-center">
+                                          <p className="text-[10px] uppercase text-gray-400">Ganados</p>
+                                          <p className="text-xl font-bold text-green-400">{finalStats.victorias}</p>
+                                      </div>
+                                      <div className="bg-black/20 p-1 rounded-md text-center">
+                                          <p className="text-[10px] uppercase text-gray-400">Empatados</p>
+                                          <p className="text-xl font-bold text-yellow-400">{finalStats.empates}</p>
+                                      </div>
+                                      <div className="bg-black/20 p-1 rounded-md text-center">
+                                          <p className="text-[10px] uppercase text-gray-400">Perdidos</p>
+                                          <p className="text-xl font-bold text-red-500">{finalStats.derrotas}</p>
+                                      </div>
+                                  </div>
 
-                                        <div className="h-full w-px bg-white/20 mx-2"></div>
-                                        
-                                        <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-1">
-                                            <div className="bg-black/20 p-1 rounded-md text-center">
-                                                <p className="text-[10px] uppercase text-gray-400">Goles</p>
-                                                <p className="text-xl font-bold">{finalStats.goles}</p>
-                                            </div>
-                                            <div className="bg-black/20 p-1 rounded-md text-center">
-                                                <p className="text-[10px] uppercase text-gray-400">MVP</p>
-                                                <p className="text-xl font-bold">{finalStats.mvps}</p>
-                                            </div>
-                                            <div className="bg-black/20 p-1 rounded-md text-center">
-                                                <p className="text-[10px] uppercase text-gray-400">Amarillas</p>
-                                                <p className="text-xl font-bold text-yellow-400">{finalStats.amarillas}</p>
-                                            </div>
-                                            <div className="bg-black/20 p-1 rounded-md text-center">
-                                                <p className="text-[10px] uppercase text-gray-400">Rojas</p>
-                                                <p className="text-xl font-bold text-red-500">{finalStats.rojas}</p>
-                                            </div>
-                                        </div>
+                                  <div className="h-full w-px bg-white/20 mx-2"></div>
+                                  
+                                  <div className="flex-1 grid grid-cols-2 grid-rows-2 gap-1">
+                                      <div className="bg-black/20 p-1 rounded-md text-center">
+                                          <p className="text-[10px] uppercase text-gray-400">Goles</p>
+                                          <p className="text-xl font-bold">{finalStats.goles}</p>
+                                      </div>
+                                      <div className="bg-black/20 p-1 rounded-md text-center">
+                                          <p className="text-[10px] uppercase text-gray-400">MVP</p>
+                                          <p className="text-xl font-bold">{finalStats.mvps}</p>
+                                      </div>
+                                      <div className="bg-black/20 p-1 rounded-md text-center">
+                                          <p className="text-[10px] uppercase text-gray-400">Amarillas</p>
+                                          <p className="text-xl font-bold text-yellow-400">{finalStats.amarillas}</p>
+                                      </div>
+                                      <div className="bg-black/20 p-1 rounded-md text-center">
+                                          <p className="text-[10px] uppercase text-gray-400">Rojas</p>
+                                          <p className="text-xl font-bold text-red-500">{finalStats.rojas}</p>
+                                      </div>
+                                  </div>
 
-                                        <div className="flex-1 text-center">
-                                            <h3 className="text-xs font-bold uppercase text-gray-400">Prom. de Gol</h3>
-                                            <p className="text-5xl font-bold">{goalAverage}</p>
-                                            <p className="text-xs text-gray-400">Goles por Partido</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
+                                  <div className="flex-1 text-center">
+                                      <h3 className="text-xs font-bold uppercase text-gray-400">Prom. de Gol</h3>
+                                      <p className="text-5xl font-bold">{goalAverage}</p>
+                                      <p className="text-xs text-gray-400">Goles por Partido</p>
+                                  </div>
+                              </div>
+                          </div>
+                      </div>
+                  </motion.div>
+              )}
           </AnimatePresence>
 
         </div>
@@ -691,3 +695,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
