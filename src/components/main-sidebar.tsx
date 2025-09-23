@@ -16,6 +16,8 @@ import {
   Youtube,
   Instagram,
   Footprints,
+  KeyRound,
+  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -25,8 +27,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from "react";
+import { useState } from 'react';
 import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
+import { Input } from './ui/input';
+import { Label } from './ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 
 const menuItems = [
@@ -74,14 +81,94 @@ const footerMenuItems = [
     { href: '/profile', icon: UserIcon, label: 'MI PERFIL' },
 ];
 
+const AdminAuthDialog = ({ isOpen, onOpenChange, onAuthorized }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onAuthorized: () => void }) => {
+    const [password, setPassword] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const { toast } = useToast();
+    const correctPassword = "basilala12e";
+
+    const handleVerify = () => {
+        setIsLoading(true);
+        setTimeout(() => { // Simulating network delay
+            if (password === correctPassword) {
+                onAuthorized();
+                toast({ title: "Acceso concedido", description: "¡Bienvenido, Editor! Tu rol ha sido actualizado." });
+                onOpenChange(false);
+            } else {
+                toast({ title: "Acceso Denegado", description: "La contraseña es incorrecta.", variant: "destructive" });
+            }
+            setIsLoading(false);
+            setPassword('');
+        }, 500);
+    }
+    
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Acceso al Panel de Administrador</DialogTitle>
+                    <DialogDescription>
+                        Ingresa la contraseña para obtener permisos de editor y acceder a las herramientas de administración.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-2">
+                    <Label htmlFor="admin-password">Contraseña de Editor</Label>
+                    <div className="relative">
+                        <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            id="admin-password"
+                            type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
+                            className="pl-9"
+                        />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                    <Button onClick={handleVerify} disabled={isLoading}>
+                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Verificar
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 
 export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
-  const { user, loading, logout } = useUser();
+  const { user, loading, logout, setUser, setAllUsers, allUsers } = useUser();
   const router = useRouter();
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+
+  const handleAdminPanelClick = (e: React.MouseEvent) => {
+      if (user?.role !== 'admin' && user?.role !== 'editor') {
+          e.preventDefault();
+          setIsAuthDialogOpen(true);
+      }
+  }
+
+  const handleAuthorization = () => {
+      if (!user) return;
+      const updatedUser = { ...user, role: 'editor' as const };
+      setUser(updatedUser);
+      
+      const updatedAllUsers = allUsers.map(u => u.id === user.id ? updatedUser : u);
+      setAllUsers(updatedAllUsers);
+      
+      const usersToStore = updatedAllUsers.filter(
+        (u) => u.id !== 'admin-user' && u.id !== 'editor-user' // Assuming these are initial users
+      );
+      localStorage.setItem('users', JSON.stringify(usersToStore));
+
+      router.push('/admin');
+  }
 
   const handleLogout = async () => {
-    if (user?.name === 'VISITANTE') {
+    if (user?.id === 'visitor') {
         router.push('/login');
     } else {
         await logout();
@@ -91,17 +178,18 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)[]) => {
     return items.map((item) => {
       let finalHref = item.href;
-      if('label' in item && item.label === 'MI PERFIL' && user && user.name !== 'VISITANTE') {
+      if(item.label === 'MI PERFIL' && user && user.id !== 'visitor') {
           finalHref = `/profile/${user.id}`;
-      } else if ('label' in item && item.label === 'MI PERFIL' && (!user || user.name === 'VISITANTE')) {
+      } else if (item.label === 'MI PERFIL' && (!user || user.id === 'visitor')) {
           finalHref = '/login'; // Redirect visitor to login
       }
-
+      
+      const isPanelAdmin = item.label === 'PANEL DE ADMIN';
       const isActive = pathname === finalHref || (finalHref !== '/' && pathname.startsWith(finalHref) && finalHref.length > 1);
 
       return (
         <li key={item.href}>
-          <Link href={finalHref} passHref>
+          <Link href={finalHref} passHref onClick={isPanelAdmin ? handleAdminPanelClick : undefined}>
             <Button
               variant='ghost'
               className={cn(
@@ -125,6 +213,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   );
 
   return (
+    <>
     <aside className={sidebarClasses}>
         <div className="flex h-16 items-center justify-center border-b p-2">
           <Link href="/">
@@ -148,7 +237,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 </>
             ) : user ? (
                 <>
-                    <Link href={user.name === 'VISITANTE' ? '/login' : `/profile/${user.id}`}>
+                    <Link href={user.id === 'visitor' ? '/login' : `/profile/${user.id}`}>
                         <AnimatedAvatar>
                             <Avatar className="w-12 h-12">
                                 <AvatarImage src={user.avatar} alt="User avatar" />
@@ -157,7 +246,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                         </AnimatedAvatar>
                     </Link>
                     <div className="flex flex-col overflow-hidden">
-                        {user.name !== 'VISITANTE' ? (
+                        {user.id !== 'visitor' ? (
                           <>
                             <span className="font-semibold truncate">@{user.username}</span>
                             <span className="text-sm text-muted-foreground truncate">{user.name}</span>
@@ -190,7 +279,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                         </li>
                     ))}
                 </div>
-                {user && user.name !== 'VISITANTE' && renderMenuItems(footerMenuItems)}
+                {user && user.id !== 'visitor' && renderMenuItems(footerMenuItems)}
                  <li>
                     <Button
                         variant="ghost"
@@ -199,11 +288,13 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                         disabled={loading}
                     >
                         <LogOut className="h-5 w-5" />
-                        <span className="lg:text-base">{user?.name === 'VISITANTE' ? 'INICIAR SESIÓN' : 'CERRAR SESIÓN'}</span>
+                        <span className="lg:text-base">{user?.id === 'visitor' ? 'INICIAR SESIÓN' : 'CERRAR SESIÓN'}</span>
                     </Button>
                 </li>
             </ul>
         </nav>
     </aside>
+    <AdminAuthDialog isOpen={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen} onAuthorized={handleAuthorization} />
+    </>
   );
 }

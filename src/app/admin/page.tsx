@@ -21,6 +21,7 @@ import {
 import Link from 'next/link';
 import type { User } from '@/lib/data';
 import { useUser } from '@/context/user-context';
+import { useRouter } from 'next/navigation';
 
 
 const adminActions = [
@@ -70,8 +71,16 @@ const adminActions = [
 
 export default function AdminPage() {
   const { user: currentUser, loading } = useUser();
+  const router = useRouter();
 
-  if (loading) {
+  useEffect(() => {
+    if (!loading && (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor'))) {
+        router.replace('/');
+    }
+  }, [currentUser, loading, router]);
+
+
+  if (loading || !currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) {
     return <div className="p-8 text-center">Cargando...</div>;
   }
 
