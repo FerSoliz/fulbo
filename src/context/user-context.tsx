@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { initialNotifications, initialUsers } from '@/lib/data';
@@ -25,6 +25,8 @@ const defaultVisitor: User = {
     league: 'Bronce',
     division: 4,
     stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+    interactions: 0,
+    packsOpened: 0,
 };
 
 interface UserContextType {
@@ -43,6 +45,8 @@ interface UserContextType {
   nextPackTimestamp: number | null;
   setNextPackTimestamp: React.Dispatch<React.SetStateAction<number | null>>;
   countdown: string;
+  trackInteraction: () => void;
+  trackPackOpening: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -66,13 +70,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateUserInStorage = (updatedUser: User) => {
+    const newAllUsers = allUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u));
+    setAllUsers(newAllUsers);
+    
+    const usersToStore = newAllUsers.filter(
+      (u) => !initialUsers.some((iu) => iu.id === u.id)
+    );
+    localStorage.setItem("users", JSON.stringify(usersToStore));
+  };
+
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
         const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
         const combinedUsers = [...initialUsers, ...storedUsers];
-        let foundUser = combinedUsers.find(u => u.email === firebaseUser.email);
+        let foundUser = combinedUsers.find(u => u.id === firebaseUser.uid || u.email === firebaseUser.email);
         
         // Ensure admin user always gets correct role and data from initialUsers
         if (firebaseUser.email === 'admin@sudone.com') {
@@ -95,6 +110,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 league: 'Bronce',
                 division: 4,
                 stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+                interactions: 0,
+                packsOpened: 0,
             };
             const updatedUsers = [...storedUsers, foundUser];
             localStorage.setItem('users', JSON.stringify(updatedUsers));
@@ -215,6 +232,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
             league: 'Bronce',
             division: 4,
             stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+            interactions: 0,
+            packsOpened: 0,
         };
         const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
         const updatedUsers = [...storedUsers, newUser];
@@ -251,6 +270,29 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   };
   
+  const trackInteraction = useCallback(() => {
+    if (!user || user.id === 'visitor') return;
+
+    const updatedUser = {
+      ...user,
+      interactions: (user.interactions || 0) + 1,
+    };
+    setUser(updatedUser);
+    updateUserInStorage(updatedUser);
+  }, [user, allUsers]);
+
+  const trackPackOpening = useCallback(() => {
+    if (!user || user.id === 'visitor') return;
+
+    const updatedUser = {
+      ...user,
+      packsOpened: (user.packsOpened || 0) + 1,
+    };
+    setUser(updatedUser);
+    updateUserInStorage(updatedUser);
+  }, [user, allUsers]);
+
+
   const contextValue: UserContextType = {
       user,
       allUsers,
@@ -266,7 +308,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setAvailablePacks,
       nextPackTimestamp,
       setNextPackTimestamp,
-      countdown
+      countdown,
+      trackInteraction,
+      trackPackOpening,
   };
 
   return (
@@ -283,5 +327,3 @@ export function useUser() {
   }
   return context;
 }
-
-    

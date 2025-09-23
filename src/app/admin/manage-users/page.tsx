@@ -73,7 +73,9 @@ export default function ManageUsersPage() {
 
   const saveUsers = (updatedUsers: User[]) => {
     setAllUsers(updatedUsers);
-    localStorage.setItem('users', JSON.stringify(updatedUsers));
+    // Filter out initial users before saving to localStorage
+    const usersToStore = updatedUsers.filter(u => u.id !== 'admin-user' && u.id !== 'editor-user');
+    localStorage.setItem('users', JSON.stringify(usersToStore));
   };
 
   const handleToggleBlock = (userId: string) => {
