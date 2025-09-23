@@ -216,9 +216,9 @@ const EditProfileDialog = ({ user, onSave, children }: { user: User, onSave: (up
 }
 
 const backgroundOptions = [
-    { name: 'La Bombonera', url: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png' },
-    { name: 'Lusail', url: 'https://i.postimg.cc/1RfWNTCC/lusail.png' },
-    { name: 'El Monumental', url: 'https://i.postimg.cc/L4wxkTGH/monumental.png' },
+    { name: 'La Bombonera', url: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png', crestUrl: 'https://i.postimg.cc/d1wV1W1j/boca-escudo.png' },
+    { name: 'Lusail', url: 'https://i.postimg.cc/1RfWNTCC/lusail.png', crestUrl: 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png' },
+    { name: 'El Monumental', url: 'https://i.postimg.cc/L4wxkTGH/monumental.png', crestUrl: 'https://i.postimg.cc/tTW2fcQP/river-escudo.png' },
 ]
 
 const CustomizeBackgroundDialog = ({ user, onSave, children }: { user: User, onSave: (updatedUser: User) => void, children: React.ReactNode }) => {
@@ -516,7 +516,8 @@ export default function ProfilePage() {
   const finalStats = (dni && stats) ? stats : exampleStats;
   const winrate = finalStats.partidosJugados > 0 ? Math.round((finalStats.victorias / finalStats.partidosJugados) * 100) : 0;
   const goalAverage = finalStats.partidosJugados > 0 ? (finalStats.goles / finalStats.partidosJugados).toFixed(2) : '0.00';
-
+  
+  const currentBackgroundData = backgroundOptions.find(bg => bg.url === profileBackground);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -662,7 +663,16 @@ export default function ProfilePage() {
                   />
                 </div>
               </div>
-              <div className="absolute right-0 top-0 z-10">
+              <div className="absolute right-0 top-0 z-10 flex items-center">
+                 {currentBackgroundData && (
+                    <Image
+                        src={currentBackgroundData.crestUrl}
+                        alt={`${currentBackgroundData.name} crest`}
+                        width={41}
+                        height={51}
+                        className="opacity-80"
+                    />
+                 )}
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                          <Image
