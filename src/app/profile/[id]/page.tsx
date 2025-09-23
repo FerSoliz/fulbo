@@ -92,7 +92,7 @@ const MatchHistory = () => {
                 <div className="flex-1 flex flex-col justify-around">
                     {puertoFcHistory.slice(0, 4).map((match) => (
                         <div key={match.id} className="w-full border-b border-white/20 pb-1 last:border-b-0">
-                            <div className="grid grid-cols-[2fr_1fr_2fr_1fr] items-center text-center text-sm gap-2">
+                            <div className="grid grid-cols-[2fr_1fr_2fr_auto] items-center text-center text-sm gap-2">
                                 <span className="text-right truncate font-semibold">{match.teamA}</span>
                                 <span className="font-bold">{match.scoreA} - {match.scoreB}</span>
                                 <span className="text-left truncate font-semibold">{match.teamB}</span>
@@ -624,35 +624,33 @@ export default function ProfilePage() {
                     />
                     <div className="absolute inset-0 py-5 px-12 flex flex-col text-white">
                         <h2 className="text-xl font-bold uppercase text-center">Estadísticas</h2>
-                         
-                                <div className="flex-1 flex flex-col justify-around">
-                                    <StatItem icon={Calendar} label="Partidos Jugados" value={finalStats.partidosJugados} />
-                                    <Separator className="bg-white/20"/>
-                                    <div className="grid grid-cols-3">
-                                       <StatItem icon={Trophy} label="Victorias" value={finalStats.victorias} />
-                                       <StatItem icon={Shield} label="Empates" value={finalStats.empates} />
-                                       <StatItem icon={ShieldAlert} label="Derrotas" value={finalStats.derrotas} />
-                                    </div>
-                                    <Separator className="bg-white/20"/>
-                                    <div className="grid grid-cols-2">
-                                        <StatItem icon={Swords} label="Goles" value={finalStats.goles} />
-                                        <StatItem icon={Medal} label="MVPs" value={finalStats.mvps} />
-                                    </div>
-                                    <Separator className="bg-white/20"/>
-                                     <div className="grid grid-cols-2 gap-4">
-                                        <div className="flex flex-col items-center gap-2 p-3 bg-yellow-400/10 text-yellow-400 rounded-lg">
-                                            <div className="w-4 h-6 bg-yellow-400 rounded-sm"/>
-                                            <span className="text-xs">Amarillas</span>
-                                            <span className="font-bold text-2xl">{finalStats.amarillas}</span>
-                                        </div>
-                                         <div className="flex flex-col items-center gap-2 p-3 bg-red-500/10 text-red-500 rounded-lg">
-                                            <div className="w-4 h-6 bg-red-500 rounded-sm"/>
-                                             <span className="text-xs">Rojas</span>
-                                            <span className="font-bold text-2xl">{finalStats.rojas}</span>
-                                        </div>
-                                    </div>
+                         <div className="flex-1 flex flex-col justify-around py-2">
+                            <StatItem icon={Calendar} label="Partidos Jugados" value={finalStats.partidosJugados} />
+                            <Separator className="bg-white/20 my-2"/>
+                            <div className="grid grid-cols-3">
+                               <StatItem icon={Trophy} label="Victorias" value={finalStats.victorias} />
+                               <StatItem icon={Shield} label="Empates" value={finalStats.empates} />
+                               <StatItem icon={ShieldAlert} label="Derrotas" value={finalStats.derrotas} />
+                            </div>
+                            <Separator className="bg-white/20 my-2"/>
+                            <div className="grid grid-cols-2">
+                                <StatItem icon={Swords} label="Goles" value={finalStats.goles} />
+                                <StatItem icon={Medal} label="MVPs" value={finalStats.mvps} />
+                            </div>
+                            <Separator className="bg-white/20 my-2"/>
+                             <div className="grid grid-cols-2 gap-4">
+                                <div className="flex flex-col items-center gap-2 p-2 bg-yellow-400/10 text-yellow-400 rounded-lg">
+                                    <div className="w-4 h-6 bg-yellow-400 rounded-sm"/>
+                                    <span className="text-xs">Amarillas</span>
+                                    <span className="font-bold text-2xl">{finalStats.amarillas}</span>
                                 </div>
-                            
+                                 <div className="flex flex-col items-center gap-2 p-2 bg-red-500/10 text-red-500 rounded-lg">
+                                    <div className="w-4 h-6 bg-red-500 rounded-sm"/>
+                                     <span className="text-xs">Rojas</span>
+                                    <span className="font-bold text-2xl">{finalStats.rojas}</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
               </motion.div>
@@ -664,4 +662,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
