@@ -15,65 +15,34 @@ import {
   BarChart2,
   Youtube,
   Instagram,
-  Footprints,
-  KeyRound,
-  Loader2,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from "react";
-import { useState } from 'react';
 import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
-import { Input } from './ui/input';
-import { Label } from './ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 
 const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
+    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', adminOnly: true },
     { href: '/leagues', icon: Trophy, label: 'LIGAS EN CURSO' },
+    { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
     { href: '/store', icon: Store, label: 'TIENDA' },
     { href: '/collectibles', icon: Swords, label: 'COLECCIONABLES' },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
-    { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
-    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', adminOnly: true },
 ];
-
-const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    {...props}
-  >
-    <path d="M16.6 14c-.2-.1-1.5-0.7-1.7-0.8-.2-.1-.4-.1-.6 0.1s-.6 0.8-.8 1c-.1 0.2-.3 0.2-.5 0.1-1-0.3-1.9-0.9-2.7-1.7-0.6-0.6-1.1-1.4-1.2-1.6-.1-.2 0-.4 0.1-.5 0.1-.1 0.2-.3 0.4-.4 0.1-.1 0.2-.2 0.2-.3 0.1-.1 0.1-.3 0-0.4C9.5 8.8 9.1 7.8 8.9 7.4c-.2-.4-.4-.3-.6-.3h-.5c-.2 0-.5 0.1-.7 0.3-0.2 0.2-.8 0.8-.8 1.9s0.8 2.2 1 2.4c0.1 0.2 1.5 2.3 3.7 3.2 0.5 0.2 0.9 0.4 1.2 0.5 0.7 0.2 1.3 0.2 1.8 0.1 0.5-.1 1.5-0.6 1.7-1.2 0.2-.5 0.2-1 0.1-1.1s-.2-.2-.4-.3z M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8z" />
-  </svg>
-);
-
-const DiscordIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 28 28"
-      fill="currentColor"
-      {...props}
-    >
-        <path d="M20.8,3.2c-1.7-0.6-3.5-1-5.3-1.2C15.3,2,15.2,2,15,2.1c-0.2,0-0.3-0.1-0.5-0.1c-1.8,0.2-3.6,0.6-5.3,1.2	C4.9,4.7,3.5,8.2,3,11.8c-0.1,0.5-0.1,1,0,1.5c0.5,4.7,2.2,8.4,5.4,11.2c1.4,1.2,3.1,2.2,4.9,2.8c0.2,0.1,0.4,0.1,0.6,0.1c0.2,0,0.4,0,0.6-0.1c1.8-0.6,3.5-1.5,4.9-2.8c3.2-2.8,4.9-6.5,5.4-11.2c0.1-0.5,0.1-1,0-1.5C24.5,8.2,23.1,4.7,20.8,3.2z M12.2,19.2c-1.4,0-2.6-1.1-2.6-2.6c0-1.4,1.2-2.6,2.6-2.6c1.4,0,2.6,1.2,2.6,2.6S13.6,19.2,12.2,19.2z M18.4,19.2c-1.4,0-2.6-1.1-2.6-2.6c0-1.4,1.2-2.6,2.6-2.6c1.4,0,2.6,1.2,2.6,2.6S19.8,19.2,18.4,19.2z"/>
-    </svg>
-);
 
 const socialItems = [
     { href: 'https://www.youtube.com/@ORGANIZACIONSUDONE', icon: Youtube, label: 'YOUTUBE' },
     { href: 'https://www.instagram.com/liga.sudone/', icon: Instagram, label: 'INSTAGRAM' },
-    { href: 'https://wa.me/5491139027578', icon: WhatsAppIcon, label: 'WHATSAPP' },
-    { href: 'https://discord.gg/H8tuKK5c', icon: DiscordIcon, label: 'DISCORD' }
 ];
 
 const footerMenuItems = [
@@ -81,99 +50,11 @@ const footerMenuItems = [
     { href: '/profile', icon: UserIcon, label: 'MI PERFIL' },
 ];
 
-const AdminAuthDialog = ({ isOpen, onOpenChange, onAuthorized }: { isOpen: boolean, onOpenChange: (open: boolean) => void, onAuthorized: () => void }) => {
-    const [password, setPassword] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const { toast } = useToast();
-    const correctPassword = "basilala12e";
-
-    const handleVerify = () => {
-        setIsLoading(true);
-        setTimeout(() => { // Simulating network delay
-            if (password === correctPassword) {
-                onAuthorized();
-                toast({ title: "Acceso concedido", description: "¡Bienvenido, Editor! Tu rol ha sido actualizado." });
-                onOpenChange(false);
-            } else {
-                toast({ title: "Acceso Denegado", description: "La contraseña es incorrecta.", variant: "destructive" });
-            }
-            setIsLoading(false);
-            setPassword('');
-        }, 500);
-    }
-    
-    return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Acceso al Panel de Administrador</DialogTitle>
-                    <DialogDescription>
-                        Ingresa la contraseña para obtener permisos de editor y acceder a las herramientas de administración.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="py-4 space-y-2">
-                    <Label htmlFor="admin-password">Contraseña de Editor</Label>
-                    <div className="relative">
-                        <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            id="admin-password"
-                            type="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleVerify()}
-                            className="pl-9"
-                        />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                    <Button onClick={handleVerify} disabled={isLoading}>
-                        {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Verificar
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
-}
-
 
 export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
-  const { user, loading, logout, setUser, setAllUsers, allUsers, trackInteraction } = useUser();
+  const { user, loading, logout } = useUser();
   const router = useRouter();
-  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
-
-  const handleAdminPanelClick = (e: React.MouseEvent) => {
-      if (user?.role !== 'admin' && user?.role !== 'editor') {
-          e.preventDefault();
-          setIsAuthDialogOpen(true);
-      } else {
-        trackInteraction();
-      }
-  }
-  
-  const handleMenuClick = () => {
-    if (user?.id !== 'visitor') {
-      trackInteraction();
-    }
-  }
-
-  const handleAuthorization = () => {
-      if (!user) return;
-      const updatedUser = { ...user, role: 'editor' as const };
-      setUser(updatedUser);
-      
-      const updatedAllUsers = allUsers.map(u => u.id === user.id ? updatedUser : u);
-      setAllUsers(updatedAllUsers);
-      
-      const usersToStore = updatedAllUsers.filter(
-        (u) => !initialUsers.some((iu) => iu.id === u.id)
-      );
-      localStorage.setItem('users', JSON.stringify(usersToStore));
-
-      router.push('/admin');
-  }
 
   const handleLogout = async () => {
     if (user?.id === 'visitor') {
@@ -183,7 +64,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
     }
   }
 
-  const renderMenuItems = (items: (typeof menuItems)[]) => {
+  const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)[]) => {
     return items.map((item) => {
       if ('adminOnly' in item && item.adminOnly && user?.role !== 'admin' && user?.role !== 'editor') {
         return null;
@@ -196,12 +77,11 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
           finalHref = '/login'; // Redirect visitor to login
       }
       
-      const isPanelAdmin = item.label === 'PANEL DE ADMIN';
       const isActive = pathname === finalHref || (finalHref !== '/' && pathname.startsWith(finalHref) && finalHref.length > 1);
 
       return (
         <li key={item.href}>
-          <Link href={finalHref} passHref onClick={isPanelAdmin ? handleAdminPanelClick : handleMenuClick}>
+          <Link href={finalHref} passHref>
             <Button
               variant='ghost'
               className={cn(
@@ -225,7 +105,6 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   );
 
   return (
-    <>
     <aside className={sidebarClasses}>
         <div className="flex h-16 items-center justify-center border-b p-2">
           <Link href="/">
@@ -276,14 +155,14 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 {renderMenuItems(menuItems)}
             </ul>
             <ul className="mt-auto flex flex-col gap-1 border-t p-2">
-                <div className="flex justify-start gap-2 py-2">
+                <div className="flex justify-around py-2">
                     {socialItems.map(item => (
                         <li key={item.href}>
                              <Link href={item.href} passHref target="_blank" rel="noopener noreferrer">
                                 <Button
-                                variant='destructive'
+                                variant='ghost'
                                 size="icon"
-                                className='bg-red-600 hover:bg-red-700 text-white'
+                                className='text-muted-foreground hover:text-accent-foreground'
                                 >
                                 <item.icon className="h-5 w-5" />
                                 </Button>
@@ -306,7 +185,5 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
             </ul>
         </nav>
     </aside>
-    <AdminAuthDialog isOpen={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen} onAuthorized={handleAuthorization} />
-    </>
   );
 }
