@@ -3,15 +3,36 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
-import { initialNotifications, initialUsers, defaultVisitor } from '@/lib/data';
+import { initialNotifications, initialUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
-import { auth, db, collection, getDocs, setDoc, doc } from '@/lib/firebase';
+import { auth, db, collection, getDocs } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
 
+const defaultVisitor: User = {
+    id: 'visitor',
+    name: 'VISITANTE',
+    username: 'visitante',
+    role: 'user', 
+    avatar: 'https://avatar.vercel.sh/visitor.png',
+    isVerified: false,
+    isBlocked: false,
+    location: '',
+    sudpoints: 0,
+    baseSudpoints: 0,
+    league: 'Bronce',
+    division: 4,
+    stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+    interactions: 0,
+    packsOpened: 0,
+};
+
 interface UserContextType {
   user: User | null;
+  allUsers: User[];
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  setAllUsers: React.Dispatch<React.SetStateAction<User[]>>;
   loading: boolean;
   login: (email: string, pass: string) => Promise<boolean>;
   register: (name: string, username: string, email: string, pass: string, dni: string) => Promise<boolean>;
@@ -31,6 +52,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [allUsers, setAllUsers] = useState<User[]>(initialUsers);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [availablePacks, setAvailablePacks] = useState(0);
@@ -38,37 +60,71 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [countdown, setCountdown] = useState('');
   const router = useRouter();
   const { toast } = useToast();
+  
+  const fetchAllUsers = useCallback(async () => {
+    try {
+        const querySnapshot = await getDocs(collection(db, "users"));
+        const usersFromDb = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        
+        // Combine with initial static users, ensuring no duplicates
+        const combined = [...initialUsers, ...usersFromDb];
+        const uniqueUsers = Array.from(new Map(combined.map(u => [u.id, u])).values());
+        
+        setAllUsers(uniqueUsers);
+    } catch (error) {
+        console.error("Error fetching all users:", error);
+        // Fallback to initial users on error
+        setAllUsers(initialUsers);
+    }
+  }, []);
 
-  const updateUserInStorage = (updatedUser: User) => {
-    // This function will need to be updated to write to Firestore
-  };
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    fetchAllUsers();
+  }, [fetchAllUsers]);
+
+  const updateUserInStorage = (updatedUser: User) => {
+    const newAllUsers = allUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u));
+    setAllUsers(newAllUsers);
+    
+    const usersToStore = newAllUsers.filter(
+      (u) => !initialUsers.some((iu) => iu.id === u.id)
+    );
+    // This is now handled by Firestore, but we can keep it for local caching if needed
+    // localStorage.setItem("users", JSON.stringify(usersToStore));
+  };
+
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
-        const userRef = doc(db, "users", firebaseUser.uid);
-        const userSnap = await getDoc(userRef);
+        // Find user in the already-fetched list of all users
+        let foundUser = allUsers.find(u => u.id === firebaseUser.uid || u.email === firebaseUser.email);
+        
+        if (firebaseUser.email === 'admin@sudone.com') {
+            foundUser = initialUsers.find(u => u.role === 'admin');
+        }
 
-        if (userSnap.exists()) {
-          const userData = userSnap.data() as User;
-          setUser({ ...userData, id: firebaseUser.uid });
-          // Load user-specific data from localStorage for now
-          const notifs = JSON.parse(localStorage.getItem(`notifications_${firebaseUser.uid}`) || 'null');
-          setNotifications(notifs || initialNotifications);
-          const savedPacksData = localStorage.getItem(`userCardPacksData_${firebaseUser.uid}`);
-          if (savedPacksData) {
-            const { packs, timestamp } = JSON.parse(savedPacksData);
-            setAvailablePacks(packs);
-            setNextPackTimestamp(timestamp);
-          } else {
-            setAvailablePacks(1);
-            setNextPackTimestamp(null);
-          }
+        if (foundUser) {
+            setUser(foundUser);
+            // Load user-specific data
+            const notifs = JSON.parse(localStorage.getItem(`notifications_${foundUser.id}`) || 'null');
+            setNotifications(notifs || initialNotifications);
+
+            const savedPacksData = localStorage.getItem(`userCardPacksData_${foundUser.id}`);
+            if (savedPacksData) {
+                const { packs, timestamp } = JSON.parse(savedPacksData);
+                setAvailablePacks(packs);
+                setNextPackTimestamp(timestamp);
+            } else {
+                setAvailablePacks(1);
+                setNextPackTimestamp(null);
+            }
         } else {
-           // Handle case where user is authenticated but not in our DB
-           // This can happen with Google Sign-In for the first time
-           const newUser: User = {
+            // This case handles a newly signed-up user via Google that is not yet in our 'users' collection
+            // We can create a temporary profile or wait for the registration flow to complete
+             const tempUser: User = {
                 id: firebaseUser.uid,
                 name: firebaseUser.displayName || 'Nuevo Usuario',
                 username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now()}`,
@@ -86,12 +142,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
                 interactions: 0,
                 packsOpened: 0,
             };
-            await setDoc(userRef, newUser);
-            setUser(newUser);
+            setUser(tempUser);
+            // New users shouldn't have old notifications
             setNotifications([]);
-            setAvailablePacks(1);
-            setNextPackTimestamp(null);
         }
+
       } else {
         setUser(defaultVisitor);
         setNotifications([]);
@@ -101,8 +156,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
       setLoading(false);
     });
+
     return () => unsubscribe();
-  }, []);
+  }, [allUsers]);
+
 
   useEffect(() => {
     if (user && user.id !== 'visitor' && notifications.length > 0) {
@@ -112,8 +169,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user || user.id === 'visitor') return;
+
     const packsData = { packs: availablePacks, timestamp: nextPackTimestamp };
     localStorage.setItem(`userCardPacksData_${user.id}`, JSON.stringify(packsData));
+
   }, [availablePacks, nextPackTimestamp, user]);
 
   useEffect(() => {
@@ -121,6 +180,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (nextPackTimestamp) {
         const now = Date.now();
         const timeLeft = nextPackTimestamp - now;
+
         if (timeLeft <= 0) {
           setAvailablePacks(prev => {
             const newPacks = Math.min(2, prev + 1);
@@ -132,118 +192,137 @@ export function UserProvider({ children }: { children: ReactNode }) {
             return newPacks;
           });
         } else {
-          const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
-          const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
-          const seconds = Math.floor((timeLeft / 1000) % 60);
-          setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+           const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+           const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
+           const seconds = Math.floor((timeLeft / 1000) % 60);
+           setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
         }
       } else {
         setCountdown('');
       }
     }, 1000);
+
     return () => clearInterval(timer);
   }, [nextPackTimestamp]);
+
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, pass);
-      return true; // onAuthStateChanged will handle the rest
-    } catch (error: any) {
-      console.error(error);
-      toast({
-        title: "Error de inicio de sesión",
-        description: "El correo electrónico o la contraseña son incorrectos.",
-        variant: "destructive",
-      });
-      setLoading(false);
-      return false;
+        await signInWithEmailAndPassword(auth, email, pass);
+        return true;
+    } catch(error: any) {
+        console.error(error);
+        toast({
+            title: "Error de inicio de sesión",
+            description: "El correo electrónico o la contraseña son incorrectos.",
+            variant: "destructive",
+        });
+        setLoading(false);
+        return false;
     }
   };
-
+  
   const register = async (name: string, username: string, email: string, pass: string, dni: string): Promise<boolean> => {
     setLoading(true);
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-      const newUser: User = {
-        id: userCredential.user.uid,
-        name,
-        username,
-        email,
-        dni,
-        avatar: `https://avatar.vercel.sh/${username}.png`,
-        role: 'user',
-        isVerified: false,
-        isBlocked: false,
-        location: 'Desconocida',
-        sudpoints: 0,
-        baseSudpoints: 0,
-        league: 'Bronce',
-        division: 4,
-        stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-        interactions: 0,
-        packsOpened: 0,
-      };
-      await setDoc(doc(db, "users", newUser.id), newUser);
-      // onAuthStateChanged will handle setting the user state
-      toast({
-        title: "¡Cuenta Creada!",
-        description: "Tu cuenta ha sido creada exitosamente.",
-      });
-      router.push('/');
-      return true;
+        const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+        const newUser: User = {
+            id: userCredential.user.uid,
+            name: name,
+            username: username,
+            email: email,
+            dni: dni,
+            avatar: `https://avatar.vercel.sh/${username}.png`,
+            role: 'user',
+            isVerified: false,
+            isBlocked: false,
+            location: 'Desconocida',
+            sudpoints: 0,
+            baseSudpoints: 0,
+            league: 'Bronce',
+            division: 4,
+            stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+            interactions: 0,
+            packsOpened: 0,
+        };
+        // Save new user to Firestore
+        await setDoc(doc(db, "users", newUser.id), newUser);
+        
+        setAllUsers(prev => [...prev, newUser]);
+        setUser(newUser);
+
+        toast({
+          title: "¡Cuenta Creada!",
+          description: "Tu cuenta ha sido creada exitosamente.",
+        });
+        router.push('/');
+        return true;
     } catch (error: any) {
-      console.error(error);
-      let errorMessage = "Ocurrió un error al registrar la cuenta.";
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "Este correo electrónico ya está en uso.";
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = "La contraseña debe tener al menos 6 caracteres.";
-      }
-      toast({ title: "Error de registro", description: errorMessage, variant: "destructive" });
-      return false;
+        console.error(error);
+        let errorMessage = "Ocurrió un error al registrar la cuenta.";
+        if (error.code === 'auth/email-already-in-use') {
+            errorMessage = "Este correo electrónico ya está en uso.";
+        } else if (error.code === 'auth/weak-password') {
+            errorMessage = "La contraseña debe tener al menos 6 caracteres.";
+        }
+        toast({ title: "Error de registro", description: errorMessage, variant: "destructive" });
+        return false;
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
   };
 
   const logout = async () => {
     setLoading(true);
     await signOut(auth);
-    // onAuthStateChanged will set user to visitor
+    setUser(defaultVisitor);
+    setNotifications([]);
     router.push('/login');
     setLoading(false);
   };
-
+  
   const trackInteraction = useCallback(() => {
     if (!user || user.id === 'visitor') return;
-    const updatedUser = { ...user, interactions: (user.interactions || 0) + 1 };
+
+    const updatedUser = {
+      ...user,
+      interactions: (user.interactions || 0) + 1,
+    };
     setUser(updatedUser);
-    updateDoc(doc(db, "users", user.id), { interactions: updatedUser.interactions });
-  }, [user]);
+    updateUserInStorage(updatedUser);
+  }, [user, allUsers]);
 
   const trackPackOpening = useCallback(() => {
     if (!user || user.id === 'visitor') return;
-    const updatedUser = { ...user, packsOpened: (user.packsOpened || 0) + 1 };
+
+    const updatedUser = {
+      ...user,
+      packsOpened: (user.packsOpened || 0) + 1,
+    };
     setUser(updatedUser);
-    updateDoc(doc(db, "users", user.id), { packsOpened: updatedUser.packsOpened });
-  }, [user]);
+    updateUserInStorage(updatedUser);
+  }, [user, allUsers]);
+
 
   const contextValue: UserContextType = {
-    user,
-    loading,
-    login,
-    register,
-    logout,
-    notifications,
-    setNotifications,
-    availablePacks,
-    setAvailablePacks,
-    nextPackTimestamp,
-    setNextPackTimestamp,
-    countdown,
-    trackInteraction,
-    trackPackOpening,
+      user,
+      allUsers,
+      setUser,
+      setAllUsers,
+      loading,
+      login,
+      register,
+      logout,
+      notifications,
+      setNotifications,
+      availablePacks,
+      setAvailablePacks,
+      nextPackTimestamp,
+      setNextPackTimestamp,
+      countdown,
+      trackInteraction,
+      trackPackOpening,
   };
 
   return (

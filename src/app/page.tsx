@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { CreatePostForm } from '@/components/create-post-form';
 import { PostCard } from '@/components/post-card';
-import { Post, User, posts as initialPosts, initialUsers } from '@/lib/data';
+import { Post, User, posts as initialPosts } from '@/lib/data';
 import { useUser } from '@/context/user-context';
 
 
 export default function HomePage() {
-  const { user: currentUser } = useUser();
+  const { user: currentUser, allUsers } = useUser();
   const [posts, setPosts] = useState<Post[]>([]);
   
   // Cargar datos desde localStorage y filtrar publicaciones antiguas
@@ -48,7 +48,7 @@ export default function HomePage() {
   }, [posts]);
 
   const handleAddPost = (newPostData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments'>) => {
-    if (!currentUser || currentUser.name === 'VISITANTE') return;
+    if (!currentUser || currentUser.id === 'visitor') return;
     const newPost: Post = {
         ...newPostData,
         authorId: currentUser.id,
@@ -70,9 +70,11 @@ export default function HomePage() {
     setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
   };
 
+  const canPost = currentUser?.role === 'admin' || currentUser?.role === 'editor';
+
   return (
     <div className="max-w-2xl mx-auto space-y-4 p-4">
-      {currentUser?.role === 'admin' && (
+      {currentUser && canPost && (
         <CreatePostForm
           currentUser={currentUser}
           onAddPost={handleAddPost}
@@ -88,13 +90,13 @@ export default function HomePage() {
               currentUser={currentUser}
               onUpdatePost={handleUpdatePost}
               onDeletePost={handleDeletePost}
-              allUsers={initialUsers}
+              allUsers={allUsers}
             />
           ))
         ) : (
           <div className="text-center text-muted-foreground py-10">
             <p>Aún no hay publicaciones.</p>
-            {currentUser?.role === 'admin' && <p>¡Sé el primero en compartir algo!</p>}
+            {canPost && <p>¡Sé el primero en compartir algo!</p>}
           </div>
         )}
       </div>
