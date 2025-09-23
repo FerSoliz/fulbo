@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -378,7 +379,7 @@ export default function ProfilePage() {
           <div className="absolute top-4 right-4 z-10 flex gap-2">
             {profileUser.id === 'admin-user' && (
                 <div className="w-16 h-16">
-                   <Image src="https://i.postimg.cc/50jZytQp/escudito-de-boca.png" alt="Escudo AFA" width={64} height={64} />
+                   <Image src="https://i.postimg.cc/50jZytQp/escudito-de-boca.png" alt="Escudo BOCA" width={64} height={64} />
                 </div>
             )}
             {currentUser && !isOwnProfile && (
@@ -392,27 +393,27 @@ export default function ProfilePage() {
               </Button>
             )}
              {isOwnProfile && (
-              <BackgroundChangerDialog user={profileUser} onSave={handleSaveProfile}>
-                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="secondary" size="icon" className="rounded-full bg-black/30 text-white hover:bg-black/50">
-                      <MoreVertical className="w-5 h-5" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                     <DropdownMenuItem>
-                       <ImageIcon className="mr-2 h-4 w-4" />
-                        Cambiar Fondo
-                    </DropdownMenuItem>
-                    <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
-                       <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Editar Perfil
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="w-10 h-10">
+                    <Image src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png" alt="Opciones" width={40} height={40} />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <BackgroundChangerDialog user={profileUser} onSave={handleSaveProfile}>
+                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          <ImageIcon className="mr-2 h-4 w-4" />
+                          Cambiar Fondo
                       </DropdownMenuItem>
-                    </EditProfileDialog>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </BackgroundChangerDialog>
+                  </BackgroundChangerDialog>
+                  <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
+                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Editar Perfil
+                    </DropdownMenuItem>
+                  </EditProfileDialog>
+                </DropdownMenuContent>
+              </DropdownMenu>
              )}
           </div>
           
