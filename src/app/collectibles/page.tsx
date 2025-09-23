@@ -149,7 +149,7 @@ export default function CollectibleCardsPage() {
 
 
   const handleOpenPack = () => {
-    if (user?.name === 'VISITANTE' || availablePacks <= 0) return;
+    if (user?.id === 'visitor' || availablePacks <= 0) return;
     
     const newCards: CardType[] = [];
     for (let i = 0; i < 3; i++) {
@@ -297,7 +297,7 @@ export default function CollectibleCardsPage() {
 }
 
 const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { onOpenPack: () => void, setView: (v: View) => void, user: any, availablePacks: number, countdown: string }) => {
-    const isVisitor = user?.name === 'VISITANTE';
+    const isVisitor = user?.id === 'visitor';
     const hasFreePack = availablePacks > 0;
 
     return (
@@ -703,5 +703,7 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
+
+    
 
     
