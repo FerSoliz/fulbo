@@ -187,11 +187,10 @@ const GamePass = () => {
                                     isCurrent && "border-amber-400 bg-amber-400/30 ring-2 ring-amber-400",
                                     isLocked && "border-gray-600 bg-black/30"
                                 )}>
-                                    <Image src="https://i.postimg.cc/P5yX8PNk/giftcard.png" alt={`Recompensa nivel ${level}`} width={80} height={112} className="absolute inset-0 w-full h-full object-cover rounded-md" />
+                                    <Image src={isClaimed ? "https://i.postimg.cc/vm4JHBVh/reclamado.png" : "https://i.postimg.cc/P5yX8PNk/giftcard.png"} alt={`Recompensa nivel ${level}`} width={80} height={112} className="absolute inset-0 w-full h-full object-cover rounded-md" />
                                     <div className="relative z-10 w-full h-full flex flex-col justify-between items-center">
-                                      <p className="font-bold text-base text-shadow-lg [text-shadow:_1px_1px_2px_rgb(0_0_0_/_80%)]">{level}</p>
+                                      {!isClaimed && <p className="font-bold text-base text-shadow-lg [text-shadow:_1px_1px_2px_rgb(0_0_0_/_80%)]">{level}</p>}
                                       
-                                       {isClaimed && <CheckCircle2 className="w-5 h-5 text-green-400 [filter:drop-shadow(0_0_2px_#000)]" />}
                                        {isLocked && <Lock className="w-5 h-5 text-gray-400 [filter:drop-shadow(0_0_2px_#000)]" />}
                                     </div>
                                 </div>
