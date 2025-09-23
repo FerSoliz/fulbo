@@ -422,7 +422,7 @@ export default function ProfilePage() {
           </div>
           {isOwnProfile ? (
             <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full hidden md:inline-flex">
                 <Pencil className="mr-2 h-4 w-4" />
                 Editar Perfil y Vincular DNI
               </Button>
@@ -496,5 +496,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
