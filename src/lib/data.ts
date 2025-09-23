@@ -116,7 +116,7 @@ export const sudpointConfig = {
 };
 
 export const leagues = [
-    { name: 'Bronce', divisions: 4, color: '#cd7f32', icon: 'Shield', nextLeague: 'Plata' },
+    { name: 'Bronce', divisions: 4, color: '#cd7f32', icon: 'Shield', badgeImageUrl: 'https://i.postimg.cc/c1KwdNCm/bronce.png', nextLeague: 'Plata' },
     { name: 'Plata', divisions: 4, color: '#c0c0c0', icon: 'Shield', nextLeague: 'Oro' },
     { name: 'Oro', divisions: 4, color: '#ffd700', icon: 'Shield', nextLeague: 'Diamante' },
     { name: 'Diamante', divisions: 4, color: '#b9f2ff', icon: 'Gem', nextLeague: 'HISTORICO' },

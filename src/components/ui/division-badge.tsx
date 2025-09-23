@@ -3,6 +3,7 @@
 import { leagues } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Shield, Gem, Crown, Star } from 'lucide-react';
+import Image from 'next/image';
 
 interface DivisionBadgeProps {
   league: string;
@@ -27,8 +28,27 @@ export function DivisionBadge({ league, division }: DivisionBadgeProps) {
     return null;
   }
 
-  const Icon = ICONS[leagueInfo.icon] || Star;
   const romanDivision = romanNumerals[division] || division;
+
+  if (leagueInfo.badgeImageUrl) {
+    return (
+        <div
+            className="relative inline-flex items-center justify-center w-28 h-12"
+        >
+            <Image
+                src={leagueInfo.badgeImageUrl}
+                alt={`${leagueInfo.name} badge`}
+                layout="fill"
+                objectFit="contain"
+            />
+            <span className="relative text-white font-bold text-lg" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.7)' }}>
+                {romanDivision}
+            </span>
+        </div>
+    )
+  }
+
+  const Icon = ICONS[leagueInfo.icon] || Star;
 
   return (
     <div
