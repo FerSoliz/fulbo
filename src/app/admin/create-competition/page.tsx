@@ -27,6 +27,10 @@ import { Slider } from '@/components/ui/slider';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { doc, setDoc, collection, getDocs, writeBatch } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
+
 
 type TournamentType = 'LIGA' | 'COPA';
 type TournamentFormat =
@@ -38,6 +42,7 @@ type TournamentFormat =
 
 export default function CreateCompetitionPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [competitionName, setCompetitionName] = useState('');
   const [competitionType, setCompetitionType] =
     useState<TournamentType>('LIGA');
@@ -49,6 +54,7 @@ export default function CreateCompetitionPage() {
     Array(8).fill('')
   );
   const [groupCount, setGroupCount] = useState(2);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleTeamCountChange = (value: number) => {
     const newCount = Math.max(0, Math.min(20, value));
@@ -66,7 +72,12 @@ export default function CreateCompetitionPage() {
     setTeamNames(newTeamNames);
   };
 
-  const handleSaveCompetition = () => {
+  const handleSaveCompetition = async () => {
+    if (!competitionName) {
+        toast({ title: "Error", description: "El nombre de la competencia es obligatorio.", variant: "destructive" });
+        return;
+    }
+    setIsLoading(true);
     const tournamentId = `tournament_${Date.now()}`;
     const newTournament = {
       id: tournamentId,
@@ -79,24 +90,45 @@ export default function CreateCompetitionPage() {
       ...(competitionFormat === 'grupos-y-playoffs' && { groupCount }),
     };
 
-    const existingTournaments = JSON.parse(
-      localStorage.getItem('tournaments') || '[]'
-    );
-    localStorage.setItem(
-      'tournaments',
-      JSON.stringify([...existingTournaments, newTournament])
-    );
+    try {
+        const batch = writeBatch(db);
 
-    localStorage.setItem(
-      `teams_${tournamentId}`,
-      JSON.stringify(teamNames.filter(name => name.trim() !== ''))
-    );
-    
-    alert('¡Competencia guardada con éxito!');
-    router.push('/admin/manage-tournaments');
+        // Save tournament document
+        const tournamentRef = doc(db, 'tournaments', tournamentId);
+        batch.set(tournamentRef, newTournament);
+
+        // Save teams subcollection
+        const validTeams = teamNames.filter(name => name.trim() !== '');
+        validTeams.forEach((teamName, index) => {
+            const teamId = `team_${tournamentId}_${teamName.replace(/\s+/g, '_') || index}`;
+            const teamRef = doc(db, 'tournaments', tournamentId, 'teams', teamId);
+            batch.set(teamRef, {
+                id: teamId,
+                name: teamName,
+                logoUrl: `https://avatar.vercel.sh/${teamName || `Equipo${index}`}.png`
+            });
+        });
+
+        await batch.commit();
+
+        toast({
+          title: "¡Competencia guardada!",
+          description: "El nuevo torneo y sus equipos han sido creados con éxito.",
+        });
+        router.push('/admin/manage-tournaments');
+
+    } catch (error) {
+        console.error("Error saving competition: ", error);
+        toast({
+          title: "Error al guardar",
+          description: "Hubo un problema al crear la competencia. Inténtalo de nuevo.",
+          variant: "destructive"
+        });
+    } finally {
+        setIsLoading(false);
+    }
   };
 
-  const validTeamNames = teamNames.filter(name => name && name.trim() !== '');
 
   return (
     <TooltipProvider>
@@ -257,9 +289,9 @@ export default function CreateCompetitionPage() {
             )}
             
             <div className="flex justify-end pt-4 border-t">
-              <Button onClick={handleSaveCompetition}>
+              <Button onClick={handleSaveCompetition} disabled={isLoading}>
                 <Save className="mr-2 h-4 w-4" />
-                Guardar Competencia
+                {isLoading ? 'Guardando...' : 'Guardar Competencia'}
               </Button>
             </div>
           </CardContent>
