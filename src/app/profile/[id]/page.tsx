@@ -683,6 +683,42 @@ export default function ProfilePage() {
                   </div>
                 </div>
               )}
+                {isOwnProfile && (
+                    <div className="mt-6">
+                        <Separator />
+                        <div className="pt-4">
+                            <h3 className="text-sm font-medium mb-3">TÍTULOS</h3>
+                            <div className="flex flex-wrap gap-3">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <Star className="w-6 h-6 text-white fill-white" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Campeón Liga Anual 2023</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <Star className="w-6 h-6 text-white fill-white" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Campeón Copa Verano 2024</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                     <Tooltip>
+                                        <TooltipTrigger>
+                                            <Star className="w-6 h-6 text-white fill-white" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Goleador Liga Anual 2023</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </CardContent>
           </Card>
         </div>
