@@ -31,7 +31,7 @@ export default function HomePage() {
   }, [posts]);
 
   const handleAddPost = (newPostData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments'>) => {
-    if (!currentUser) return;
+    if (!currentUser || currentUser.id === 'visitor') return;
     const newPost: Post = {
         ...newPostData,
         authorId: currentUser.id,
