@@ -39,11 +39,11 @@ import { useToast } from '@/hooks/use-toast';
 const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
     { href: '/leagues', icon: Trophy, label: 'LIGAS EN CURSO' },
-    { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
     { href: '/store', icon: Store, label: 'TIENDA' },
     { href: '/collectibles', icon: Swords, label: 'COLECCIONABLES' },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
+    { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
     { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN' },
 ];
 
