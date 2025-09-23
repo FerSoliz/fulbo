@@ -70,41 +70,41 @@ const StatItem = ({
   </div>
 );
 
-const puertoFcHistory = [
-    { id: 1, teamA: 'PUERTO F.C.', teamB: 'La Naranja Mecánica', scoreA: 3, scoreB: 1, date: '20/05' },
-    { id: 2, teamA: 'Deportivo Vencer', teamB: 'PUERTO F.C.', scoreA: 2, scoreB: 2, date: '13/05' },
-    { id: 3, teamA: 'PUERTO F.C.', teamB: 'Tiki Taka', scoreA: 4, scoreB: 0, date: '06/05' },
-    { id: 4, teamA: 'Real Sudone', teamB: 'PUERTO F.C.', scoreA: 1, scoreB: 2, date: '29/04' },
-];
-
-
-const MatchHistory = () => (
-    <div className="relative w-full h-auto">
-        <Image
-            src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png"
-            alt="Contenedor de historial de partidos"
-            width={800}
-            height={600}
-            className="w-full h-auto"
-            quality={100}
-        />
-        <div className="absolute inset-0 py-5 px-12 flex flex-col text-white">
-             <h2 className="text-xl font-bold uppercase text-center mb-2">Historial de Partidos</h2>
-            <div className="flex-1 flex flex-col justify-around">
-                {puertoFcHistory.slice(0, 4).map((match, index) => (
-                    <div key={match.id} className="w-full border-b border-white/20 pb-1 last:border-b-0">
-                        <div className="grid grid-cols-[2fr_1fr_2fr_1fr] items-center text-center text-sm gap-2">
-                            <span className="text-right truncate font-semibold">{match.teamA}</span>
-                            <span className="font-bold">{match.scoreA} - {match.scoreB}</span>
-                            <span className="text-left truncate font-semibold">{match.teamB}</span>
-                             <span className="text-right text-xs opacity-80">{match.date}</span>
+const MatchHistory = () => {
+    const puertoFcHistory = [
+        { id: 1, teamA: 'PUERTO F.C.', teamB: 'La Naranja Mecánica', scoreA: 3, scoreB: 1, date: '20/05' },
+        { id: 2, teamA: 'Deportivo Vencer', teamB: 'PUERTO F.C.', scoreA: 2, scoreB: 2, date: '13/05' },
+        { id: 3, teamA: 'PUERTO F.C.', teamB: 'Tiki Taka', scoreA: 4, scoreB: 0, date: '06/05' },
+        { id: 4, teamA: 'Real Sudone', teamB: 'PUERTO F.C.', scoreA: 1, scoreB: 2, date: '29/04' },
+    ];
+    return (
+        <div className="relative w-full h-auto">
+            <Image
+                src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png"
+                alt="Contenedor de historial de partidos"
+                width={800}
+                height={600}
+                className="w-full h-auto"
+                quality={100}
+            />
+            <div className="absolute inset-0 py-5 px-12 flex flex-col text-white">
+                <h2 className="text-xl font-bold uppercase text-center mb-2">Historial de Partidos</h2>
+                <div className="flex-1 flex flex-col justify-around">
+                    {puertoFcHistory.slice(0, 4).map((match) => (
+                        <div key={match.id} className="w-full border-b border-white/20 pb-1 last:border-b-0">
+                            <div className="grid grid-cols-[2fr_1fr_2fr_1fr] items-center text-center text-sm gap-2">
+                                <span className="text-right truncate font-semibold">{match.teamA}</span>
+                                <span className="font-bold">{match.scoreA} - {match.scoreB}</span>
+                                <span className="text-left truncate font-semibold">{match.teamB}</span>
+                                <span className="text-right text-xs opacity-80">{match.date}</span>
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
+};
 
 
 const NextMatch = () => {
@@ -602,14 +602,49 @@ export default function ProfilePage() {
                 <div className="relative w-full h-auto">
                     <Image
                         src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png"
-                        alt="Contenedor vacio"
+                        alt="Contenedor de estadisticas"
                         width={800}
                         height={600}
                         className="w-full h-auto"
                         quality={100}
                     />
-                    <div className="absolute inset-0 p-5">
-                       {/* Contenido irá aquí */}
+                    <div className="absolute inset-0 py-5 px-12 flex flex-col text-white">
+                        <h2 className="text-xl font-bold uppercase text-center">Estadísticas</h2>
+                         {uniqueCode && stats ? (
+                                <div className="flex-1 flex flex-col justify-around">
+                                    <StatItem icon={Calendar} label="Partidos Jugados" value={stats.partidosJugados} />
+                                    <Separator className="bg-white/20"/>
+                                    <div className="grid grid-cols-3">
+                                       <StatItem icon={Trophy} label="Victorias" value={stats.victorias} />
+                                       <StatItem icon={Shield} label="Empates" value={stats.empates} />
+                                       <StatItem icon={ShieldAlert} label="Derrotas" value={stats.derrotas} />
+                                    </div>
+                                    <Separator className="bg-white/20"/>
+                                    <div className="grid grid-cols-2">
+                                        <StatItem icon={Swords} label="Goles" value={stats.goles} />
+                                        <StatItem icon={Medal} label="MVPs" value={stats.mvps} />
+                                    </div>
+                                    <Separator className="bg-white/20"/>
+                                     <div className="grid grid-cols-2 gap-4">
+                                        <div className="flex flex-col items-center gap-2 p-3 bg-yellow-400/10 text-yellow-400 rounded-lg">
+                                            <div className="w-4 h-6 bg-yellow-400 rounded-sm"/>
+                                            <span className="text-xs">Amarillas</span>
+                                            <span className="font-bold text-2xl">{stats.amarillas}</span>
+                                        </div>
+                                         <div className="flex flex-col items-center gap-2 p-3 bg-red-500/10 text-red-500 rounded-lg">
+                                            <div className="w-4 h-6 bg-red-500 rounded-sm"/>
+                                             <span className="text-xs">Rojas</span>
+                                            <span className="font-bold text-2xl">{stats.rojas}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex-1 flex items-center justify-center text-center">
+                                    <p className="text-muted-foreground">
+                                        No hay estadísticas disponibles. Vincula tu código de jugador para ver tus datos.
+                                    </p>
+                                </div>
+                            )}
                     </div>
                 </div>
               </motion.div>
