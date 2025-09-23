@@ -164,17 +164,16 @@ const GamePass = () => {
     const progressPercentage = (currentLevel / totalLevels) * 100;
 
     return (
-        <div className="relative w-full h-auto">
+        <div className="relative w-full h-[250px]">
             <Image
                 src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png"
                 alt="Contenedor de Pase de Juego"
-                width={800}
-                height={600}
-                className="w-full h-auto"
+                fill
+                className="object-cover"
                 quality={100}
             />
             <div className="absolute inset-0 py-5 px-8 flex flex-col text-white">
-                <h2 className="text-xl font-bold uppercase text-center mb-2">Pase de Juego</h2>
+                <h2 className="text-xl font-bold uppercase text-center mb-4">Pase de Juego</h2>
                 <ScrollArea className="w-full whitespace-nowrap">
                     <div className="flex space-x-4 pb-4">
                         {Array.from({ length: totalLevels }).map((_, index) => {
@@ -183,26 +182,26 @@ const GamePass = () => {
                             const isCurrent = level === currentLevel;
                             const isLocked = level > currentLevel;
                             return (
-                                <div key={level} className={cn("flex flex-col items-center justify-between w-20 h-28 rounded-lg p-2 border-2",
+                                <div key={level} className={cn("flex flex-col items-center justify-between w-20 h-24 rounded-lg p-1 border-2",
                                     isClaimed && "border-green-500 bg-green-500/20",
                                     isCurrent && "border-amber-400 bg-amber-400/30",
                                     isLocked && "border-gray-600 bg-black/30"
                                 )}>
                                     <div className="text-center">
-                                        <p className="font-bold text-lg">{level}</p>
-                                        <div className="relative w-10 h-10 mx-auto my-1">
+                                        <p className="font-bold text-base">{level}</p>
+                                        <div className="relative w-8 h-8 mx-auto my-1">
                                             <Gift className={cn("w-full h-full", isLocked ? "text-gray-500" : "text-yellow-400")} />
-                                            {isLocked && <Lock className="absolute bottom-0 right-0 w-4 h-4 text-gray-400 bg-black/50 rounded-full p-0.5" />}
+                                            {isLocked && <Lock className="absolute bottom-0 right-0 w-3 h-3 text-gray-400 bg-black/50 rounded-full p-0.5" />}
                                         </div>
                                     </div>
-                                    {isClaimed && <CheckCircle2 className="w-5 h-5 text-green-400" />}
+                                    {isClaimed && <CheckCircle2 className="w-4 h-4 text-green-400" />}
                                 </div>
                             );
                         })}
                     </div>
                     <ScrollBar orientation="horizontal" />
                 </ScrollArea>
-                <div className="mt-2 px-4">
+                <div className="mt-auto px-4">
                     <Progress value={progressPercentage} className="h-3 bg-white/20 [&>div]:bg-white" />
                     <p className="text-center text-xs mt-1">Nivel {currentLevel} / {totalLevels}</p>
                 </div>
@@ -910,4 +909,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
