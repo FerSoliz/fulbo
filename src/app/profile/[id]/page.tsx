@@ -362,7 +362,7 @@ export default function ProfilePage() {
   return (
      <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
       <Card>
-        <div className="relative w-full aspect-[16/9]">
+        <div className="relative w-full aspect-[3/1] md:aspect-[16/9]">
           {profileBackground && (
             <Image
               src={profileBackground}
@@ -515,7 +515,6 @@ export default function ProfilePage() {
         </CardContent>
         {!dni &&
             <CardFooter>
-                <p className="text-xs text-muted-foreground text-center w-full">Vincula tu DNI en "Editar Perfil" para ver tus estadísticas.</p>
             </CardFooter>
         }
       </Card>
