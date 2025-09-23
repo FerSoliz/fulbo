@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
@@ -44,10 +45,7 @@ export default function CollectibleCardsPage() {
   const [userTeam, setUserTeam] = useState(initialTeam);
   const [lastOpenedPack, setLastOpenedPack] = useState<CardType[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const { user } = useUser();
-  const [availablePacks, setAvailablePacks] = useState(0);
-  const [nextPackTimestamp, setNextPackTimestamp] = useState<number | null>(null);
-  const [countdown, setCountdown] = useState('');
+  const { user, availablePacks, setAvailablePacks, nextPackTimestamp, setNextPackTimestamp, countdown } = useUser();
 
 
   useEffect(() => {
@@ -55,62 +53,15 @@ export default function CollectibleCardsPage() {
     if (user && user.id !== 'visitor') {
       const savedCollection = localStorage.getItem(`userCardCollection_${user.id}`);
       const savedTeam = localStorage.getItem(`userCardTeam_${user.id}`);
-      const savedPacksData = localStorage.getItem(`userCardPacksData_${user.id}`);
 
       setUserCollection(savedCollection ? JSON.parse(savedCollection) : []);
       setUserTeam(savedTeam ? JSON.parse(savedTeam) : initialTeam);
-      
-      if (savedPacksData) {
-        const { packs, timestamp } = JSON.parse(savedPacksData);
-        setAvailablePacks(packs);
-        setNextPackTimestamp(timestamp);
-      } else {
-        setAvailablePacks(1); // Start with 1 free pack for new users
-        setNextPackTimestamp(null);
-      }
+
     } else {
         setUserCollection([]);
         setUserTeam(initialTeam);
     }
   }, [user]);
-
-  useEffect(() => {
-    if (!user || user.id === 'visitor') return;
-
-    const packsData = { packs: availablePacks, timestamp: nextPackTimestamp };
-    localStorage.setItem(`userCardPacksData_${user.id}`, JSON.stringify(packsData));
-
-  }, [availablePacks, nextPackTimestamp, user]);
-
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (nextPackTimestamp) {
-        const now = Date.now();
-        const timeLeft = nextPackTimestamp - now;
-
-        if (timeLeft <= 0) {
-          setAvailablePacks(prev => {
-            const newPacks = Math.min(2, prev + 1);
-            if (newPacks < 2) {
-              setNextPackTimestamp(now + SIX_HOURS_IN_MS);
-            } else {
-              setNextPackTimestamp(null); // Stop timer if max packs reached
-            }
-            return newPacks;
-          });
-        } else {
-           const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
-           const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
-           const seconds = Math.floor((timeLeft / 1000) % 60);
-           setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-        }
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [nextPackTimestamp]);
-
 
   const saveCollection = (collection: CardType[]) => {
     if (!user || user.id === 'visitor') return;
@@ -703,7 +654,5 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
-
-    
 
     

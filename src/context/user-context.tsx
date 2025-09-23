@@ -9,6 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
+const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
 
 const defaultVisitor: User = {
     id: 'visitor',
@@ -37,6 +38,11 @@ interface UserContextType {
   logout: () => Promise<void>;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
+  availablePacks: number;
+  setAvailablePacks: React.Dispatch<React.SetStateAction<number>>;
+  nextPackTimestamp: number | null;
+  setNextPackTimestamp: React.Dispatch<React.SetStateAction<number | null>>;
+  countdown: string;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -46,6 +52,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [allUsers, setAllUsers] = useState<User[]>(initialUsers);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [availablePacks, setAvailablePacks] = useState(0);
+  const [nextPackTimestamp, setNextPackTimestamp] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState('');
   const router = useRouter();
   const { toast } = useToast();
   
@@ -89,9 +98,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUser(foundUser);
         const notifs = JSON.parse(localStorage.getItem(`notifications_${foundUser.id}`) || 'null');
         setNotifications(notifs || initialNotifications);
+
+        // Load packs data for the logged-in user
+        const savedPacksData = localStorage.getItem(`userCardPacksData_${foundUser.id}`);
+        if (savedPacksData) {
+            const { packs, timestamp } = JSON.parse(savedPacksData);
+            setAvailablePacks(packs);
+            setNextPackTimestamp(timestamp);
+        } else {
+            setAvailablePacks(1); // Start with 1 free pack
+            setNextPackTimestamp(null);
+        }
+
       } else {
         setUser(defaultVisitor);
         setNotifications([]);
+        setAvailablePacks(0);
+        setNextPackTimestamp(null);
+        setCountdown('');
       }
       setLoading(false);
     });
@@ -105,6 +129,46 @@ export function UserProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
     }
   }, [user, notifications]);
+
+  // Packs logic moved from collectibles page
+  useEffect(() => {
+    if (!user || user.id === 'visitor') return;
+
+    const packsData = { packs: availablePacks, timestamp: nextPackTimestamp };
+    localStorage.setItem(`userCardPacksData_${user.id}`, JSON.stringify(packsData));
+
+  }, [availablePacks, nextPackTimestamp, user]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (nextPackTimestamp) {
+        const now = Date.now();
+        const timeLeft = nextPackTimestamp - now;
+
+        if (timeLeft <= 0) {
+          setAvailablePacks(prev => {
+            const newPacks = Math.min(2, prev + 1);
+            if (newPacks < 2) {
+              setNextPackTimestamp(now + SIX_HOURS_IN_MS);
+            } else {
+              setNextPackTimestamp(null); // Stop timer if max packs reached
+            }
+            return newPacks;
+          });
+        } else {
+           const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+           const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
+           const seconds = Math.floor((timeLeft / 1000) % 60);
+           setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        }
+      } else {
+        setCountdown('');
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [nextPackTimestamp]);
+
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     setLoading(true);
@@ -190,7 +254,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
       register,
       logout,
       notifications,
-      setNotifications
+      setNotifications,
+      availablePacks,
+      setAvailablePacks,
+      nextPackTimestamp,
+      setNextPackTimestamp,
+      countdown
   };
 
   return (

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Bell, Menu, Layers, LogOut, Search, User as UserIcon, Star, FileText, Heart, Package, Trophy, UserCheck, UserX } from 'lucide-react';
@@ -47,7 +48,7 @@ const notificationIcons: { [key: string]: React.ElementType } = {
 };
 
 export function PageHeader() {
-  const { user, loading, logout, notifications, setNotifications } = useUser();
+  const { user, loading, logout, notifications, setNotifications, availablePacks, countdown } = useUser();
   const router = useRouter();
   
   const hasUnreadNotifications = notifications.some(n => !n.isRead);
@@ -125,9 +126,16 @@ export function PageHeader() {
             </div>
             <div className="flex flex-shrink-0 items-center justify-end gap-2">
                 <Link href="/collectibles">
-                    <Button variant="ghost" className="flex items-center gap-2">
-                        <Layers className="h-6 w-6 text-destructive" />
-                        <span className="font-bold text-sm">GRATIS</span>
+                    <Button variant="ghost" className="flex items-center gap-2 text-destructive">
+                        <Layers className="h-6 w-6" />
+                         <span className="font-bold text-sm">
+                            {availablePacks > 0 
+                                ? `SOBRE GRATIS (${availablePacks})` 
+                                : countdown 
+                                ? `PRÓXIMO EN: ${countdown}`
+                                : 'SOBRES'
+                            }
+                        </span>
                     </Button>
                 </Link>
                 {loading ? (
