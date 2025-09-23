@@ -6,9 +6,10 @@ import { ArrowLeft } from 'lucide-react';
 import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
 import { CollectibleCard } from '@/components/collectible-card';
 import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useUser } from '@/context/user-context';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export default function CollectionPage() {
   const [userCollection, setUserCollection] = useState<CardType[]>([]);
@@ -18,12 +19,18 @@ export default function CollectionPage() {
 
   useEffect(() => {
     setIsClient(true);
-    if (user && user.id !== 'visitor') {
-      const savedCollection = localStorage.getItem(`userCardCollection_${user.id}`);
-      if (savedCollection) {
-        setUserCollection(JSON.parse(savedCollection));
-      }
-    }
+    const fetchCollection = async () => {
+        if (user && user.id !== 'visitor') {
+            const collectionRef = doc(db, 'users', user.id, 'data', 'collectibles');
+            const docSnap = await getDoc(collectionRef);
+            if (docSnap.exists()) {
+                const collectionIds = docSnap.data().cardIds as number[];
+                const collectionData = allCards.filter(card => collectionIds.includes(card.id));
+                setUserCollection(collectionData);
+            }
+        }
+    };
+    fetchCollection();
   }, [user]);
 
   const collectionPercentage = allCards.length > 0 ? (userCollection.length / allCards.length) * 100 : 0;

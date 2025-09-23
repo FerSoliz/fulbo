@@ -13,62 +13,74 @@ import { Send, MessageSquareDashed } from 'lucide-react';
 import Link from 'next/link';
 import { format, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 function MessagesPageContent() {
-  const { user: currentUser } = useUser();
+  const { user: currentUser, allUsers } = useUser();
   const searchParams = useSearchParams();
   const recipientId = searchParams.get('recipient');
   
-  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    setAllUsers(storedUsers);
+    if (!currentUser) return;
+    
+    const conversationsRef = collection(db, 'conversations');
+    const unsubscribe = onSnapshot(conversationsRef, (snapshot) => {
+        const userConversations: Conversation[] = [];
+        snapshot.forEach(doc => {
+            const convo = doc.data() as Conversation;
+            if (convo.participants.includes(currentUser.id)) {
+                userConversations.push({ id: doc.id, ...convo });
+            }
+        });
+        setConversations(userConversations);
+    });
 
-    const savedConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
-    setConversations(savedConversations);
-
-  }, []);
+    return () => unsubscribe();
+  }, [currentUser]);
   
   useEffect(() => {
-    if (recipientId && currentUser && allUsers.length > 0) {
-      const recipientExists = allUsers.find(u => u.id === recipientId);
-      if (!recipientExists) return;
+    const createOrSetActiveConversation = async () => {
+        if (recipientId && currentUser && currentUser.id !== 'visitor' && allUsers.length > 0) {
+          const recipientExists = allUsers.find(u => u.id === recipientId);
+          if (!recipientExists) return;
 
-      const conversationId = [currentUser.id, recipientId].sort().join('-');
-      const existingConversation = conversations.find(c => c.id === conversationId);
+          const conversationId = [currentUser.id, recipientId].sort().join('-');
+          const existingConversation = conversations.find(c => c.id === conversationId);
 
-      if (existingConversation) {
-        setActiveConversationId(conversationId);
-      } else {
-        const newConversation: Conversation = {
-          id: conversationId,
-          participants: [currentUser.id, recipientId],
-          messages: [],
-        };
-        const updatedConversations = [...conversations, newConversation];
-        setConversations(updatedConversations);
-        localStorage.setItem('conversations', JSON.stringify(updatedConversations));
-        setActiveConversationId(conversationId);
-      }
-    } else if (conversations.length > 0 && !activeConversationId) {
-       const sortedConversations = [...conversations].sort((a, b) => (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0));
-       if (sortedConversations.length > 0) {
-           setActiveConversationId(sortedConversations[0].id);
-       }
+          if (existingConversation) {
+            setActiveConversationId(conversationId);
+          } else {
+            const newConversation: Conversation = {
+              id: conversationId,
+              participants: [currentUser.id, recipientId],
+              messages: [],
+            };
+            const convoRef = doc(db, 'conversations', conversationId);
+            await setDoc(convoRef, newConversation);
+            setActiveConversationId(conversationId);
+          }
+        } else if (conversations.length > 0 && !activeConversationId) {
+           const sortedConversations = [...conversations].sort((a, b) => (b.lastMessage?.timestamp || 0) - (a.lastMessage?.timestamp || 0));
+           if (sortedConversations.length > 0) {
+               setActiveConversationId(sortedConversations[0].id);
+           }
+        }
     }
+    createOrSetActiveConversation();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recipientId, currentUser, allUsers]);
+  }, [recipientId, currentUser, allUsers, conversations]);
   
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [activeConversationId, conversations]);
   
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!newMessage.trim() || !currentUser || !activeConversationId) return;
 
     const message: Message = {
@@ -78,19 +90,16 @@ function MessagesPageContent() {
       timestamp: Date.now(),
     };
 
-    const updatedConversations = conversations.map(convo => {
-      if (convo.id === activeConversationId) {
-        return {
-          ...convo,
-          messages: [...convo.messages, message],
-          lastMessage: { text: newMessage, timestamp: message.timestamp },
-        };
-      }
-      return convo;
-    });
+    const convoRef = doc(db, 'conversations', activeConversationId);
+    const activeConvo = conversations.find(c => c.id === activeConversationId);
 
-    setConversations(updatedConversations);
-    localStorage.setItem('conversations', JSON.stringify(updatedConversations));
+    if (activeConvo) {
+      const updatedMessages = [...activeConvo.messages, message];
+      const lastMessage = { text: newMessage, timestamp: message.timestamp };
+      
+      await setDoc(convoRef, { messages: updatedMessages, lastMessage }, { merge: true });
+    }
+    
     setNewMessage('');
   };
   

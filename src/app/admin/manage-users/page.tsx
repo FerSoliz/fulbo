@@ -59,6 +59,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import { collection, doc, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 export default function ManageUsersPage() {
   const { user: currentUser, loading: userLoading, allUsers, setAllUsers } = useUser();
@@ -71,42 +73,55 @@ export default function ManageUsersPage() {
     setLoading(false);
   }, [allUsers]);
 
-  const saveUsers = (updatedUsers: User[]) => {
-    setAllUsers(updatedUsers);
-    // Filter out initial users before saving to localStorage
-    const usersToStore = updatedUsers.filter(u => u.id !== 'admin-user' && u.id !== 'editor-user');
-    localStorage.setItem('users', JSON.stringify(usersToStore));
+  const saveUserUpdate = async (updatedUser: User) => {
+    try {
+        const userRef = doc(db, "users", updatedUser.id);
+        await updateDoc(userRef, { ...updatedUser });
+
+        setAllUsers((prev) =>
+          prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+        );
+    } catch (error) {
+        console.error("Error updating user: ", error);
+        toast({ title: "Error", description: "No se pudo actualizar el usuario.", variant: "destructive" });
+    }
   };
 
+
   const handleToggleBlock = (userId: string) => {
-    const updatedUsers = allUsers.map((u) =>
-      u.id === userId ? { ...u, isBlocked: !u.isBlocked } : u
-    );
-    saveUsers(updatedUsers);
+    const userToUpdate = allUsers.find((u) => u.id === userId);
+    if (!userToUpdate) return;
+    const updatedUser = { ...userToUpdate, isBlocked: !userToUpdate.isBlocked };
+    saveUserUpdate(updatedUser);
     toast({
-      title: `Usuario ${allUsers.find(u=>u.id===userId)?.isBlocked ? 'desbloqueado' : 'bloqueado'}`,
+      title: `Usuario ${updatedUser.isBlocked ? 'bloqueado' : 'desbloqueado'}`,
     });
   };
 
   const handleChangeRole = (userId: string, newRole: 'user' | 'editor' | 'admin') => {
-    const updatedUsers = allUsers.map((u) =>
-      u.id === userId ? { ...u, role: newRole } : u
-    );
-    saveUsers(updatedUsers);
+    const userToUpdate = allUsers.find((u) => u.id === userId);
+    if (!userToUpdate) return;
+    const updatedUser = { ...userToUpdate, role: newRole };
+    saveUserUpdate(updatedUser);
     toast({
       title: 'Rol actualizado',
       description: `El usuario ahora tiene el rol de ${newRole}.`,
     });
   };
 
-  const handleDeleteUser = (userId: string) => {
-    const updatedUsers = allUsers.filter((u) => u.id !== userId);
-    saveUsers(updatedUsers);
-     toast({
-      title: 'Usuario Eliminado',
-      description: 'El usuario ha sido eliminado permanentemente.',
-      variant: 'destructive',
-    });
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await deleteDoc(doc(db, "users", userId));
+      setAllUsers((prev) => prev.filter((u) => u.id !== userId));
+      toast({
+        title: 'Usuario Eliminado',
+        description: 'El usuario ha sido eliminado permanentemente.',
+        variant: 'destructive',
+      });
+    } catch (error) {
+       console.error("Error deleting user: ", error);
+       toast({ title: "Error", description: "No se pudo eliminar el usuario.", variant: "destructive" });
+    }
   };
   
   const filteredUsers = allUsers.filter(user => 

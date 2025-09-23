@@ -13,11 +13,12 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { ClipboardList, Star, Save } from 'lucide-react';
 import { Separator } from './ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { collection, doc, getDoc, getDocs, updateDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 interface Player {
   id: string; // DNI
@@ -50,34 +51,43 @@ export function MatchStatsDialog({
   const [stats, setStats] = useState<{ [playerId: string]: { goals: number, yellow: boolean, red: boolean } }>({});
   const [penaltyScore, setPenaltyScore] = useState<{ home: number | null, away: number | null }>({ home: null, away: null });
   
-  const matchId = `${tournamentId}_r${roundIndex}m${matchIndex}`;
+  const matchId = `r${roundIndex}m${matchIndex}`;
 
   useEffect(() => {
-    const getTeamId = (teamName: string) => {
-        const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
-        const index = teamNames.indexOf(teamName);
-        if (index !== -1) {
-            return `team_${tournamentId}_${teamName.replace(/\s+/g, '_') || index}`;
+    const fetchInitialData = async () => {
+        try {
+            // Fetch rosters
+            const teamsSnapshot = await getDocs(collection(db, 'tournaments', tournamentId, 'teams'));
+            const teamsData = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            const homeTeamDoc = teamsData.find(t => t.name === match.home);
+            const awayTeamDoc = teamsData.find(t => t.name === match.away);
+
+            if (homeTeamDoc) {
+                const homeRosterSnap = await getDocs(collection(db, 'tournaments', tournamentId, 'teams', homeTeamDoc.id, 'roster'));
+                setHomeRoster(homeRosterSnap.docs.map(doc => doc.data() as Player));
+            }
+            if (awayTeamDoc) {
+                const awayRosterSnap = await getDocs(collection(db, 'tournaments', tournamentId, 'teams', awayTeamDoc.id, 'roster'));
+                setAwayRoster(awayRosterSnap.docs.map(doc => doc.data() as Player));
+            }
+            
+            // Fetch existing match stats
+            const matchStatsRef = doc(db, 'tournaments', tournamentId, 'matches', matchId);
+            const matchStatsSnap = await getDoc(matchStatsRef);
+            if(matchStatsSnap.exists()){
+                const data = matchStatsSnap.data();
+                setMvp(data.mvp || null);
+                setStats(data.stats || {});
+                setPenaltyScore(data.penaltyScore || { home: null, away: null });
+            }
+
+        } catch (error) {
+            console.error("Error fetching match dialog data: ", error);
         }
-        return null;
-    }
-
-    const homeTeamId = getTeamId(match.home);
-    const awayTeamId = getTeamId(match.away);
+    };
     
-    const homeRosterData: Player[] = homeTeamId ? JSON.parse(localStorage.getItem(`roster_${tournamentId}_${homeTeamId}`) || '[]') : [];
-    const awayRosterData: Player[] = awayTeamId ? JSON.parse(localStorage.getItem(`roster_${tournamentId}_${awayTeamId}`) || '[]') : [];
-    
-    setHomeRoster(homeRosterData);
-    setAwayRoster(awayRosterData);
-
-    const savedStats = JSON.parse(localStorage.getItem(`matchStats_${matchId}`) || '{}');
-    if (savedStats) {
-        setMvp(savedStats.mvp || null);
-        setStats(savedStats.stats || {});
-        setPenaltyScore(savedStats.penaltyScore || { home: null, away: null });
-    }
-
+    fetchInitialData();
   }, [tournamentId, match, matchId]);
 
   const handleStatChange = (playerId: string, stat: 'goals' | 'yellow' | 'red', value: any) => {
@@ -99,17 +109,19 @@ export function MatchStatsDialog({
     setMvp(prev => prev === playerId ? null : playerId);
   }
   
-  const handleSaveStats = () => {
-    const matchStats = {
-      mvp,
-      stats,
-      penaltyScore,
-    };
-    localStorage.setItem(`matchStats_${matchId}`, JSON.stringify(matchStats));
-    toast({
-        title: "¡Estadísticas Guardadas!",
-        description: "Los datos del partido se han guardado correctamente.",
-    })
+  const handleSaveStats = async () => {
+    const matchStatsRef = doc(db, 'tournaments', tournamentId, 'matches', matchId);
+    const dataToSave = { mvp, stats, penaltyScore };
+    try {
+        await setDoc(matchStatsRef, dataToSave, { merge: true });
+        toast({
+            title: "¡Estadísticas Guardadas!",
+            description: "Los datos del partido se han guardado correctamente.",
+        })
+    } catch (error) {
+        console.error("Error saving match stats: ", error);
+        toast({ title: "Error", description: "No se pudieron guardar las estadísticas.", variant: "destructive" });
+    }
   }
 
   const renderPlayerStats = (player: Player | null, index: number, teamType: 'home' | 'away') => {

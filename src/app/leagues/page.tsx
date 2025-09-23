@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Trophy, ShieldQuestion, Star, Crown, ShieldCheck, Shield, Flag } from 'lucide-react';
+import { Trophy, ShieldQuestion, Star, Crown, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Accordion,
@@ -30,6 +30,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { db } from '@/lib/firebase';
+import { collection, doc, getDoc, getDocs } from 'firebase/firestore';
+
 
 interface Tournament {
   id: string;
@@ -95,57 +98,77 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
     const [penalties, setPenalties] = useState<PenaltyPosition[]>([]);
     const [fixtureRounds, setFixtureRounds] = useState<{[key: string]: FixtureMatch[]}>({});
     const [favorites, setFavorites] = useState<string[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const savedPositions = JSON.parse(localStorage.getItem(`positions_${tournament.id}`) || '[]');
-        const savedScorers = JSON.parse(localStorage.getItem(`scorers_${tournament.id}`) || '[]');
-        const savedSanctions = JSON.parse(localStorage.getItem(`sanctions_${tournament.id}`) || '[]');
-        const savedPenalties = JSON.parse(localStorage.getItem(`penalties_${tournament.id}`) || '[]');
-        const savedFixture = JSON.parse(localStorage.getItem(`fixture_${tournament.id}`) || '[]');
-        const savedResults = JSON.parse(localStorage.getItem(`results_${tournament.id}`) || '{}');
-        const savedDetails = JSON.parse(localStorage.getItem(`details_${tournament.id}`) || '{}');
-        const savedFinishedMatches = new Set(JSON.parse(localStorage.getItem(`finished_matches_${tournament.id}`) || '[]'));
-
-        const fullFixture: FixtureMatch[] = savedFixture.flatMap((round: any[], roundIndex: number) => 
-            round.map((match: any, matchIndex: number) => {
-                const matchId = `r${roundIndex}m${matchIndex}`;
-                const result = savedResults[matchId];
-                const details = savedDetails[matchId];
-                const isFinished = savedFinishedMatches.has(matchId);
-                
-                const date = new Date(details?.date);
-                const formattedDate = !isNaN(date.getTime()) 
-                    ? date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
-                    : '-';
-                
-                return {
-                    round: roundIndex + 1,
-                    home: match.home,
-                    away: match.away,
-                    score: isFinished ? `${result?.home ?? 0} - ${result?.away ?? 0}` : 'vs',
-                    finished: isFinished,
-                    date: formattedDate,
-                    time: details?.time || '-',
-                    referee: details?.referee || '-',
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                // Load stats
+                const statsRef = doc(db, 'tournaments', tournament.id, 'statistics', 'allStats');
+                const statsSnap = await getDoc(statsRef);
+                if(statsSnap.exists()){
+                    const data = statsSnap.data();
+                    setPositions(data.positions || []);
+                    setScorers(data.scorers || []);
+                    setSanctions(data.sanctions || []);
+                    setPenalties(data.penalties || []);
                 }
-            })
-        );
-        
-        const rounds = fullFixture.reduce((acc, match) => {
-            const roundKey = `FECHA ${match.round}`;
-            if (!acc[roundKey]) {
-                acc[roundKey] = [];
+                
+                // Load fixture
+                const fixtureRef = doc(db, 'tournaments', tournament.id, 'data', 'fixture');
+                const fixtureSnap = await getDoc(fixtureRef);
+                if(fixtureSnap.exists()){
+                    const fixtureData = fixtureSnap.data();
+                    const savedFixture = fixtureData.rounds || [];
+                    const savedResults = fixtureData.results || {};
+                    const savedDetails = fixtureData.details || {};
+                    const savedFinishedMatches = new Set(fixtureData.finishedMatches || []);
+
+                    const fullFixture: FixtureMatch[] = savedFixture.flatMap((round: any[], roundIndex: number) => 
+                        round.map((match: any, matchIndex: number) => {
+                            const matchId = `r${roundIndex}m${matchIndex}`;
+                            const result = savedResults[matchId];
+                            const details = savedDetails[matchId];
+                            const isFinished = savedFinishedMatches.has(matchId);
+                            
+                            const date = new Date(details?.date);
+                            const formattedDate = !isNaN(date.getTime()) 
+                                ? date.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
+                                : '-';
+                            
+                            return {
+                                round: roundIndex + 1,
+                                home: match.home,
+                                away: match.away,
+                                score: isFinished ? `${result?.home ?? 0} - ${result?.away ?? 0}` : 'vs',
+                                finished: isFinished,
+                                date: formattedDate,
+                                time: details?.time || '-',
+                                referee: details?.referee || '-',
+                            }
+                        })
+                    );
+                    
+                    const rounds = fullFixture.reduce((acc, match) => {
+                        const roundKey = `FECHA ${match.round}`;
+                        if (!acc[roundKey]) {
+                            acc[roundKey] = [];
+                        }
+                        acc[roundKey].push(match);
+                        return acc;
+                    }, {} as {[key: string]: FixtureMatch[]});
+
+                    setFixtureRounds(rounds);
+                }
+            } catch (error) {
+                console.error("Error loading tournament data for card:", error);
+            } finally {
+                setLoading(false);
             }
-            acc[roundKey].push(match);
-            return acc;
-        }, {} as {[key: string]: FixtureMatch[]});
+        };
 
-        setFixtureRounds(rounds);
-        setPositions(savedPositions);
-        setScorers(savedScorers);
-        setSanctions(savedSanctions);
-        setPenalties(savedPenalties);
-
+        loadData();
         const savedFavorites = JSON.parse(localStorage.getItem('favorite_tournaments') || '[]');
         setFavorites(savedFavorites);
     }, [tournament.id]);
@@ -370,11 +393,19 @@ export default function LeaguesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const savedTournaments = JSON.parse(
-      localStorage.getItem('tournaments') || '[]'
-    );
-    setTournaments(savedTournaments);
-    setLoading(false);
+    const fetchTournaments = async () => {
+        setLoading(true);
+        try {
+            const querySnapshot = await getDocs(collection(db, 'tournaments'));
+            const tournamentsData = querySnapshot.docs.map(doc => doc.data() as Tournament);
+            setTournaments(tournamentsData);
+        } catch (error) {
+            console.error("Error fetching tournaments: ", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchTournaments();
   }, []);
 
 

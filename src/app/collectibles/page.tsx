@@ -1,11 +1,11 @@
 
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
 import { CollectibleCard } from '@/components/collectible-card';
 import { CardPack } from '@/components/card-pack';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Dices, Shield, Swords, Zap, PackageOpen, Layers, Users, ChevronRight, ArrowLeftRight } from 'lucide-react';
+import { ArrowLeft, Dices, Shield, Swords, PackageOpen, Layers, Users, ChevronRight, ArrowLeftRight } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
@@ -16,7 +16,8 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-context';
-
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 type View = 'menu' | 'pack' | 'formation' | 'vs_match';
 
@@ -47,59 +48,65 @@ export default function CollectibleCardsPage() {
   const [isClient, setIsClient] = useState(false);
   const { user, availablePacks, setAvailablePacks, nextPackTimestamp, setNextPackTimestamp, countdown, trackPackOpening } = useUser();
 
-
   useEffect(() => {
     setIsClient(true);
-    if (user && user.id !== 'visitor') {
-      const savedCollection = localStorage.getItem(`userCardCollection_${user.id}`);
-      const savedTeam = localStorage.getItem(`userCardTeam_${user.id}`);
+    const fetchUserData = async () => {
+        if (user && user.id !== 'visitor') {
+            const collectionRef = doc(db, 'users', user.id, 'data', 'collectibles');
+            const collectionSnap = await getDoc(collectionRef);
+            if (collectionSnap.exists()) {
+                const collectionIds = collectionSnap.data().cardIds as number[];
+                setUserCollection(allCards.filter(c => collectionIds.includes(c.id)));
+            }
 
-      setUserCollection(savedCollection ? JSON.parse(savedCollection) : []);
-      setUserTeam(savedTeam ? JSON.parse(savedTeam) : initialTeam);
-
-    } else {
-        setUserCollection([]);
-        setUserTeam(initialTeam);
-    }
+            const teamRef = doc(db, 'users', user.id, 'data', 'team');
+            const teamSnap = await getDoc(teamRef);
+            if (teamSnap.exists()) {
+                setUserTeam(teamSnap.data() as typeof initialTeam);
+            }
+        } else {
+            setUserCollection([]);
+            setUserTeam(initialTeam);
+        }
+    };
+    fetchUserData();
   }, [user]);
 
-  const saveCollection = (collection: CardType[]) => {
+  const saveCollection = async (collection: CardType[]) => {
     if (!user || user.id === 'visitor') return;
     setUserCollection(collection);
-    localStorage.setItem(`userCardCollection_${user.id}`, JSON.stringify(collection));
+    const collectionRef = doc(db, 'users', user.id, 'data', 'collectibles');
+    const cardIds = collection.map(c => c.id);
+    await setDoc(collectionRef, { cardIds }, { merge: true });
   };
 
-  const saveTeam = (team: typeof initialTeam) => {
+  const saveTeam = async (team: typeof initialTeam) => {
     if (!user || user.id === 'visitor') return;
     setUserTeam(team);
-    localStorage.setItem(`userCardTeam_${user.id}`, JSON.stringify(team));
+    const teamRef = doc(db, 'users', user.id, 'data', 'team');
+    await setDoc(teamRef, team, { merge: true });
   }
   
   const getCardByProbability = (): CardType => {
     const rand = Math.random() * 100;
-    // 70% chance for common (IDs 1-11)
     if (rand < 70) { 
         const commonCards = allCards.filter(c => c.id >= 1 && c.id <= 11);
         return commonCards[Math.floor(Math.random() * commonCards.length)];
     } 
-    // 24% chance for rare (IDs 12-16)
     else if (rand < 94) {
         const rareCards = allCards.filter(c => c.id >= 12 && c.id <= 16);
         return rareCards[Math.floor(Math.random() * rareCards.length)];
     } 
-    // 5% chance for epic/legendary (IDs 17,18,19)
     else if (rand < 99) { 
         const epicCards = allCards.filter(c => c.id === 17 || c.id === 18 || c.id === 19);
         return epicCards[Math.floor(Math.random() * epicCards.length)];
     } 
-    // 1% chance for mundial (ID 20)
     else { 
         return allCards.find(c => c.id === 20)!;
     }
   }
 
-
-  const handleOpenPack = () => {
+  const handleOpenPack = async () => {
     if (user?.id === 'visitor' || availablePacks <= 0) return;
     
     const newCards: CardType[] = [];
@@ -116,8 +123,8 @@ export default function CollectibleCardsPage() {
       }
     });
     
-    saveCollection(updatedCollection);
-    trackPackOpening(); // Track the opened pack
+    await saveCollection(updatedCollection);
+    trackPackOpening();
 
     const newPackCount = availablePacks - 1;
     setAvailablePacks(newPackCount);
@@ -140,27 +147,25 @@ export default function CollectibleCardsPage() {
     let newUserTeam = { ...userTeam };
     let newCollection = [...userCollection];
 
-    // Mover desde la colección a la formación
     if (sourceListId === 'collectionDroppable') {
       const draggedCard = newCollection[source.index];
       
       if (destListId.startsWith('starter-')) {
         const starterIndex = parseInt(destListId.split('-')[1]);
-        if(newUserTeam.formation.starters[starterIndex]) { // si ya hay una carta, la devolvemos a la coleccion
+        if(newUserTeam.formation.starters[starterIndex]) { 
             newCollection.push(newUserTeam.formation.starters[starterIndex]!);
         }
         newUserTeam.formation.starters[starterIndex] = draggedCard;
         newCollection.splice(source.index, 1);
       } else if (destListId.startsWith('sub-')) {
         const subIndex = parseInt(destListId.split('-')[1]);
-         if(newUserTeam.formation.subs[subIndex]) { // si ya hay una carta, la devolvemos a la coleccion
+         if(newUserTeam.formation.subs[subIndex]) { 
             newCollection.push(newUserTeam.formation.subs[subIndex]!);
         }
         newUserTeam.formation.subs[subIndex] = draggedCard;
         newCollection.splice(source.index, 1);
       }
     } 
-    // Mover desde la formación a la colección
     else if (destination.droppableId === 'collectionDroppable') {
         let cardToReturn: CardType | null = null;
         if(sourceListId.startsWith('starter-')) {
@@ -176,7 +181,6 @@ export default function CollectibleCardsPage() {
             newCollection.splice(destination.index, 0, cardToReturn);
         }
     }
-    // Mover dentro de la formación
     else {
         let sourceCard: CardType | null = null;
         if (source.droppableId.startsWith('starter-')) {
@@ -192,7 +196,6 @@ export default function CollectibleCardsPage() {
             destCard = newUserTeam.formation.subs[parseInt(destination.droppableId.split('-')[1])];
         }
 
-        // Swap cards
         if (source.droppableId.startsWith('starter-')) {
             newUserTeam.formation.starters[parseInt(source.droppableId.split('-')[1])] = destCard;
         } else if (source.droppableId.startsWith('sub-')) {
@@ -337,11 +340,10 @@ const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: V
   const handleOpenPackAnimation = () => {
     if (cards.length > 0 && !isOpening) {
       setIsOpening(true);
-      // Wait for pack animation to finish before hiding it and showing the card
       setTimeout(() => {
         setPackVisible(false);
-        setRevealedCardIndex(0); // Reveal the first card
-      }, 800); // Duration of the pack exit animation
+        setRevealedCardIndex(0); 
+      }, 800); 
     }
   };
 
@@ -349,13 +351,11 @@ const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: V
     if (revealedCardIndex < cards.length - 1) {
       setRevealedCardIndex(prev => prev + 1);
     } else {
-      // Last card clicked, go back to menu or collection
       router.push('/collectibles/collection');
     }
   };
   
   useEffect(() => {
-    // If the view is 'pack' but the pack is empty, go back to menu.
     if (cards.length === 0) {
         setView('menu');
         return;
@@ -535,54 +535,49 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
     const userAvgRating = calculateTeamRating(userTeam.formation.starters, userStamina);
     const botAvgRating = calculateTeamRating(botTeam.formation.starters, botStamina);
 
-    const runSimulation = useCallback(() => {
-        if(time >= 90) {
-            setIsFinished(true);
-            return;
-        }
-
-        // Reduce stamina
-        setUserStamina(stamina => stamina.map(s => Math.max(0, s - 0.5)));
-        setBotStamina(stamina => stamina.map(s => Math.max(0, s - 0.5)));
-
-        // User team goal chance
-        let userGoalProb = userAvgRating / 1000;
-        if(strategy === 'ofensiva') userGoalProb *= 1.5;
-        if(strategy === 'defensiva') userGoalProb *= 0.5;
-
-        if (Math.random() < userGoalProb) {
-            const scorer = userTeam.formation.starters.filter(p => p)[Math.floor(Math.random() * userTeam.formation.starters.filter(p => p).length)]!;
-            setScore(s => ({ ...s, user: s.user + 1 }));
-            setEvents(e => [...e, { minute: time, text: `¡GOL de ${scorer.name}!`, team: 'user' }]);
-        }
-
-        // Bot team goal chance
-        let botGoalProb = botAvgRating / 1000;
-        if(strategy === 'ofensiva') botGoalProb *= 1.2; // Higher risk
-        
-        if (Math.random() < botGoalProb) {
-            const scorer = botTeam.formation.starters.filter(p => p)[Math.floor(Math.random() * botTeam.formation.starters.filter(p => p).length)]!;
-            setScore(s => ({ ...s, bot: s.bot + 1 }));
-            setEvents(e => [...e, { minute: time, text: `Gol de ${scorer.name}`, team: 'bot' }]);
-        }
-        
-        // Card event
-        if(Math.random() < 0.02) {
-             const teamToCard = Math.random() > 0.5 ? 'user' : 'bot';
-             const lineup = teamToCard === 'user' ? userTeam.formation.starters : botTeam.formation.starters;
-             const playerToCard = lineup.filter(p => p)[Math.floor(Math.random() * lineup.filter(p => p).length)]!;
-             const cardType = Math.random() > (playerToCard.stats.def / 120) ? 'Roja' : 'Amarilla';
-             setEvents(e => [...e, { minute: time, text: `Tarjeta ${cardType} para ${playerToCard.name}`, team: teamToCard }]);
-        }
-
-
-        setTime(t => t + 1);
-    }, [time, userAvgRating, botAvgRating, strategy, userTeam, botTeam]);
-    
     useEffect(() => {
+        const runSimulation = () => {
+            if(time >= 90) {
+                setIsFinished(true);
+                return;
+            }
+
+            setUserStamina(stamina => stamina.map(s => Math.max(0, s - 0.5)));
+            setBotStamina(stamina => stamina.map(s => Math.max(0, s - 0.5)));
+
+            let userGoalProb = userAvgRating / 1000;
+            if(strategy === 'ofensiva') userGoalProb *= 1.5;
+            if(strategy === 'defensiva') userGoalProb *= 0.5;
+
+            if (Math.random() < userGoalProb) {
+                const scorer = userTeam.formation.starters.filter(p => p)[Math.floor(Math.random() * userTeam.formation.starters.filter(p => p).length)]!;
+                setScore(s => ({ ...s, user: s.user + 1 }));
+                setEvents(e => [...e, { minute: time, text: `¡GOL de ${scorer.name}!`, team: 'user' }]);
+            }
+
+            let botGoalProb = botAvgRating / 1000;
+            if(strategy === 'ofensiva') botGoalProb *= 1.2; 
+            
+            if (Math.random() < botGoalProb) {
+                const scorer = botTeam.formation.starters.filter(p => p)[Math.floor(Math.random() * botTeam.formation.starters.filter(p => p).length)]!;
+                setScore(s => ({ ...s, bot: s.bot + 1 }));
+                setEvents(e => [...e, { minute: time, text: `Gol de ${scorer.name}`, team: 'bot' }]);
+            }
+            
+            if(Math.random() < 0.02) {
+                 const teamToCard = Math.random() > 0.5 ? 'user' : 'bot';
+                 const lineup = teamToCard === 'user' ? userTeam.formation.starters : botTeam.formation.starters;
+                 const playerToCard = lineup.filter(p => p)[Math.floor(Math.random() * lineup.filter(p => p).length)]!;
+                 const cardType = Math.random() > (playerToCard.stats.def / 120) ? 'Roja' : 'Amarilla';
+                 setEvents(e => [...e, { minute: time, text: `Tarjeta ${cardType} para ${playerToCard.name}`, team: teamToCard }]);
+            }
+
+            setTime(t => t + 1);
+        };
+
         const gameInterval = setInterval(runSimulation, 500);
         return () => clearInterval(gameInterval);
-    }, [runSimulation]);
+    }, [time, userAvgRating, botAvgRating, strategy, userTeam, botTeam]);
 
     const finalResult = isFinished ? (score.user > score.bot ? 'Victoria' : score.user < score.bot ? 'Derrota' : 'Empate') : null;
     
@@ -655,5 +650,3 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
-
-    
