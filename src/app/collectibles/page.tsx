@@ -43,17 +43,29 @@ export default function CollectibleCardsPage() {
   const [lastOpenedPack, setLastOpenedPack] = useState<CardType[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { user } = useUser();
+  const [availablePacks, setAvailablePacks] = useState(0);
+  const [countdown, setCountdown] = useState(0);
+
 
   useEffect(() => {
     setIsClient(true);
     if (user && user.id !== 'visitor') {
       const savedCollection = localStorage.getItem(`userCardCollection_${user.id}`);
       const savedTeam = localStorage.getItem(`userCardTeam_${user.id}`);
+      const savedPacks = localStorage.getItem(`userCardPacks_${user.id}`);
+      const savedTimestamp = localStorage.getItem(`userCardTimestamp_${user.id}`);
+
 
       if (savedCollection) {
         setUserCollection(JSON.parse(savedCollection));
       } else {
         setUserCollection([]); // Start with 0 cards
+      }
+      
+      if (savedPacks) {
+        setAvailablePacks(JSON.parse(savedPacks));
+      } else {
+        setAvailablePacks(1); // Start with 1 free pack
       }
 
       if (savedTeam) {
@@ -76,18 +88,44 @@ export default function CollectibleCardsPage() {
     setUserTeam(team);
     localStorage.setItem(`userCardTeam_${user.id}`, JSON.stringify(team));
   }
+  
+  const getCardByProbability = (): CardType => {
+    const rand = Math.random() * 100;
+    if (rand <= 70) { // 70% chance for common
+        const commonCards = allCards.filter(c => c.id >= 1 && c.id <= 11);
+        return commonCards[Math.floor(Math.random() * commonCards.length)];
+    } else if (rand <= 94) { // 24% chance for rare (70 + 24)
+        const rareCards = allCards.filter(c => c.id >= 12 && c.id <= 16);
+        return rareCards[Math.floor(Math.random() * rareCards.length)];
+    } else if (rand <= 99) { // 5% chance for epic/legendary
+        const epicCards = allCards.filter(c => c.id >= 17 && c.id <= 19);
+        return epicCards[Math.floor(Math.random() * epicCards.length)];
+    } else { // 1% chance for mundial
+        return allCards.find(c => c.id === 20)!;
+    }
+  }
+
 
   const handleOpenPack = () => {
-    if (user?.name === 'VISITANTE') return;
-    const newCards = allCards.sort(() => 0.5 - Math.random()).slice(0, 3);
+    if (user?.name === 'VISITANTE' || availablePacks <= 0) return;
+    
+    const newCards: CardType[] = [];
+    for (let i = 0; i < 3; i++) {
+        newCards.push(getCardByProbability());
+    }
+    
     setLastOpenedPack(newCards);
+    
     const updatedCollection = [...userCollection];
     newCards.forEach(newCard => {
       if (!updatedCollection.some(card => card.id === newCard.id)) {
         updatedCollection.push(newCard);
       }
     });
+    
     saveCollection(updatedCollection);
+    setAvailablePacks(prev => prev - 1);
+    // TODO: Save availablePacks to localStorage
     setView('pack');
   };
 
@@ -179,7 +217,7 @@ export default function CollectibleCardsPage() {
   const renderView = () => {
     switch (view) {
       case 'menu':
-        return <MainMenu onOpenPack={handleOpenPack} setView={setView} user={user} />;
+        return <MainMenu onOpenPack={handleOpenPack} setView={setView} user={user} availablePacks={availablePacks}/>;
       case 'pack':
         return <PackOpeningView cards={lastOpenedPack} setView={setView} />;
       case 'formation':
@@ -210,8 +248,10 @@ export default function CollectibleCardsPage() {
   );
 }
 
-const MainMenu = ({ onOpenPack, setView, user }: { onOpenPack: () => void, setView: (v: View) => void, user: any }) => {
+const MainMenu = ({ onOpenPack, setView, user, availablePacks }: { onOpenPack: () => void, setView: (v: View) => void, user: any, availablePacks: number }) => {
     const isVisitor = user?.name === 'VISITANTE';
+    const hasFreePack = availablePacks > 0;
+
     return (
     <Card className="w-full max-w-lg bg-card/70">
       <div className="grid grid-cols-1 md:grid-cols-3">
@@ -231,11 +271,15 @@ const MainMenu = ({ onOpenPack, setView, user }: { onOpenPack: () => void, setVi
             <div className="space-y-4">
               <div>
                 <Button
-                     className={cn("w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full", isVisitor && "opacity-60 cursor-not-allowed")}
+                     className={cn("w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full", (isVisitor || !hasFreePack) && "opacity-60 cursor-not-allowed")}
                      onClick={onOpenPack}
-                     disabled={isVisitor}
+                     disabled={isVisitor || !hasFreePack}
                 >
-                  <div className="flex items-center gap-3"><PackageOpen className="w-5 h-5" /><span>ABRIR SOBRE</span></div>
+                  <div className="relative flex items-center gap-3">
+                    {hasFreePack && <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>}
+                    <PackageOpen className="w-5 h-5" />
+                    <span>ABRIR SOBRE ({availablePacks})</span>
+                  </div>
                   <ChevronRight className="w-5 h-5" />
                 </Button>
               </div>
