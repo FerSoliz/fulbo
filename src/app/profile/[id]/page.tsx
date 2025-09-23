@@ -675,7 +675,7 @@ export default function ProfilePage() {
                   <Progress value={sudpoints} className="h-2 my-1" />
                   <div className="flex justify-between">
                     <p className="text-xs text-muted-foreground mt-1">
-                      Siguiente división en 100 SP
+                      Siguiente división en
                     </p>
                     <p className="text-sm font-semibold">
                       {sudpoints} / 100 SP
