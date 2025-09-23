@@ -15,7 +15,9 @@ export function useUpload() {
     setIsUploading(true);
     setProgress(0);
     return new Promise((resolve, reject) => {
-      const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
+      // FIX: Sanitize the file name to prevent issues with special characters.
+      const sanitizedFileName = file.name.replace(/[/\\?%*:|"<>]/g, '_');
+      const storageRef = ref(storage, `${path}/${Date.now()}_${sanitizedFileName}`);
       const uploadTask = uploadBytesResumable(storageRef, file);
 
       uploadTask.on(
@@ -55,7 +57,9 @@ export function useUpload() {
       
       const uploadPromises = files.map((file, index) => 
         new Promise<string | null>((resolve, reject) => {
-          const storageRef = ref(storage, `${path}/${Date.now()}_${file.name}`);
+          // FIX: Sanitize the file name to prevent issues with special characters.
+          const sanitizedFileName = file.name.replace(/[/\\?%*:|"<>]/g, '_');
+          const storageRef = ref(storage, `${path}/${Date.now()}_${sanitizedFileName}`);
           const uploadTask = uploadBytesResumable(storageRef, file);
 
           uploadTask.on(
