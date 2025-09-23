@@ -14,12 +14,13 @@ export function useUpload() {
   const uploadFile = async (file: File, path: string): Promise<string> => {
     setIsUploading(true);
     setProgress(0);
-    return new Promise((resolve, reject) => {
-      // FIX: Sanitize the file name to prevent issues with special characters.
-      const sanitizedFileName = file.name.replace(/[/\\?%*:|"<>]/g, '_');
-      const storageRef = ref(storage, `${path}/${Date.now()}_${sanitizedFileName}`);
-      const uploadTask = uploadBytesResumable(storageRef, file);
+    
+    // Sanitize the file name to prevent issues with special characters.
+    const sanitizedFileName = file.name.replace(/[/\\?%*:|"<>]/g, '_');
+    const storageRef = ref(storage, `${path}/${Date.now()}_${sanitizedFileName}`);
+    const uploadTask = uploadBytesResumable(storageRef, file);
 
+    return new Promise((resolve, reject) => {
       uploadTask.on(
         'state_changed',
         (snapshot) => {
@@ -36,16 +37,15 @@ export function useUpload() {
           setIsUploading(false);
           reject(error);
         },
-        async () => {
-          try {
-            const url = await getDownloadURL(uploadTask.snapshot.ref);
+        () => {
+          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
             setIsUploading(false);
-            resolve(url);
-          } catch (e: any) {
-            console.error("URL fetch error:", e);
-            setIsUploading(false);
-            reject(e);
-          }
+            resolve(downloadURL);
+          }).catch((error) => {
+             console.error("URL fetch error:", error);
+             setIsUploading(false);
+             reject(error);
+          });
         }
       );
     });
@@ -57,7 +57,6 @@ export function useUpload() {
       
       const uploadPromises = files.map((file, index) => 
         new Promise<string | null>((resolve, reject) => {
-          // FIX: Sanitize the file name to prevent issues with special characters.
           const sanitizedFileName = file.name.replace(/[/\\?%*:|"<>]/g, '_');
           const storageRef = ref(storage, `${path}/${Date.now()}_${sanitizedFileName}`);
           const uploadTask = uploadBytesResumable(storageRef, file);
@@ -72,14 +71,13 @@ export function useUpload() {
               console.error(`Error subiendo ${file.name}:`, error);
               resolve(null); // Resolve with null on error for individual file
             },
-            async () => {
-              try {
-                const url = await getDownloadURL(uploadTask.snapshot.ref);
-                resolve(url);
-              } catch (e) {
-                console.error(`Error obteniendo URL for ${file.name}:`, e);
-                resolve(null);
-              }
+            () => {
+              getDownloadURL(uploadTask.snapshot.ref).then(downloadURL => {
+                  resolve(downloadURL);
+              }).catch(error => {
+                  console.error(`Error obteniendo URL for ${file.name}:`, error);
+                  resolve(null);
+              });
             }
           );
         })
@@ -103,7 +101,7 @@ export function useUpload() {
         }
         return successfulUrls;
 
-      } catch (error) { // This catch might not be necessary with the current promise setup
+      } catch (error) { 
         toast({
           title: 'Error de Subida Múltiple',
           description: 'Ocurrió un error inesperado durante la subida.',

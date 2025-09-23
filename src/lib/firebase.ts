@@ -25,7 +25,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyDrZo9X6NNtazx4J9kS9L5D1NUswQTQ0SM",
   authDomain: "studio-1084069868-b52ab.firebaseapp.com",
   projectId: "studio-1084069868-b52ab",
-  storageBucket: "gs://studio-1084069868-b52ab.appspot.com",
+  storageBucket: "studio-1084069868-b52ab.appspot.com",
   messagingSenderId: "243075375047",
   appId: "1:243075375047:web:eddc9c9e86681afe82c3e2"
 };
@@ -33,8 +33,8 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
-const storage = getStorage(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 // Check if the config is just placeholder values
 const isMockConfig = firebaseConfig.apiKey.startsWith("AIza");
