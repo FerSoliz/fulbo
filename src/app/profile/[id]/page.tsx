@@ -188,6 +188,7 @@ const BackgroundChangerDialog = ({
   const backgrounds = [
     'https://i.postimg.cc/1RfWNTCC/lusail.png',
     'https://i.postimg.cc/L4wxkTGH/monumental.png',
+    'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png'
   ];
 
   const handleSelect = (url: string) => {
@@ -362,7 +363,7 @@ export default function ProfilePage() {
   return (
      <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
       <Card>
-        <div className="relative w-full aspect-[3/1] md:aspect-[16/9]">
+        <div className="relative w-full aspect-[4/1]">
           {profileBackground && (
             <Image
               src={profileBackground}
@@ -377,6 +378,7 @@ export default function ProfilePage() {
           <div className="absolute top-4 right-4 z-10 flex gap-2">
             {profileUser.id === 'admin-user' && (
                 <div className="w-16 h-16">
+                   <Image src="https://i.postimg.cc/50jZytQp/escudito-de-boca.png" alt="Escudo AFA" width={64} height={64} />
                 </div>
             )}
             {currentUser && !isOwnProfile && (
