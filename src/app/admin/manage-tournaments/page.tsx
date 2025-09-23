@@ -41,6 +41,7 @@ interface Tournament {
   type: string;
   format: string;
   teamCount: number;
+  groupCount?: number;
 }
 
 export default function ManageTournamentsPage() {
@@ -192,6 +193,7 @@ export default function ManageTournamentsPage() {
                       )}
                       <CardDescription>
                         {tournament.type} - {tournament.format}
+                        {tournament.groupCount && ` - ${tournament.groupCount} Grupos`}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-grow">

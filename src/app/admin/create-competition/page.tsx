@@ -48,6 +48,7 @@ export default function CreateCompetitionPage() {
   const [teamNames, setTeamNames] = useState<string[]>(
     Array(8).fill('')
   );
+  const [groupCount, setGroupCount] = useState(2);
 
   const handleTeamCountChange = (value: number) => {
     const newCount = Math.max(0, Math.min(20, value));
@@ -75,6 +76,7 @@ export default function CreateCompetitionPage() {
       teamCount: teamCount,
       autoFixture: autoFixture,
       status: 'pending', 
+      ...(competitionFormat === 'grupos-y-playoffs' && { groupCount }),
     };
 
     const existingTournaments = JSON.parse(
@@ -174,6 +176,26 @@ export default function CreateCompetitionPage() {
                   <Label htmlFor="format-4">Liga Doble Rueda</Label>
                 </div>
               </RadioGroup>
+               {competitionFormat === 'grupos-y-playoffs' && (
+                <div className="pl-6 pt-2">
+                    <Label htmlFor="group-count">Cantidad de Grupos</Label>
+                     <Select
+                        value={String(groupCount)}
+                        onValueChange={(value) => setGroupCount(Number(value))}
+                    >
+                        <SelectTrigger id="group-count" className="w-[180px]">
+                            <SelectValue placeholder="Seleccionar grupos" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {Array.from({ length: 16 }, (_, i) => i + 1).map(num => (
+                                <SelectItem key={num} value={String(num)}>
+                                    {num} {num === 1 ? 'Grupo' : 'Grupos'}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+               )}
             </div>
 
             <div className="flex items-center justify-between p-4 border rounded-lg">
