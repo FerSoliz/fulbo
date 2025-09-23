@@ -383,7 +383,7 @@ export default function ProfilePage() {
   const currentCrest = profileBackground ? crestMap[profileBackground] : null;
 
   return (
-     <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+     <div className="max-w-4xl mx-auto space-y-0 p-4 sm:p-6 lg:p-8">
       <Card>
         <div className="relative w-full aspect-[4/1]">
           {profileBackground && (
@@ -502,7 +502,7 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
       
-      <Card>
+      <Card className="relative z-10 -mt-12">
         <CardContent className="p-4 relative min-h-[140px]">
              <AnimatePresence mode="wait">
                 {view === 'buttons' && (
@@ -538,7 +538,7 @@ export default function ProfilePage() {
                      >
                         <Button variant="ghost" size="sm" onClick={() => setView('buttons')} className="absolute -top-2 left-0 text-muted-foreground"><ArrowLeft className="mr-1 h-4 w-4"/> Volver</Button>
                         <h3 className="text-center font-bold text-lg pt-4">HISTORIAL DE PARTIDOS</h3>
-                        <div className="space-y-2 px-2">
+                         <div className="space-y-2 px-2">
                            {mockMatchHistory.map((match, index) => (
                                 <React.Fragment key={match.id}>
                                     <div className="flex justify-between items-center text-sm py-1">
