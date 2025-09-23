@@ -283,7 +283,7 @@ export default function ProfilePage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [view, setView] = useState<'buttons' | 'history' | 'stats' | 'next_match'>('buttons');
+  const [view, setView] = useState<'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass'>('buttons');
 
   useEffect(() => {
     const targetUser = allUsers.find((u) => u.id === userId);
@@ -382,6 +382,8 @@ export default function ProfilePage() {
     avatar,
     dni,
     profileBackground,
+    sudonepassLevel = 1,
+    sudonepassExp = 0,
   } = profileUser;
 
   const finalStats =
@@ -396,6 +398,9 @@ export default function ProfilePage() {
       : '0.00';
 
   const currentCrest = profileBackground ? crestMap[profileBackground] : null;
+  const expToNextLevel = 100; // Placeholder
+  const passProgress = (sudonepassExp / expToNextLevel) * 100;
+
 
   const OverlayView = ({ children }: { children: React.ReactNode }) => (
     <motion.div
@@ -549,7 +554,7 @@ export default function ProfilePage() {
                   <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}>
                       <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} className="rounded-lg w-full h-auto" />
                   </button>
-                  <button className="transition-transform hover:scale-105">
+                  <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}>
                       <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
                   </button>
               </div>
@@ -655,6 +660,7 @@ export default function ProfilePage() {
               </CardFooter>
           </OverlayView>
         )}
+
         {view === 'next_match' && (
           <OverlayView>
             <CardHeader>
@@ -696,6 +702,58 @@ export default function ProfilePage() {
                 </Button>
             </CardFooter>
           </OverlayView>
+        )}
+
+        {view === 'sudone_pass' && (
+            <OverlayView>
+                <CardHeader>
+                    <CardTitle className="text-center text-2xl">SUDONE PASS</CardTitle>
+                    <div className="pt-4">
+                        <div className="flex justify-between items-end mb-1">
+                            <span className="font-bold text-lg">NIVEL {sudonepassLevel}</span>
+                             <span className="text-sm text-muted-foreground">{sudonepassExp} / {expToNextLevel} EXP</span>
+                        </div>
+                        <Progress value={passProgress} />
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                    {Array.from({ length: 10 }).map((_, index) => {
+                        const level = index + 1;
+                        const isUnlocked = level <= sudonepassLevel;
+                        return (
+                            <div key={level} className={cn("flex items-center justify-between p-3 rounded-lg", isUnlocked ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
+                                <div className="flex items-center gap-4">
+                                     <div className="flex flex-col items-center justify-center w-12">
+                                        <span className="text-xs text-muted-foreground">NIVEL</span>
+                                        <span className="text-xl font-bold">{level}</span>
+                                     </div>
+                                     <div className="relative">
+                                         <Image 
+                                            src="https://i.postimg.cc/qM6GyVNg/sobre-base-campeones-de-qatar.png"
+                                            alt="Recompensa sobre de cartas"
+                                            width={80}
+                                            height={100}
+                                            className={cn("object-contain transition-opacity", !isUnlocked && "opacity-30")}
+                                        />
+                                        {!isUnlocked && <Lock className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-white"/>}
+                                     </div>
+                                     <div className="font-semibold">
+                                         Sobre de Cartas
+                                     </div>
+                                </div>
+                                <Button size="sm" disabled={!isUnlocked} variant={isUnlocked ? "default" : "outline"}>
+                                    {isUnlocked ? "Reclamado" : "Bloqueado"}
+                                </Button>
+                            </div>
+                        )
+                    })}
+                </CardContent>
+                <CardFooter>
+                    <Button variant="ghost" onClick={() => setView('buttons')} className="w-full">
+                        Volver
+                    </Button>
+                </CardFooter>
+            </OverlayView>
         )}
       </AnimatePresence>
     </>
