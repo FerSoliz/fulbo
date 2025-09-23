@@ -160,7 +160,7 @@ export const initialUsers: User[] = [
     league: 'Diamante',
     division: 1,
     dni: '12345678',
-    profileBackground: 'https://i.postimg.cc/L4wxkTGH/monumental.png',
+    profileBackground: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png',
     sudonepassLevel: 15,
     sudonepassExp: 45,
     stats: { partidosJugados: 100, victorias: 80, empates: 10, derrotas: 10, goles: 150, asistencias: 50, amarillas: 2, rojas: 0, mvps: 40 },

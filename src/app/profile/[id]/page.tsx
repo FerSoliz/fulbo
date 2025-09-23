@@ -89,12 +89,6 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
-const availableBackgrounds = [
-    { name: 'Default', url: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png' },
-    { name: 'Lusail Stadium', url: 'https://i.postimg.cc/1RfWNTCC/lusail.png' },
-    { name: 'Estadio Monumental', url: 'https://i.postimg.cc/L4wxkTGH/monumental.png' }
-];
-
 const EditProfileDialog = ({
   user,
   onSave,
@@ -182,6 +176,64 @@ const EditProfileDialog = ({
   );
 };
 
+const BackgroundChangerDialog = ({
+  user,
+  onSave,
+  children,
+}: {
+  user: User;
+  onSave: (updatedUser: User) => void;
+  children: React.ReactNode;
+}) => {
+  const backgrounds = [
+    'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png',
+    'https://i.postimg.cc/1RfWNTCC/lusail.png',
+    'https://i.postimg.cc/L4wxkTGH/monumental.png',
+  ];
+
+  const handleSelect = (url: string) => {
+    onSave({ ...user, profileBackground: url });
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Cambiar Fondo de Perfil</DialogTitle>
+          <DialogDescription>
+            Elige una nueva imagen de cabecera para tu perfil.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid grid-cols-2 gap-4 py-4">
+          {backgrounds.map((bg, index) => (
+            <div
+              key={index}
+              className="relative aspect-video cursor-pointer group rounded-lg overflow-hidden"
+              onClick={() => handleSelect(bg)}
+            >
+              <Image src={bg} alt={`Fondo ${index + 1}`} layout="fill" className="object-cover" />
+               {user.profileBackground === bg && (
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                  <CheckCircle2 className="w-8 h-8 text-white" />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+         <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="secondary">
+              Cerrar
+            </Button>
+          </DialogClose>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -200,7 +252,6 @@ export default function ProfilePage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isBgSelectorOpen, setIsBgSelectorOpen] = useState(false);
 
   useEffect(() => {
     const targetUser = allUsers.find((u) => u.id === userId);
@@ -209,63 +260,22 @@ export default function ProfilePage() {
   }, [userId, allUsers]);
 
   const handleSaveProfile = async (updatedUser: User) => {
-    if (!updatedUser.dni) {
-      toast({
-        title: 'DNI Requerido',
-        description: 'El DNI es necesario para buscar y vincular estadísticas.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     setProfileUser(updatedUser); // Update UI optimistically
     try {
-      // Find player in all rosters in all tournaments
-      const playersQuery = query(
-        collectionGroup(db, 'roster'),
-        where('dni', '==', updatedUser.dni)
-      );
-      const querySnapshot = await getDocs(playersQuery);
-
-      if (!querySnapshot.empty) {
-        const playerDoc = querySnapshot.docs[0];
-        const playerData = playerDoc.data() as PlayerDetails;
-
-        const userWithDni = {
-          ...updatedUser,
-          name: `${playerData.name} ${playerData.lastName}`,
-          // In a real scenario, you might want to recalculate stats here
-        };
-        const userRef = doc(db, 'users', userWithDni.id);
-        await updateDoc(userRef, userWithDni);
-
-        setProfileUser(userWithDni); // Update UI with full data
-        setAllUsers((prev) =>
-          prev.map((u) => (u.id === userWithDni.id ? userWithDni : u))
-        );
-         if (currentUser?.id === userWithDni.id) {
-          setCurrentUser(userWithDni);
-        }
-        toast({
-          title: '¡Perfil Vinculado!',
-          description:
-            'Tu perfil se ha vinculado con tus datos de jugador.',
-        });
-      } else {
-        // Save user without linking if DNI not found, but DNI is saved
         const userRef = doc(db, 'users', updatedUser.id);
-        await updateDoc(userRef, updatedUser);
+        await updateDoc(userRef, { ...updatedUser });
+
         setAllUsers((prev) =>
-            prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+          prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
         );
          if (currentUser?.id === updatedUser.id) {
           setCurrentUser(updatedUser);
         }
         toast({
           title: '¡Perfil Actualizado!',
-          description: 'Tu DNI ha sido guardado, pero no se encontraron estadísticas para vincular.',
+          description:
+            'Tus cambios han sido guardados.',
         });
-      }
     } catch (error) {
       console.error('Error updating profile:', error);
       toast({
@@ -303,37 +313,6 @@ export default function ProfilePage() {
         });
       } catch (error) {
         // The useUpload hook already shows a toast on error
-      }
-    }
-  };
-
-   const handleBackgroundChange = async (imageUrl: string) => {
-    if (profileUser) {
-      try {
-        const updatedUser = { ...profileUser, profileBackground: imageUrl };
-        const userRef = doc(db, 'users', profileUser.id);
-        await updateDoc(userRef, { profileBackground: imageUrl });
-
-        setProfileUser(updatedUser);
-        setAllUsers((prev) =>
-          prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
-        );
-        if (currentUser?.id === updatedUser.id) {
-          setCurrentUser(updatedUser);
-        }
-
-        toast({
-          title: '¡Fondo Actualizado!',
-          description: 'Tu nuevo fondo de perfil ha sido guardado.',
-        });
-      } catch (error) {
-        toast({
-          title: 'Error',
-          description: 'No se pudo actualizar el fondo de perfil.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsBgSelectorOpen(false);
       }
     }
   };
@@ -394,55 +373,40 @@ export default function ProfilePage() {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
           
-          <div className="absolute top-2 right-2 z-10 flex gap-2">
-            {isOwnProfile && (
-                 <Dialog open={isBgSelectorOpen} onOpenChange={setIsBgSelectorOpen}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                         <Button variant="secondary" size="icon" className="rounded-full h-8 w-8 bg-black/30 text-white hover:bg-black/50">
-                             <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                         <DropdownMenuItem onClick={() => setIsBgSelectorOpen(true)}>
-                            <ImageIcon className="mr-2 h-4 w-4" />
-                            Cambiar Fondo
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                     <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Seleccionar Fondo de Perfil</DialogTitle>
-                          <DialogDescription>Elige una imagen para personalizar tu cabecera.</DialogDescription>
-                        </DialogHeader>
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4">
-                            {availableBackgrounds.map(bg => (
-                                <div key={bg.name} className="relative aspect-video cursor-pointer group" onClick={() => handleBackgroundChange(bg.url)}>
-                                    <Image src={bg.url} alt={bg.name} layout="fill" className="object-cover rounded-md"/>
-                                    {profileBackground === bg.url && (
-                                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-md">
-                                            <CheckCircle2 className="w-8 h-8 text-white"/>
-                                        </div>
-                                    )}
-                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-md">
-                                        <p className="text-white font-bold">{bg.name}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </DialogContent>
-                </Dialog>
-            )}
+          <div className="absolute top-4 right-4 z-10 flex gap-2">
             {currentUser && !isOwnProfile && (
               <Button
                 variant="secondary"
                 size="icon"
                 onClick={() => setIsFavorite(!isFavorite)}
-                className="rounded-full h-8 w-8 bg-black/30 text-white hover:bg-black/50"
+                className="rounded-full bg-black/30 text-white hover:bg-black/50"
               >
-                <Star className={cn('w-4 h-4', isFavorite && 'fill-accent text-accent')} />
+                <Star className={cn('w-5 h-5', isFavorite && 'fill-accent text-accent')} />
               </Button>
             )}
+             {isOwnProfile && (
+              <BackgroundChangerDialog user={profileUser} onSave={handleSaveProfile}>
+                 <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="secondary" size="icon" className="rounded-full bg-black/30 text-white hover:bg-black/50">
+                      <MoreVertical className="w-5 h-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                     <DropdownMenuItem>
+                       <ImageIcon className="mr-2 h-4 w-4" />
+                        Cambiar Fondo
+                    </DropdownMenuItem>
+                    <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
+                       <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                          <Pencil className="mr-2 h-4 w-4" />
+                          Editar Perfil
+                      </DropdownMenuItem>
+                    </EditProfileDialog>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </BackgroundChangerDialog>
+             )}
           </div>
           
           <div className="absolute bottom-0 left-6 translate-y-1/2">
@@ -500,7 +464,7 @@ export default function ProfilePage() {
             <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
               <Button variant="outline" className="w-full md:hidden">
                 <Pencil className="mr-2 h-4 w-4" />
-                Editar Perfil
+                Editar Perfil y Vincular DNI
               </Button>
             </EditProfileDialog>
           ) : (
@@ -554,7 +518,7 @@ export default function ProfilePage() {
               </div>
             </div>
           ) : (
-            <div className="text-center py-10 border-2 border-dashed rounded-lg">
+            <div className="text-center py-10 border-2 border-dashed rounded-lg hidden">
               <p className="text-muted-foreground">Vincula tu DNI en "Editar Perfil" para ver tus estadísticas.</p>
             </div>
           )}
