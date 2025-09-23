@@ -42,6 +42,8 @@ import {
   UserCircle,
   Foot,
   Goal,
+  MoreVertical,
+  Pencil,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -52,25 +54,25 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+    DialogClose,
+    DialogDescription
+} from '@/components/ui/dialog';
 import { useUser } from "@/context/user-context";
 import { useUpload } from "@/hooks/use-upload";
 import { motion, AnimatePresence } from "framer-motion";
-
-const StatItem = ({
-  icon: Icon,
-  label,
-  value,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: string | number;
-}) => (
-  <div className="flex flex-col items-center gap-1 text-center">
-    <Icon className="w-8 h-8 text-accent" />
-    <p className="text-muted-foreground text-sm">{label}</p>
-    <p className="font-semibold text-lg">{value}</p>
-  </div>
-);
 
 const MatchHistory = () => {
     const puertoFcHistory = [
@@ -94,7 +96,7 @@ const MatchHistory = () => {
                 <div className="flex-1 flex flex-col justify-around">
                     {puertoFcHistory.slice(0, 4).map((match) => (
                         <div key={match.id} className="w-full border-b border-white/20 pb-1 last:border-b-0">
-                            <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center text-center text-sm gap-4">
+                             <div className="grid grid-cols-[1fr_auto_1fr_auto] items-center text-center text-sm gap-4">
                                 <span className="text-right truncate font-semibold">{match.teamA}</span>
                                 <span className="font-bold text-lg">{match.scoreA} - {match.scoreB}</span>
                                 <span className="text-left truncate font-semibold">{match.teamB}</span>
@@ -148,6 +150,68 @@ const NextMatch = () => {
     );
 };
 
+const EditProfileDialog = ({ user, onSave, children }: { user: User, onSave: (updatedUser: User) => void, children: React.ReactNode }) => {
+    const [name, setName] = useState(user.name);
+    const [username, setUsername] = useState(user.username);
+    const [dni, setDni] = useState(user.dni || '');
+
+    useEffect(() => {
+        setName(user.name);
+        setUsername(user.username);
+        setDni(user.dni || '');
+    }, [user]);
+
+    const handleSave = () => {
+        const updatedUser = {
+            ...user,
+            name,
+            username,
+            dni,
+        };
+        onSave(updatedUser);
+    }
+
+    return (
+        <Dialog>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Editar Perfil y Vinculación</DialogTitle>
+                    <DialogDescription>
+                        Actualiza tu información personal. Tu DNI se usará para vincular tus estadísticas de jugador.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="name">Nombre y Apellido</Label>
+                        <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="username">Nombre de Usuario</Label>
+                        <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="dni">DNI (para vincular estadísticas)</Label>
+                        <Input id="dni" value={dni} onChange={(e) => setDni(e.target.value)} />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="email">Email (no editable)</Label>
+                        <Input id="email" value={user.email || ''} disabled />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">Cancelar</Button>
+                    </DialogClose>
+                     <DialogClose asChild>
+                        <Button type="button" onClick={handleSave}>Guardar Cambios</Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
 
 export default function ProfilePage() {
   const params = useParams();
@@ -165,7 +229,6 @@ export default function ProfilePage() {
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [uniqueCodeInput, setUniqueCodeInput] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [showNextMatch, setShowNextMatch] = useState(false);
@@ -189,29 +252,43 @@ export default function ProfilePage() {
 
   // Recalculate stats and sudpoints when user profile is loaded and linked
   useEffect(() => {
-    if (profileUser && profileUser.uniqueCode) {
+    if (profileUser && profileUser.dni) {
       recalculateStatsAndProgression();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileUser?.id, profileUser?.uniqueCode]);
+  }, [profileUser?.id, profileUser?.dni]);
 
   const recalculateStatsAndProgression = () => {
-    if (!profileUser || !profileUser.uniqueCode) return;
+    if (!profileUser || !profileUser.dni) return;
 
     // This is a placeholder for the real logic.
     // In a real app, you would fetch all match data.
     const allPlayerStats = JSON.parse(
       localStorage.getItem("allPlayerMatchStats") || "{}"
-    ); // e.g. { "match_1_player_SUD-XYZ": { goals: 2, yellow: 1 } }
+    ); 
     const allMatchResults = JSON.parse(
       localStorage.getItem("allMatchResults") || "{}"
-    ); // e.g. { "match_1": { teamA: 'Team X', teamB: 'Team Y', scoreA: 3, scoreB: 1, winner: 'teamA' } }
+    ); 
+    
+    // Find player by DNI across all rosters in all tournaments
+    // This is a simplified simulation
+    const allTournaments = JSON.parse(localStorage.getItem('tournaments') || '[]');
+    let foundPlayerInRoster = false;
+    for (const tournament of allTournaments) {
+        const teams = JSON.parse(localStorage.getItem(`teams_${tournament.id}`) || '[]');
+        for (const team of teams) {
+            const roster = JSON.parse(localStorage.getItem(`roster_${tournament.id}_${team.id}`) || '[]');
+            const playerInRoster = roster.find((p: any) => p.dni === profileUser.dni);
+            if (playerInRoster) {
+                foundPlayerInRoster = true;
+                break;
+            }
+        }
+        if (foundPlayerInRoster) break;
+    }
 
-    const playerDetails = JSON.parse(
-      localStorage.getItem("playerDetails") || "{}"
-    );
-    const linkedPlayer: PlayerDetails = playerDetails[profileUser.uniqueCode];
-    if (!linkedPlayer) return;
+    if (!foundPlayerInRoster) return;
+
 
     let calculatedStats = {
       partidosJugados: 0,
@@ -226,8 +303,7 @@ export default function ProfilePage() {
     };
     let newSudpoints = 0;
 
-    // In a real app, you would iterate over `allMatchResults` and `allPlayerStats`
-    // For this demo, we'll simulate some stats
+    // For this demo, we'll simulate some stats if player is found
     calculatedStats = {
       partidosJugados: 25,
       victorias: 15,
@@ -297,37 +373,14 @@ export default function ProfilePage() {
     }
   };
 
-  const handleLinkAccount = () => {
-    if (!profileUser) return;
-    const playerDetailsJSON = localStorage.getItem("playerDetails");
-    const playerDetails = playerDetailsJSON
-      ? JSON.parse(playerDetailsJSON)
-      : {};
-    const player: PlayerDetails = playerDetails[uniqueCodeInput.toUpperCase()];
-
-    if (player) {
-      const updatedUser: User = {
-        ...profileUser,
-        name: `${player.name} ${player.lastName}`,
-        email: player.email,
-        uniqueCode: player.uniqueCode,
-        baseSudpoints: profileUser.sudpoints, // Save current points as base
-      };
+  const handleSaveProfile = (updatedUser: User) => {
       setProfileUser(updatedUser);
       updateUserInStorage(updatedUser);
       toast({
-        title: "¡Cuenta Vinculada!",
-        description:
-          "Tu perfil ahora está conectado a tus estadísticas de jugador.",
-      });
-    } else {
-      toast({
-        title: "Error",
-        description: "El código de jugador no es válido.",
-        variant: "destructive",
-      });
-    }
-  };
+          title: "¡Perfil Actualizado!",
+          description: "Tu información ha sido guardada correctamente."
+      })
+  }
 
   const handleAvatarClick = () => {
     if (currentUser?.id === profileUser?.id && !isUploading) {
@@ -371,9 +424,9 @@ export default function ProfilePage() {
     league,
     division,
     sudpoints,
-    uniqueCode,
     isVerified,
     avatar,
+    dni,
   } = profileUser;
   
   const exampleStats = {
@@ -387,7 +440,7 @@ export default function ProfilePage() {
       rojas: 1,
       mvps: 4,
   };
-  const finalStats = (uniqueCode && stats) ? stats : exampleStats;
+  const finalStats = (dni && stats) ? stats : exampleStats;
   const winrate = finalStats.partidosJugados > 0 ? Math.round((finalStats.victorias / finalStats.partidosJugados) * 100) : 0;
   const goalAverage = finalStats.partidosJugados > 0 ? (finalStats.goles / finalStats.partidosJugados).toFixed(2) : '0.00';
 
@@ -500,30 +553,6 @@ export default function ProfilePage() {
                   </div>
                 </div>
               )}
-              {isOwnProfile && !uniqueCode && (
-                <>
-                  <Separator className="my-4" />
-                  <div className="space-y-2">
-                    <Label htmlFor="uniqueCodeInput" className="text-sm">
-                      Vincular Cuenta de Jugador
-                    </Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        id="uniqueCodeInput"
-                        placeholder="SUD-XXXXXX"
-                        value={uniqueCodeInput}
-                        onChange={(e) => setUniqueCodeInput(e.target.value)}
-                      />
-                      <Button onClick={handleLinkAccount}>
-                        <Link2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">
-                      Ingresa el código único para sincronizar tus estadísticas.
-                    </p>
-                  </div>
-                </>
-              )}
             </CardContent>
           </Card>
         </div>
@@ -561,13 +590,29 @@ export default function ProfilePage() {
                 </div>
               </div>
               <div className="absolute right-0 top-0 z-10">
-                <Image
-                  src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png"
-                  alt="Configuracion"
-                  width={41}
-                  height={51}
-                  className="cursor-pointer hover:scale-105 transition-transform"
-                />
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                         <Image
+                            src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png"
+                            alt="Configuracion"
+                            width={41}
+                            height={51}
+                            className="cursor-pointer hover:scale-105 transition-transform"
+                        />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        {isOwnProfile ? (
+                            <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                    <Pencil className="mr-2 h-4 w-4" />
+                                    Editar Perfil y Vinculación
+                                </DropdownMenuItem>
+                            </EditProfileDialog>
+                        ) : (
+                             <DropdownMenuItem>No hay acciones</DropdownMenuItem>
+                        )}
+                    </DropdownMenuContent>
+                 </DropdownMenu>
               </div>
               <div className="absolute right-2 bottom-2 z-10">
                 <Image
@@ -629,7 +674,8 @@ export default function ProfilePage() {
                           <div className="absolute inset-0 py-5 px-4 flex flex-col text-white">
                                <h2 className="text-xl font-bold uppercase text-center mb-2">Estadisticas</h2>
                                <div className="w-full h-px bg-white/20 mb-4"></div>
-                               <div className="flex flex-1 items-center">
+                               {dni ? (
+                                <div className="flex flex-1 items-center">
                                   <div className="flex-1 text-center">
                                       <h3 className="text-xs font-bold uppercase text-gray-400">Winrate</h3>
                                       <p className="text-5xl font-bold">{winrate}<span className="text-2xl">%</span></p>
@@ -677,13 +723,19 @@ export default function ProfilePage() {
                                           <p className="text-xl font-bold text-red-500">{finalStats.rojas}</p>
                                       </div>
                                   </div>
+                                  <div className="h-full w-px bg-white/20 mx-2"></div>
 
                                   <div className="flex-1 text-center">
                                       <h3 className="text-xs font-bold uppercase text-gray-400">Prom. de Gol</h3>
                                       <p className="text-5xl font-bold">{goalAverage}</p>
                                       <p className="text-xs text-gray-400">Goles por Partido</p>
                                   </div>
-                              </div>
+                                </div>
+                               ) : (
+                                 <div className="flex-1 flex items-center justify-center">
+                                    <p className="text-center text-muted-foreground p-4">Vincula tu DNI para ver tus estadísticas de jugador.</p>
+                                 </div>
+                               )}
                           </div>
                       </div>
                   </motion.div>
@@ -695,5 +747,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
