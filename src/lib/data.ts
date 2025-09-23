@@ -16,6 +16,7 @@ export interface User {
   division: number;
   isVerified: boolean;
   location: string;
+  profileBackground?: string;
   stats: {
     partidosJugados: number;
     victorias: number;
@@ -130,6 +131,7 @@ export const defaultVisitor: User = {
     isVerified: false,
     isBlocked: false,
     location: '',
+    profileBackground: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png',
     sudpoints: 0,
     baseSudpoints: 0,
     league: 'Bronce',
@@ -153,6 +155,7 @@ export const initialUsers: User[] = [
     league: 'Diamante',
     division: 1,
     uniqueCode: 'SUD-ADMIN',
+    profileBackground: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png',
     stats: { partidosJugados: 100, victorias: 80, empates: 10, derrotas: 10, goles: 150, asistencias: 50, amarillas: 2, rojas: 0, mvps: 40 },
   },
   {
@@ -170,6 +173,7 @@ export const initialUsers: User[] = [
     league: 'Oro',
     division: 2,
     uniqueCode: 'MESSI10',
+    profileBackground: 'https://i.postimg.cc/1RfWNTCC/lusail.png',
     stats: { partidosJugados: 10, victorias: 8, empates: 1, derrotas: 1, goles: 15, asistencias: 5, amarillas: 0, rojas: 0, mvps: 7 },
   },
 ];

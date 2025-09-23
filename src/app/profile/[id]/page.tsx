@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { AnimatedAvatar } from "@/components/ui/animated-avatar";
-import { DivisionBadge } from "@/components/division-badge";
+import { DivisionBadge } from "@/components/ui/division-badge";
 import {
   User,
   initialUsers,
@@ -44,6 +44,7 @@ import {
   Goal,
   MoreVertical,
   Pencil,
+  Image as ImageIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -59,6 +60,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
     Dialog,
@@ -73,6 +75,7 @@ import {
 import { useUser } from "@/context/user-context";
 import { useUpload } from "@/hooks/use-upload";
 import { motion, AnimatePresence } from "framer-motion";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const MatchHistory = () => {
     const puertoFcHistory = [
@@ -205,6 +208,66 @@ const EditProfileDialog = ({ user, onSave, children }: { user: User, onSave: (up
                     </DialogClose>
                      <DialogClose asChild>
                         <Button type="button" onClick={handleSave}>Guardar Cambios</Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+const backgroundOptions = [
+    { name: 'La Bombonera', url: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png' },
+    { name: 'Lusail', url: 'https://i.postimg.cc/1RfWNTCC/lusail.png' },
+    { name: 'El Monumental', url: 'https://i.postimg.cc/L4wxkTGH/monumental.png' },
+]
+
+const CustomizeBackgroundDialog = ({ user, onSave, children }: { user: User, onSave: (updatedUser: User) => void, children: React.ReactNode }) => {
+    const [selectedBackground, setSelectedBackground] = useState(user.profileBackground || backgroundOptions[0].url);
+
+    const handleSave = () => {
+        onSave({ ...user, profileBackground: selectedBackground });
+    }
+
+    return (
+         <Dialog>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent className="max-w-2xl">
+                <DialogHeader>
+                    <DialogTitle>Personalizar Fondo de Perfil</DialogTitle>
+                    <DialogDescription>
+                        Elige tu estadio favorito para el fondo de tu perfil.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Carousel setApi={(api) => {
+                        api?.on("select", () => {
+                            setSelectedBackground(backgroundOptions[api.selectedScrollSnap()].url);
+                        });
+                    }}>
+                        <CarouselContent>
+                            {backgroundOptions.map((bg, index) => (
+                                <CarouselItem key={index}>
+                                    <div className="p-1">
+                                        <Card>
+                                            <CardContent className="flex aspect-video items-center justify-center p-6 relative">
+                                                <Image src={bg.url} alt={bg.name} fill className="object-cover rounded-lg"/>
+                                                <span className="absolute bottom-2 left-2 bg-black/50 text-white text-xs px-2 py-1 rounded-md">{bg.name}</span>
+                                            </CardContent>
+                                        </Card>
+                                    </div>
+                                </CarouselItem>
+                            ))}
+                        </CarouselContent>
+                        <CarouselPrevious />
+                        <CarouselNext />
+                    </Carousel>
+                </div>
+                <DialogFooter>
+                     <DialogClose asChild>
+                        <Button type="button" variant="secondary">Cancelar</Button>
+                    </DialogClose>
+                     <DialogClose asChild>
+                        <Button type="button" onClick={handleSave}>Guardar Fondo</Button>
                     </DialogClose>
                 </DialogFooter>
             </DialogContent>
@@ -382,6 +445,15 @@ export default function ProfilePage() {
       })
   }
 
+  const handleSaveBackground = (updatedUser: User) => {
+    setProfileUser(updatedUser);
+    updateUserInStorage(updatedUser);
+    toast({
+        title: "¡Fondo Actualizado!",
+        description: "Tu nuevo fondo de perfil ha sido guardado."
+    })
+  }
+
   const handleAvatarClick = () => {
     if (currentUser?.id === profileUser?.id && !isUploading) {
       fileInputRef.current?.click();
@@ -427,6 +499,7 @@ export default function ProfilePage() {
     isVerified,
     avatar,
     dni,
+    profileBackground,
   } = profileUser;
   
   const exampleStats = {
@@ -602,12 +675,20 @@ export default function ProfilePage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
                         {isOwnProfile ? (
-                            <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
-                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                    <Pencil className="mr-2 h-4 w-4" />
-                                    Editar Perfil y Vinculación
-                                </DropdownMenuItem>
-                            </EditProfileDialog>
+                            <>
+                                <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
+                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <Pencil className="mr-2 h-4 w-4" />
+                                        Editar Perfil y Vinculación
+                                    </DropdownMenuItem>
+                                </EditProfileDialog>
+                                <CustomizeBackgroundDialog user={profileUser} onSave={handleSaveBackground}>
+                                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                        <ImageIcon className="mr-2 h-4 w-4" />
+                                        Personalizar Fondo
+                                    </DropdownMenuItem>
+                                </CustomizeBackgroundDialog>
+                            </>
                         ) : (
                              <DropdownMenuItem>No hay acciones</DropdownMenuItem>
                         )}
@@ -624,7 +705,7 @@ export default function ProfilePage() {
                 />
               </div>
               <Image
-                src="https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png"
+                src={profileBackground || 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png'}
                 alt="Interfaz de menú de perfil"
                 width={800}
                 height={200}
