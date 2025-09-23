@@ -54,7 +54,7 @@ export function PageHeader() {
   const hasUnreadNotifications = notifications.some(n => !n.isRead);
 
   const handleLogout = async () => {
-    if (user?.name === 'VISITANTE') {
+    if (user?.id === 'visitor') {
         router.push('/login');
     } else {
         await logout();
@@ -140,7 +140,7 @@ export function PageHeader() {
                 </Link>
                 {loading ? (
                    <Skeleton className="h-10 w-10 rounded-full" />
-                ) : user && user.name !== 'VISITANTE' ? (
+                ) : user && user.id !== 'visitor' ? (
                     <>
                         <DropdownMenu onOpenChange={(open) => open && handleOpenNotifications()}>
                             <DropdownMenuTrigger asChild>
