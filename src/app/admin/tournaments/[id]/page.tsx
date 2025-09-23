@@ -28,6 +28,7 @@ import {
   ShieldCheck,
   Download,
   AlertTriangle,
+  Crown
 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+    Table as UiTable,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -76,6 +85,11 @@ const generateFixture = (teams: string[]) => {
 };
 
 type ManualMatch = { home: string; away: string };
+interface Position { rank: number; team: string; played: number; won: number; drawn: number; lost: number; points: number; gf: number; gc: number; dg: number; }
+interface Scorer { player: string; team: string; goals: number; }
+interface Sanction { player: string; team: string; yellow: number; red: number; }
+interface PenaltyPosition { rank: number; team: string; played: number; won: number; lost: number; points: number; }
+
 
 export default function TournamentDetailsPage() {
   const params = useParams();
@@ -87,6 +101,11 @@ export default function TournamentDetailsPage() {
   const [matchResults, setMatchResults] = useState<any>({});
   const [matchDetails, setMatchDetails] = useState<any>({});
   const [finishedMatches, setFinishedMatches] = useState<Set<string>>(new Set());
+
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [scorers, setScorers] = useState<Scorer[]>([]);
+  const [sanctions, setSanctions] = useState<Sanction[]>([]);
+  const [penalties, setPenalties] = useState<PenaltyPosition[]>([]);
 
   const [playoffMatches, setPlayoffMatches] = useState({
     quarter: [
@@ -104,6 +123,16 @@ export default function TournamentDetailsPage() {
   const planillaRef = useRef<HTMLDivElement>(null);
   const [planillaData, setPlanillaData] = useState<{home: string, away: string, matchId: string, qrCodeUrl: string} | null>(null);
 
+  const loadStats = () => {
+    const savedPositions = JSON.parse(localStorage.getItem(`positions_${tournamentId}`) || '[]');
+    const savedScorers = JSON.parse(localStorage.getItem(`scorers_${tournamentId}`) || '[]');
+    const savedSanctions = JSON.parse(localStorage.getItem(`sanctions_${tournamentId}`) || '[]');
+    const savedPenalties = JSON.parse(localStorage.getItem(`penalties_${tournamentId}`) || '[]');
+    setPositions(savedPositions);
+    setScorers(savedScorers);
+    setSanctions(savedSanctions);
+    setPenalties(savedPenalties);
+  };
 
   useEffect(() => {
     if (!tournamentId) return;
@@ -141,6 +170,8 @@ export default function TournamentDetailsPage() {
 
     const savedFinished = JSON.parse(localStorage.getItem(`finished_matches_${tournamentId}`) || '[]');
     setFinishedMatches(new Set(savedFinished));
+
+    loadStats();
 
   }, [tournamentId]);
 
@@ -310,6 +341,9 @@ export default function TournamentDetailsPage() {
     localStorage.setItem(`scorers_${tournamentId}`, JSON.stringify(sortedScorers));
     localStorage.setItem(`sanctions_${tournamentId}`, JSON.stringify(sortedSanctions));
     localStorage.setItem(`penalties_${tournamentId}`, JSON.stringify(sortedPenalties));
+    
+    // After saving, reload the stats into the state to update the UI
+    loadStats();
     console.log("Tournament stats recalculated and saved.", {sortedTeams, sortedScorers, sortedSanctions});
   };
 
@@ -668,7 +702,123 @@ export default function TournamentDetailsPage() {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* Add other TabsContent for positions, scorers, etc. here */}
+          <TabsContent value="positions" className="mt-4">
+               <div className="rounded-lg border">
+                  <UiTable>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[40px]">#</TableHead>
+                        <TableHead>Equipo</TableHead>
+                        <TableHead className="text-center">PJ</TableHead>
+                        <TableHead className="text-center">G</TableHead>
+                        <TableHead className="text-center">E</TableHead>
+                        <TableHead className="text-center">P</TableHead>
+                        <TableHead className="hidden md:table-cell text-center">GF</TableHead>
+                        <TableHead className="hidden md:table-cell text-center">GC</TableHead>
+                        <TableHead className="hidden md:table-cell text-center">DG</TableHead>
+                        <TableHead className="text-right">Puntos</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {positions.map((pos) => (
+                        <TableRow key={pos.team}>
+                          <TableCell className="font-bold">{pos.rank}</TableCell>
+                          <TableCell>{pos.team}</TableCell>
+                          <TableCell className="text-center">{pos.played}</TableCell>
+                          <TableCell className="text-center">{pos.won}</TableCell>
+                          <TableCell className="text-center">{pos.drawn}</TableCell>
+                          <TableCell className="text-center">{pos.lost}</TableCell>
+                          <TableCell className="hidden md:table-cell text-center">{pos.gf}</TableCell>
+                          <TableCell className="hidden md:table-cell text-center">{pos.gc}</TableCell>
+                          <TableCell className="hidden md:table-cell text-center">{pos.dg}</TableCell>
+                          <TableCell className="text-right font-bold">{pos.points}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </UiTable>
+               </div>
+            </TabsContent>
+            <TabsContent value="scorers" className="mt-4">
+               <div className="rounded-lg border">
+                  <UiTable>
+                     <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[50px]">#</TableHead>
+                        <TableHead>Jugador</TableHead>
+                        <TableHead>Equipo</TableHead>
+                        <TableHead className="text-right">Goles</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {scorers.map((scorer, index) => (
+                         <TableRow key={scorer.player}>
+                          <TableCell className="font-bold flex items-center gap-1">{index + 1 === 1 && <Crown className="w-4 h-4 text-amber-400"/>}{index + 1}</TableCell>
+                          <TableCell>{scorer.player}</TableCell>
+                          <TableCell>{scorer.team}</TableCell>
+                          <TableCell className="text-right font-bold">{scorer.goals}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </UiTable>
+               </div>
+            </TabsContent>
+            <TabsContent value="goalkeepers" className="mt-4">
+               <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                    <p className="text-muted-foreground">La tabla de valla menos vencida aparecerá aquí.</p>
+                </div>
+            </TabsContent>
+             <TabsContent value="sanctions" className="mt-4">
+               <div className="rounded-lg border">
+                  <UiTable>
+                     <TableHeader>
+                      <TableRow>
+                        <TableHead>Jugador</TableHead>
+                        <TableHead>Equipo</TableHead>
+                        <TableHead className="text-center">Amarillas</TableHead>
+                        <TableHead className="text-center">Rojas</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {sanctions.map((s, i) => (
+                         <TableRow key={i}>
+                          <TableCell>{s.player}</TableCell>
+                          <TableCell>{s.team}</TableCell>
+                          <TableCell className="text-center font-bold text-amber-400">{s.yellow}</TableCell>
+                          <TableCell className="text-center font-bold text-destructive">{s.red}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </UiTable>
+               </div>
+            </TabsContent>
+             <TabsContent value="penalties" className="mt-4">
+               <div className="rounded-lg border">
+                   <UiTable>
+                       <TableHeader>
+                           <TableRow>
+                               <TableHead>#</TableHead>
+                               <TableHead>Equipo</TableHead>
+                               <TableHead className="text-center">PJ</TableHead>
+                               <TableHead className="text-center">G</TableHead>
+                               <TableHead className="text-center">P</TableHead>
+                               <TableHead className="text-right">Puntos</TableHead>
+                           </TableRow>
+                       </TableHeader>
+                       <TableBody>
+                           {penalties.map((p, i) => (
+                               <TableRow key={p.team}>
+                                   <TableCell className="font-bold">{i + 1}</TableCell>
+                                   <TableCell>{p.team}</TableCell>
+                                   <TableCell className="text-center">{p.played}</TableCell>
+                                   <TableCell className="text-center">{p.won}</TableCell>
+                                   <TableCell className="text-center">{p.lost}</TableCell>
+                                   <TableCell className="text-right font-bold">{p.points}</TableCell>
+                               </TableRow>
+                           ))}
+                       </TableBody>
+                   </UiTable>
+               </div>
+            </TabsContent>
         </Tabs>
       </div>
     </div>
