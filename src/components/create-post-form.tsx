@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Image as ImageIcon, Video, X } from 'lucide-react';
+import { Image as ImageIcon, Video, X, Play } from 'lucide-react';
 import { User, Post } from '@/lib/data';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import Image from 'next/image';
@@ -23,8 +23,29 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
   const [content, setContent] = useState('');
   const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [youtubeVideoId, setYoutubeVideoId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadMultipleFiles, isUploading, progress } = useUpload();
+
+  const getYoutubeVideoId = (url: string): string | null => {
+    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/;
+    const match = url.match(youtubeRegex);
+    return match ? match[1] : null;
+  };
+
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const newContent = e.target.value;
+    setContent(newContent);
+    
+    // Only set video if one isn't already set
+    if (!youtubeVideoId) {
+        const videoId = getYoutubeVideoId(newContent);
+        if (videoId) {
+            setYoutubeVideoId(videoId);
+        }
+    }
+  };
+
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
@@ -50,18 +71,22 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
   };
 
   const handleSubmit = async () => {
-    if (!title && !content && filesToUpload.length === 0) return;
+    let media: { type: 'image' | 'video'; url: string }[] = [];
     
-    let uploadedImageUrls: string[] = [];
+    if (!title && !content && filesToUpload.length === 0 && !youtubeVideoId) return;
+    
     if(filesToUpload.length > 0) {
-      uploadedImageUrls = await uploadMultipleFiles(filesToUpload, `posts/${currentUser.id}`);
+      const uploadedImageUrls = await uploadMultipleFiles(filesToUpload, `posts/${currentUser.id}`);
+      media = uploadedImageUrls.map(url => ({ type: 'image', url }));
+    } else if (youtubeVideoId) {
+       media.push({ type: 'video', url: `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg` });
     }
 
     onAddPost({
       authorId: currentUser.id,
       title,
       content,
-      media: uploadedImageUrls.map(url => ({ type: 'image', url })),
+      media: media,
     });
 
     // Reset form
@@ -69,6 +94,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     setContent('');
     setFilesToUpload([]);
     setImagePreviews([]);
+    setYoutubeVideoId(null);
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
     }
@@ -90,16 +116,40 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             disabled={isUploading}
           />
           <Textarea
-            placeholder={`¿Qué estás pensando, ${currentUser.name}?`}
+            placeholder={`¿Qué estás pensando, ${currentUser.name}? Pega un link de YouTube...`}
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={handleContentChange}
             className="border-none shadow-none focus-visible:ring-0 px-0 resize-none"
             rows={2}
             disabled={isUploading}
           />
         </div>
       </div>
-      {imagePreviews.length > 0 && (
+       
+       {youtubeVideoId && (
+        <div className="mt-4 relative group">
+           <Image
+                src={`https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`}
+                alt="YouTube video thumbnail"
+                width={1280}
+                height={720}
+                className="w-full h-auto rounded-lg object-cover"
+            />
+            <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
+                <Play className="h-16 w-16 text-white" />
+            </div>
+            {!isUploading && <Button
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2 h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => setYoutubeVideoId(null)}
+            >
+                <X className="h-4 w-4" />
+            </Button>}
+        </div>
+       )}
+
+      {imagePreviews.length > 0 && !youtubeVideoId && (
         <ScrollArea className="w-full whitespace-nowrap rounded-md mt-4">
             <div className="flex space-x-2 p-1">
                 {imagePreviews.map((url, index) => (
@@ -128,10 +178,10 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             variant="ghost"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading}
+            disabled={isUploading || !!youtubeVideoId}
           >
             <ImageIcon className="mr-2 h-4 w-4" />
-            Foto/Video
+            Foto
           </Button>
           <input
             type="file"
@@ -140,9 +190,10 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             accept="image/*"
             multiple
             onChange={handleFileChange}
+            disabled={!!youtubeVideoId}
           />
         </div>
-        <Button onClick={handleSubmit} disabled={(!title && !content && filesToUpload.length === 0) || isUploading}>
+        <Button onClick={handleSubmit} disabled={(!title && !content && filesToUpload.length === 0 && !youtubeVideoId) || isUploading}>
           {isUploading ? `Publicando... ${Math.round(progress)}%` : 'Publicar'}
         </Button>
       </div>
