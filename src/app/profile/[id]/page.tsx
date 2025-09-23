@@ -214,7 +214,7 @@ export default function ProfilePage() {
     try {
       // Find player in all rosters in all tournaments
       const playersQuery = query(
-        collectionGroup(db, 'players'),
+        collectionGroup(db, 'roster'),
         where('dni', '==', updatedUser.dni)
       );
       const querySnapshot = await getDocs(playersQuery);
@@ -323,6 +323,7 @@ export default function ProfilePage() {
   const {
     stats,
     name,
+    username,
     role,
     league,
     division,
@@ -341,132 +342,111 @@ export default function ProfilePage() {
       : 0;
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Columna Izquierda */}
-        <div className="md:col-span-1 space-y-6">
-          <Card className="relative">
-            <CardHeader className="items-center text-center">
-              <div className="absolute top-4 right-4">
+    <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+      <Card>
+        <div className="relative h-32 md:h-48 w-full">
+            {profileBackground && (
+                <Image
+                    src={profileBackground}
+                    alt="Imagen de fondo del perfil"
+                    layout="fill"
+                    className="object-cover rounded-t-lg"
+                />
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+
+             <div className="absolute top-4 right-4 z-10">
                 {currentUser && !isOwnProfile && (
                   <Button
-                    variant="ghost"
+                    variant="secondary"
                     size="icon"
                     onClick={() => setIsFavorite(!isFavorite)}
+                    className="rounded-full bg-black/30 text-white hover:bg-black/50"
                   >
-                    <Star
-                      className={cn(
-                        'w-5 h-5 text-muted-foreground',
-                        isFavorite && 'fill-accent text-accent'
-                      )}
-                    />
+                    <Star className={cn('w-5 h-5', isFavorite && 'fill-accent text-accent')} />
                   </Button>
                 )}
               </div>
-              <div
-                className={cn(
-                  'relative group',
-                  isOwnProfile && 'cursor-pointer hover:opacity-80 transition-opacity'
-                )}
-                onClick={handleAvatarClick}
-              >
-                <AnimatedAvatar>
-                  <Avatar className="w-32 h-32 text-4xl">
-                    <AvatarImage src={avatar} alt={name} />
-                    <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </AnimatedAvatar>
-                {isUploading && (
-                  <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-white" />
-                    <p className="text-white text-xs mt-2">
-                      {Math.round(progress)}%
-                    </p>
-                  </div>
-                )}
-              </div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleAvatarChange}
-                className="hidden"
-                accept="image/*"
-                disabled={isUploading}
-              />
 
-              <div className="flex items-center gap-2 pt-4">
-                <CardTitle className="text-2xl">{name}</CardTitle>
-                {isVerified && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Image
-                          src="https://i.postimg.cc/8cm263zS/verificado.png"
-                          alt="Verificado"
-                          width={24}
-                          height={24}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Usuario Verificado</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+            <div className="absolute bottom-0 left-6 translate-y-1/2">
+                <div
+                    className={cn('relative group', isOwnProfile && 'cursor-pointer hover:opacity-80 transition-opacity')}
+                    onClick={handleAvatarClick}
+                >
+                    <AnimatedAvatar>
+                        <Avatar className="w-24 h-24 md:w-32 md:h-32 text-4xl border-4 border-background">
+                            <AvatarImage src={avatar} alt={name} />
+                            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                    </AnimatedAvatar>
+                    {isUploading && (
+                    <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center">
+                        <Loader2 className="w-8 h-8 animate-spin text-white" />
+                        <p className="text-white text-xs mt-2">{Math.round(progress)}%</p>
+                    </div>
+                    )}
+                </div>
+            </div>
+        </div>
+
+        <CardHeader className="pt-16 pb-4 px-6">
+          <div className="flex flex-col md:flex-row justify-between items-start">
+             <div>
+                <div className="flex items-center gap-2">
+                    <CardTitle className="text-2xl">{name}</CardTitle>
+                    {isVerified && (
+                    <TooltipProvider>
+                        <Tooltip>
+                        <TooltipTrigger>
+                            <Image
+                            src="https://i.postimg.cc/8cm263zS/verificado.png"
+                            alt="Verificado"
+                            width={24}
+                            height={24}
+                            />
+                        </TooltipTrigger>
+                        <TooltipContent><p>Usuario Verificado</p></TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    )}
+                </div>
+                <CardDescription>@{username} · {role === 'admin' || role === 'editor' ? 'Administrador' : 'Jugador'}</CardDescription>
+             </div>
+
+             <div className="flex gap-2 mt-4 md:mt-0">
+                {isOwnProfile ? (
+                    <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
+                        <Button variant="outline">
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Editar Perfil
+                        </Button>
+                    </EditProfileDialog>
+                ) : (
+                    <Button onClick={handleSendMessage}>
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Enviar Mensaje
+                    </Button>
                 )}
-              </div>
-              <CardDescription className="capitalize text-sm">
-                {role === 'admin' || role === 'editor'
-                  ? 'Administrador'
-                  : 'Jugador'}
-              </CardDescription>
-              <div className="flex items-center gap-4 pt-2">
-                <DivisionBadge league={league} division={division} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              {currentUser &&
-                !isOwnProfile &&
-                currentUser.id !== 'visitor' && (
-                  <Button className="w-full" onClick={handleSendMessage}>
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Enviar Mensaje
-                  </Button>
-                )}
-              {isOwnProfile && (
-                <div className="mt-4">
-                  <Label className="text-sm font-medium">
-                    Progreso en la división
-                  </Label>
-                  <Progress
-                    value={sudpoints}
-                    className="h-2 my-1 bg-[#201538]"
-                  />
-                  <div className="flex justify-between">
+            </div>
+          </div>
+          
+           <div className="flex items-center gap-4 pt-4">
+            <DivisionBadge league={league} division={division} />
+            <div className="w-full max-w-xs">
+                <Progress value={sudpoints} className="h-2 my-1 bg-[#201538]" />
+                <div className="flex justify-between">
                     <p className="text-xs text-muted-foreground mt-1">
                       Siguiente división
                     </p>
                     <p className="text-sm font-semibold">
                       {sudpoints} / 100 SP
                     </p>
-                  </div>
                 </div>
-              )}
-            </CardContent>
-             {isOwnProfile && (
-                 <CardFooter>
-                    <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
-                        <Button variant="outline" className="w-full">
-                            <Pencil className="mr-2 h-4 w-4" />
-                            Editar Perfil y Vincular DNI
-                        </Button>
-                    </EditProfileDialog>
-                </CardFooter>
-            )}
-          </Card>
-        </div>
-
-        {/* Columna Derecha */}
-        <div className="md:col-span-2 space-y-6">
+            </div>
+          </div>
+        </CardHeader>
+        
+        <CardContent className="px-6">
             <Card>
                 <CardHeader>
                     <CardTitle>Estadísticas del Jugador</CardTitle>
@@ -516,8 +496,17 @@ export default function ProfilePage() {
                      )}
                 </CardContent>
             </Card>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
+      
+       <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleAvatarChange}
+            className="hidden"
+            accept="image/*"
+            disabled={isUploading}
+        />
     </div>
   );
 }
