@@ -738,7 +738,7 @@ export default function ProfilePage() {
                                         {!isUnlocked && <Lock className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-white"/>}
                                      </div>
                                      <div className="font-semibold">
-                                         Sobre de Cartas
+                                         SOBRE
                                      </div>
                                 </div>
                                 <Button size="sm" disabled={!isUnlocked} variant={isUnlocked ? "default" : "outline"}>
