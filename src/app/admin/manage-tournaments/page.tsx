@@ -223,7 +223,7 @@ export default function ManageTournamentsPage() {
                           )}
                         >
                           <Users className="mr-2 h-4 w-4" />
-                          GESTIONAR EQUIPOS
+                          EDITAR EQUIPO
                         </Link>
                       </Button>
                     </CardFooter>
