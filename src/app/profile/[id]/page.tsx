@@ -186,7 +186,6 @@ const BackgroundChangerDialog = ({
   children: React.ReactNode;
 }) => {
   const backgrounds = [
-    'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png',
     'https://i.postimg.cc/1RfWNTCC/lusail.png',
     'https://i.postimg.cc/L4wxkTGH/monumental.png',
   ];
@@ -363,7 +362,7 @@ export default function ProfilePage() {
   return (
      <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
       <Card>
-        <div className="relative w-full aspect-[16/9] md:aspect-[21/9]">
+        <div className="relative w-full aspect-[16/9]">
           {profileBackground && (
             <Image
               src={profileBackground}
@@ -376,6 +375,11 @@ export default function ProfilePage() {
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent rounded-t-lg" />
           
           <div className="absolute top-4 right-4 z-10 flex gap-2">
+            {profileUser.id === 'admin-user' && (
+                <div className="w-16 h-16">
+                    <Image src="https://i.postimg.cc/50jZytQp/escudito-de-boca.png" width={80} height={80} alt="Escudo Boca" className="object-contain" />
+                </div>
+            )}
             {currentUser && !isOwnProfile && (
               <Button
                 variant="secondary"
@@ -479,11 +483,7 @@ export default function ProfilePage() {
                 className="object-contain"
             />
             <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-
-                <div className="absolute top-[10%] right-[8%]">
-                    <Image src="https://i.postimg.cc/YqTT9ktz/escudito-afa.png" width={80} height={80} alt="Escudo AFA" className="object-contain" />
-                </div>
-
+                
                 <div className="absolute top-[35%] left-[8%] transform -translate-y-1/2 flex flex-col gap-3">
                      <button onClick={() => setActiveTab('stats')} className="hover:scale-105 transition-transform">
                         <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" width={180} height={50} alt="Boton Estadisticas" />
