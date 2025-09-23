@@ -18,6 +18,7 @@ import {
   Footprints,
   KeyRound,
   Loader2,
+  Download,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -27,7 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from "react";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from './ui/dialog';
@@ -137,12 +138,39 @@ const AdminAuthDialog = ({ isOpen, onOpenChange, onAuthorized }: { isOpen: boole
     )
 }
 
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: Array<string>;
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed',
+    platform: string
+  }>;
+  prompt(): Promise<void>;
+}
 
 export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const pathname = usePathname();
   const { user, loading, logout, setUser, setAllUsers, allUsers, trackInteraction } = useUser();
   const router = useRouter();
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+  const [installPrompt, setInstallPrompt] = React.useState<BeforeInstallPromptEvent | null>(null);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: Event) => {
+        e.preventDefault();
+        setInstallPrompt(e as BeforeInstallPromptEvent);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+}, []);
+
+  const handleInstallClick = () => {
+      if (!installPrompt) return;
+      installPrompt.prompt();
+  };
 
   const handleAdminPanelClick = (e: React.MouseEvent) => {
       if (user?.role !== 'admin' && user?.role !== 'editor') {
@@ -162,15 +190,12 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   const handleAuthorization = () => {
       if (!user) return;
       const updatedUser = { ...user, role: 'editor' as const };
-      setUser(updatedUser);
       
-      const updatedAllUsers = allUsers.map(u => u.id === user.id ? updatedUser : u);
-      setAllUsers(updatedAllUsers);
-      
-      const usersToStore = updatedAllUsers.filter(
-        (u) => u.id !== 'admin-user' && u.id !== 'editor-user' // Assuming these are initial users
-      );
-      localStorage.setItem('users', JSON.stringify(usersToStore));
+      const newAllUsers = allUsers.map((u) => (u.id === user.id ? updatedUser : u));
+      setAllUsers(newAllUsers);
+       if (user?.id === updatedUser.id) {
+          setUser(updatedUser);
+        }
 
       router.push('/admin');
   }
@@ -286,6 +311,18 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                             </Link>
                         </li>
                     ))}
+                    {installPrompt && (
+                        <li>
+                            <Button
+                                variant='destructive'
+                                size="icon"
+                                className='bg-red-600 hover:bg-red-700 text-white'
+                                onClick={handleInstallClick}
+                            >
+                                <Download className="h-5 w-5" />
+                            </Button>
+                        </li>
+                    )}
                 </div>
                 {user && user.id !== 'visitor' && renderMenuItems(footerMenuItems)}
                  <li>
