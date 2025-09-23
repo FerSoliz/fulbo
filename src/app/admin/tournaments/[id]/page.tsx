@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams } from 'next/navigation';
 import {
   Tabs,
@@ -27,6 +27,7 @@ import {
   PlusCircle,
   ShieldCheck,
   Download,
+  AlertTriangle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Input } from '@/components/ui/input';
@@ -50,6 +51,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { PlanillaPartidoSVG } from '@/components/planilla-partido-svg';
 import * as htmlToImage from 'html-to-image';
@@ -73,13 +75,14 @@ const generateFixture = (teams: string[]) => {
   return rounds;
 };
 
+type ManualMatch = { home: string; away: string };
 
 export default function TournamentDetailsPage() {
   const params = useParams();
   const tournamentId = params.id as string;
   const [tournament, setTournament] = useState<any>(null);
   const [teams, setTeams] = useState<string[]>([]);
-  const [fixture, setFixture] = useState<{ home: string; away: string }[][]>([]);
+  const [fixture, setFixture] = useState<ManualMatch[][]>([]);
   const [isGroupStageFinished, setIsGroupStageFinished] = useState(false);
   const [matchResults, setMatchResults] = useState<any>({});
   const [matchDetails, setMatchDetails] = useState<any>({});
@@ -353,6 +356,47 @@ export default function TournamentDetailsPage() {
         console.error("Failed to generate QR code", err);
     }
   };
+  
+  const generateEmptyFixture = () => {
+    if (teams.length < 2) return;
+    const numTeams = teams.length % 2 === 0 ? teams.length : teams.length + 1;
+    const numRounds = numTeams - 1;
+    const matchesPerRound = numTeams / 2;
+    const newFixture: ManualMatch[][] = Array(numRounds)
+      .fill(null)
+      .map(() =>
+        Array(matchesPerRound)
+          .fill(null)
+          .map(() => ({ home: '', away: '' }))
+      );
+    setFixture(newFixture);
+    localStorage.setItem(`fixture_${tournamentId}`, JSON.stringify(newFixture));
+  };
+  
+  const handleManualMatchChange = (roundIndex: number, matchIndex: number, teamType: 'home' | 'away', teamName: string) => {
+    const newFixture = [...fixture];
+    newFixture[roundIndex][matchIndex][teamType] = teamName;
+    setFixture(newFixture);
+    localStorage.setItem(`fixture_${tournamentId}`, JSON.stringify(newFixture));
+  }
+
+  const fixtureWarnings = useMemo(() => {
+    const warnings: {[key: string]: boolean} = {};
+    const seenMatches = new Set<string>();
+
+    fixture.forEach((round, roundIndex) => {
+        round.forEach((match, matchIndex) => {
+            if (match.home && match.away) {
+                const sortedTeams = [match.home, match.away].sort().join('-');
+                if (seenMatches.has(sortedTeams)) {
+                    warnings[`${roundIndex}-${matchIndex}`] = true;
+                }
+                seenMatches.add(sortedTeams);
+            }
+        });
+    });
+    return warnings;
+  }, [fixture]);
 
 
   const renderPlayoffStage = (
@@ -406,6 +450,7 @@ export default function TournamentDetailsPage() {
   );
 
   return (
+    <TooltipProvider>
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Hidden div for rendering the planilla SVG for download */}
@@ -520,9 +565,37 @@ export default function TournamentDetailsPage() {
                             return (
                             <Card key={matchIndex} className={isFinished ? 'bg-green-900/20 border-green-500' : ''}>
                               <CardHeader>
-                                <CardTitle className="text-lg">
-                                  {match.home} vs {match.away}
-                                </CardTitle>
+                                {tournament?.autoFixture ? (
+                                     <CardTitle className="text-lg">
+                                        {match.home} vs {match.away}
+                                     </CardTitle>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <Select value={match.home} onValueChange={(value) => handleManualMatchChange(roundIndex, matchIndex, 'home', value)} disabled={isFinished}>
+                                            <SelectTrigger><SelectValue placeholder="Equipo Local" /></SelectTrigger>
+                                            <SelectContent>
+                                                {teams.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <span>vs</span>
+                                         <Select value={match.away} onValueChange={(value) => handleManualMatchChange(roundIndex, matchIndex, 'away', value)} disabled={isFinished}>
+                                            <SelectTrigger><SelectValue placeholder="Equipo Visitante" /></SelectTrigger>
+                                            <SelectContent>
+                                                {teams.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        {fixtureWarnings[`${roundIndex}-${matchIndex}`] && (
+                                            <Tooltip>
+                                                <TooltipTrigger>
+                                                    <AlertTriangle className="w-5 h-5 text-destructive"/>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Este partido ya existe en el fixture.</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        )}
+                                    </div>
+                                )}
                               </CardHeader>
                               <CardContent className="space-y-4">
                                 <div className="flex items-center justify-center gap-2">
@@ -583,6 +656,12 @@ export default function TournamentDetailsPage() {
                       <p className="text-muted-foreground">
                         No se ha generado un fixture para este torneo.
                       </p>
+                       {!tournament?.autoFixture && (
+                         <Button onClick={generateEmptyFixture} className="mt-4">
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Generar Fechas Vacías
+                        </Button>
+                       )}
                     </div>
                   )
                 )}
@@ -593,5 +672,6 @@ export default function TournamentDetailsPage() {
         </Tabs>
       </div>
     </div>
+    </TooltipProvider>
   );
 }
