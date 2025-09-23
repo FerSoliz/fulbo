@@ -36,6 +36,8 @@ const botTeam = {
   }
 }
 
+const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
+
 export default function CollectibleCardsPage() {
   const [view, setView] = useState<View>('menu');
   const [userCollection, setUserCollection] = useState<CardType[]>([]);
@@ -44,7 +46,8 @@ export default function CollectibleCardsPage() {
   const [isClient, setIsClient] = useState(false);
   const { user } = useUser();
   const [availablePacks, setAvailablePacks] = useState(0);
-  const [countdown, setCountdown] = useState(0);
+  const [nextPackTimestamp, setNextPackTimestamp] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState('');
 
 
   useEffect(() => {
@@ -52,30 +55,62 @@ export default function CollectibleCardsPage() {
     if (user && user.id !== 'visitor') {
       const savedCollection = localStorage.getItem(`userCardCollection_${user.id}`);
       const savedTeam = localStorage.getItem(`userCardTeam_${user.id}`);
-      const savedPacks = localStorage.getItem(`userCardPacks_${user.id}`);
-      const savedTimestamp = localStorage.getItem(`userCardTimestamp_${user.id}`);
+      const savedPacksData = localStorage.getItem(`userCardPacksData_${user.id}`);
 
-
-      if (savedCollection) {
-        setUserCollection(JSON.parse(savedCollection));
-      } else {
-        setUserCollection([]); // Start with 0 cards
-      }
+      setUserCollection(savedCollection ? JSON.parse(savedCollection) : []);
+      setUserTeam(savedTeam ? JSON.parse(savedTeam) : initialTeam);
       
-      if (savedPacks) {
-        setAvailablePacks(JSON.parse(savedPacks));
+      if (savedPacksData) {
+        const { packs, timestamp } = JSON.parse(savedPacksData);
+        setAvailablePacks(packs);
+        setNextPackTimestamp(timestamp);
       } else {
-        setAvailablePacks(1); // Start with 1 free pack
-      }
-
-      if (savedTeam) {
-        setUserTeam(JSON.parse(savedTeam));
+        setAvailablePacks(1); // Start with 1 free pack for new users
+        setNextPackTimestamp(null);
       }
     } else {
         setUserCollection([]);
         setUserTeam(initialTeam);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!user || user.id === 'visitor') return;
+
+    const packsData = { packs: availablePacks, timestamp: nextPackTimestamp };
+    localStorage.setItem(`userCardPacksData_${user.id}`, JSON.stringify(packsData));
+
+  }, [availablePacks, nextPackTimestamp, user]);
+
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (nextPackTimestamp) {
+        const now = Date.now();
+        const timeLeft = nextPackTimestamp - now;
+
+        if (timeLeft <= 0) {
+          setAvailablePacks(prev => {
+            const newPacks = Math.min(2, prev + 1);
+            if (newPacks < 2) {
+              setNextPackTimestamp(now + SIX_HOURS_IN_MS);
+            } else {
+              setNextPackTimestamp(null); // Stop timer if max packs reached
+            }
+            return newPacks;
+          });
+        } else {
+           const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+           const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
+           const seconds = Math.floor((timeLeft / 1000) % 60);
+           setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [nextPackTimestamp]);
+
 
   const saveCollection = (collection: CardType[]) => {
     if (!user || user.id === 'visitor') return;
@@ -91,16 +126,23 @@ export default function CollectibleCardsPage() {
   
   const getCardByProbability = (): CardType => {
     const rand = Math.random() * 100;
-    if (rand <= 70) { // 70% chance for common
+    // 70% chance for common (IDs 1-11)
+    if (rand < 70) { 
         const commonCards = allCards.filter(c => c.id >= 1 && c.id <= 11);
         return commonCards[Math.floor(Math.random() * commonCards.length)];
-    } else if (rand <= 94) { // 24% chance for rare (70 + 24)
+    } 
+    // 24% chance for rare (IDs 12-16)
+    else if (rand < 94) {
         const rareCards = allCards.filter(c => c.id >= 12 && c.id <= 16);
         return rareCards[Math.floor(Math.random() * rareCards.length)];
-    } else if (rand <= 99) { // 5% chance for epic/legendary
-        const epicCards = allCards.filter(c => c.id >= 17 && c.id <= 19);
+    } 
+    // 5% chance for epic/legendary (IDs 17,18,19)
+    else if (rand < 99) { 
+        const epicCards = allCards.filter(c => c.id === 17 || c.id === 18 || c.id === 19);
         return epicCards[Math.floor(Math.random() * epicCards.length)];
-    } else { // 1% chance for mundial
+    } 
+    // 1% chance for mundial (ID 20)
+    else { 
         return allCards.find(c => c.id === 20)!;
     }
   }
@@ -124,8 +166,14 @@ export default function CollectibleCardsPage() {
     });
     
     saveCollection(updatedCollection);
-    setAvailablePacks(prev => prev - 1);
-    // TODO: Save availablePacks to localStorage
+
+    const newPackCount = availablePacks - 1;
+    setAvailablePacks(newPackCount);
+    
+    if (nextPackTimestamp === null && newPackCount < 2) {
+      setNextPackTimestamp(Date.now() + SIX_HOURS_IN_MS);
+    }
+    
     setView('pack');
   };
 
@@ -217,7 +265,7 @@ export default function CollectibleCardsPage() {
   const renderView = () => {
     switch (view) {
       case 'menu':
-        return <MainMenu onOpenPack={handleOpenPack} setView={setView} user={user} availablePacks={availablePacks}/>;
+        return <MainMenu onOpenPack={handleOpenPack} setView={setView} user={user} availablePacks={availablePacks} countdown={countdown}/>;
       case 'pack':
         return <PackOpeningView cards={lastOpenedPack} setView={setView} />;
       case 'formation':
@@ -248,7 +296,7 @@ export default function CollectibleCardsPage() {
   );
 }
 
-const MainMenu = ({ onOpenPack, setView, user, availablePacks }: { onOpenPack: () => void, setView: (v: View) => void, user: any, availablePacks: number }) => {
+const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { onOpenPack: () => void, setView: (v: View) => void, user: any, availablePacks: number, countdown: string }) => {
     const isVisitor = user?.name === 'VISITANTE';
     const hasFreePack = availablePacks > 0;
 
@@ -278,7 +326,7 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks }: { onOpenPack: (
                   <div className="relative flex items-center gap-3">
                     {hasFreePack && <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>}
                     <PackageOpen className="w-5 h-5" />
-                    <span>ABRIR SOBRE ({availablePacks})</span>
+                     {hasFreePack ? <span>ABRIR SOBRE ({availablePacks})</span> : <span>{countdown || '...'}</span>}
                   </div>
                   <ChevronRight className="w-5 h-5" />
                 </Button>
@@ -655,3 +703,5 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
+
+    
