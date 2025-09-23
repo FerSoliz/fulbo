@@ -19,7 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { AnimatedAvatar } from "@/components/ui/animated-avatar";
-import { DivisionBadge } from "@/components/ui/division-badge";
+import { DivisionBadge } from "@/components/division-badge";
 import {
   User,
   initialUsers,
@@ -45,6 +45,9 @@ import {
   MoreVertical,
   Pencil,
   Image as ImageIcon,
+  Gift,
+  Lock,
+  CheckCircle2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -76,6 +79,8 @@ import { useUser } from "@/context/user-context";
 import { useUpload } from "@/hooks/use-upload";
 import { motion, AnimatePresence } from "framer-motion";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+
 
 const MatchHistory = () => {
     const puertoFcHistory = [
@@ -152,6 +157,59 @@ const NextMatch = () => {
         </div>
     );
 };
+
+const GamePass = () => {
+    const currentLevel = 15; // Example current level
+    const totalLevels = 40;
+    const progressPercentage = (currentLevel / totalLevels) * 100;
+
+    return (
+        <div className="relative w-full h-auto">
+            <Image
+                src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png"
+                alt="Contenedor de Pase de Juego"
+                width={800}
+                height={600}
+                className="w-full h-auto"
+                quality={100}
+            />
+            <div className="absolute inset-0 py-5 px-8 flex flex-col text-white">
+                <h2 className="text-xl font-bold uppercase text-center mb-2">Pase de Juego</h2>
+                <ScrollArea className="w-full whitespace-nowrap">
+                    <div className="flex space-x-4 pb-4">
+                        {Array.from({ length: totalLevels }).map((_, index) => {
+                            const level = index + 1;
+                            const isClaimed = level < currentLevel;
+                            const isCurrent = level === currentLevel;
+                            const isLocked = level > currentLevel;
+                            return (
+                                <div key={level} className={cn("flex flex-col items-center justify-between w-20 h-28 rounded-lg p-2 border-2",
+                                    isClaimed && "border-green-500 bg-green-500/20",
+                                    isCurrent && "border-amber-400 bg-amber-400/30",
+                                    isLocked && "border-gray-600 bg-black/30"
+                                )}>
+                                    <div className="text-center">
+                                        <p className="font-bold text-lg">{level}</p>
+                                        <div className="relative w-10 h-10 mx-auto my-1">
+                                            <Gift className={cn("w-full h-full", isLocked ? "text-gray-500" : "text-yellow-400")} />
+                                            {isLocked && <Lock className="absolute bottom-0 right-0 w-4 h-4 text-gray-400 bg-black/50 rounded-full p-0.5" />}
+                                        </div>
+                                    </div>
+                                    {isClaimed && <CheckCircle2 className="w-5 h-5 text-green-400" />}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <ScrollBar orientation="horizontal" />
+                </ScrollArea>
+                <div className="mt-2 px-4">
+                    <Progress value={progressPercentage} className="h-3 bg-white/20 [&>div]:bg-white" />
+                    <p className="text-center text-xs mt-1">Nivel {currentLevel} / {totalLevels}</p>
+                </div>
+            </div>
+        </div>
+    )
+}
 
 const EditProfileDialog = ({ user, onSave, children }: { user: User, onSave: (updatedUser: User) => void, children: React.ReactNode }) => {
     const [name, setName] = useState(user.name);
@@ -296,6 +354,7 @@ export default function ProfilePage() {
   const [showHistory, setShowHistory] = useState(false);
   const [showNextMatch, setShowNextMatch] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showGamePass, setShowGamePass] = useState(false);
 
   // Load initial data from localStorage
   useEffect(() => {
@@ -641,7 +700,7 @@ export default function ProfilePage() {
                   alt="Proximo Partido"
                   width={82}
                   height={103}
-                  onClick={() => {setShowNextMatch(!showNextMatch); setShowHistory(false); setShowStats(false);}}
+                  onClick={() => {setShowNextMatch(!showNextMatch); setShowHistory(false); setShowStats(false); setShowGamePass(false);}}
                   className="cursor-pointer hover:scale-105 transition-transform"
                 />
                 <div className="flex flex-row gap-2">
@@ -650,7 +709,7 @@ export default function ProfilePage() {
                     alt="Historial"
                     width={82}
                     height={103}
-                    onClick={() => {setShowHistory(!showHistory); setShowNextMatch(false); setShowStats(false);}}
+                    onClick={() => {setShowHistory(!showHistory); setShowNextMatch(false); setShowStats(false); setShowGamePass(false);}}
                     className="cursor-pointer hover:scale-105 transition-transform"
                   />
                    <Image
@@ -658,7 +717,7 @@ export default function ProfilePage() {
                     alt="Estadisticas"
                     width={82}
                     height={103}
-                    onClick={() => {setShowStats(!showStats); setShowHistory(false); setShowNextMatch(false);}}
+                    onClick={() => {setShowStats(!showStats); setShowHistory(false); setShowNextMatch(false); setShowGamePass(false);}}
                     className="cursor-pointer hover:scale-105 transition-transform"
                   />
                 </div>
@@ -711,6 +770,7 @@ export default function ProfilePage() {
                   alt="Pase de Batalla"
                   width={82}
                   height={103}
+                  onClick={() => {setShowGamePass(!showGamePass); setShowStats(false); setShowHistory(false); setShowNextMatch(false);}}
                   className="cursor-pointer hover:scale-105 transition-transform"
                 />
               </div>
@@ -833,6 +893,16 @@ export default function ProfilePage() {
                       </div>
                   </motion.div>
               )}
+               {showGamePass && (
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                >
+                    <GamePass />
+                </motion.div>
+              )}
           </AnimatePresence>
 
         </div>
@@ -840,3 +910,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
