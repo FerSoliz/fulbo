@@ -363,16 +363,17 @@ export default function ProfilePage() {
   return (
      <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
       <Card>
-        <div className="relative h-32 md:h-48 w-full">
+        <div className="relative w-full aspect-[16/9] md:aspect-[21/9]">
           {profileBackground && (
             <Image
               src={profileBackground}
               alt="Imagen de fondo del perfil"
               layout="fill"
               className="object-cover rounded-t-lg"
+              priority
             />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent rounded-t-lg" />
           
           <div className="absolute top-4 right-4 z-10 flex gap-2">
             {currentUser && !isOwnProfile && (
@@ -553,4 +554,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
