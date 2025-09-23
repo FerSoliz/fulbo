@@ -386,7 +386,7 @@ export default function ProfilePage() {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent rounded-t-lg" />
           
-          <div className="absolute top-4 right-4 z-10 flex gap-2 items-center">
+          <div className="absolute top-2 right-2 z-10 flex gap-2 items-center">
              {currentCrest && (
                 <div className="w-10 h-10">
                    <Image src={currentCrest} alt="Escudo de equipo" width={40} height={40} />
