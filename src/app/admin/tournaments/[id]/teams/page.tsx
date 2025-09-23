@@ -45,6 +45,9 @@ import {
 import { Label } from '@/components/ui/label';
 import { useUpload } from '@/hooks/use-upload';
 import { useToast } from '@/hooks/use-toast';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, getDoc, updateDoc, setDoc, writeBatch, deleteDoc } from 'firebase/firestore';
+
 
 interface Team {
   id: string;
@@ -81,38 +84,41 @@ export default function ManageTeamsPage() {
   const inputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [teamToUpdateLogo, setTeamToUpdateLogo] = useState<string | null>(null);
-   const [uploadingLogoId, setUploadingLogoId] = useState<string | null>(null);
+  const [uploadingLogoId, setUploadingLogoId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load tournament name
-    const allTournaments = JSON.parse(
-      localStorage.getItem('tournaments') || '[]'
-    );
-    const currentTournament = allTournaments.find((t: any) => t.id === tournamentId);
-    if (currentTournament) {
-      setTournamentName(currentTournament.name);
-    } else {
-      router.push('/admin/manage-tournaments');
-      return;
-    }
+    if (!tournamentId) return;
 
-    // Load teams for this tournament
-    const teamNamesJson = localStorage.getItem(`teams_${tournamentId}`);
-    if (teamNamesJson) {
-      const teamNames = JSON.parse(teamNamesJson);
-      const teamLogos = JSON.parse(localStorage.getItem(`logos_${tournamentId}`) || '{}');
-      const teamObjects = teamNames.map((name: string, index: number) => {
-        // Use a consistent ID generation based on the team name or index
-        const teamId = `team_${tournamentId}_${name.replace(/\s+/g, '_') || index}`;
-        return {
-          id: teamId,
-          name: name || `Equipo ${index + 1}`,
-          logoUrl: teamLogos[teamId] || `https://avatar.vercel.sh/${name || `Equipo${index}`}.png`,
+    const fetchTeamData = async () => {
+        setLoading(true);
+        try {
+            const tournamentRef = doc(db, 'tournaments', tournamentId);
+            const tournamentSnap = await getDoc(tournamentRef);
+            if (tournamentSnap.exists()) {
+                setTournamentName(tournamentSnap.data().name);
+            } else {
+                router.push('/admin/manage-tournaments');
+                return;
+            }
+
+            const teamsCollectionRef = collection(db, 'tournaments', tournamentId, 'teams');
+            const teamsSnapshot = await getDocs(teamsCollectionRef);
+            const teamsData = teamsSnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            } as Team));
+            setTeams(teamsData);
+        } catch (error) {
+            console.error("Error fetching team data: ", error);
+            toast({ title: "Error", description: "No se pudieron cargar los datos de los equipos.", variant: "destructive" });
+        } finally {
+            setLoading(false);
         }
-      });
-      setTeams(teamObjects);
-    }
-  }, [tournamentId, router]);
+    };
+
+    fetchTeamData();
+  }, [tournamentId, router, toast]);
 
   const handleEditNameClick = (team: Team) => {
     setEditingTeamId(team.id);
@@ -125,28 +131,36 @@ export default function ManageTeamsPage() {
     }
   },[editingTeamId]);
 
-  const handleSaveName = (teamId: string) => {
-    const teamIndex = teams.findIndex(t => t.id === teamId);
-    if (teamIndex === -1) return;
-
-    // Update state
-    const updatedTeams = teams.map(t => 
-        t.id === teamId ? {...t, name: editingName} : t
-    );
-    setTeams(updatedTeams);
-
-    // Save to localStorage
-    const teamNamesToSave = updatedTeams.map(t => t.name);
-    localStorage.setItem(`teams_${tournamentId}`, JSON.stringify(teamNamesToSave));
+  const handleSaveName = async (teamId: string) => {
+    if (!editingName.trim()) {
+        toast({ title: "Error", description: "El nombre del equipo no puede estar vacío.", variant: "destructive"});
+        return;
+    }
     
-    setEditingTeamId(null);
+    const teamRef = doc(db, 'tournaments', tournamentId, 'teams', teamId);
+    try {
+        await updateDoc(teamRef, { name: editingName });
+        setTeams(prev => prev.map(t => t.id === teamId ? {...t, name: editingName} : t));
+        toast({ title: "Nombre Actualizado", description: "El nombre del equipo se ha guardado."});
+    } catch (error) {
+        console.error("Error updating team name: ", error);
+        toast({ title: "Error", description: "No se pudo actualizar el nombre del equipo.", variant: "destructive"});
+    } finally {
+        setEditingTeamId(null);
+    }
   };
   
-  const handleEditRoster = (team: Team) => {
+  const handleEditRoster = async (team: Team) => {
       setSelectedTeam(team);
-      const rosterKey = `roster_${tournamentId}_${team.id}`;
-      const savedRoster = JSON.parse(localStorage.getItem(rosterKey) || '[]');
-      setRoster(savedRoster);
+      const rosterRef = collection(db, 'tournaments', tournamentId, 'teams', team.id, 'roster');
+      try {
+        const rosterSnapshot = await getDocs(rosterRef);
+        const rosterData = rosterSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Player));
+        setRoster(rosterData);
+      } catch (error) {
+        console.error("Error fetching roster: ", error);
+        setRoster([]);
+      }
       setIsEditDialogOpen(true);
   }
 
@@ -168,21 +182,34 @@ export default function ManageTeamsPage() {
   }
 
 
-  const handleSaveRoster = () => {
+  const handleSaveRoster = async () => {
       if(selectedTeam) {
-        const rosterKey = `roster_${tournamentId}_${selectedTeam.id}`;
-        // Filter out players with no DNI, name, or lastname before saving
+        const batch = writeBatch(db);
         const validRoster = roster.filter(p => p.dni.trim() && p.name.trim() && p.lastName.trim());
-        localStorage.setItem(rosterKey, JSON.stringify(validRoster));
-        
-        const allPlayerDetails = JSON.parse(localStorage.getItem("playerDetails") || "{}");
-        validRoster.forEach(player => {
-             allPlayerDetails[player.dni] = player;
-        });
-        localStorage.setItem("playerDetails", JSON.stringify(allPlayerDetails));
 
-        setIsEditDialogOpen(false);
-        toast({ title: '¡Plantilla Guardada!', description: `La plantilla de ${selectedTeam.name} se guardó correctamente.`});
+        // First, delete existing players in a subcollection to handle removals
+        const rosterCollectionRef = collection(db, 'tournaments', tournamentId, 'teams', selectedTeam.id, 'roster');
+        const existingRosterSnap = await getDocs(rosterCollectionRef);
+        existingRosterSnap.docs.forEach(doc => batch.delete(doc.ref));
+
+        // Then, add all current valid players
+        validRoster.forEach(player => {
+            const playerRef = doc(rosterCollectionRef, player.dni); // Use DNI as document ID
+            batch.set(playerRef, { ...player, id: player.dni });
+
+            // Also update the global player details
+            const globalPlayerRef = doc(db, 'playerDetails', player.dni);
+            batch.set(globalPlayerRef, player, { merge: true });
+        });
+        
+        try {
+            await batch.commit();
+            setIsEditDialogOpen(false);
+            toast({ title: '¡Plantilla Guardada!', description: `La plantilla de ${selectedTeam.name} se guardó correctamente.`});
+        } catch (error) {
+            console.error("Error saving roster: ", error);
+            toast({ title: 'Error', description: 'No se pudo guardar la plantilla.', variant: 'destructive'});
+        }
       }
   }
   
@@ -199,13 +226,13 @@ export default function ManageTeamsPage() {
       try {
         const uploadedUrl = await uploadFile(file, `teams/${tournamentId}/logos`);
         
+        const teamRef = doc(db, 'tournaments', tournamentId, 'teams', teamToUpdateLogo);
+        await updateDoc(teamRef, { logoUrl: uploadedUrl });
+
         setTeams(prevTeams => 
             prevTeams.map(t => t.id === teamToUpdateLogo ? {...t, logoUrl: uploadedUrl} : t)
         );
 
-        const teamLogos = JSON.parse(localStorage.getItem(`logos_${tournamentId}`) || '{}');
-        teamLogos[teamToUpdateLogo] = uploadedUrl;
-        localStorage.setItem(`logos_${tournamentId}`, JSON.stringify(teamLogos));
         toast({ title: '¡Logo Actualizado!', description: 'El nuevo logo del equipo ha sido guardado.'});
       } catch (error) {
         // useUpload hook already shows a toast on error
@@ -217,6 +244,14 @@ export default function ManageTeamsPage() {
     setTeamToUpdateLogo(null);
   };
 
+  if (loading) {
+      return (
+        <div className="p-8 text-center flex justify-center items-center h-screen">
+          <Loader2 className="w-8 h-8 animate-spin mr-4"/>
+          <span>Cargando equipos...</span>
+        </div>
+      );
+  }
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">

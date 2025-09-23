@@ -66,16 +66,18 @@ import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { PlanillaPartidoSVG } from '@/components/planilla-partido-svg';
 import * as htmlToImage from 'html-to-image';
 import QRCode from 'qrcode';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, getDoc, updateDoc, writeBatch } from 'firebase/firestore';
 
 
 // Mock data, this would come from your state management/API
-const generateFixture = (teams: string[]) => {
-  if (teams.length % 2 !== 0) teams.push('BYE');
-  const rounds: { home: string; away: string }[][] = [];
+const generateFixture = (teams: any[]) => {
+  if (teams.length % 2 !== 0) teams.push({id: 'bye', name: 'BYE'});
+  const rounds: { home: any; away: any }[][] = [];
   const numRounds = teams.length - 1;
   const half = teams.length / 2;
   for (let i = 0; i < numRounds; i++) {
-    const round: { home: string; away: string }[] = [];
+    const round: { home: any; away: any }[] = [];
     for (let j = 0; j < half; j++) {
       round.push({ home: teams[j], away: teams[teams.length - 1 - j] });
     }
@@ -111,8 +113,8 @@ export default function TournamentDetailsPage() {
   const params = useParams();
   const tournamentId = params.id as string;
   const [tournament, setTournament] = useState<any>(null);
-  const [teams, setTeams] = useState<string[]>([]);
-  const [fixture, setFixture] = useState<ManualMatch[][]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
+  const [fixture, setFixture] = useState<any[][]>([]);
   const [isGroupStageFinished, setIsGroupStageFinished] = useState(false);
   const [matchResults, setMatchResults] = useState<any>({});
   const [matchDetails, setMatchDetails] = useState<any>({});
@@ -142,66 +144,60 @@ export default function TournamentDetailsPage() {
   const [planillaData, setPlanillaData] = useState<PlanillaData | null>(null);
 
   const getTeamId = (teamName: string) => {
-    const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
-    const index = teamNames.indexOf(teamName);
-    if (index !== -1) {
-        return `team_${tournamentId}_${teamName.replace(/\s+/g, '_') || index}`;
-    }
-    return null;
+    const team = teams.find(t => t.name === teamName);
+    return team ? team.id : null;
   }
 
-
-  const loadStats = () => {
-    const savedPositions = JSON.parse(localStorage.getItem(`positions_${tournamentId}`) || '[]');
-    const savedScorers = JSON.parse(localStorage.getItem(`scorers_${tournamentId}`) || '[]');
-    const savedSanctions = JSON.parse(localStorage.getItem(`sanctions_${tournamentId}`) || '[]');
-    const savedPenalties = JSON.parse(localStorage.getItem(`penalties_${tournamentId}`) || '[]');
-    const savedSuspensions = JSON.parse(localStorage.getItem(`suspensions_${tournamentId}`) || '{}');
-    setPositions(savedPositions);
-    setScorers(savedScorers);
-    setSanctions(savedSanctions);
-    setPenalties(savedPenalties);
-    setSuspensions(savedSuspensions);
+  const loadStats = async () => {
+    if (!tournamentId) return;
+    const statsRef = doc(db, 'tournaments', tournamentId, 'statistics', 'allStats');
+    const statsSnap = await getDoc(statsRef);
+    if(statsSnap.exists()) {
+        const data = statsSnap.data();
+        setPositions(data.positions || []);
+        setScorers(data.scorers || []);
+        setSanctions(data.sanctions || []);
+        setPenalties(data.penalties || []);
+        setSuspensions(data.suspensions || {});
+    }
   };
 
   useEffect(() => {
     if (!tournamentId) return;
 
-    const allTournaments = JSON.parse(
-      localStorage.getItem('tournaments') || '[]'
-    );
-    const currentTournament = allTournaments.find(
-      (t: any) => t.id === tournamentId
-    );
-    setTournament(currentTournament);
-    
-    const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
-    setTeams(teamNames);
+    const fetchTournamentData = async () => {
+        const tournamentRef = doc(db, 'tournaments', tournamentId);
+        const tournamentSnap = await getDoc(tournamentRef);
 
-    if (teamNames.length > 0) {
-      const storedFixture = JSON.parse(localStorage.getItem(`fixture_${tournamentId}`) || 'null');
-      if (storedFixture && storedFixture.length > 0 && storedFixture.flat().length > 0) {
-        setFixture(storedFixture);
-      } else if (currentTournament?.autoFixture) {
-        const newFixture = generateFixture([...teamNames]);
-        setFixture(newFixture);
-        localStorage.setItem(`fixture_${tournamentId}`, JSON.stringify(newFixture));
-      }
-    }
+        if (tournamentSnap.exists()) {
+            const tournamentData = tournamentSnap.data();
+            setTournament(tournamentData);
+            
+            const teamsCollectionRef = collection(db, 'tournaments', tournamentId, 'teams');
+            const teamsSnapshot = await getDocs(teamsCollectionRef);
+            const teamsData = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            setTeams(teamsData);
 
-    const stageStatus = JSON.parse(localStorage.getItem(`groupStageStatus_${tournamentId}`) || 'false');
-    setIsGroupStageFinished(stageStatus);
-
-    const savedResults = JSON.parse(localStorage.getItem(`results_${tournamentId}`) || '{}');
-    setMatchResults(savedResults);
-    
-    const savedDetails = JSON.parse(localStorage.getItem(`details_${tournamentId}`) || '{}');
-    setMatchDetails(savedDetails);
-
-    const savedFinished = JSON.parse(localStorage.getItem(`finished_matches_${tournamentId}`) || '[]');
-    setFinishedMatches(new Set(savedFinished));
-
-    loadStats();
+            const fixtureRef = doc(db, 'tournaments', tournamentId, 'data', 'fixture');
+            const fixtureSnap = await getDoc(fixtureRef);
+            if (fixtureSnap.exists()) {
+                const fixtureData = fixtureSnap.data();
+                setFixture(fixtureData.rounds || []);
+                setMatchResults(fixtureData.results || {});
+                setMatchDetails(fixtureData.details || {});
+                setFinishedMatches(new Set(fixtureData.finishedMatches || []));
+            } else if (tournamentData.autoFixture && teamsData.length > 0) {
+                 const newFixtureRounds = generateFixture([...teamsData]);
+                 const newFixture = newFixtureRounds.map(round => round.map(match => ({ home: match.home.name, away: match.away.name })));
+                 setFixture(newFixture);
+                 await updateDoc(fixtureRef, { rounds: newFixture }, { merge: true });
+            }
+            
+            setIsGroupStageFinished(tournamentData.isGroupStageFinished || false);
+            loadStats();
+        }
+    };
+    fetchTournamentData();
 
   }, [tournamentId]);
 
@@ -223,10 +219,16 @@ export default function TournamentDetailsPage() {
   }, [planillaData]);
 
 
-  const handleFinishGroupStage = () => {
+  const handleFinishGroupStage = async () => {
     setIsGroupStageFinished(true);
-    localStorage.setItem(`groupStageStatus_${tournamentId}`, JSON.stringify(true));
+    const tournamentRef = doc(db, 'tournaments', tournamentId);
+    await updateDoc(tournamentRef, { isGroupStageFinished: true });
   };
+  
+  const updateFixtureData = async (field: string, data: any) => {
+      const fixtureRef = doc(db, 'tournaments', tournamentId, 'data', 'fixture');
+      await updateDoc(fixtureRef, { [field]: data }, { merge: true });
+  }
   
   const handleResultChange = (roundIndex: number, matchIndex: number, team: 'home' | 'away', score: string) => {
     const matchId = `r${roundIndex}m${matchIndex}`;
@@ -238,7 +240,7 @@ export default function TournamentDetailsPage() {
       }
     };
     setMatchResults(newResults);
-    localStorage.setItem(`results_${tournamentId}`, JSON.stringify(newResults));
+    updateFixtureData('results', newResults);
   }
   
   const handleDetailChange = (roundIndex: number, matchIndex: number, field: 'date' | 'time' | 'referee', value: string) => {
@@ -251,27 +253,21 @@ export default function TournamentDetailsPage() {
         }
     };
     setMatchDetails(newDetails);
-    localStorage.setItem(`details_${tournamentId}`, JSON.stringify(newDetails));
+    updateFixtureData('details', newDetails);
   }
 
-  const calculateAllTournamentStats = (currentFinishedMatches: Set<string>) => {
+  const calculateAllTournamentStats = async (currentFinishedMatches: Set<string>) => {
     if (!teams || teams.length === 0) return;
 
     let allRosters: {[key: string]: Player[]} = {};
-    const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
-
-    teamNames.forEach((teamName: string) => {
-        const teamId = getTeamId(teamName);
-        if (teamId) {
-            const rosterKey = `roster_${tournamentId}_${teamId}`;
-            const storedRoster = localStorage.getItem(rosterKey);
-            allRosters[teamName] = storedRoster ? JSON.parse(storedRoster) : [];
-        }
-    });
+    for (const team of teams) {
+        const rosterSnapshot = await getDocs(collection(db, 'tournaments', tournamentId, 'teams', team.id, 'roster'));
+        allRosters[team.name] = rosterSnapshot.docs.map(doc => doc.data() as Player);
+    }
 
     const stats: { [team: string]: any } = teams.reduce((acc, team) => {
-      if (team !== 'BYE') {
-        acc[team] = { rank: 0, team, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, gc: 0, dg: 0, points: 0 };
+      if (team.name !== 'BYE') {
+        acc[team.name] = { rank: 0, team: team.name, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, gc: 0, dg: 0, points: 0 };
       }
       return acc;
     }, {} as { [team: string]: any });
@@ -295,8 +291,8 @@ export default function TournamentDetailsPage() {
     }
     
     const penaltyTable: { [team: string]: any } = teams.reduce((acc, team) => {
-        if (team !== 'BYE') {
-          acc[team] = { rank: 0, team, played: 0, won: 0, drawn: 0, lost: 0, points: 0 };
+        if (team.name !== 'BYE') {
+          acc[team.name] = { rank: 0, team: team.name, played: 0, won: 0, drawn: 0, lost: 0, points: 0 };
         }
         return acc;
     }, {} as { [team: string]: any });
@@ -305,9 +301,8 @@ export default function TournamentDetailsPage() {
 
 
     fixture.forEach((round, roundIndex) => {
-      round.forEach((match, matchIndex) => {
+      round.forEach(async (match, matchIndex) => {
         const matchId = `r${roundIndex}m${matchIndex}`;
-        const matchIdForStats = `${tournamentId}_${matchId}`;
         const isFinished = currentFinishedMatches.has(matchId);
         
         if (isFinished && match.home && match.away && match.home !== 'BYE' && match.away !== 'BYE') {
@@ -339,51 +334,56 @@ export default function TournamentDetailsPage() {
             stats[match.away].points += 1;
           }
 
-          const matchPlayerStats = JSON.parse(localStorage.getItem(`matchStats_${matchIdForStats}`) || '{}');
-          if (matchPlayerStats.stats) {
-            for (const dni in matchPlayerStats.stats) {
-              const pData = matchPlayerStats.stats[dni];
-              
-              if (playerStats[dni]) {
-                  playerStats[dni].goals += pData.goals || 0;
+          const matchStatsRef = doc(db, 'tournaments', tournamentId, 'matches', matchId);
+          const matchStatsSnap = await getDoc(matchStatsRef);
+
+          if (matchStatsSnap.exists()) {
+              const matchPlayerStats = matchStatsSnap.data();
+              if (matchPlayerStats.stats) {
+                for (const dni in matchPlayerStats.stats) {
+                  const pData = matchPlayerStats.stats[dni];
                   
-                  if (pData.red) {
-                      playerStats[dni].red++;
-                      playerStats[dni].yellow = 0;
-                      newSuspensions[dni] = { nextMatchSuspended: true };
-                  } else if (pData.yellow) {
-                      playerStats[dni].yellow++;
-                      if (playerStats[dni].yellow >= 5) {
-                          playerStats[dni].yellow -= 5;
+                  if (playerStats[dni]) {
+                      playerStats[dni].goals += pData.goals || 0;
+                      
+                      if (pData.red) {
+                          playerStats[dni].red++;
+                          playerStats[dni].yellow = 0;
                           newSuspensions[dni] = { nextMatchSuspended: true };
+                      } else if (pData.yellow) {
+                          playerStats[dni].yellow++;
+                          if (playerStats[dni].yellow >= 5) {
+                              playerStats[dni].yellow -= 5;
+                              newSuspensions[dni] = { nextMatchSuspended: true };
+                          }
                       }
                   }
+                }
               }
-            }
-          }
-          
-           if(matchPlayerStats.penaltyScore) {
-               const homePenalty = matchPlayerStats.penaltyScore.home;
-               const awayPenalty = matchPlayerStats.penaltyScore.away;
-               if(homePenalty !== undefined && awayPenalty !== undefined && homePenalty !== null && awayPenalty !== null){
-                   penaltyTable[match.home].played++;
-                   penaltyTable[match.away].played++;
-                   if(homePenalty > awayPenalty){
-                       penaltyTable[match.home].won++;
-                       penaltyTable[match.away].lost++;
-                       penaltyTable[match.home].points += 3;
-                   } else if (awayPenalty > homePenalty) {
-                       penaltyTable[match.away].won++;
-                       penaltyTable[match.home].lost++;
-                       penaltyTable[match.away].points += 3;
-                   } else {
-                        penaltyTable[match.home].drawn++;
-                        penaltyTable[match.away].drawn++;
-                        penaltyTable[match.home].points += 1;
-                        penaltyTable[match.away].points += 1;
+              
+               if(matchPlayerStats.penaltyScore) {
+                   const homePenalty = matchPlayerStats.penaltyScore.home;
+                   const awayPenalty = matchPlayerStats.penaltyScore.away;
+                   if(homePenalty !== undefined && awayPenalty !== undefined && homePenalty !== null && awayPenalty !== null){
+                       penaltyTable[match.home].played++;
+                       penaltyTable[match.away].played++;
+                       if(homePenalty > awayPenalty){
+                           penaltyTable[match.home].won++;
+                           penaltyTable[match.away].lost++;
+                           penaltyTable[match.home].points += 3;
+                       } else if (awayPenalty > homePenalty) {
+                           penaltyTable[match.away].won++;
+                           penaltyTable[match.home].lost++;
+                           penaltyTable[match.away].points += 3;
+                       } else {
+                            penaltyTable[match.home].drawn++;
+                            penaltyTable[match.away].drawn++;
+                            penaltyTable[match.home].points += 1;
+                            penaltyTable[match.away].points += 1;
+                       }
                    }
                }
-           }
+          }
         }
       });
     });
@@ -398,12 +398,14 @@ export default function TournamentDetailsPage() {
     const sortedPenalties = Object.values(penaltyTable).sort((a, b) => b.points - a.points);
     sortedPenalties.forEach((team, index) => team.rank = index + 1);
 
-
-    localStorage.setItem(`positions_${tournamentId}`, JSON.stringify(sortedTeams));
-    localStorage.setItem(`scorers_${tournamentId}`, JSON.stringify(sortedScorers));
-    localStorage.setItem(`sanctions_${tournamentId}`, JSON.stringify(sortedSanctions));
-    localStorage.setItem(`penalties_${tournamentId}`, JSON.stringify(sortedPenalties));
-    localStorage.setItem(`suspensions_${tournamentId}`, JSON.stringify(newSuspensions));
+    const statsRef = doc(db, 'tournaments', tournamentId, 'statistics', 'allStats');
+    await updateDoc(statsRef, {
+        positions: sortedTeams,
+        scorers: sortedScorers,
+        sanctions: sortedSanctions,
+        penalties: sortedPenalties,
+        suspensions: newSuspensions,
+    }, { merge: true });
     
     loadStats();
   };
@@ -431,8 +433,7 @@ export default function TournamentDetailsPage() {
         newFinishedMatches.delete(matchId);
     }
     setFinishedMatches(newFinishedMatches);
-    localStorage.setItem(`finished_matches_${tournamentId}`, JSON.stringify(Array.from(newFinishedMatches)));
-
+    updateFixtureData('finishedMatches', Array.from(newFinishedMatches));
     calculateAllTournamentStats(newFinishedMatches);
   };
 
@@ -443,8 +444,17 @@ export default function TournamentDetailsPage() {
       const homeTeamId = getTeamId(match.home);
       const awayTeamId = getTeamId(match.away);
       
-      const homeRoster: Player[] = homeTeamId ? JSON.parse(localStorage.getItem(`roster_${tournamentId}_${homeTeamId}`) || '[]') : [];
-      const awayRoster: Player[] = awayTeamId ? JSON.parse(localStorage.getItem(`roster_${tournamentId}_${awayTeamId}`) || '[]') : [];
+      let homeRoster: Player[] = [];
+      let awayRoster: Player[] = [];
+
+      if (homeTeamId) {
+          const rosterSnap = await getDocs(collection(db, 'tournaments', tournamentId, 'teams', homeTeamId, 'roster'));
+          homeRoster = rosterSnap.docs.map(doc => doc.data() as Player);
+      }
+      if (awayTeamId) {
+           const rosterSnap = await getDocs(collection(db, 'tournaments', tournamentId, 'teams', awayTeamId, 'roster'));
+          awayRoster = rosterSnap.docs.map(doc => doc.data() as Player);
+      }
 
       const homeSuspensions = homeRoster.filter(p => suspensions[p.dni]?.nextMatchSuspended).map(p => p.dni);
       const awaySuspensions = awayRoster.filter(p => suspensions[p.dni]?.nextMatchSuspended).map(p => p.dni);
@@ -469,7 +479,7 @@ export default function TournamentDetailsPage() {
       }
   };
   
-  const generateEmptyFixture = () => {
+  const generateEmptyFixture = async () => {
     if (teams.length < 2) return;
     const numTeams = teams.length % 2 === 0 ? teams.length : teams.length + 1;
     const numRounds = numTeams - 1;
@@ -482,14 +492,14 @@ export default function TournamentDetailsPage() {
           .map(() => ({ home: '', away: '' }))
       );
     setFixture(newFixture);
-    localStorage.setItem(`fixture_${tournamentId}`, JSON.stringify(newFixture));
+    await updateFixtureData('rounds', newFixture);
   };
   
   const handleManualMatchChange = (roundIndex: number, matchIndex: number, teamType: 'home' | 'away', teamName: string) => {
     const newFixture = [...fixture];
     newFixture[roundIndex][matchIndex][teamType] = teamName;
     setFixture(newFixture);
-    localStorage.setItem(`fixture_${tournamentId}`, JSON.stringify(newFixture));
+    updateFixtureData('rounds', newFixture);
   }
 
   const fixtureWarnings = useMemo(() => {
@@ -532,8 +542,8 @@ export default function TournamentDetailsPage() {
               </SelectTrigger>
               <SelectContent>
                 {teams.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
+                  <SelectItem key={t.id} value={t.name}>
+                    {t.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -549,8 +559,8 @@ export default function TournamentDetailsPage() {
               </SelectTrigger>
               <SelectContent>
                 {teams.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {t}
+                  <SelectItem key={t.id} value={t.name}>
+                    {t.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -693,14 +703,14 @@ export default function TournamentDetailsPage() {
                                         <Select value={match.home} onValueChange={(value) => handleManualMatchChange(roundIndex, matchIndex, 'home', value)} disabled={isFinished}>
                                             <SelectTrigger><SelectValue placeholder="Equipo Local" /></SelectTrigger>
                                             <SelectContent>
-                                                {teams.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                                                {teams.map(team => <SelectItem key={team.id} value={team.name}>{team.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                         <span>vs</span>
                                          <Select value={match.away} onValueChange={(value) => handleManualMatchChange(roundIndex, matchIndex, 'away', value)} disabled={isFinished}>
                                             <SelectTrigger><SelectValue placeholder="Equipo Visitante" /></SelectTrigger>
                                             <SelectContent>
-                                                {teams.map(name => <SelectItem key={name} value={name}>{name}</SelectItem>)}
+                                                {teams.map(team => <SelectItem key={team.id} value={team.name}>{team.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                         {fixtureWarnings[`${roundIndex}-${matchIndex}`] && (
