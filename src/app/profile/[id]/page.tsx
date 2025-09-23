@@ -89,6 +89,12 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
+const availableBackgrounds = [
+    { name: 'Default', url: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png' },
+    { name: 'Lusail Stadium', url: 'https://i.postimg.cc/1RfWNTCC/lusail.png' },
+    { name: 'Estadio Monumental', url: 'https://i.postimg.cc/L4wxkTGH/monumental.png' }
+];
+
 const EditProfileDialog = ({
   user,
   onSave,
@@ -194,6 +200,7 @@ export default function ProfilePage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isBgSelectorOpen, setIsBgSelectorOpen] = useState(false);
 
   useEffect(() => {
     const targetUser = allUsers.find((u) => u.id === userId);
@@ -300,6 +307,37 @@ export default function ProfilePage() {
     }
   };
 
+   const handleBackgroundChange = async (imageUrl: string) => {
+    if (profileUser) {
+      try {
+        const updatedUser = { ...profileUser, profileBackground: imageUrl };
+        const userRef = doc(db, 'users', profileUser.id);
+        await updateDoc(userRef, { profileBackground: imageUrl });
+
+        setProfileUser(updatedUser);
+        setAllUsers((prev) =>
+          prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+        );
+        if (currentUser?.id === updatedUser.id) {
+          setCurrentUser(updatedUser);
+        }
+
+        toast({
+          title: '¡Fondo Actualizado!',
+          description: 'Tu nuevo fondo de perfil ha sido guardado.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'No se pudo actualizar el fondo de perfil.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsBgSelectorOpen(false);
+      }
+    }
+  };
+
   const handleAvatarClick = () => {
     if (currentUser?.id === profileUser?.id && !isUploading) {
       fileInputRef.current?.click();
@@ -356,15 +394,53 @@ export default function ProfilePage() {
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
           
-          <div className="absolute top-4 right-4 z-10">
+          <div className="absolute top-2 right-2 z-10 flex gap-2">
+            {isOwnProfile && (
+                 <Dialog open={isBgSelectorOpen} onOpenChange={setIsBgSelectorOpen}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                         <Button variant="secondary" size="icon" className="rounded-full h-8 w-8 bg-black/30 text-white hover:bg-black/50">
+                             <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                         <DropdownMenuItem onClick={() => setIsBgSelectorOpen(true)}>
+                            <ImageIcon className="mr-2 h-4 w-4" />
+                            Cambiar Fondo
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                     <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Seleccionar Fondo de Perfil</DialogTitle>
+                          <DialogDescription>Elige una imagen para personalizar tu cabecera.</DialogDescription>
+                        </DialogHeader>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 py-4">
+                            {availableBackgrounds.map(bg => (
+                                <div key={bg.name} className="relative aspect-video cursor-pointer group" onClick={() => handleBackgroundChange(bg.url)}>
+                                    <Image src={bg.url} alt={bg.name} layout="fill" className="object-cover rounded-md"/>
+                                    {profileBackground === bg.url && (
+                                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center rounded-md">
+                                            <CheckCircle2 className="w-8 h-8 text-white"/>
+                                        </div>
+                                    )}
+                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-md">
+                                        <p className="text-white font-bold">{bg.name}</p>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            )}
             {currentUser && !isOwnProfile && (
               <Button
                 variant="secondary"
                 size="icon"
                 onClick={() => setIsFavorite(!isFavorite)}
-                className="rounded-full bg-black/30 text-white hover:bg-black/50"
+                className="rounded-full h-8 w-8 bg-black/30 text-white hover:bg-black/50"
               >
-                <Star className={cn('w-5 h-5', isFavorite && 'fill-accent text-accent')} />
+                <Star className={cn('w-4 h-4', isFavorite && 'fill-accent text-accent')} />
               </Button>
             )}
           </div>
@@ -422,9 +498,9 @@ export default function ProfilePage() {
           </div>
           {isOwnProfile ? (
             <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
-              <Button variant="outline" className="w-full hidden md:inline-flex">
+              <Button variant="outline" className="w-full md:hidden">
                 <Pencil className="mr-2 h-4 w-4" />
-                Editar Perfil y Vincular DNI
+                Editar Perfil
               </Button>
             </EditProfileDialog>
           ) : (
