@@ -672,7 +672,7 @@ export default function ProfilePage() {
                   <Label className="text-sm font-medium">
                     Progreso en la división
                   </Label>
-                  <Progress value={sudpoints} className="h-2 my-1" />
+                  <Progress value={sudpoints} className="h-2 my-1 bg-[#201538]" />
                   <div className="flex justify-between">
                     <p className="text-xs text-muted-foreground mt-1">
                       Siguiente división en
