@@ -118,9 +118,9 @@ export default function TournamentDetailsPage() {
 
     if (teamNames.length > 0) {
       const storedFixture = JSON.parse(localStorage.getItem(`fixture_${tournamentId}`) || 'null');
-      if (storedFixture) {
+      if (storedFixture && storedFixture.length > 0 && storedFixture.flat().length > 0) {
         setFixture(storedFixture);
-      } else {
+      } else if (currentTournament?.autoFixture) {
         const newFixture = generateFixture([...teamNames]);
         setFixture(newFixture);
         localStorage.setItem(`fixture_${tournamentId}`, JSON.stringify(newFixture));
@@ -497,6 +497,7 @@ export default function TournamentDetailsPage() {
                      </Button>
                   </div>
                 ) : (
+                  fixture.length > 0 ? (
                   <Tabs defaultValue="round-1" className="w-full">
                     <TabsList>
                       {fixture.map((_, index) => (
@@ -577,6 +578,13 @@ export default function TournamentDetailsPage() {
                       </TabsContent>
                     ))}
                   </Tabs>
+                  ) : (
+                    <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                      <p className="text-muted-foreground">
+                        No se ha generado un fixture para este torneo.
+                      </p>
+                    </div>
+                  )
                 )}
               </CardContent>
             </Card>
