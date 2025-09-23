@@ -3,7 +3,22 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-import { getFirestore } from "firebase/firestore";
+import { 
+    getFirestore,
+    collection,
+    doc,
+    setDoc,
+    getDoc,
+    getDocs,
+    writeBatch,
+    deleteDoc,
+    updateDoc,
+    onSnapshot,
+    query,
+    where,
+    limit,
+    orderBy
+} from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -29,4 +44,4 @@ if (isMockConfig && typeof window !== 'undefined') {
 }
 
 
-export { app, auth, storage, db, GoogleAuthProvider, signInWithPopup };
+export { app, auth, storage, db, GoogleAuthProvider, signInWithPopup, collection, doc, setDoc, getDoc, getDocs, writeBatch, deleteDoc, updateDoc, onSnapshot, query, where, limit, orderBy };
