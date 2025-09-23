@@ -71,17 +71,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       if (firebaseUser) {
         const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        let foundUser = [...initialUsers, ...storedUsers].find(u => u.email === firebaseUser.email);
+        const combinedUsers = [...initialUsers, ...storedUsers];
+        let foundUser = combinedUsers.find(u => u.email === firebaseUser.email);
         
+        // Ensure admin user always gets correct role and data from initialUsers
+        if (firebaseUser.email === 'admin@sudone.com') {
+            foundUser = initialUsers.find(u => u.role === 'admin');
+        }
+
         if (!foundUser) {
-            const isAdmin = firebaseUser.email === 'admin@sudone.com';
             foundUser = {
                 id: firebaseUser.uid,
                 name: firebaseUser.displayName || 'Nuevo Usuario',
                 username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now()}`,
                 email: firebaseUser.email!,
                 avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
-                role: isAdmin ? 'admin' : 'user',
+                role: 'user',
                 isVerified: firebaseUser.emailVerified,
                 isBlocked: false,
                 location: 'Desconocida',
@@ -93,20 +98,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
             };
             const updatedUsers = [...storedUsers, foundUser];
             localStorage.setItem('users', JSON.stringify(updatedUsers));
-            setAllUsers(prev => [...prev, foundUser]);
+            setAllUsers(prev => [...prev, foundUser!]);
         }
         
-        // Ensure admin role is always correctly assigned for the owner
-        if (foundUser.email === 'admin@sudone.com' && foundUser.role !== 'admin') {
-            foundUser.role = 'admin';
-        }
-
-        setUser(foundUser);
-        const notifs = JSON.parse(localStorage.getItem(`notifications_${foundUser.id}`) || 'null');
+        setUser(foundUser!);
+        const notifs = JSON.parse(localStorage.getItem(`notifications_${foundUser!.id}`) || 'null');
         setNotifications(notifs || initialNotifications);
 
         // Load packs data for the logged-in user
-        const savedPacksData = localStorage.getItem(`userCardPacksData_${foundUser.id}`);
+        const savedPacksData = localStorage.getItem(`userCardPacksData_${foundUser!.id}`);
         if (savedPacksData) {
             const { packs, timestamp } = JSON.parse(savedPacksData);
             setAvailablePacks(packs);
@@ -127,6 +127,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -282,3 +283,5 @@ export function useUser() {
   }
   return context;
 }
+
+    
