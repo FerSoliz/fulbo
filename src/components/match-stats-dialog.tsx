@@ -22,6 +22,8 @@ import { cn } from '@/lib/utils';
 interface Player {
   id: string; // DNI
   name: string;
+  lastName: string;
+  dni: string;
 }
 
 interface MatchStatsDialogProps {
@@ -49,13 +51,20 @@ export function MatchStatsDialog({
   const matchId = `${tournamentId}_r${roundIndex}m${matchIndex}`;
 
   useEffect(() => {
-    // Load rosters from localStorage
-    const homeRosterData: Player[] = JSON.parse(
-      localStorage.getItem(`roster_${tournamentId}_${match.home}`) || '[]'
-    ).map((p: any) => ({ id: p.dni, name: `${p.name} ${p.lastName}`.trim() }));
-    const awayRosterData: Player[] = JSON.parse(
-      localStorage.getItem(`roster_${tournamentId}_${match.away}`) || '[]'
-    ).map((p: any) => ({ id: p.dni, name: `${p.name} ${p.lastName}`.trim() }));
+    const getTeamId = (teamName: string) => {
+        const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
+        const index = teamNames.indexOf(teamName);
+        if (index !== -1) {
+            return `team_${tournamentId}_${teamName.replace(/\s+/g, '_') || index}`;
+        }
+        return null;
+    }
+
+    const homeTeamId = getTeamId(match.home);
+    const awayTeamId = getTeamId(match.away);
+    
+    const homeRosterData: Player[] = homeTeamId ? JSON.parse(localStorage.getItem(`roster_${tournamentId}_${homeTeamId}`) || '[]') : [];
+    const awayRosterData: Player[] = awayTeamId ? JSON.parse(localStorage.getItem(`roster_${tournamentId}_${awayTeamId}`) || '[]') : [];
     
     setHomeRoster(homeRosterData);
     setAwayRoster(awayRosterData);
@@ -102,8 +111,8 @@ export function MatchStatsDialog({
   }
 
   const renderPlayerStats = (player: Player | null, index: number, teamType: 'home' | 'away') => {
-    const playerId = player?.id; // This is now DNI
-    const playerName = player?.name || `Jugador ${index + 1}`;
+    const playerId = player?.dni;
+    const playerName = player ? `${player.name} ${player.lastName}` : `Jugador ${index + 1}`;
     const playerStats = playerId ? stats[playerId] || { goals: 0, yellow: false, red: false } : { goals: 0, yellow: false, red: false };
 
     return (

@@ -102,7 +102,8 @@ export default function ManageTeamsPage() {
       const teamNames = JSON.parse(teamNamesJson);
       const teamLogos = JSON.parse(localStorage.getItem(`logos_${tournamentId}`) || '{}');
       const teamObjects = teamNames.map((name: string, index: number) => {
-        const teamId = `team_${tournamentId}_${index}`; // More unique ID
+        // Use a consistent ID generation based on the team name or index
+        const teamId = `team_${tournamentId}_${name.replace(/\s+/g, '_') || index}`;
         return {
           id: teamId,
           name: name || `Equipo ${index + 1}`,
@@ -145,16 +146,7 @@ export default function ManageTeamsPage() {
       setSelectedTeam(team);
       const rosterKey = `roster_${tournamentId}_${team.id}`;
       const savedRoster = JSON.parse(localStorage.getItem(rosterKey) || '[]');
-      if(savedRoster.length > 0) {
-        setRoster(savedRoster);
-      } else {
-        const initialRoster: Player[] = Array(11).fill(null).map((_, i) => ({
-            id: `player_${i}`,
-            dni: '',
-            name: '', lastName: '', age: '', nationality: '', phone: '', address: '', email: ''
-        }))
-        setRoster(initialRoster);
-      }
+      setRoster(savedRoster);
       setIsEditDialogOpen(true);
   }
 
@@ -163,17 +155,29 @@ export default function ManageTeamsPage() {
     newRoster[index] = {...newRoster[index], [field]: value};
     setRoster(newRoster);
   }
+  
+  const handleAddPlayer = () => {
+    setRoster(prev => [...prev, {
+        id: `player_${Date.now()}`,
+        dni: '', name: '', lastName: '', age: '', nationality: '', phone: '', address: '', email: ''
+    }])
+  }
+
+  const handleRemovePlayer = (indexToRemove: number) => {
+    setRoster(prev => prev.filter((_, index) => index !== indexToRemove));
+  }
+
 
   const handleSaveRoster = () => {
       if(selectedTeam) {
         const rosterKey = `roster_${tournamentId}_${selectedTeam.id}`;
-        localStorage.setItem(rosterKey, JSON.stringify(roster));
+        // Filter out players with no DNI, name, or lastname before saving
+        const validRoster = roster.filter(p => p.dni.trim() && p.name.trim() && p.lastName.trim());
+        localStorage.setItem(rosterKey, JSON.stringify(validRoster));
         
         const allPlayerDetails = JSON.parse(localStorage.getItem("playerDetails") || "{}");
-        roster.forEach(player => {
-            if(player.dni && player.name && player.lastName) {
-                 allPlayerDetails[player.dni] = player;
-            }
+        validRoster.forEach(player => {
+             allPlayerDetails[player.dni] = player;
         });
         localStorage.setItem("playerDetails", JSON.stringify(allPlayerDetails));
 
@@ -295,7 +299,7 @@ export default function ManageTeamsPage() {
                 <div className="max-h-[70vh] overflow-y-auto p-1">
                     <Accordion type="multiple" className="w-full">
                        {roster.map((player, index) => (
-                         <AccordionItem value={`item-${index}`} key={player.id}>
+                         <AccordionItem value={player.id} key={player.id}>
                             <AccordionTrigger>
                                 {player.name || player.lastName ? `${player.name} ${player.lastName}` : `Jugador ${index + 1}`}
                             </AccordionTrigger>
@@ -337,14 +341,14 @@ export default function ManageTeamsPage() {
                                         <Input id={`email-${index}`} type="email" value={player.email} onChange={(e) => handlePlayerChange(index, 'email', e.target.value)} />
                                     </div>
                                 </div>
-                                <Button variant="destructive" size="sm" className="mt-2">
+                                <Button variant="destructive" size="sm" className="mt-2" onClick={() => handleRemovePlayer(index)}>
                                     <Trash2 className="mr-2 h-4 w-4"/> Eliminar Jugador
                                 </Button>
                             </AccordionContent>
                          </AccordionItem>
                        ))}
                     </Accordion>
-                    <Button variant="outline" className="mt-4 w-full">
+                    <Button variant="outline" className="mt-4 w-full" onClick={handleAddPlayer}>
                         <UserPlus className="mr-2 h-4 w-4"/> Agregar Jugador
                     </Button>
                 </div>
