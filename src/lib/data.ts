@@ -9,7 +9,6 @@ export interface User {
   role: 'user' | 'editor' | 'admin';
   avatar: string;
   isBlocked?: boolean;
-  uniqueCode?: string;
   sudpoints: number;
   baseSudpoints: number;
   league: string;
@@ -34,7 +33,7 @@ export interface User {
 
 export interface PlayerDetails {
   id: string;
-  uniqueCode: string;
+  dni: string;
   name: string;
   lastName: string;
   age: string;
@@ -156,7 +155,7 @@ export const initialUsers: User[] = [
     baseSudpoints: 0,
     league: 'Diamante',
     division: 1,
-    uniqueCode: 'SUD-ADMIN',
+    dni: '12345678',
     profileBackground: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png',
     sudonepassLevel: 15,
     sudonepassExp: 45,
@@ -176,7 +175,7 @@ export const initialUsers: User[] = [
     baseSudpoints: 0,
     league: 'Oro',
     division: 2,
-    uniqueCode: 'MESSI10',
+    dni: '10101010',
     profileBackground: 'https://i.postimg.cc/1RfWNTCC/lusail.png',
     sudonepassLevel: 8,
     sudonepassExp: 90,

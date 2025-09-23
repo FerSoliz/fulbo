@@ -240,7 +240,7 @@ export default function TournamentDetailsPage() {
       return acc;
     }, {} as { [team: string]: any });
 
-    const playerStats: { [playerId: string]: { player: string, team: string, goals: number, yellow: number, red: number } } = {};
+    const playerStats: { [dni: string]: { player: string, team: string, goals: number, yellow: number, red: number } } = {};
     const penaltyTable: { [team: string]: any } = teams.reduce((acc, team) => {
         if (team !== 'BYE') {
           acc[team] = { rank: 0, team, played: 0, won: 0, lost: 0, points: 0 };
@@ -289,19 +289,19 @@ export default function TournamentDetailsPage() {
           if (matchPlayerStats.stats) {
             const playerRoster = [...(allRosters[match.home] || []), ...(allRosters[match.away] || [])];
             
-            for (const playerId in matchPlayerStats.stats) {
-              const pData = matchPlayerStats.stats[playerId];
-              const playerInfo = playerRoster.find((p: any) => p.uniqueCode === playerId);
+            for (const dni in matchPlayerStats.stats) {
+              const pData = matchPlayerStats.stats[dni];
+              const playerInfo = playerRoster.find((p: any) => p.dni === dni);
               
               if (playerInfo) {
-                  const teamName = teams.find(t => allRosters[t]?.some((p:any) => p.uniqueCode === playerId));
+                  const teamName = teams.find(t => allRosters[t]?.some((p:any) => p.dni === dni));
 
-                  if (!playerStats[playerId]) {
-                      playerStats[playerId] = { player: `${playerInfo.name} ${playerInfo.lastName}`, team: teamName || 'N/A', goals: 0, yellow: 0, red: 0 };
+                  if (!playerStats[dni]) {
+                      playerStats[dni] = { player: `${playerInfo.name} ${playerInfo.lastName}`, team: teamName || 'N/A', goals: 0, yellow: 0, red: 0 };
                   }
-                  playerStats[playerId].goals += pData.goals || 0;
-                  if (pData.yellow) playerStats[playerId].yellow++;
-                  if (pData.red) playerStats[playerId].red++;
+                  playerStats[dni].goals += pData.goals || 0;
+                  if (pData.yellow) playerStats[dni].yellow++;
+                  if (pData.red) playerStats[dni].red++;
               }
             }
           }

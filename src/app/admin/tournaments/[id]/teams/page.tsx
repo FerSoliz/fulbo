@@ -21,6 +21,7 @@ import {
   UserPlus,
   KeyRound,
   Loader2,
+  FileText,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -53,7 +54,7 @@ interface Team {
 
 interface Player {
   id: string;
-  uniqueCode: string;
+  dni: string;
   name: string;
   lastName: string;
   age: string;
@@ -149,7 +150,7 @@ export default function ManageTeamsPage() {
       } else {
         const initialRoster: Player[] = Array(11).fill(null).map((_, i) => ({
             id: `player_${i}`,
-            uniqueCode: `SUD-${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+            dni: '',
             name: '', lastName: '', age: '', nationality: '', phone: '', address: '', email: ''
         }))
         setRoster(initialRoster);
@@ -157,7 +158,7 @@ export default function ManageTeamsPage() {
       setIsEditDialogOpen(true);
   }
 
-  const handlePlayerChange = (index: number, field: keyof Omit<Player, 'id' | 'uniqueCode'>, value: string) => {
+  const handlePlayerChange = (index: number, field: keyof Omit<Player, 'id'>, value: string) => {
     const newRoster = [...roster];
     newRoster[index] = {...newRoster[index], [field]: value};
     setRoster(newRoster);
@@ -170,8 +171,8 @@ export default function ManageTeamsPage() {
         
         const allPlayerDetails = JSON.parse(localStorage.getItem("playerDetails") || "{}");
         roster.forEach(player => {
-            if(player.uniqueCode && player.name && player.lastName) {
-                 allPlayerDetails[player.uniqueCode] = player;
+            if(player.dni && player.name && player.lastName) {
+                 allPlayerDetails[player.dni] = player;
             }
         });
         localStorage.setItem("playerDetails", JSON.stringify(allPlayerDetails));
@@ -288,7 +289,7 @@ export default function ManageTeamsPage() {
                 <DialogHeader>
                     <DialogTitle>Editar Plantilla de {selectedTeam?.name}</DialogTitle>
                     <DialogDescription>
-                        Gestiona los jugadores, sus datos y sus códigos únicos.
+                        Gestiona los jugadores y sus datos. El DNI es obligatorio para las estadísticas.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="max-h-[70vh] overflow-y-auto p-1">
@@ -299,12 +300,6 @@ export default function ManageTeamsPage() {
                                 {player.name || player.lastName ? `${player.name} ${player.lastName}` : `Jugador ${index + 1}`}
                             </AccordionTrigger>
                             <AccordionContent className="space-y-4">
-                                <div className="p-4 bg-muted/50 rounded-lg">
-                                    <Label className="flex items-center gap-2 font-semibold">
-                                        <KeyRound className="w-4 h-4"/> Código Único (no editable)
-                                    </Label>
-                                    <Input value={player.uniqueCode} disabled className="mt-1 font-mono"/>
-                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-1">
                                         <Label htmlFor={`name-${index}`}>Nombre</Label>
@@ -313,6 +308,13 @@ export default function ManageTeamsPage() {
                                     <div className="space-y-1">
                                         <Label htmlFor={`lastName-${index}`}>Apellido</Label>
                                         <Input id={`lastName-${index}`} value={player.lastName} onChange={(e) => handlePlayerChange(index, 'lastName', e.target.value)} />
+                                    </div>
+                                     <div className="space-y-1">
+                                        <Label htmlFor={`dni-${index}`}>DNI</Label>
+                                        <div className="relative">
+                                          <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                          <Input id={`dni-${index}`} value={player.dni} onChange={(e) => handlePlayerChange(index, 'dni', e.target.value)} className="pl-9" />
+                                        </div>
                                     </div>
                                     <div className="space-y-1">
                                         <Label htmlFor={`age-${index}`}>Edad</Label>

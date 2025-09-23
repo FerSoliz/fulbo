@@ -27,7 +27,7 @@ export default function RankingPage() {
     const leagueOrder = leagues.map(l => l.name);
 
     const sortedUsers = storedUsers
-      .filter((user: User) => user.uniqueCode) // Only show users who have linked their profile
+      .filter((user: User) => user.dni) // Only show users who have linked their profile
       .sort((a: User, b: User) => {
         const leagueIndexA = leagueOrder.indexOf(a.league);
         const leagueIndexB = leagueOrder.indexOf(b.league);

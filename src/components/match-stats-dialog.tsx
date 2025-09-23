@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 
 interface Player {
-  id: string;
+  id: string; // DNI
   name: string;
 }
 
@@ -52,10 +52,10 @@ export function MatchStatsDialog({
     // Load rosters from localStorage
     const homeRosterData: Player[] = JSON.parse(
       localStorage.getItem(`roster_${tournamentId}_${match.home}`) || '[]'
-    ).map((p: any) => ({ id: p.uniqueCode, name: `${p.name} ${p.lastName}`.trim() }));
+    ).map((p: any) => ({ id: p.dni, name: `${p.name} ${p.lastName}`.trim() }));
     const awayRosterData: Player[] = JSON.parse(
       localStorage.getItem(`roster_${tournamentId}_${match.away}`) || '[]'
-    ).map((p: any) => ({ id: p.uniqueCode, name: `${p.name} ${p.lastName}`.trim() }));
+    ).map((p: any) => ({ id: p.dni, name: `${p.name} ${p.lastName}`.trim() }));
     
     setHomeRoster(homeRosterData);
     setAwayRoster(awayRosterData);
@@ -102,13 +102,13 @@ export function MatchStatsDialog({
   }
 
   const renderPlayerStats = (player: Player | null, index: number, teamType: 'home' | 'away') => {
-    const playerId = player?.id || `${teamType}-placeholder-${index}`;
+    const playerId = player?.id; // This is now DNI
     const playerName = player?.name || `Jugador ${index + 1}`;
-    const playerStats = stats[playerId] || { goals: 0, yellow: false, red: false };
+    const playerStats = playerId ? stats[playerId] || { goals: 0, yellow: false, red: false } : { goals: 0, yellow: false, red: false };
 
     return (
-      <div key={playerId} className="grid grid-cols-[30px_1fr_45px_30px_30px] items-center gap-x-2 py-1">
-        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleMvpChange(playerId)} disabled={!player || isFinished}>
+      <div key={playerId || `${teamType}-placeholder-${index}`} className="grid grid-cols-[30px_1fr_45px_30px_30px] items-center gap-x-2 py-1">
+        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleMvpChange(playerId!)} disabled={!player || isFinished}>
             <Star className={cn("h-4 w-4 text-muted-foreground", mvp === playerId && "text-amber-400 fill-amber-400")} />
         </Button>
         <p className="text-sm truncate" title={playerName}>{playerName}</p>
@@ -118,14 +118,14 @@ export function MatchStatsDialog({
           min="0"
           className="h-7 w-12 text-center px-1"
           value={playerStats.goals || ''}
-          onChange={(e) => handleStatChange(playerId, 'goals', e.target.value ? Number(e.target.value) : 0)}
+          onChange={(e) => handleStatChange(playerId!, 'goals', e.target.value ? Number(e.target.value) : 0)}
           disabled={!player || isFinished}
         />
         <Button 
               size="icon" 
               variant={playerStats.yellow ? 'default' : 'outline'}
               className={cn("h-6 w-6 p-0 border-amber-400", playerStats.yellow && "bg-amber-400 hover:bg-amber-500")}
-              onClick={() => handleStatChange(playerId, 'yellow', !playerStats.yellow)}
+              onClick={() => handleStatChange(playerId!, 'yellow', !playerStats.yellow)}
               disabled={!player || isFinished}
           >
               <div className="w-3 h-4 bg-current rounded-sm" />
@@ -134,7 +134,7 @@ export function MatchStatsDialog({
               size="icon" 
               variant={playerStats.red ? 'default' : 'outline'}
               className={cn("h-6 w-6 p-0 border-red-600", playerStats.red && "bg-red-600 hover:bg-red-700")}
-              onClick={() => handleStatChange(playerId, 'red', !playerStats.red)}
+              onClick={() => handleStatChange(playerId!, 'red', !playerStats.red)}
               disabled={!player || isFinished}
            >
               <div className="w-3 h-4 bg-current rounded-sm" />
