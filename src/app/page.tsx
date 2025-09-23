@@ -4,51 +4,38 @@
 import { useState, useEffect } from 'react';
 import { CreatePostForm } from '@/components/create-post-form';
 import { PostCard } from '@/components/post-card';
-import { Post, User, posts as initialPosts } from '@/lib/data';
+import { Post, User } from '@/lib/data';
 import { useUser } from '@/context/user-context';
-
+import { db } from '@/lib/firebase';
+import { collection, getDocs, doc, setDoc, deleteDoc, updateDoc, orderBy, query } from 'firebase/firestore';
 
 export default function HomePage() {
   const { user: currentUser, allUsers } = useUser();
   const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Cargar datos desde localStorage y filtrar publicaciones antiguas
+  // Cargar datos desde Firestore
   useEffect(() => {
-    const savedPostsJSON = localStorage.getItem('posts');
-    let savedPosts: Post[] = [];
+    const fetchPosts = async () => {
+      setLoading(true);
+      try {
+        const postsCollection = collection(db, 'posts');
+        const postsQuery = query(postsCollection, orderBy('createdAt', 'desc'));
+        const querySnapshot = await getDocs(postsQuery);
+        const postsData = querySnapshot.docs.map(doc => doc.data() as Post);
+        setPosts(postsData);
+      } catch (error) {
+        console.error("Error fetching posts: ", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if (savedPostsJSON) {
-      savedPosts = JSON.parse(savedPostsJSON);
-    } else {
-      savedPosts = initialPosts;
-    }
-
-    const tenDaysAgo = new Date();
-    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
-
-    const recentPosts = savedPosts.filter(post => {
-        const postDate = new Date(post.createdAt);
-        return postDate >= tenDaysAgo;
-    });
-
-    setPosts(recentPosts);
-    
-    // Opcionalmente, limpiar el localStorage de posts viejos
-    if(savedPosts.length !== recentPosts.length) {
-        localStorage.setItem('posts', JSON.stringify(recentPosts));
-    }
-
+    fetchPosts();
   }, []);
 
-  // Persistir las publicaciones en localStorage cada vez que cambian
-  useEffect(() => {
-    // Evita guardar el estado inicial vacío antes de que se carguen los posts
-    if (posts.length > 0) {
-      localStorage.setItem('posts', JSON.stringify(posts));
-    }
-  }, [posts]);
 
-  const handleAddPost = (newPostData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments'>) => {
+  const handleAddPost = async (newPostData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments'>) => {
     if (!currentUser || currentUser.id === 'visitor') return;
     const newPost: Post = {
         ...newPostData,
@@ -58,17 +45,36 @@ export default function HomePage() {
         likes: [],
         comments: [],
     };
-    setPosts((prevPosts) => [newPost, ...prevPosts]);
+    
+    try {
+        const postRef = doc(db, 'posts', newPost.id.toString());
+        await setDoc(postRef, newPost);
+        setPosts((prevPosts) => [newPost, ...prevPosts]);
+    } catch (error) {
+        console.error("Error adding post: ", error);
+    }
   };
 
-  const handleUpdatePost = (updatedPost: Post) => {
-    setPosts((prevPosts) =>
-      prevPosts.map((post) => (post.id === updatedPost.id ? updatedPost : post))
-    );
+  const handleUpdatePost = async (updatedPost: Post) => {
+    try {
+        const postRef = doc(db, 'posts', updatedPost.id.toString());
+        await updateDoc(postRef, { ...updatedPost });
+        setPosts((prevPosts) =>
+          prevPosts.map((post) => (post.id === updatedPost.id ? updatedPost : post))
+        );
+    } catch (error) {
+        console.error("Error updating post: ", error);
+    }
   };
 
-  const handleDeletePost = (postId: number) => {
-    setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+  const handleDeletePost = async (postId: number) => {
+     try {
+        const postRef = doc(db, 'posts', postId.toString());
+        await deleteDoc(postRef);
+        setPosts((prevPosts) => prevPosts.filter((post) => post.id !== postId));
+    } catch (error) {
+        console.error("Error deleting post: ", error);
+    }
   };
 
   const canPost = currentUser?.role === 'admin' || currentUser?.role === 'editor';
@@ -83,7 +89,9 @@ export default function HomePage() {
       )}
 
       <div className="space-y-4">
-        {posts.length > 0 ? (
+        {loading ? (
+          <p className="text-center text-muted-foreground py-10">Cargando publicaciones...</p>
+        ) : posts.length > 0 ? (
           posts.map((post) => (
             <PostCard
               key={post.id}
