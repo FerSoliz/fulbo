@@ -12,14 +12,32 @@ export default function HomePage() {
   const { user: currentUser, allUsers } = useUser();
   const [posts, setPosts] = useState<Post[]>([]);
   
-  // Cargar datos desde localStorage al montar el componente
+  // Cargar datos desde localStorage y filtrar publicaciones antiguas
   useEffect(() => {
-    const savedPosts = localStorage.getItem('posts');
-    if (savedPosts) {
-      setPosts(JSON.parse(savedPosts));
+    const savedPostsJSON = localStorage.getItem('posts');
+    let savedPosts: Post[] = [];
+
+    if (savedPostsJSON) {
+      savedPosts = JSON.parse(savedPostsJSON);
     } else {
-      setPosts(initialPosts);
+      savedPosts = initialPosts;
     }
+
+    const tenDaysAgo = new Date();
+    tenDaysAgo.setDate(tenDaysAgo.getDate() - 10);
+
+    const recentPosts = savedPosts.filter(post => {
+        const postDate = new Date(post.createdAt);
+        return postDate >= tenDaysAgo;
+    });
+
+    setPosts(recentPosts);
+    
+    // Opcionalmente, limpiar el localStorage de posts viejos
+    if(savedPosts.length !== recentPosts.length) {
+        localStorage.setItem('posts', JSON.stringify(recentPosts));
+    }
+
   }, []);
 
   // Persistir las publicaciones en localStorage cada vez que cambian
