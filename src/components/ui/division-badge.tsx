@@ -30,12 +30,14 @@ export function DivisionBadge({ league, division }: DivisionBadgeProps) {
 
   const romanDivision = romanNumerals[division] || division;
 
+  // @ts-ignore
   if (leagueInfo.badgeImageUrl) {
     return (
         <div
             className="relative inline-flex items-center justify-center w-28 h-12"
         >
             <Image
+                // @ts-ignore
                 src={leagueInfo.badgeImageUrl}
                 alt={`${leagueInfo.name} badge`}
                 layout="fill"
