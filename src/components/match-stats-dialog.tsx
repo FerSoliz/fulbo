@@ -48,7 +48,7 @@ export function MatchStatsDialog({
   const [awayRoster, setAwayRoster] = useState<Player[]>([]);
   const [mvp, setMvp] = useState<string | null>(null);
   const [stats, setStats] = useState<{ [playerId: string]: { goals: number, yellow: boolean, red: boolean } }>({});
-  const [penaltyScore, setPenaltyScore] = useState({ home: 0, away: 0 });
+  const [penaltyScore, setPenaltyScore] = useState<{ home: number | null, away: number | null }>({ home: null, away: null });
   
   const matchId = `${tournamentId}_r${roundIndex}m${matchIndex}`;
 
@@ -75,7 +75,7 @@ export function MatchStatsDialog({
     if (savedStats) {
         setMvp(savedStats.mvp || null);
         setStats(savedStats.stats || {});
-        setPenaltyScore(savedStats.penaltyScore || { home: 0, away: 0 });
+        setPenaltyScore(savedStats.penaltyScore || { home: null, away: null });
     }
 
   }, [tournamentId, match, matchId]);
@@ -196,9 +196,9 @@ export function MatchStatsDialog({
                 <h3 className="font-semibold text-sm">Tanda de Penales:</h3>
                 <div className="flex items-center justify-center gap-2">
                      <span className="text-sm font-medium w-16 text-right truncate">{match.home}</span>
-                    <Input type="number" min="0" className="w-12 h-8 text-center" value={penaltyScore.home} onChange={(e) => setPenaltyScore(p => ({...p, home: Number(e.target.value)}))} disabled={isFinished}/>
+                    <Input type="number" min="0" className="w-12 h-8 text-center" placeholder="-" value={penaltyScore.home ?? ''} onChange={(e) => setPenaltyScore(p => ({...p, home: e.target.value === '' ? null : Number(e.target.value)}))} disabled={isFinished}/>
                     <span className="font-bold">-</span>
-                    <Input type="number" min="0" className="w-12 h-8 text-center" value={penaltyScore.away} onChange={(e) => setPenaltyScore(p => ({...p, away: Number(e.target.value)}))} disabled={isFinished}/>
+                    <Input type="number" min="0" className="w-12 h-8 text-center" placeholder="-" value={penaltyScore.away ?? ''} onChange={(e) => setPenaltyScore(p => ({...p, away: e.target.value === '' ? null : Number(e.target.value)}))} disabled={isFinished}/>
                     <span className="text-sm font-medium w-16 truncate">{match.away}</span>
                 </div>
             </div>

@@ -147,7 +147,6 @@ export default function TournamentDetailsPage() {
     if (index !== -1) {
         return `team_${tournamentId}_${teamName.replace(/\s+/g, '_') || index}`;
     }
-    // Fallback for teams not in the list, though this shouldn't happen with valid fixtures.
     return `team_${tournamentId}_${teamName.replace(/\s+/g, '_')}`;
   }
 
@@ -369,9 +368,9 @@ export default function TournamentDetailsPage() {
           
            // Penalty Table Stats
            if(matchPlayerStats.penaltyScore) {
-               const homePenalty = matchPlayerStats.penaltyScore.home || 0;
-               const awayPenalty = matchPlayerStats.penaltyScore.away || 0;
-               if(homePenalty > 0 || awayPenalty > 0){
+               const homePenalty = matchPlayerStats.penaltyScore.home;
+               const awayPenalty = matchPlayerStats.penaltyScore.away;
+               if(homePenalty !== undefined && awayPenalty !== undefined && homePenalty !== null && awayPenalty !== null){
                    penaltyTable[match.home].played++;
                    penaltyTable[match.away].played++;
                    if(homePenalty > awayPenalty){
