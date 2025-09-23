@@ -370,7 +370,7 @@ export default function ProfilePage() {
               src={profileBackground}
               alt="Imagen de fondo del perfil"
               layout="fill"
-              className="object-cover rounded-t-lg"
+              className="object-contain rounded-t-lg"
               priority
             />
           )}
