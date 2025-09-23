@@ -252,6 +252,7 @@ export default function ProfilePage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [activeTab, setActiveTab] = useState('stats');
 
   useEffect(() => {
     const targetUser = allUsers.find((u) => u.id === userId);
@@ -460,14 +461,7 @@ export default function ProfilePage() {
               <p className="text-sm font-semibold">{sudpoints} / 100 SP</p>
             </div>
           </div>
-          {isOwnProfile ? (
-            <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
-              <Button variant="outline" className="w-full md:hidden">
-                <Pencil className="mr-2 h-4 w-4" />
-                Editar Perfil y Vincular DNI
-              </Button>
-            </EditProfileDialog>
-          ) : (
+          {currentUser && !isOwnProfile && (
             <Button onClick={handleSendMessage} className="w-full">
               <MessageSquare className="mr-2 h-4 w-4" />
               Enviar Mensaje
@@ -476,54 +470,77 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
       
-      <Card>
-        <CardHeader>
-          <CardTitle>Estadísticas del Jugador</CardTitle>
-          <CardDescription>Resumen del rendimiento en torneos.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {dni ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-y-6 text-center">
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-4xl font-bold">{finalStats.partidosJugados}</p>
-                <p className="text-sm text-muted-foreground">Partidos</p>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-4xl font-bold text-green-400">{finalStats.victorias}</p>
-                <p className="text-sm text-muted-foreground">Victorias</p>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-4xl font-bold text-yellow-400">{finalStats.empates}</p>
-                <p className="text-sm text-muted-foreground">Empates</p>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-4xl font-bold text-red-500">{finalStats.derrotas}</p>
-                <p className="text-sm text-muted-foreground">Derrotas</p>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-4xl font-bold">{finalStats.goles}</p>
-                <p className="text-sm text-muted-foreground">Goles</p>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-4xl font-bold">{finalStats.mvps}</p>
-                <p className="text-sm text-muted-foreground">MVPs</p>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-4xl font-bold text-yellow-400">{finalStats.amarillas}</p>
-                <p className="text-sm text-muted-foreground">Amarillas</p>
-              </div>
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-4xl font-bold text-red-500">{finalStats.rojas}</p>
-                <p className="text-sm text-muted-foreground">Rojas</p>
-              </div>
+        <div className="relative w-full aspect-[16/9] max-w-4xl mx-auto">
+            <Image
+                src="https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png"
+                alt="Interfaz de perfil de jugador"
+                layout="fill"
+                className="object-contain"
+            />
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
+
+                <div className="absolute top-[10%] right-[8%]">
+                    <Image src="https://i.postimg.cc/YqTT9ktz/escudito-afa.png" width={80} height={80} alt="Escudo AFA" className="object-contain" />
+                </div>
+
+                <div className="absolute top-[35%] left-[8%] transform -translate-y-1/2 flex flex-col gap-3">
+                     <button onClick={() => setActiveTab('stats')} className="hover:scale-105 transition-transform">
+                        <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" width={180} height={50} alt="Boton Estadisticas" />
+                    </button>
+                    <button onClick={() => setActiveTab('history')} className="hover:scale-105 transition-transform">
+                        <Image src="https://i.postimg.cc/xTc9mJ0M/boton-historial.png" width={180} height={50} alt="Boton Historial" />
+                    </button>
+                     <button className="hover:scale-105 transition-transform">
+                        <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" width={180} height={50} alt="Boton Proximo Partido" />
+                    </button>
+                </div>
+                
+                <div className="absolute bottom-[8%] left-1/2 transform -translate-x-1/2 flex items-end gap-2">
+                    <button className="hover:scale-105 transition-transform">
+                        <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" width={120} height={120} alt="Pase" />
+                    </button>
+                    <button className="hover:scale-105 transition-transform">
+                        <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" width={120} height={120} alt="SUDONE PASS" />
+                    </button>
+                     <button className="hover:scale-105 transition-transform">
+                        <Image src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png" width={60} height={60} alt="Configuracion" />
+                    </button>
+                </div>
+
+                <div className="absolute top-[28%] right-[8%] w-[55%] h-[55%]">
+                    {activeTab === 'stats' && (
+                         <div className="w-full h-full p-4 grid grid-cols-2 gap-4 text-center">
+                            <div className="bg-black/30 p-2 rounded-lg">
+                                <p className="text-xs font-bold text-gray-300">PARTIDOS</p>
+                                <p className="text-3xl font-black">{finalStats.partidosJugados}</p>
+                            </div>
+                            <div className="bg-black/30 p-2 rounded-lg">
+                                <p className="text-xs font-bold text-gray-300">VICTORIAS</p>
+                                <p className="text-3xl font-black">{finalStats.victorias}</p>
+                            </div>
+                            <div className="bg-black/30 p-2 rounded-lg">
+                                <p className="text-xs font-bold text-gray-300">GOLES</p>
+                                <p className="text-3xl font-black">{finalStats.goles}</p>
+                            </div>
+                             <div className="bg-black/30 p-2 rounded-lg">
+                                <p className="text-xs font-bold text-gray-300">MVPs</p>
+                                <p className="text-3xl font-black">{finalStats.mvps}</p>
+                            </div>
+                         </div>
+                    )}
+                     {activeTab === 'history' && (
+                         <div className="w-full h-full relative">
+                            <Image src="https://i.postimg.cc/VvZVqWqt/contenedor-historial.png" layout="fill" objectFit="contain" alt="Historial" />
+                             <div className="absolute inset-0 p-4 pt-8 text-black text-center text-xs overflow-y-auto">
+                                <p>Club de Amigos 2 - 1 La Naranja</p>
+                                <p>Club de Amigos 0 - 3 Los Cracks</p>
+                                <p>Club de Amigos 5 - 2 Real Cohólicos</p>
+                             </div>
+                         </div>
+                    )}
+                </div>
             </div>
-          ) : (
-            <div className="text-center py-10 border-2 border-dashed rounded-lg hidden">
-              <p className="text-muted-foreground">Vincula tu DNI en "Editar Perfil" para ver tus estadísticas.</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </div>
       
       <input
         type="file"
@@ -536,3 +553,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+

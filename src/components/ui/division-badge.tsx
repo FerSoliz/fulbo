@@ -1,3 +1,4 @@
+
 'use client';
 
 import { leagues } from '@/lib/data';
@@ -65,3 +66,4 @@ export function DivisionBadge({ league, division }: DivisionBadgeProps) {
     </div>
   );
 }
+
