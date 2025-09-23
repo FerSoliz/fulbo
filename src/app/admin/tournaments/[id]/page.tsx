@@ -224,8 +224,14 @@ export default function TournamentDetailsPage() {
     localStorage.setItem(`details_${tournamentId}`, JSON.stringify(newDetails));
   }
 
-  const calculateAllTournamentStats = () => {
+  const calculateAllTournamentStats = (currentFinishedMatches: Set<string>) => {
     if (!teams || teams.length === 0) return;
+
+    let allRosters: {[key: string]: any[]} = {};
+    teams.forEach(teamId => {
+        const rosterKey = `roster_${tournamentId}_${teamId}`;
+        allRosters[teamId] = JSON.parse(localStorage.getItem(rosterKey) || '[]');
+    });
 
     const stats: { [team: string]: any } = teams.reduce((acc, team) => {
       if (team !== 'BYE') {
@@ -235,7 +241,6 @@ export default function TournamentDetailsPage() {
     }, {} as { [team: string]: any });
 
     const playerStats: { [playerId: string]: { player: string, team: string, goals: number, yellow: number, red: number } } = {};
-    const goalkeeperStats: { [playerId: string]: { player: string, team: string, played: number, conceded: number } } = {};
     const penaltyTable: { [team: string]: any } = teams.reduce((acc, team) => {
         if (team !== 'BYE') {
           acc[team] = { rank: 0, team, played: 0, won: 0, lost: 0, points: 0 };
@@ -247,9 +252,9 @@ export default function TournamentDetailsPage() {
       round.forEach((match, matchIndex) => {
         const matchId = `r${roundIndex}m${matchIndex}`;
         const matchIdForStats = `${tournamentId}_${matchId}`;
-        const isFinished = finishedMatches.has(matchId);
+        const isFinished = currentFinishedMatches.has(matchId);
 
-        if (isFinished && match.home !== 'BYE' && match.away !== 'BYE') {
+        if (isFinished && match.home && match.away && match.home !== 'BYE' && match.away !== 'BYE') {
           const result = matchResults[matchId] || {};
           const homeScore = parseInt(result.home, 10) || 0;
           const awayScore = parseInt(result.away, 10) || 0;
@@ -282,16 +287,14 @@ export default function TournamentDetailsPage() {
           // Individual Player Stats
           const matchPlayerStats = JSON.parse(localStorage.getItem(`matchStats_${matchIdForStats}`) || '{}');
           if (matchPlayerStats.stats) {
+            const playerRoster = [...(allRosters[match.home] || []), ...(allRosters[match.away] || [])];
+            
             for (const playerId in matchPlayerStats.stats) {
               const pData = matchPlayerStats.stats[playerId];
-              const playerRoster = [...(JSON.parse(localStorage.getItem(`roster_${tournamentId}_${match.home}`) || '[]')), ...(JSON.parse(localStorage.getItem(`roster_${tournamentId}_${match.away}`) || '[]'))];
               const playerInfo = playerRoster.find((p: any) => p.uniqueCode === playerId);
               
               if (playerInfo) {
-                  const teamName = teams.find(t => {
-                      const roster = JSON.parse(localStorage.getItem(`roster_${tournamentId}_${t}`) || '[]');
-                      return roster.some((p: any) => p.uniqueCode === playerId);
-                  });
+                  const teamName = teams.find(t => allRosters[t]?.some((p:any) => p.uniqueCode === playerId));
 
                   if (!playerStats[playerId]) {
                       playerStats[playerId] = { player: `${playerInfo.name} ${playerInfo.lastName}`, team: teamName || 'N/A', goals: 0, yellow: 0, red: 0 };
@@ -318,8 +321,6 @@ export default function TournamentDetailsPage() {
                        penaltyTable[match.away].won++;
                        penaltyTable[match.home].lost++;
                        penaltyTable[match.away].points += 3;
-                   } else {
-                        // Handle penalty draw if needed
                    }
                }
            }
@@ -342,9 +343,7 @@ export default function TournamentDetailsPage() {
     localStorage.setItem(`sanctions_${tournamentId}`, JSON.stringify(sortedSanctions));
     localStorage.setItem(`penalties_${tournamentId}`, JSON.stringify(sortedPenalties));
     
-    // After saving, reload the stats into the state to update the UI
     loadStats();
-    console.log("Tournament stats recalculated and saved.", {sortedTeams, sortedScorers, sortedSanctions});
   };
 
 
@@ -372,8 +371,7 @@ export default function TournamentDetailsPage() {
     setFinishedMatches(newFinishedMatches);
     localStorage.setItem(`finished_matches_${tournamentId}`, JSON.stringify(Array.from(newFinishedMatches)));
 
-    // Recalculate all stats every time a match is finalized/de-finalized
-    calculateAllTournamentStats();
+    calculateAllTournamentStats(newFinishedMatches);
   };
 
   const handleDownloadPlanilla = async (match: { home: string; away: string }, roundIndex: number, matchIndex: number) => {
