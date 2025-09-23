@@ -97,10 +97,13 @@ type PlanillaData = {
     qrCodeUrl: string;
     homeRoster: Player[];
     awayRoster: Player[];
+    homeSuspensions: string[];
+    awaySuspensions: string[];
     date?: string;
     time?: string;
     referee?: string;
 };
+type SuspensionInfo = { [playerId: string]: { nextMatchSuspended: boolean } };
 
 
 export default function TournamentDetailsPage() {
@@ -118,6 +121,7 @@ export default function TournamentDetailsPage() {
   const [scorers, setScorers] = useState<Scorer[]>([]);
   const [sanctions, setSanctions] = useState<Sanction[]>([]);
   const [penalties, setPenalties] = useState<PenaltyPosition[]>([]);
+  const [suspensions, setSuspensions] = useState<SuspensionInfo>({});
 
   const [playoffMatches, setPlayoffMatches] = useState({
     quarter: [
@@ -140,10 +144,12 @@ export default function TournamentDetailsPage() {
     const savedScorers = JSON.parse(localStorage.getItem(`scorers_${tournamentId}`) || '[]');
     const savedSanctions = JSON.parse(localStorage.getItem(`sanctions_${tournamentId}`) || '[]');
     const savedPenalties = JSON.parse(localStorage.getItem(`penalties_${tournamentId}`) || '[]');
+    const savedSuspensions = JSON.parse(localStorage.getItem(`suspensions_${tournamentId}`) || '{}');
     setPositions(savedPositions);
     setScorers(savedScorers);
     setSanctions(savedSanctions);
     setPenalties(savedPenalties);
+    setSuspensions(savedSuspensions);
   };
 
   useEffect(() => {
@@ -241,8 +247,22 @@ export default function TournamentDetailsPage() {
 
     let allRosters: {[key: string]: any[]} = {};
     teams.forEach(teamId => {
-        const rosterKey = `roster_${tournamentId}_${teamId}`;
-        allRosters[teamId] = JSON.parse(localStorage.getItem(rosterKey) || '[]');
+        const teamKey = `team_${tournamentId}_${teamId.replace(/\s+/g, '_')}`;
+        const rosterKey = `roster_${teamKey}`;
+        const storedRoster = localStorage.getItem(rosterKey);
+        if (storedRoster) {
+          allRosters[teamId] = JSON.parse(storedRoster);
+        } else {
+           const teamNames = JSON.parse(localStorage.getItem(`teams_${tournamentId}`) || '[]');
+           const index = teamNames.indexOf(teamId);
+           const legacyTeamId = `team_${tournamentId}_${teamId.replace(/\s+/g, '_') || index}`;
+           const legacyRoster = localStorage.getItem(`roster_${tournamentId}_${legacyTeamId}`);
+           if (legacyRoster) {
+             allRosters[teamId] = JSON.parse(legacyRoster);
+           } else {
+             allRosters[teamId] = [];
+           }
+        }
     });
 
     const stats: { [team: string]: any } = teams.reduce((acc, team) => {
@@ -252,19 +272,37 @@ export default function TournamentDetailsPage() {
       return acc;
     }, {} as { [team: string]: any });
 
-    const playerStats: { [dni: string]: { player: string, team: string, goals: number, yellow: number, red: number } } = {};
+    const playerStats: { [dni: string]: { player: string, team: string, goals: number, yellow: number, red: number, suspendedMatches: number } } = {};
+    
+    // Load previously served suspension matches to avoid double counting
+    const servedSuspensions = JSON.parse(localStorage.getItem(`served_suspensions_${tournamentId}`) || '{}');
+
     const penaltyTable: { [team: string]: any } = teams.reduce((acc, team) => {
         if (team !== 'BYE') {
           acc[team] = { rank: 0, team, played: 0, won: 0, lost: 0, points: 0 };
         }
         return acc;
     }, {} as { [team: string]: any });
+    
+    // Reset suspensions for this calculation
+    const newSuspensions: SuspensionInfo = {};
+
 
     fixture.forEach((round, roundIndex) => {
       round.forEach((match, matchIndex) => {
         const matchId = `r${roundIndex}m${matchIndex}`;
         const matchIdForStats = `${tournamentId}_${matchId}`;
         const isFinished = currentFinishedMatches.has(matchId);
+        
+        const homeRoster = allRosters[match.home] || [];
+        const awayRoster = allRosters[match.away] || [];
+        const playerRoster = [...homeRoster, ...awayRoster];
+
+        playerRoster.forEach(player => {
+            if (!playerStats[player.dni]) {
+                playerStats[player.dni] = { player: `${player.name} ${player.lastName}`, team: teams.find(t => allRosters[t]?.some((p:any) => p.dni === player.dni)) || 'N/A', goals: 0, yellow: 0, red: 0, suspendedMatches: 0 };
+            }
+        });
 
         if (isFinished && match.home && match.away && match.home !== 'BYE' && match.away !== 'BYE') {
           const result = matchResults[matchId] || {};
@@ -296,24 +334,26 @@ export default function TournamentDetailsPage() {
             stats[match.away].points += 1;
           }
 
-          // Individual Player Stats
+          // Individual Player Stats & Suspension Logic
           const matchPlayerStats = JSON.parse(localStorage.getItem(`matchStats_${matchIdForStats}`) || '{}');
           if (matchPlayerStats.stats) {
-            const playerRoster = [...(allRosters[match.home] || []), ...(allRosters[match.away] || [])];
-            
             for (const dni in matchPlayerStats.stats) {
               const pData = matchPlayerStats.stats[dni];
-              const playerInfo = playerRoster.find((p: any) => p.dni === dni);
               
-              if (playerInfo) {
-                  const teamName = teams.find(t => allRosters[t]?.some((p:any) => p.dni === dni));
-
-                  if (!playerStats[dni]) {
-                      playerStats[dni] = { player: `${playerInfo.name} ${playerInfo.lastName}`, team: teamName || 'N/A', goals: 0, yellow: 0, red: 0 };
-                  }
+              if (playerStats[dni]) {
                   playerStats[dni].goals += pData.goals || 0;
-                  if (pData.yellow) playerStats[dni].yellow++;
-                  if (pData.red) playerStats[dni].red++;
+                  
+                  if (pData.red) {
+                      playerStats[dni].red++;
+                      playerStats[dni].yellow = 0; // Red card clears yellow cards
+                      newSuspensions[dni] = { nextMatchSuspended: true };
+                  } else if (pData.yellow) {
+                      playerStats[dni].yellow++;
+                      if (playerStats[dni].yellow >= 5) {
+                          playerStats[dni].yellow -= 5; // Reset after suspension
+                          newSuspensions[dni] = { nextMatchSuspended: true };
+                      }
+                  }
               }
             }
           }
@@ -354,6 +394,7 @@ export default function TournamentDetailsPage() {
     localStorage.setItem(`scorers_${tournamentId}`, JSON.stringify(sortedScorers));
     localStorage.setItem(`sanctions_${tournamentId}`, JSON.stringify(sortedSanctions));
     localStorage.setItem(`penalties_${tournamentId}`, JSON.stringify(sortedPenalties));
+    localStorage.setItem(`suspensions_${tournamentId}`, JSON.stringify(newSuspensions));
     
     loadStats();
   };
@@ -399,8 +440,11 @@ export default function TournamentDetailsPage() {
       const homeTeamId = getTeamId(match.home);
       const awayTeamId = getTeamId(match.away);
       
-      const homeRoster = homeTeamId ? JSON.parse(localStorage.getItem(`roster_${tournamentId}_${homeTeamId}`) || '[]') : [];
-      const awayRoster = awayTeamId ? JSON.parse(localStorage.getItem(`roster_${tournamentId}_${awayTeamId}`) || '[]') : [];
+      const homeRoster: Player[] = homeTeamId ? JSON.parse(localStorage.getItem(`roster_${tournamentId}_${homeTeamId}`) || '[]') : [];
+      const awayRoster: Player[] = awayTeamId ? JSON.parse(localStorage.getItem(`roster_${tournamentId}_${awayTeamId}`) || '[]') : [];
+
+      const homeSuspensions = homeRoster.filter(p => suspensions[p.dni]?.nextMatchSuspended).map(p => p.dni);
+      const awaySuspensions = awayRoster.filter(p => suspensions[p.dni]?.nextMatchSuspended).map(p => p.dni);
 
       try {
           const qrCodeUrl = await QRCode.toDataURL(matchId);
@@ -411,6 +455,8 @@ export default function TournamentDetailsPage() {
               qrCodeUrl: qrCodeUrl,
               homeRoster,
               awayRoster,
+              homeSuspensions,
+              awaySuspensions,
               date: details.date,
               time: details.time,
               referee: details.referee,
@@ -527,6 +573,8 @@ export default function TournamentDetailsPage() {
                   qrCodeUrl={planillaData.qrCodeUrl}
                   homeRoster={planillaData.homeRoster}
                   awayRoster={planillaData.awayRoster}
+                  homeSuspensions={planillaData.homeSuspensions}
+                  awaySuspensions={planillaData.awaySuspensions}
                   date={planillaData.date}
                   time={planillaData.time}
                   referee={planillaData.referee}
@@ -702,7 +750,7 @@ export default function TournamentDetailsPage() {
                                 </div>
                               </CardContent>
                               <CardContent className="flex items-center justify-between">
-                                <MatchStatsDialog tournamentId={tournamentId} match={match} roundIndex={roundIndex} matchIndex={matchIndex} isFinished={isFinished}/>
+                                <MatchStatsDialog tournamentId={tournamentId} match={match} roundIndex={roundIndex} matchIndex={matchIndex} isFinished={isFinished} suspensions={suspensions}/>
                                 <div className="flex items-center space-x-2">
                                   <Label htmlFor={`finished-${matchId}`}>
                                     Finalizar Partido

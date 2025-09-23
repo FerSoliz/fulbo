@@ -15,20 +15,25 @@ interface PlanillaProps {
   qrCodeUrl?: string;
   homeRoster?: Player[];
   awayRoster?: Player[];
+  homeSuspensions?: string[];
+  awaySuspensions?: string[];
   date?: string;
   time?: string;
   referee?: string;
 }
 
-export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ homeTeam = "Equipo Local", awayTeam = "Equipo Visitante", matchId, qrCodeUrl, homeRoster = [], awayRoster = [], date, time, referee }, ref) => {
+export const PlanillaPartidoSVG = forwardRef<HTMLDivElement, PlanillaProps>(({ homeTeam = "Equipo Local", awayTeam = "Equipo Visitante", matchId, qrCodeUrl, homeRoster = [], awayRoster = [], homeSuspensions = [], awaySuspensions = [], date, time, referee }, ref) => {
     
     const PlayerRow = ({ index, player, isHome }: { index: number, player?: Player, isHome: boolean }) => {
+        const isSuspended = player ? (isHome ? homeSuspensions.includes(player.dni) : awaySuspensions.includes(player.dni)) : false;
         const playerName = player ? `${player.name} ${player.lastName}` : '';
         const xBase = isHome ? 0 : 440;
         return (
             <>
                 <text x={25 + xBase} y={217 + index * 25} fontFamily="Arial" fontSize="12" textAnchor="middle">{index + 1}</text>
-                <text x={45 + xBase} y={217 + index * 25} fontFamily="Arial" fontSize="12">{playerName}</text>
+                <text x={45 + xBase} y={217 + index * 25} fontFamily="Arial" fontSize="12" textDecoration={isSuspended ? 'line-through' : 'none'} fill={isSuspended ? 'red' : 'black'}>
+                    {playerName} {isSuspended && '(S)'}
+                </text>
             </>
         );
     };

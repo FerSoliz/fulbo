@@ -32,6 +32,7 @@ interface MatchStatsDialogProps {
   roundIndex: number;
   matchIndex: number;
   isFinished: boolean;
+  suspensions: { [playerId: string]: { nextMatchSuspended: boolean } };
 }
 
 export function MatchStatsDialog({
@@ -39,7 +40,8 @@ export function MatchStatsDialog({
   match,
   roundIndex,
   matchIndex,
-  isFinished
+  isFinished,
+  suspensions
 }: MatchStatsDialogProps) {
   const { toast } = useToast();
   const [homeRoster, setHomeRoster] = useState<Player[]>([]);
@@ -112,15 +114,18 @@ export function MatchStatsDialog({
 
   const renderPlayerStats = (player: Player | null, index: number, teamType: 'home' | 'away') => {
     const playerId = player?.dni;
+    const isSuspended = playerId ? suspensions[playerId]?.nextMatchSuspended : false;
     const playerName = player ? `${player.name} ${player.lastName}` : `Jugador ${index + 1}`;
     const playerStats = playerId ? stats[playerId] || { goals: 0, yellow: false, red: false } : { goals: 0, yellow: false, red: false };
 
     return (
       <div key={playerId || `${teamType}-placeholder-${index}`} className="grid grid-cols-[30px_1fr_45px_30px_30px] items-center gap-x-2 py-1">
-        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleMvpChange(playerId!)} disabled={!player || isFinished}>
+        <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => handleMvpChange(playerId!)} disabled={!player || isFinished || isSuspended}>
             <Star className={cn("h-4 w-4 text-muted-foreground", mvp === playerId && "text-amber-400 fill-amber-400")} />
         </Button>
-        <p className="text-sm truncate" title={playerName}>{playerName}</p>
+        <p className={cn("text-sm truncate", isSuspended && "text-destructive line-through")} title={playerName}>
+            {playerName} {isSuspended && '(S)'}
+        </p>
         <Input
           id={`goals-${playerId}`}
           type="number"
@@ -128,14 +133,14 @@ export function MatchStatsDialog({
           className="h-7 w-12 text-center px-1"
           value={playerStats.goals || ''}
           onChange={(e) => handleStatChange(playerId!, 'goals', e.target.value ? Number(e.target.value) : 0)}
-          disabled={!player || isFinished}
+          disabled={!player || isFinished || isSuspended}
         />
         <Button 
               size="icon" 
               variant={playerStats.yellow ? 'default' : 'outline'}
               className={cn("h-6 w-6 p-0 border-amber-400", playerStats.yellow && "bg-amber-400 hover:bg-amber-500")}
               onClick={() => handleStatChange(playerId!, 'yellow', !playerStats.yellow)}
-              disabled={!player || isFinished}
+              disabled={!player || isFinished || isSuspended}
           >
               <div className="w-3 h-4 bg-current rounded-sm" />
           </Button>
@@ -144,7 +149,7 @@ export function MatchStatsDialog({
               variant={playerStats.red ? 'default' : 'outline'}
               className={cn("h-6 w-6 p-0 border-red-600", playerStats.red && "bg-red-600 hover:bg-red-700")}
               onClick={() => handleStatChange(playerId!, 'red', !playerStats.red)}
-              disabled={!player || isFinished}
+              disabled={!player || isFinished || isSuspended}
            >
               <div className="w-3 h-4 bg-current rounded-sm" />
           </Button>
