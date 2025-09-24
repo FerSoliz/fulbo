@@ -126,19 +126,6 @@ export function PageHeader() {
                 </DropdownMenu>
             </div>
             <div className="flex flex-shrink-0 items-center justify-end gap-2">
-                <Link href="/collectibles">
-                    <Button variant="ghost" className="flex items-center gap-2 text-destructive">
-                        <Layers className="h-6 w-6" />
-                         <span className="font-bold text-sm">
-                            {availablePacks > 0 
-                                ? `SOBRE GRATIS (${availablePacks})` 
-                                : countdown 
-                                ? `PRÓXIMO EN: ${countdown}`
-                                : 'SOBRES'
-                            }
-                        </span>
-                    </Button>
-                </Link>
                 {loading ? (
                    <Skeleton className="h-10 w-10 rounded-full" />
                 ) : user && user.id !== 'visitor' ? (
