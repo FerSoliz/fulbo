@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Heart, MessageSquare, Bookmark, MoreHorizontal, Play, Pencil } from 'lucide-react';
+import { Heart, MessageSquare, Bookmark, MoreHorizontal, Play, Pencil, Star } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Post, User, Comment } from '@/lib/data';
@@ -53,6 +53,8 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
     setCommentText('');
     setShowComments(true); // Ensure comments are visible after adding a new one
   };
+  
+  const isPinned = post.isPinned && post.pinnedUntil && new Date(post.pinnedUntil) > new Date();
 
   const isLiked = currentUser && post.likes.includes(currentUser.id);
   const canEditOrDelete = currentUser?.id === post.authorId || currentUser?.role === 'admin' || currentUser?.role === 'editor';
@@ -131,7 +133,12 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
   };
 
   return (
-    <Card>
+    <Card className="relative">
+      {isPinned && (
+        <div className="absolute top-3 right-3 z-10 text-accent">
+            <Star className="h-5 w-5 fill-current"/>
+        </div>
+      )}
       <CardHeader className="flex flex-row items-center gap-4">
         <Link href={`/profile/${author.id}`}>
           <Avatar>

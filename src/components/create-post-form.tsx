@@ -6,12 +6,13 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Image as ImageIcon, Video, X, Play } from 'lucide-react';
+import { Image as ImageIcon, Video, X, Play, Star } from 'lucide-react';
 import { User, Post } from '@/lib/data';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import Image from 'next/image';
 import { useUpload } from '@/hooks/use-upload';
 import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 
 interface CreatePostFormProps {
   currentUser: User;
@@ -24,6 +25,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
   const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [youtubeVideoId, setYoutubeVideoId] = useState<string | null>(null);
+  const [isPinned, setIsPinned] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadMultipleFiles, isUploading, progress } = useUpload();
 
@@ -87,6 +89,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
       title,
       content,
       media: media,
+      isPinned,
     });
 
     // Reset form
@@ -95,6 +98,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     setFilesToUpload([]);
     setImagePreviews([]);
     setYoutubeVideoId(null);
+    setIsPinned(false);
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
     }
@@ -193,9 +197,14 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             disabled={!!youtubeVideoId}
           />
         </div>
-        <Button onClick={handleSubmit} disabled={(!title && !content && filesToUpload.length === 0 && !youtubeVideoId) || isUploading}>
-          {isUploading ? `Publicando... ${Math.round(progress)}%` : 'Publicar'}
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button variant="ghost" size="icon" onClick={() => setIsPinned(!isPinned)} disabled={isUploading}>
+                <Star className={cn("h-5 w-5 text-muted-foreground", isPinned && "fill-accent text-accent")} />
+            </Button>
+            <Button onClick={handleSubmit} disabled={(!title && !content && filesToUpload.length === 0 && !youtubeVideoId) || isUploading}>
+              {isUploading ? `Publicando... ${Math.round(progress)}%` : 'Publicar'}
+            </Button>
+        </div>
       </div>
     </Card>
   );

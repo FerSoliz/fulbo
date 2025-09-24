@@ -21,8 +21,26 @@ export default function HomePage() {
         const postsCollection = collection(db, 'posts');
         const postsQuery = query(postsCollection, orderBy('createdAt', 'desc'));
         const querySnapshot = await getDocs(postsQuery);
-        const postsData = querySnapshot.docs.map(doc => doc.data() as Post);
-        setPosts(postsData);
+        let postsData = querySnapshot.docs.map(doc => doc.data() as Post);
+        
+        // Separate pinned and unpinned posts
+        const now = new Date();
+        const pinned: Post[] = [];
+        const unpinned: Post[] = [];
+
+        postsData.forEach(post => {
+          if (post.isPinned && post.pinnedUntil && new Date(post.pinnedUntil) > now) {
+            pinned.push(post);
+          } else {
+            unpinned.push(post);
+          }
+        });
+        
+        // Sort pinned posts by creation date as well, then combine
+        pinned.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        setPosts([...pinned, ...unpinned]);
+
       } catch (error) {
         console.error("Error fetching posts: ", error);
       } finally {
@@ -36,6 +54,14 @@ export default function HomePage() {
 
   const handleAddPost = async (newPostData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments'>) => {
     if (!currentUser || currentUser.id === 'visitor') return;
+    
+    let pinnedUntil: string | undefined = undefined;
+    if (newPostData.isPinned) {
+        const expiryDate = new Date();
+        expiryDate.setHours(expiryDate.getHours() + 12);
+        pinnedUntil = expiryDate.toISOString();
+    }
+
     const newPost: Post = {
         ...newPostData,
         authorId: currentUser.id,
@@ -43,12 +69,34 @@ export default function HomePage() {
         createdAt: new Date().toISOString(),
         likes: [],
         comments: [],
+        pinnedUntil: pinnedUntil,
     };
     
     try {
         const postRef = doc(db, 'posts', newPost.id.toString());
         await setDoc(postRef, newPost);
-        setPosts((prevPosts) => [newPost, ...prevPosts]);
+        
+        // Add to state and re-sort
+        setPosts((prevPosts) => {
+          const allPosts = [newPost, ...prevPosts];
+          const now = new Date();
+          const pinned: Post[] = [];
+          const unpinned: Post[] = [];
+
+          allPosts.forEach(post => {
+            if (post.isPinned && post.pinnedUntil && new Date(post.pinnedUntil) > now) {
+              pinned.push(post);
+            } else {
+              unpinned.push(post);
+            }
+          });
+          
+          pinned.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          unpinned.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          
+          return [...pinned, ...unpinned];
+        });
+
     } catch (error) {
         console.error("Error adding post: ", error);
     }

@@ -1,5 +1,6 @@
 
 
+
 export interface User {
   id: string;
   name: string;
@@ -61,6 +62,8 @@ export interface Post {
   likes: string[];
   comments: Comment[];
   createdAt: string;
+  isPinned?: boolean;
+  pinnedUntil?: string;
 }
 
 export interface Product {
