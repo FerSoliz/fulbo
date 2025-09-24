@@ -181,13 +181,13 @@ const EditProfileDialog = ({
 
 const backgrounds = [
     'https://i.postimg.cc/1RfWNTCC/lusail.png', // Lusail -> AFA
-    'https://i.postimg.cc/L4wxkTGH/monumental.png', // Monumental -> River
+    'https://i.postimg.cc/BnnbJSjY/ELMONUMENTALRIVERPLATE2.png', // Monumental -> River
     'https://i.postimg.cc/fL20hVKv/LABOMBONERABOCAJUNIORS.jpg' // La Bombonera -> Boca
 ];
 
 const crestMap: { [key: string]: string } = {
     'https://i.postimg.cc/1RfWNTCC/lusail.png': 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png',
-    'https://i.postimg.cc/L4wxkTGH/monumental.png': 'https://i.postimg.cc/3wts3GNd/escudito-river.png',
+    'https://i.postimg.cc/BnnbJSjY/ELMONUMENTALRIVERPLATE2.png': 'https://i.postimg.cc/3wts3GNd/escudito-river.png',
     'https://i.postimg.cc/fL20hVKv/LABOMBONERABOCAJUNIORS.jpg': 'https://i.postimg.cc/50jZytQp/escudito-de-boca.png'
 };
 
@@ -758,5 +758,7 @@ export default function ProfilePage() {
     </>
   );
 }
+
+    
 
     
