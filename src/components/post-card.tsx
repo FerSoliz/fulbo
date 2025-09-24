@@ -151,7 +151,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
             <div className="flex items-center gap-1">
                 <p className="font-semibold text-sm">{author.name}</p>
                  {(author.role === 'admin' || author.role === 'editor') && (
-                    <Image src="https://i.postimg.cc/SQM9LfMY/verificado.png" alt="Editor" width={16} height={16} />
+                    <Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Editor" width={16} height={16} />
                 )}
             </div>
           </Link>
@@ -213,7 +213,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
                                 <span className="font-semibold text-sm">{commentAuthor.name}</span>
                              </Link>
                             {(commentAuthor.role === 'admin' || commentAuthor.role === 'editor') && (
-                                <Image src="https://i.postimg.cc/SQM9LfMY/verificado.png" alt="Editor" width={14} height={14} />
+                                <Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Editor" width={14} height={14} />
                             )}
                         </div>
                         <p className="text-sm text-muted-foreground">{comment.content}</p>
