@@ -25,6 +25,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
   const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [youtubeVideoId, setYoutubeVideoId] = useState<string | null>(null);
+  const [twitchChannelName, setTwitchChannelName] = useState<string | null>(null);
   const [isPinned, setIsPinned] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { uploadMultipleFiles, isUploading, progress } = useUpload();
@@ -35,12 +36,21 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     return match ? match[1] : null;
   };
 
+  const getTwitchChannelName = (url: string): string | null => {
+    const twitchRegex = /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]+)\/?$/;
+    const match = url.match(twitchRegex);
+    return match ? match[1] : null;
+  }
+
   const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setContent(newContent);
     
-    const videoId = getYoutubeVideoId(newContent);
-    setYoutubeVideoId(videoId);
+    const ytbId = getYoutubeVideoId(newContent);
+    const twChannel = getTwitchChannelName(newContent);
+
+    setYoutubeVideoId(ytbId);
+    setTwitchChannelName(twChannel);
   };
 
 
@@ -66,17 +76,24 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
       return newPreviews;
     });
   };
+  
+  const removeVideo = () => {
+    setYoutubeVideoId(null);
+    setTwitchChannelName(null);
+  }
 
   const handleSubmit = async () => {
-    let media: { type: 'image' | 'video'; url: string }[] = [];
+    let media: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string; }[] = [];
     
-    if (!title && !content && filesToUpload.length === 0 && !youtubeVideoId) return;
+    if (!title && !content && filesToUpload.length === 0 && !youtubeVideoId && !twitchChannelName) return;
     
     if(filesToUpload.length > 0) {
       const uploadedImageUrls = await uploadMultipleFiles(filesToUpload, `posts/${currentUser.id}`);
       media = uploadedImageUrls.map(url => ({ type: 'image', url }));
     } else if (youtubeVideoId) {
-       media.push({ type: 'video', url: `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg` });
+       media.push({ type: 'video', url: `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`, videoType: 'youtube', videoId: youtubeVideoId });
+    } else if (twitchChannelName) {
+       media.push({ type: 'video', url: `https://static-cdn.jtvnw.net/previews-ttv/live_user_${twitchChannelName}-1280x720.jpg`, videoType: 'twitch', videoId: twitchChannelName });
     }
 
     onAddPost({
@@ -93,11 +110,14 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     setFilesToUpload([]);
     setImagePreviews([]);
     setYoutubeVideoId(null);
+    setTwitchChannelName(null);
     setIsPinned(false);
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
     }
   };
+  
+  const hasVideo = !!youtubeVideoId || !!twitchChannelName;
 
   return (
     <Card className="p-4">
@@ -115,7 +135,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             disabled={isUploading}
           />
           <Textarea
-            placeholder={`¿Qué estás pensando, ${currentUser.name}? Pega un link de YouTube...`}
+            placeholder={`¿Qué estás pensando, ${currentUser.name}? Pega un link de YouTube o Twitch...`}
             value={content}
             onChange={handleContentChange}
             className="border-none shadow-none focus-visible:ring-0 px-0 resize-none"
@@ -125,14 +145,16 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
         </div>
       </div>
        
-       {youtubeVideoId && (
+       {hasVideo && (
         <div className="mt-4 relative group">
            <Image
-                src={`https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`}
-                alt="YouTube video thumbnail"
+                src={youtubeVideoId ? `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg` : `https://static-cdn.jtvnw.net/previews-ttv/live_user_${twitchChannelName}-1280x720.jpg`}
+                alt="Video thumbnail"
                 width={1280}
                 height={720}
-                className="w-full h-auto rounded-lg object-cover"
+                className="w-full h-auto rounded-lg object-cover bg-muted"
+                // In case twitch thumbnail fails
+                onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}
             />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
                 <Play className="h-16 w-16 text-white" />
@@ -141,14 +163,14 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
                 variant="destructive"
                 size="icon"
                 className="absolute top-2 right-2 h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => setYoutubeVideoId(null)}
+                onClick={removeVideo}
             >
                 <X className="h-4 w-4" />
             </Button>}
         </div>
        )}
 
-      {imagePreviews.length > 0 && !youtubeVideoId && (
+      {imagePreviews.length > 0 && !hasVideo && (
         <ScrollArea className="w-full whitespace-nowrap rounded-md mt-4">
             <div className="flex space-x-2 p-1">
                 {imagePreviews.map((url, index) => (
@@ -177,7 +199,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             variant="ghost"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || !!youtubeVideoId}
+            disabled={isUploading || hasVideo}
           >
             <ImageIcon className="mr-2 h-4 w-4" />
             Foto
@@ -189,14 +211,14 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             accept="image/*"
             multiple
             onChange={handleFileChange}
-            disabled={!!youtubeVideoId}
+            disabled={hasVideo}
           />
         </div>
         <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={() => setIsPinned(!isPinned)} disabled={isUploading}>
                 <Star className={cn("h-5 w-5 text-muted-foreground", isPinned && "fill-accent text-accent")} />
             </Button>
-            <Button onClick={handleSubmit} disabled={(!title && !content && filesToUpload.length === 0 && !youtubeVideoId) || isUploading}>
+            <Button onClick={handleSubmit} disabled={(!title && !content && filesToUpload.length === 0 && !hasVideo) || isUploading}>
               {isUploading ? `Publicando... ${Math.round(progress)}%` : 'Publicar'}
             </Button>
         </div>

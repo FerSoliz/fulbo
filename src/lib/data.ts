@@ -1,6 +1,7 @@
 
 
 
+
 export interface User {
   id: string;
   name: string;
@@ -58,7 +59,7 @@ export interface Post {
   authorId: string;
   title: string;
   content: string;
-  media: { type: 'image' | 'video'; url: string }[];
+  media: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string; }[];
   likes: string[];
   comments: Comment[];
   createdAt: string;
@@ -239,7 +240,7 @@ export const posts: Post[] = [
         title: "Recordando la final del mundo",
         content: "Un momento inolvidable para todos los argentinos. Comparto este video del resumen del partido. ¿Cuál fue su momento favorito?",
         media: [
-            { type: "video", url: "https://img.youtube.com/vi/FG_wffPU-yM/maxresdefault.jpg" },
+            { type: "video", url: "https://img.youtube.com/vi/FG_wffPU-yM/maxresdefault.jpg", videoType: 'youtube', videoId: 'FG_wffPU-yM' },
         ],
         likes: ['admin-user'],
         comments: [

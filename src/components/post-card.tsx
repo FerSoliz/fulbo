@@ -63,13 +63,22 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
   const renderMedia = () => {
     const { media } = post;
     if (!media || media.length === 0) return null;
+    
+    const videoItem = media.find(item => item.type === 'video');
 
-    if (media[0].url.includes('img.youtube.com')) {
+    if (videoItem) {
         return (
              <Dialog>
                 <DialogTrigger asChild>
                     <div className="relative cursor-pointer group">
-                        <Image src={media[0].url} alt="Video thumbnail" width={1280} height={720} className="w-full h-auto rounded-lg object-cover" />
+                        <Image 
+                            src={videoItem.url} 
+                            alt="Video thumbnail" 
+                            width={1280} 
+                            height={720} 
+                            className="w-full h-auto rounded-lg object-cover bg-muted"
+                            onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}
+                         />
                         <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
                             <Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" />
                         </div>
@@ -77,14 +86,24 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl p-0">
                     <div className="aspect-video">
-                        <iframe
-                            src={`https://www.youtube.com/embed/${media[0].url.split('/vi/')[1].split('/')[0]}`}
-                            title="YouTube video player"
-                            frameBorder="0"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowFullScreen
-                            className="w-full h-full"
-                        ></iframe>
+                        {videoItem.videoType === 'youtube' && videoItem.videoId ? (
+                            <iframe
+                                src={`https://www.youtube.com/embed/${videoItem.videoId}`}
+                                title="YouTube video player"
+                                frameBorder="0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                                className="w-full h-full"
+                            ></iframe>
+                        ) : videoItem.videoType === 'twitch' && videoItem.videoId ? (
+                             <iframe
+                                src={`https://player.twitch.tv/?channel=${videoItem.videoId}&parent=${window.location.hostname}`}
+                                frameBorder="0"
+                                allowFullScreen={true}
+                                scrolling="no"
+                                className="w-full h-full">
+                            </iframe>
+                        ) : null}
                     </div>
                 </DialogContent>
             </Dialog>
