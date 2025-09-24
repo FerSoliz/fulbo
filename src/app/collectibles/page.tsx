@@ -463,37 +463,23 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTe
             </div>
         </div>
 
-        <div className="relative z-10 mt-4 w-full px-4">
-            <div className="w-full flex justify-between items-end">
-                <div className="flex-1 flex justify-center">
-                     <div className="flex gap-4">
-                        <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
-                            <Image 
-                                src="https://i.postimg.cc/t4NZKwwX/SHOP-CARD.png" 
-                                alt="Tienda de cartas"
-                                width={154}
-                                height={154}
-                            />
-                        </button>
-                         <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
-                            <Image 
-                                src="https://i.postimg.cc/0QRpxDZv/BOTON-VS.png" 
-                                alt="Modo VS"
-                                width={154}
-                                height={154}
-                            />
-                        </button>
-                    </div>
-                </div>
-                 <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
-                    <Image
-                        src="https://i.postimg.cc/qBzwcYxF/MISIONES-ICONO.png"
-                        alt="Misiones"
-                        width={64}
-                        height={64}
-                    />
-                </button>
-            </div>
+        <div className="relative z-10 mt-6 w-full flex justify-center gap-4">
+            <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
+                <Image 
+                    src="https://i.postimg.cc/t4NZKwwX/SHOP-CARD.png" 
+                    alt="Tienda de cartas"
+                    width={154}
+                    height={154}
+                />
+            </button>
+             <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
+                <Image 
+                    src="https://i.postimg.cc/0QRpxDZv/BOTON-VS.png" 
+                    alt="Modo VS"
+                    width={154}
+                    height={154}
+                />
+            </button>
         </div>
 
 
@@ -830,3 +816,4 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
+
