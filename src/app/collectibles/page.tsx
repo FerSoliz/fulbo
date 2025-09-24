@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Dices, Shield, Swords, PackageOpen, Layers, Users, ChevronRight, ArrowLeftRight, MoreVertical, Gift, Store } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -36,7 +37,8 @@ const initialTeam = {
   formation: {
     starters: Array(5).fill(null),
     subs: Array(3).fill(null),
-  }
+  },
+  showcasedCard: null as CardType | null,
 };
 
 const botTeamLineup = allCards.sort(() => 0.5 - Math.random()).slice(0, 8);
@@ -72,7 +74,8 @@ export default function CollectibleCardsPage() {
             const teamRef = doc(db, 'users', user.id, 'data', 'team');
             const teamSnap = await getDoc(teamRef);
             if (teamSnap.exists()) {
-                setUserTeam(teamSnap.data() as typeof initialTeam);
+                const teamData = teamSnap.data();
+                setUserTeam({ ...initialTeam, ...teamData });
             }
         } else {
             setUserCollection([]);
@@ -230,7 +233,7 @@ export default function CollectibleCardsPage() {
   const renderView = () => {
     switch (view) {
       case 'menu':
-        return <MainMenu onOpenPack={handleOpenPack} setView={setView} user={user} availablePacks={availablePacks} countdown={countdown}/>;
+        return <MainMenu onOpenPack={handleOpenPack} setView={setView} user={user} availablePacks={availablePacks} countdown={countdown} userTeam={userTeam} setUserTeam={saveTeam} userCollection={userCollection} />;
       case 'pack':
         return <PackOpeningView cards={lastOpenedPack} setView={setView} />;
       case 'formation':
@@ -270,12 +273,13 @@ export default function CollectibleCardsPage() {
   );
 }
 
-const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { onOpenPack: () => void, setView: (v: View) => void, user: any, availablePacks: number, countdown: string }) => {
+const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTeam, setUserTeam, userCollection }: { onOpenPack: () => void, setView: (v: View) => void, user: any, availablePacks: number, countdown: string, userTeam: typeof initialTeam, setUserTeam: (team: typeof initialTeam) => void, userCollection: CardType[] }) => {
     const isVisitor = user?.id === 'visitor';
     const level = user?.sudonepassLevel || 1;
     const currentExp = user?.sudonepassExp || 0;
     const expToNextLevel = sudonepassConfig.expPerLevel(level);
     const passProgress = (currentExp / expToNextLevel) * 100;
+    const [isCardSelectorOpen, setIsCardSelectorOpen] = useState(false);
     
     const menuItems = [
       { id: 'collection', label: 'MI COLECCIÓN', icon: Layers, href: '/collectibles/collection' },
@@ -309,6 +313,11 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
         return <button onClick={item.action}>{content}</button>;
     }
     
+    const handleSelectShowcasedCard = (card: CardType) => {
+        setUserTeam({ ...userTeam, showcasedCard: card });
+        setIsCardSelectorOpen(false);
+    }
+    
     return (
      <div className="w-full h-screen flex flex-col items-center justify-center relative">
         <motion.div
@@ -320,7 +329,31 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
           <div className="w-full max-w-lg mx-auto bg-card/80 backdrop-blur-sm border-b border-x border-border rounded-b-lg">
             <div className="flex justify-between items-center h-20 px-4 relative">
                 <div className="w-1/3">
-                    {/* Placeholder for left content */}
+                    <Dialog open={isCardSelectorOpen} onOpenChange={setIsCardSelectorOpen}>
+                        <DialogTrigger asChild>
+                            <div className="w-16 h-[100px] bg-muted/20 rounded-md flex items-center justify-center border-2 border-dashed border-muted-foreground/50 cursor-pointer hover:bg-muted/30 transition-colors">
+                                {userTeam.showcasedCard ? (
+                                    <div className="w-full h-full">
+                                         <CollectibleCard card={userTeam.showcasedCard} small />
+                                    </div>
+                                ) : (
+                                    <span className="text-xs text-center text-muted-foreground">Mostrar Carta</span>
+                                )}
+                            </div>
+                        </DialogTrigger>
+                        <DialogContent>
+                             <DialogHeader>
+                                <DialogTitle>Elige tu carta para mostrar</DialogTitle>
+                             </DialogHeader>
+                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[60vh] overflow-y-auto">
+                                {userCollection.map(card => (
+                                    <div key={card.id} onClick={() => handleSelectShowcasedCard(card)} className="cursor-pointer">
+                                        <CollectibleCard card={card} small />
+                                    </div>
+                                ))}
+                             </div>
+                        </DialogContent>
+                    </Dialog>
                 </div>
                  <div className="w-1/3 flex flex-col items-center">
                     {user && (
