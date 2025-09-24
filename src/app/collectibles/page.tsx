@@ -429,7 +429,7 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
             </div>
         </div>
 
-        <div className="relative z-10 mt-6 w-full flex justify-start pl-8 gap-4">
+        <div className="relative z-10 mt-6 w-full flex justify-center gap-4">
             <button className="transition-transform hover:scale-105" disabled>
                 <Image 
                     src="https://i.postimg.cc/t4NZKwwX/SHOP-CARD.png" 
@@ -784,3 +784,4 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
+
