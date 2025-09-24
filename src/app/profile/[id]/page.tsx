@@ -51,6 +51,7 @@ import {
   ArrowLeft,
   MapPin,
   Crown,
+  Flag,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -78,6 +79,20 @@ import {
   DialogClose,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from '@/components/ui/tabs';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
 import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -273,6 +288,20 @@ const mockRanking = [
     { rank: 5, name: 'Agustin', sudpoints: 950 },
 ]
 
+const mockTournamentStats = {
+    positions: [
+        { rank: 1, team: 'SUDONE FC', played: 4, won: 3, drawn: 1, lost: 0, points: 10, gf: 11, gc: 4, dg: 7 },
+        { rank: 2, team: 'Los Rivales', played: 4, won: 2, drawn: 1, lost: 1, points: 7, gf: 8, gc: 6, dg: 2 },
+    ],
+    scorers: [
+        { rank: 1, player: 'L. Mingrone', team: 'SUDONE FC', goals: 6 },
+        { rank: 2, player: 'J. Pérez', team: 'Los Rivales', goals: 4 },
+    ],
+    sanctions: [
+        { player: 'F. González', team: 'SUDONE FC', yellow: 2, red: 0 },
+    ]
+}
+
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -291,7 +320,7 @@ export default function ProfilePage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [view, setView] = useState<'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass' | 'ranking_preview'>('buttons');
+  const [view, setView] = useState<'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass' | 'ranking_preview' | 'favorite_tournaments'>('buttons');
 
   useEffect(() => {
     const targetUser = allUsers.find((u) => u.id === userId);
@@ -565,10 +594,17 @@ export default function ProfilePage() {
                    <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}>
                        <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
                    </button>
-                   <div className="mt-1 col-start-1">
+               </div>
+               <div className="grid grid-cols-4 gap-5 mt-1">
+                   <div className="col-span-1">
                       <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}>
                          <Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={150} height={50} className="rounded-lg w-full h-auto" />
-                     </button>
+                      </button>
+                   </div>
+                   <div className="col-span-1">
+                      <button className="transition-transform hover:scale-105" onClick={() => setView('favorite_tournaments')}>
+                         <Image src="https://i.postimg.cc/yYnD2Q1z/boton-favorito-torneo.png" alt="Torneos Favoritos" width={150} height={50} className="rounded-lg w-full h-auto" />
+                      </button>
                    </div>
                </div>
           </CardContent>
@@ -795,7 +831,110 @@ export default function ProfilePage() {
                 </CardFooter>
             </OverlayView>
         )}
+
+        {view === 'favorite_tournaments' && (
+            <OverlayView>
+                <CardHeader>
+                    <CardTitle className="text-center text-2xl">Torneos Favoritos</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <Tabs defaultValue="positions" className="w-full">
+                        <TabsList className="grid w-full grid-cols-5">
+                          <TabsTrigger value="positions">Posiciones</TabsTrigger>
+                          <TabsTrigger value="scorers">Goleadores</TabsTrigger>
+                          <TabsTrigger value="goalkeepers">Valla</TabsTrigger>
+                          <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
+                          <TabsTrigger value="penalties">Penales</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="positions" className="mt-4">
+                           <div className="rounded-lg border">
+                              <Table>
+                                <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="w-[40px]">#</TableHead>
+                                    <TableHead>Equipo</TableHead>
+                                    <TableHead className="text-center">PJ</TableHead>
+                                    <TableHead className="text-right">Puntos</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {mockTournamentStats.positions.map((pos) => (
+                                    <TableRow key={pos.team}>
+                                      <TableCell className="font-bold">{pos.rank}</TableCell>
+                                      <TableCell>{pos.team}</TableCell>
+                                      <TableCell className="text-center">{pos.played}</TableCell>
+                                      <TableCell className="text-right font-bold">{pos.points}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                           </div>
+                        </TabsContent>
+                        <TabsContent value="scorers" className="mt-4">
+                           <div className="rounded-lg border">
+                              <Table>
+                                 <TableHeader>
+                                  <TableRow>
+                                    <TableHead className="w-[50px]">#</TableHead>
+                                    <TableHead>Jugador</TableHead>
+                                    <TableHead className="text-right">Goles</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {mockTournamentStats.scorers.map((scorer) => (
+                                     <TableRow key={scorer.player}>
+                                      <TableCell className="font-bold">{scorer.rank}</TableCell>
+                                      <TableCell>{scorer.player}</TableCell>
+                                      <TableCell className="text-right font-bold">{scorer.goals}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                           </div>
+                        </TabsContent>
+                        <TabsContent value="goalkeepers" className="mt-4">
+                           <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">La tabla de valla menos vencida aparecerá aquí.</p>
+                            </div>
+                        </TabsContent>
+                         <TabsContent value="sanctions" className="mt-4">
+                           <div className="rounded-lg border">
+                              <Table>
+                                 <TableHeader>
+                                  <TableRow>
+                                    <TableHead>Jugador</TableHead>
+                                    <TableHead className="text-center">Amarillas</TableHead>
+                                    <TableHead className="text-center">Rojas</TableHead>
+                                  </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                  {mockTournamentStats.sanctions.map((s, i) => (
+                                     <TableRow key={i}>
+                                      <TableCell>{s.player}</TableCell>
+                                      <TableCell className="text-center font-bold text-amber-400">{s.yellow}</TableCell>
+                                      <TableCell className="text-center font-bold text-destructive">{s.red}</TableCell>
+                                    </TableRow>
+                                  ))}
+                                </TableBody>
+                              </Table>
+                           </div>
+                        </TabsContent>
+                         <TabsContent value="penalties" className="mt-4">
+                           <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                                <p className="text-muted-foreground">La tabla de penales aparecerá aquí.</p>
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                </CardContent>
+                <CardFooter>
+                    <Button variant="ghost" onClick={() => setView('buttons')} className="w-full">
+                        Volver
+                    </Button>
+                </CardFooter>
+            </OverlayView>
+        )}
       </AnimatePresence>
     </>
   );
 }
+
