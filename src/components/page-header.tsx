@@ -50,6 +50,7 @@ const notificationIcons: { [key: string]: React.ElementType } = {
 export function PageHeader() {
   const { user, loading, logout, notifications, setNotifications, availablePacks, countdown } = useUser();
   const router = useRouter();
+  const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   
   const hasUnreadNotifications = notifications.some(n => !n.isRead);
 
@@ -83,14 +84,14 @@ export function PageHeader() {
     <header className="sticky top-0 z-20 w-full bg-[#291e37]/80 backdrop-blur-sm">
         <div className="flex h-14 items-center justify-between px-4 sm:px-6">
             <div className="md:hidden flex-1">
-                <Sheet>
+                <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
                     <SheetTrigger asChild>
                         <Button variant="ghost" size="icon">
                             <Menu/>
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="p-0 w-64">
-                       <MainSidebar isMobile={true}/>
+                       <MainSidebar isMobile={true} onLinkClick={() => setIsSheetOpen(false)} />
                     </SheetContent>
                 </Sheet>
             </div>

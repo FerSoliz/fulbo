@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -147,7 +148,12 @@ interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
+interface MainSidebarProps {
+  isMobile?: boolean;
+  onLinkClick?: () => void;
+}
+
+export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps) {
   const pathname = usePathname();
   const { user, loading, logout, setUser, setAllUsers, allUsers, trackInteraction } = useUser();
   const router = useRouter();
@@ -179,12 +185,14 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
       } else {
         trackInteraction();
       }
+      if (onLinkClick) onLinkClick();
   }
   
   const handleMenuClick = () => {
     if (user?.id !== 'visitor') {
       trackInteraction();
     }
+    if (onLinkClick) onLinkClick();
   }
 
   const handleAuthorization = () => {
@@ -201,6 +209,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   }
 
   const handleLogout = async () => {
+    if (onLinkClick) onLinkClick();
     if (user?.id === 'visitor') {
         router.push('/login');
     } else {
@@ -249,7 +258,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
     <>
     <aside className={sidebarClasses}>
         <div className="flex h-16 items-center justify-center border-b p-2">
-          <Link href="/">
+          <Link href="/" onClick={onLinkClick}>
             <Image
               src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
               alt="SUDONE Logo"
@@ -270,7 +279,7 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                 </>
             ) : user ? (
                 <>
-                    <Link href={user.id === 'visitor' ? '/login' : `/profile/${user.id}`}>
+                    <Link href={user.id === 'visitor' ? '/login' : `/profile/${user.id}`} onClick={onLinkClick}>
                         <AnimatedAvatar>
                             <Avatar className="w-12 h-12">
                                 <AvatarImage src={user.avatar} alt="User avatar" />
