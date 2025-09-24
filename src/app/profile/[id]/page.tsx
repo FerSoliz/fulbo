@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useRef, Fragment } from 'react';
@@ -49,6 +50,7 @@ import {
   CheckCircle2,
   ArrowLeft,
   MapPin,
+  Crown,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -263,6 +265,13 @@ const mockNextMatch = {
     location: "Complejo San Cristóbal"
 }
 
+const mockRanking = [
+    { rank: 1, name: 'Faustino', sudpoints: 1250 },
+    { rank: 2, name: 'Bautista', sudpoints: 1100 },
+    { rank: 3, name: 'Felipe', sudpoints: 1050 },
+    { rank: 4, name: 'Lucio Mingrone', sudpoints: 980 },
+    { rank: 5, name: 'Agustin', sudpoints: 950 },
+]
 
 export default function ProfilePage() {
   const params = useParams();
@@ -282,7 +291,7 @@ export default function ProfilePage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [view, setView] = useState<'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass'>('buttons');
+  const [view, setView] = useState<'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass' | 'ranking_preview'>('buttons');
 
   useEffect(() => {
     const targetUser = allUsers.find((u) => u.id === userId);
@@ -541,21 +550,28 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
         
-        <Card className="relative z-10">
-          <CardContent className="p-4 relative min-h-[58px]">
-              <div className="grid grid-cols-4 gap-5">
-                  <button className="transition-transform hover:scale-105" onClick={() => setView('history')}>
-                      <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
-                  </button>
-                  <button className="transition-transform hover:scale-105" onClick={() => setView('next_match')}>
-                      <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} className="rounded-lg w-full h-auto" />
-                  </button>
-                  <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}>
-                      <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} className="rounded-lg w-full h-auto" />
-                  </button>
-                  <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}>
-                      <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
-                  </button>
+        <Card>
+           <CardContent className="p-4 relative">
+              <div className="flex flex-col items-center gap-4">
+                  <div className="grid grid-cols-4 gap-5 w-full">
+                      <button className="transition-transform hover:scale-105" onClick={() => setView('history')}>
+                          <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
+                      </button>
+                      <button className="transition-transform hover:scale-105" onClick={() => setView('next_match')}>
+                          <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} className="rounded-lg w-full h-auto" />
+                      </button>
+                      <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}>
+                          <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} className="rounded-lg w-full h-auto" />
+                      </button>
+                      <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}>
+                          <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
+                      </button>
+                  </div>
+                   <div className="grid grid-cols-1 w-full px-20">
+                     <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}>
+                        <Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={300} height={50} className="rounded-lg w-full h-auto" />
+                    </button>
+                  </div>
               </div>
           </CardContent>
         </Card>
@@ -701,6 +717,33 @@ export default function ProfilePage() {
                 </Button>
             </CardFooter>
           </OverlayView>
+        )}
+        
+        {view === 'ranking_preview' && (
+             <OverlayView>
+                <CardHeader>
+                    <CardTitle className="text-center">Posición en el Ranking</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                    {mockRanking.map((player) => (
+                        <div key={player.rank} className={cn(
+                            "flex items-center justify-between p-3 rounded-lg",
+                            player.name === profileUser.name ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50"
+                        )}>
+                            <div className="flex items-center gap-4">
+                                <span className="font-bold text-lg w-6 text-center">{player.rank === 1 ? <Crown className="w-5 h-5 text-amber-400" /> : player.rank}</span>
+                                <p className={cn("font-semibold", player.name === profileUser.name && "text-accent")}>{player.name}</p>
+                            </div>
+                            <p className="font-bold">{player.sudpoints} SP</p>
+                        </div>
+                    ))}
+                </CardContent>
+                 <CardFooter>
+                    <Button variant="ghost" onClick={() => setView('buttons')} className="w-full">
+                        Volver
+                    </Button>
+                </CardFooter>
+            </OverlayView>
         )}
 
         {view === 'sudone_pass' && (
