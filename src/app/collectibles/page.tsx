@@ -271,6 +271,29 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
       { id: 'match', label: 'PARTIDO VS', icon: Swords, disabled: true, action: () => setView("vs_match") },
       { id: 'trade', label: 'INTERCAMBIOS', icon: ArrowLeftRight, disabled: true },
     ];
+
+    const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
+        const content = (
+             <Card 
+                className={cn("bg-card/70 backdrop-blur-sm aspect-square flex flex-col items-center justify-center p-4 transition-all duration-300 transform hover:bg-card/90 hover:scale-105", item.disabled && "opacity-50 cursor-not-allowed bg-card/40")}
+            >
+                <item.icon className="w-12 h-12 mb-2"/>
+                {item.id === 'pack' && (
+                    <div className="absolute top-2 right-2 text-xs font-bold bg-destructive text-white rounded-full px-2 py-1">
+                        {item.subtext}
+                    </div>
+                )}
+            </Card>
+        );
+
+        if (item.disabled) {
+            return <div>{content}</div>;
+        }
+        if (item.href) {
+            return <Link href={item.href}>{content}</Link>
+        }
+        return <div onClick={item.action} className="cursor-pointer">{content}</div>;
+    }
     
     return (
      <div className="w-full h-screen flex relative">
@@ -283,33 +306,13 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
           priority
       />
       <motion.div 
-        className="w-1/4 p-8 flex flex-col justify-center z-10"
-        initial={{ x: -200, opacity: 0 }}
-        animate={{ x: 0, opacity: 1 }}
+        className="z-10 m-auto"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <div className="space-y-3">
-          {menuItems.map((item, index) => {
-            const ButtonContent = () => (
-              <Button
-                key={item.id}
-                className={cn("w-full h-auto p-3 justify-start text-base font-semibold border-b-4 border-r-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:scale-105 hover:bg-red-600 rounded-lg", item.disabled && "opacity-50 cursor-not-allowed")}
-                onClick={item.action}
-                disabled={item.disabled}
-              >
-                <div className="flex items-center gap-4">
-                  <item.icon className="w-6 h-6" />
-                  <span>{item.label}</span>
-                  {item.subtext && <span className="text-xs opacity-80">{item.subtext}</span>}
-                </div>
-              </Button>
-            );
-            return item.href ? (
-              <Link href={item.href} key={item.id}><ButtonContent /></Link>
-            ) : (
-              <ButtonContent key={item.id} />
-            );
-          })}
+        <div className="grid grid-cols-5 gap-4 max-w-4xl mx-auto">
+          {menuItems.map((item) => <MenuItem key={item.id} item={item} />)}
         </div>
       </motion.div>
     </div>
