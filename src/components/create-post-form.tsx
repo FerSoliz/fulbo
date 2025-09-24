@@ -39,13 +39,8 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     const newContent = e.target.value;
     setContent(newContent);
     
-    // Only set video if one isn't already set
-    if (!youtubeVideoId) {
-        const videoId = getYoutubeVideoId(newContent);
-        if (videoId) {
-            setYoutubeVideoId(videoId);
-        }
-    }
+    const videoId = getYoutubeVideoId(newContent);
+    setYoutubeVideoId(videoId);
   };
 
 
