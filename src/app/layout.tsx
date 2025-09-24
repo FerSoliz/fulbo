@@ -47,12 +47,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     
     const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
+    const isImmersivePage = pathname.startsWith('/collectibles');
 
-    if (isAuthPage) {
+    if (isAuthPage || isImmersivePage) {
         return (
           <>
             <main>{children}</main>
             <Toaster />
+            {!isImmersivePage && <FloatingActionButtons />}
           </>
         );
     }
