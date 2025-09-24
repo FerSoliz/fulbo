@@ -59,6 +59,11 @@ export default function CollectibleCardsPage() {
   const [lastOpenedPack, setLastOpenedPack] = useState<CardType[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { user, availablePacks, setAvailablePacks, nextPackTimestamp, setNextPackTimestamp, countdown, trackPackOpening } = useUser();
+  const level = user?.sudonepassLevel || 1;
+  const currentExp = user?.sudonepassExp || 0;
+  const expToNextLevel = sudonepassConfig.expPerLevel(level);
+  const passProgress = (currentExp / expToNextLevel) * 100;
+  const [isCardSelectorOpen, setIsCardSelectorOpen] = useState(false);
 
   useEffect(() => {
     setIsClient(true);
@@ -229,65 +234,19 @@ export default function CollectibleCardsPage() {
   if (!isClient) {
     return <div className="p-4 text-center">Cargando juego de cartas...</div>;
   }
+  
+  const handleSelectShowcasedCard = (card: CardType) => {
+      saveTeam({ ...userTeam, showcasedCard: card });
+      setIsCardSelectorOpen(false);
+  }
 
-  const renderView = () => {
-    switch (view) {
-      case 'menu':
-        return <MainMenu onOpenPack={handleOpenPack} setView={setView} user={user} availablePacks={availablePacks} countdown={countdown} userTeam={userTeam} setUserTeam={saveTeam} userCollection={userCollection} />;
-      case 'pack':
-        return <PackOpeningView cards={lastOpenedPack} setView={setView} />;
-      case 'formation':
-        return (
-          <DragDropContext onDragEnd={onDragEnd}>
-            <TeamFormationView 
-              userCollection={userCollection} 
-              team={userTeam} 
-              setTeam={saveTeam} 
-              setView={setView} 
-            />
-          </DragDropContext>
-        );
-      case 'vs_match':
-        return <VsMatchSimulation userTeam={userTeam} botTeam={botTeam} setView={setView}/>;
-    }
-  };
-
-  return (
-    <div className="collectible-page-background text-white min-h-screen">
-      <div id="stars-container" />
-       <AnimatePresence>
-        {view === 'menu' && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="w-full h-full flex items-center justify-center"
-          >
-            {renderView()}
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {view !== 'menu' && renderView()}
-    </div>
-  );
-}
-
-const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTeam, setUserTeam, userCollection }: { onOpenPack: () => void, setView: (v: View) => void, user: any, availablePacks: number, countdown: string, userTeam: typeof initialTeam, setUserTeam: (team: typeof initialTeam) => void, userCollection: CardType[] }) => {
-    const isVisitor = user?.id === 'visitor';
-    const level = user?.sudonepassLevel || 1;
-    const currentExp = user?.sudonepassExp || 0;
-    const expToNextLevel = sudonepassConfig.expPerLevel(level);
-    const passProgress = (currentExp / expToNextLevel) * 100;
-    const [isCardSelectorOpen, setIsCardSelectorOpen] = useState(false);
-    
-    const menuItems = [
+  const menuItems = [
       { id: 'collection', label: 'MI COLECCIÓN', icon: Layers, href: '/collectibles/collection' },
       { id: 'team', label: 'MI EQUIPO', icon: Users, disabled: true, action: () => setView("formation") },
       { id: 'trade', label: 'INTERCAMBIOS', icon: ArrowLeftRight, disabled: true },
     ];
 
-    const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
+  const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
         const content = (
              <div 
                 className={cn(
@@ -312,14 +271,35 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTe
         }
         return <button onClick={item.action}>{content}</button>;
     }
-    
-    const handleSelectShowcasedCard = (card: CardType) => {
-        setUserTeam({ ...userTeam, showcasedCard: card });
-        setIsCardSelectorOpen(false);
+
+  const renderCentralContent = () => {
+    switch (view) {
+      case 'menu':
+        return <MainMenu onOpenPack={handleOpenPack} availablePacks={availablePacks} countdown={countdown} user={user} />;
+      case 'pack':
+        return <PackOpeningView cards={lastOpenedPack} setView={setView} />;
+      case 'formation':
+        return (
+          <DragDropContext onDragEnd={onDragEnd}>
+            <TeamFormationView 
+              userCollection={userCollection} 
+              team={userTeam} 
+              setTeam={saveTeam} 
+              setView={setView} 
+            />
+          </DragDropContext>
+        );
+      case 'vs_match':
+        return <VsMatchSimulation userTeam={userTeam} botTeam={botTeam} setView={setView}/>;
+      default:
+        return <MainMenu onOpenPack={handleOpenPack} availablePacks={availablePacks} countdown={countdown} user={user} />;
     }
-    
-    return (
-     <div className="w-full h-screen flex flex-col items-center justify-center relative">
+  };
+
+  return (
+    <div className="collectible-page-background text-white min-h-screen">
+      <div id="stars-container" />
+       <div className="w-full h-screen flex flex-col items-center justify-between relative">
         <motion.div
             className="fixed top-0 left-0 right-0 z-10 w-full"
             initial={{ y: "-100%" }}
@@ -412,7 +392,7 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTe
                         <DropdownMenuContent align="end">
                              <DropdownMenuLabel>Recompensas</DropdownMenuLabel>
                              <DropdownMenuSeparator />
-                             <DropdownMenuItem onClick={onOpenPack} disabled={availablePacks <= 0}>
+                             <DropdownMenuItem onClick={handleOpenPack} disabled={availablePacks <= 0}>
                                 <PackageOpen className="mr-2 h-4 w-4" />
                                 {availablePacks > 0 ? `Abrir Sobre (${availablePacks})` : "No hay sobres"}
                              </DropdownMenuItem>
@@ -440,6 +420,42 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTe
             </div>
         </motion.div>
 
+        <main className="flex-1 flex items-center justify-center w-full z-0">
+             <AnimatePresence mode="wait">
+                <motion.div
+                  key={view}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3, ease: 'easeInOut' }}
+                  className="w-full h-full flex items-center justify-center"
+                >
+                  {renderCentralContent()}
+                </motion.div>
+             </AnimatePresence>
+        </main>
+
+
+        <motion.div 
+            className="fixed bottom-0 left-0 right-0 z-10 w-full bg-card/80 backdrop-blur-sm border-t border-border"
+            initial={{ y: "100%" }}
+            animate={{ y: "0%" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+            <div className="flex justify-center items-center gap-4 p-2">
+                {menuItems.map((item) => <MenuItem key={item.id} item={item} />)}
+            </div>
+        </motion.div>
+    </div>
+    </div>
+  );
+}
+
+const MainMenu = ({ onOpenPack, availablePacks, countdown, user }: { onOpenPack: () => void, availablePacks: number, countdown: string, user: any }) => {
+    const isVisitor = user?.id === 'visitor';
+    
+    return (
+     <div className="w-full h-full flex flex-col items-center justify-center relative">
         <Image
           src="https://i.postimg.cc/yY075BRG/FONDO-JUEGUITO.png"
           alt="Fondo del juego de cartas"
@@ -481,7 +497,7 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTe
             </button>
         </div>
 
-        <div className="relative z-10 w-full flex justify-end pr-8">
+        <div className="relative z-10 mt-2 w-full flex justify-end pr-8">
             <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
                 <Image 
                     src="https://i.postimg.cc/02ZN8tL8/MISIONES-ICONO.png"
@@ -491,18 +507,6 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTe
                 />
             </button>
         </div>
-
-
-        <motion.div 
-            className="fixed bottom-0 left-0 right-0 z-10 w-full bg-card/80 backdrop-blur-sm border-t border-border"
-            initial={{ y: "100%" }}
-            animate={{ y: "0%" }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-            <div className="flex justify-center items-center gap-4 p-2">
-                {menuItems.map((item) => <MenuItem key={item.id} item={item} />)}
-            </div>
-        </motion.div>
     </div>
  )
 };
