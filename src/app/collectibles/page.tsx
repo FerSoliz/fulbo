@@ -310,7 +310,7 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
     }
     
     return (
-     <div className="w-full h-screen flex flex-col items-center justify-between relative">
+     <div className="w-full h-screen flex flex-col items-center justify-center relative">
         <motion.div
             className="fixed top-0 left-0 right-0 z-10 w-full"
             initial={{ y: "-100%" }}
