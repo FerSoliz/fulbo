@@ -265,7 +265,7 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
     const hasFreePack = availablePacks > 0;
     
     const menuItems = [
-      { id: 'pack', label: 'ABRIR SOBRE', icon: PackageOpen, disabled: isVisitor || !hasFreePack, action: onOpenPack, subtext: hasFreePack ? `(${availablePacks})` : countdown || '...'},
+      { id: 'pack', label: 'ABRIR SOBRE', icon: PackageOpen, disabled: isVisitor || !hasFreePack, action: onOpenPack, subtext: hasFreePack ? `${availablePacks}` : countdown || '...'},
       { id: 'collection', label: 'MI COLECCIÓN', icon: Layers, href: '/collectibles/collection' },
       { id: 'team', label: 'MI EQUIPO', icon: Users, disabled: true, action: () => setView("formation") },
       { id: 'match', label: 'PARTIDO VS', icon: Swords, disabled: true, action: () => setView("vs_match") },
@@ -276,28 +276,32 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
         const content = (
              <div 
                 className={cn(
-                    "aspect-square flex flex-col items-center justify-center p-4 transition-all duration-300 transform bg-black/40 backdrop-blur-sm rounded-lg border border-white/20", 
+                    "flex flex-col items-center justify-center gap-1 p-2 transition-colors duration-200 w-32 h-20 rounded-md", 
                     item.disabled 
-                        ? "opacity-50 cursor-not-allowed" 
-                        : "hover:bg-black/60 hover:scale-105"
+                        ? "text-muted-foreground/50 cursor-not-allowed" 
+                        : "text-muted-foreground hover:bg-accent/10 hover:text-accent"
                 )}
             >
-                <item.icon className="w-1/2 h-1/2 mb-2 text-white/90"/>
-                {item.id === 'pack' && (
-                    <div className="absolute -top-2 -right-2 text-xs font-bold bg-destructive text-white rounded-full px-2 py-1 shadow-lg">
-                        {item.subtext}
-                    </div>
-                )}
+                <div className="relative">
+                  <item.icon className="w-7 h-7 mb-1"/>
+                  {item.id === 'pack' && hasFreePack && (
+                      <div className="absolute -top-1 -right-2 text-xs font-bold bg-destructive text-white rounded-full px-1.5 py-0.5 shadow-lg text-[10px]">
+                          {item.subtext}
+                      </div>
+                  )}
+                </div>
+                <span className="text-xs font-semibold uppercase tracking-wider">{item.label}</span>
+                {item.id === 'pack' && !hasFreePack && <span className="text-[10px] font-mono">{item.subtext}</span>}
             </div>
         );
 
         if (item.disabled) {
-            return <div className="relative">{content}</div>;
+            return <div>{content}</div>;
         }
         if (item.href) {
-            return <Link href={item.href} className="relative">{content}</Link>
+            return <Link href={item.href}>{content}</Link>
         }
-        return <div onClick={item.action} className="cursor-pointer relative">{content}</div>;
+        return <button onClick={item.action}>{content}</button>;
     }
     
     return (
@@ -323,12 +327,12 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
       <div className="flex-grow"></div>
 
       <motion.div 
-        className="z-10 w-full p-4 mb-4"
-        initial={{ y: 50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="fixed bottom-0 left-0 right-0 z-10 w-full bg-card/80 backdrop-blur-sm border-t border-border"
+        initial={{ y: "100%" }}
+        animate={{ y: "0%" }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
       >
-        <div className="grid grid-cols-5 gap-4 max-w-lg mx-auto">
+        <div className="flex justify-center items-center gap-4 p-2">
           {menuItems.map((item) => <MenuItem key={item.id} item={item} />)}
         </div>
       </motion.div>
