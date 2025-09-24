@@ -297,6 +297,12 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
     
     return (
      <div className="w-full h-screen flex relative">
+      <Link href="/" passHref>
+        <Button variant="ghost" className="absolute top-4 left-4 z-20">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Salir del Juego
+        </Button>
+      </Link>
       <Image
           src="https://i.postimg.cc/RFLjRbfW/wallpaper-TCG-SUDONE.png"
           alt="Fondo del juego de cartas"
