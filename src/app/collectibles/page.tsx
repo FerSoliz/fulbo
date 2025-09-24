@@ -466,7 +466,7 @@ const WelcomeBanner = ({ onEnter }: { onEnter: () => void }) => {
             onClick={onEnter}
         >
             <motion.div 
-                className="relative w-[70vw] aspect-[600/338]"
+                className="relative w-[80vw] aspect-[600/338]"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
