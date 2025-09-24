@@ -481,13 +481,13 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTe
             </button>
         </div>
 
-        <div className="relative z-10 mt-2 w-full flex justify-end pr-8">
+        <div className="relative z-10 w-full flex justify-end pr-8">
             <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
                 <Image 
                     src="https://i.postimg.cc/02ZN8tL8/MISIONES-ICONO.png"
                     alt="Misiones"
-                    width={70}
-                    height={70}
+                    width={66}
+                    height={66}
                 />
             </button>
         </div>
@@ -827,3 +827,6 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
     );
 }
 
+
+
+    
