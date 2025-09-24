@@ -64,6 +64,8 @@ export default function CollectibleCardsPage() {
   const expToNextLevel = sudonepassConfig.expPerLevel(level);
   const passProgress = (currentExp / expToNextLevel) * 100;
   const [isCardSelectorOpen, setIsCardSelectorOpen] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(true);
+
 
   useEffect(() => {
     setIsClient(true);
@@ -273,6 +275,10 @@ export default function CollectibleCardsPage() {
     }
 
   const renderCentralContent = () => {
+    if (showWelcome) {
+        return <WelcomeBanner onEnter={() => setShowWelcome(false)} />;
+    }
+
     switch (view) {
       case 'menu':
         return <MainMenu onOpenPack={handleOpenPack} availablePacks={availablePacks} countdown={countdown} user={user} />;
@@ -423,7 +429,7 @@ export default function CollectibleCardsPage() {
         <main className="flex-1 flex items-center justify-center w-full z-0">
              <AnimatePresence mode="wait">
                 <motion.div
-                  key={view}
+                  key={view === 'menu' && showWelcome ? 'welcome' : view}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
@@ -450,6 +456,34 @@ export default function CollectibleCardsPage() {
     </div>
   );
 }
+
+const WelcomeBanner = ({ onEnter }: { onEnter: () => void }) => {
+    return (
+        <div className="relative w-[600px] h-[338px] flex items-center justify-center">
+            <Image
+                src="https://i.postimg.cc/ZK0k14zx/BANNE-2.png"
+                alt="Banner de bienvenida"
+                layout="fill"
+                objectFit="contain"
+            />
+            <motion.div
+                className="absolute"
+                style={{ bottom: '22%', left: '50%', transform: 'translateX(-50%)' }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
+            >
+                <Button 
+                    onClick={onEnter} 
+                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-10 text-lg rounded-md"
+                >
+                    ENTRAR
+                </Button>
+            </motion.div>
+        </div>
+    );
+};
+
 
 const MainMenu = ({ onOpenPack, availablePacks, countdown, user }: { onOpenPack: () => void, availablePacks: number, countdown: string, user: any }) => {
     const isVisitor = user?.id === 'visitor';
