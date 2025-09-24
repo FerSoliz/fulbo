@@ -321,12 +321,33 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass' | 'ranking_preview' | 'favorite_tournaments'>('buttons');
+  const [claimedRewards, setClaimedRewards] = useState<number[]>([]);
 
   useEffect(() => {
     const targetUser = allUsers.find((u) => u.id === userId);
     setProfileUser(targetUser || null);
     setLoading(false);
+
+    if (targetUser) {
+        const savedClaims = localStorage.getItem(`claimedRewards_${targetUser.id}`);
+        if(savedClaims) {
+            setClaimedRewards(JSON.parse(savedClaims));
+        }
+    }
+
   }, [userId, allUsers]);
+
+  const handleClaimReward = (level: number) => {
+    if (!profileUser) return;
+    const newClaims = [...claimedRewards, level];
+    setClaimedRewards(newClaims);
+    localStorage.setItem(`claimedRewards_${profileUser.id}`, JSON.stringify(newClaims));
+    toast({
+        title: `¡Nivel ${level} Reclamado!`,
+        description: "Tu recompensa ha sido añadida a tu cuenta.",
+    });
+  }
+
 
   const handleSaveProfile = async (updatedUser: User) => {
     setProfileUser(updatedUser); // Update UI optimistically
@@ -796,6 +817,7 @@ export default function ProfilePage() {
                     {Array.from({ length: 10 }).map((_, index) => {
                         const level = index + 1;
                         const isUnlocked = level <= sudonepassLevel;
+                        const isClaimed = claimedRewards.includes(level);
                         return (
                             <div key={level} className={cn("flex items-center justify-between p-3 rounded-lg", isUnlocked ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
                                 <div className="flex items-center gap-4">
@@ -817,8 +839,22 @@ export default function ProfilePage() {
                                          SOBRE
                                      </div>
                                 </div>
-                                <Button size="sm" disabled={!isUnlocked} variant={isUnlocked ? "default" : "outline"}>
-                                    {isUnlocked ? "Reclamado" : "Bloqueado"}
+                                <Button
+                                  size="sm"
+                                  disabled={!isUnlocked || isClaimed}
+                                  variant={isClaimed ? "outline" : "default"}
+                                  onClick={() => handleClaimReward(level)}
+                                >
+                                  {isClaimed ? (
+                                    <>
+                                      <CheckCircle2 className="mr-2 h-4 w-4" />
+                                      Reclamado
+                                    </>
+                                  ) : isUnlocked ? (
+                                    "Reclamar"
+                                  ) : (
+                                    "Bloqueado"
+                                  )}
                                 </Button>
                             </div>
                         )
