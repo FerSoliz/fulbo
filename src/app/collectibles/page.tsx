@@ -1,10 +1,11 @@
+
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
 import { CollectibleCard } from '@/components/collectible-card';
 import { CardPack } from '@/components/card-pack';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Dices, Shield, Swords, PackageOpen, Layers, Users, ChevronRight, ArrowLeftRight, MoreVertical, Gift, Store } from 'lucide-react';
+import { ArrowLeft, Dices, Shield, Swords, PackageOpen, Layers, Users, ChevronRight, ArrowLeftRight, MoreVertical, Gift, Store, Plus } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -331,13 +332,13 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTe
                 <div className="w-1/3">
                     <Dialog open={isCardSelectorOpen} onOpenChange={setIsCardSelectorOpen}>
                         <DialogTrigger asChild>
-                            <div className="w-16 h-[100px] bg-muted/20 rounded-md flex items-center justify-center border-2 border-dashed border-muted-foreground/50 cursor-pointer hover:bg-muted/30 transition-colors">
+                             <div className="w-12 h-20 bg-muted/50 rounded-md flex items-center justify-center cursor-pointer hover:bg-muted/60 transition-colors">
                                 {userTeam.showcasedCard ? (
-                                    <div className="w-full h-full">
+                                    <div className="w-full h-full scale-[1.2]">
                                          <CollectibleCard card={userTeam.showcasedCard} small />
                                     </div>
                                 ) : (
-                                    <span className="text-xs text-center text-muted-foreground">Mostrar Carta</span>
+                                    <Plus className="w-6 h-6 text-white"/>
                                 )}
                             </div>
                         </DialogTrigger>
@@ -469,7 +470,6 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTe
                     alt="Tienda de cartas"
                     width={154}
                     height={154}
-                    className="cursor-not-allowed"
                 />
             </button>
              <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
@@ -478,7 +478,6 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTe
                     alt="Modo VS"
                     width={154}
                     height={154}
-                    className="cursor-not-allowed"
                 />
             </button>
         </div>
@@ -817,4 +816,3 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
-
