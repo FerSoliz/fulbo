@@ -432,7 +432,7 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
         <div className="relative z-10 mt-6 w-full flex justify-start pl-8">
             <button className="transition-transform hover:scale-105" disabled>
                 <Image 
-                    src="https://i.postimg.cc/m2YmJ6gj/SHOP-CARD.png" 
+                    src="https://i.postimg.cc/t4NZKwwX/SHOP-CARD.png" 
                     alt="Tienda de cartas"
                     width={128}
                     height={128}
