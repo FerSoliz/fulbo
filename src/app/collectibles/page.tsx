@@ -416,8 +416,8 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
           priority
         />
         
-        <div className="w-full bg-[#6e1b34]/30 py-8">
-            <div className="relative z-10 flex flex-col items-center">
+        <div className="relative z-10 bg-card/70 backdrop-blur-sm p-4 rounded-lg">
+            <div className="flex flex-col items-center">
                 <CardPack />
                 <Button
                     onClick={onOpenPack}
