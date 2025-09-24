@@ -541,7 +541,7 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
         
-        <Card className="relative z-10 -mt-12">
+        <Card className="relative z-10 -mt-10">
           <CardContent className="p-4 relative min-h-[58px]">
               <div className="grid grid-cols-4 gap-4">
                   <button className="transition-transform hover:scale-105" onClick={() => setView('history')}>
@@ -758,7 +758,3 @@ export default function ProfilePage() {
     </>
   );
 }
-
-    
-
-    
