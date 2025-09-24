@@ -408,7 +408,7 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
         </motion.div>
 
         <Image
-          src="https://i.postimg.cc/RFLjRbfW/wallpaper-TCG-SUDONE.png"
+          src="https://i.postimg.cc/yY075BRG/FONDO-JUEGUITO.png"
           alt="Fondo del juego de cartas"
           layout="fill"
           objectFit="cover"
