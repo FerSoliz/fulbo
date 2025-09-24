@@ -274,35 +274,43 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
 
     const MenuItem = ({ item }: { item: typeof menuItems[0] }) => {
         const content = (
-             <Card 
-                className={cn("bg-card/70 backdrop-blur-sm aspect-square flex flex-col items-center justify-center p-4 transition-all duration-300 transform hover:bg-card/90 hover:scale-105", item.disabled && "opacity-50 cursor-not-allowed bg-card/40")}
+             <div 
+                className={cn(
+                    "aspect-square flex flex-col items-center justify-center p-4 transition-all duration-300 transform bg-black/40 backdrop-blur-sm rounded-lg border border-white/20", 
+                    item.disabled 
+                        ? "opacity-50 cursor-not-allowed" 
+                        : "hover:bg-black/60 hover:scale-105"
+                )}
             >
-                <item.icon className="w-12 h-12 mb-2"/>
+                <item.icon className="w-1/2 h-1/2 mb-2 text-white/90"/>
                 {item.id === 'pack' && (
-                    <div className="absolute top-2 right-2 text-xs font-bold bg-destructive text-white rounded-full px-2 py-1">
+                    <div className="absolute -top-2 -right-2 text-xs font-bold bg-destructive text-white rounded-full px-2 py-1 shadow-lg">
                         {item.subtext}
                     </div>
                 )}
-            </Card>
+            </div>
         );
 
         if (item.disabled) {
-            return <div>{content}</div>;
+            return <div className="relative">{content}</div>;
         }
         if (item.href) {
-            return <Link href={item.href}>{content}</Link>
+            return <Link href={item.href} className="relative">{content}</Link>
         }
-        return <div onClick={item.action} className="cursor-pointer">{content}</div>;
+        return <div onClick={item.action} className="cursor-pointer relative">{content}</div>;
     }
     
     return (
-     <div className="w-full h-screen flex relative">
-      <Link href="/" passHref>
-        <Button variant="ghost" className="absolute top-4 left-4 z-20">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Salir del Juego
-        </Button>
-      </Link>
+     <div className="w-full h-screen flex flex-col relative">
+      <div className="absolute top-4 left-4 z-20">
+        <Link href="/" passHref>
+          <Button variant="ghost">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Salir del Juego
+          </Button>
+        </Link>
+      </div>
+
       <Image
           src="https://i.postimg.cc/RFLjRbfW/wallpaper-TCG-SUDONE.png"
           alt="Fondo del juego de cartas"
@@ -311,13 +319,16 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
           className="z-0"
           priority
       />
+
+      <div className="flex-grow"></div>
+
       <motion.div 
-        className="z-10 m-auto"
-        initial={{ y: 20, opacity: 0 }}
+        className="z-10 w-full p-4 mb-4"
+        initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
       >
-        <div className="grid grid-cols-5 gap-4 max-w-4xl mx-auto">
+        <div className="grid grid-cols-5 gap-4 max-w-lg mx-auto">
           {menuItems.map((item) => <MenuItem key={item.id} item={item} />)}
         </div>
       </motion.div>
