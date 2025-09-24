@@ -312,11 +312,12 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
     return (
      <div className="w-full h-screen flex flex-col relative">
         <motion.div
-            className="fixed top-0 left-0 right-0 z-10 w-full bg-card/80 backdrop-blur-sm border-b border-border"
+            className="fixed top-0 left-0 right-0 z-10 w-full"
             initial={{ y: "-100%" }}
             animate={{ y: "0%" }}
             transition={{ duration: 0.5, ease: "easeOut" }}
         >
+          <div className="w-full max-w-lg mx-auto bg-card/80 backdrop-blur-sm border-b border-x border-border rounded-b-lg">
             <div className="flex justify-between items-center h-20 px-4 relative">
                 <div className="w-1/3">
                     {/* Placeholder for left content */}
@@ -402,6 +403,7 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
                         </DropdownMenuContent>
                     </DropdownMenu>
                  </div>
+            </div>
             </div>
         </motion.div>
 
