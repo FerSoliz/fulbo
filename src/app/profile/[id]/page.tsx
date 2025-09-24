@@ -602,7 +602,7 @@ export default function ProfilePage() {
         
         <Card>
            <CardContent className="p-4 relative">
-               <div className="grid grid-cols-4 gap-5">
+               <div className="grid grid-cols-4 gap-4">
                    <button className="transition-transform hover:scale-105" onClick={() => setView('history')}>
                        <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
                    </button>
@@ -615,18 +615,12 @@ export default function ProfilePage() {
                    <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}>
                        <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
                    </button>
-               </div>
-               <div className="grid grid-cols-4 gap-5 mt-1">
-                   <div className="col-span-1">
-                      <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}>
+                   <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}>
                          <Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={150} height={50} className="rounded-lg w-full h-auto" />
-                      </button>
-                   </div>
-                   <div className="col-span-1">
-                      <button className="transition-transform hover:scale-105" onClick={() => setView('favorite_tournaments')}>
+                   </button>
+                   <button className="transition-transform hover:scale-105" onClick={() => setView('favorite_tournaments')}>
                          <Image src="https://i.postimg.cc/yYnD2Q1z/boton-favorito-torneo.png" alt="Torneos Favoritos" width={150} height={50} className="rounded-lg w-full h-auto" />
-                      </button>
-                   </div>
+                   </button>
                </div>
           </CardContent>
         </Card>
@@ -973,4 +967,5 @@ export default function ProfilePage() {
     </>
   );
 }
+
 
