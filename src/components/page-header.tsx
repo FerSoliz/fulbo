@@ -173,30 +173,14 @@ export function PageHeader() {
                                 )}
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
+                        <Link href={`/profile/${user.id}`}>
                             <Button variant="ghost" size="icon" className="rounded-full">
-                            <Avatar>
-                                <AvatarImage src={user.avatar} alt={user.name} />
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                <Avatar>
+                                    <AvatarImage src={user.avatar} alt={user.name} />
+                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                             </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <Link href={`/profile/${user.id}`}>
-                            <DropdownMenuItem>
-                                <UserIcon className="mr-2 h-4 w-4" />
-                                <span>Perfil</span>
-                            </DropdownMenuItem>
-                            </Link>
-                            <DropdownMenuItem onClick={handleLogout}>
-                            <LogOut className="mr-2 h-4 w-4" />
-                            <span>Cerrar Sesión</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                        </DropdownMenu>
+                        </Link>
                     </>
                 ) : (
                     <Link href="/login">
