@@ -17,6 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-context';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { sudonepassConfig } from '@/lib/sudonepass-config';
 
 
 type View = 'menu' | 'pack' | 'formation' | 'vs_match';
@@ -262,7 +264,10 @@ export default function CollectibleCardsPage() {
 
 const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { onOpenPack: () => void, setView: (v: View) => void, user: any, availablePacks: number, countdown: string }) => {
     const isVisitor = user?.id === 'visitor';
-    const hasFreePack = availablePacks > 0;
+    const level = user?.sudonepassLevel || 1;
+    const currentExp = user?.sudonepassExp || 0;
+    const expToNextLevel = sudonepassConfig.expPerLevel(level);
+    const passProgress = (currentExp / expToNextLevel) * 100;
     
     const menuItems = [
       { id: 'collection', label: 'MI COLECCIÓN', icon: Layers, href: '/collectibles/collection' },
@@ -298,36 +303,84 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
     
     return (
      <div className="w-full h-screen flex flex-col relative">
-      <div className="absolute top-4 left-4 z-20">
-        <Link href="/" passHref>
-          <Button variant="ghost">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Salir del Juego
-          </Button>
-        </Link>
-      </div>
+        <motion.div
+            className="fixed top-0 left-0 right-0 z-10 w-full bg-card/80 backdrop-blur-sm border-b border-border"
+            initial={{ y: "-100%" }}
+            animate={{ y: "0%" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+            <div className="flex justify-center items-center h-20 relative">
+                 <div className="absolute left-4 top-1/2 -translate-y-1/2">
+                    <Link href="/" passHref>
+                        <Button variant="ghost">
+                            <ArrowLeft className="mr-2 h-4 w-4" />
+                            Salir del Juego
+                        </Button>
+                    </Link>
+                 </div>
+                 {user && (
+                    <div className="flex flex-col items-center">
+                        <div className="relative w-20 h-20">
+                            <svg className="w-full h-full" viewBox="0 0 100 100">
+                                <circle
+                                    className="text-muted/20"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                    cx="50"
+                                    cy="50"
+                                    r="40"
+                                    fill="transparent"
+                                />
+                                <motion.circle
+                                    className="text-accent"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                    cx="50"
+                                    cy="50"
+                                    r="40"
+                                    fill="transparent"
+                                    strokeLinecap="round"
+                                    strokeDasharray={2 * Math.PI * 40}
+                                    strokeDashoffset={2 * Math.PI * 40 * (1 - passProgress / 100)}
+                                    transform="rotate(-90 50 50)"
+                                    initial={{ strokeDashoffset: 2 * Math.PI * 40 }}
+                                    animate={{ strokeDashoffset: 2 * Math.PI * 40 * (1 - passProgress / 100) }}
+                                    transition={{ duration: 1, ease: "easeOut" }}
+                                />
+                            </svg>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <Avatar className="w-16 h-16">
+                                    <AvatarImage src={user.avatar} />
+                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                            </div>
+                        </div>
+                        <span className="font-bold text-xs -mt-2 bg-card px-2 rounded-full">LVL {level}</span>
+                    </div>
+                )}
+            </div>
+        </motion.div>
 
-      <Image
+        <Image
           src="https://i.postimg.cc/RFLjRbfW/wallpaper-TCG-SUDONE.png"
           alt="Fondo del juego de cartas"
           layout="fill"
           objectFit="cover"
           className="z-0"
           priority
-      />
+        />
 
-      <div className="flex-grow"></div>
 
-      <motion.div 
-        className="fixed bottom-0 left-0 right-0 z-10 w-full bg-card/80 backdrop-blur-sm border-t border-border"
-        initial={{ y: "100%" }}
-        animate={{ y: "0%" }}
-        transition={{ duration: 0.5, ease: "easeOut" }}
-      >
-        <div className="flex justify-center items-center gap-4 p-2">
-          {menuItems.map((item) => <MenuItem key={item.id} item={item} />)}
-        </div>
-      </motion.div>
+        <motion.div 
+            className="fixed bottom-0 left-0 right-0 z-10 w-full bg-card/80 backdrop-blur-sm border-t border-border"
+            initial={{ y: "100%" }}
+            animate={{ y: "0%" }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+        >
+            <div className="flex justify-center items-center gap-4 p-2">
+                {menuItems.map((item) => <MenuItem key={item.id} item={item} />)}
+            </div>
+        </motion.div>
     </div>
  )
 };

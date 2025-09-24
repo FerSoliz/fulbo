@@ -1,4 +1,5 @@
 
+
 export const sudonepassConfig = {
   levels: 40,
   expPerLevel: (level: number) => {
