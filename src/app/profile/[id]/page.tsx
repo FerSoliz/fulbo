@@ -543,7 +543,7 @@ export default function ProfilePage() {
         
         <Card className="relative z-10 -mt-10">
           <CardContent className="p-4 relative min-h-[58px]">
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-4 gap-5">
                   <button className="transition-transform hover:scale-105" onClick={() => setView('history')}>
                       <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
                   </button>
