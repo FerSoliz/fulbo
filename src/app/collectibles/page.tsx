@@ -280,6 +280,7 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
           layout="fill"
           objectFit="cover"
           className="z-0"
+          priority
       />
       <motion.div 
         className="w-1/4 p-8 flex flex-col justify-center z-10"
@@ -634,3 +635,5 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
+
+    
