@@ -416,15 +416,17 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
           priority
         />
         
-        <div className="relative z-10 flex flex-col items-center">
-            <CardPack />
-            <Button
-                onClick={onOpenPack}
-                disabled={isVisitor || availablePacks <= 0}
-                className="mt-4 w-60"
-            >
-                {availablePacks > 0 ? `ABRIR SOBRE (${availablePacks})` : countdown ? `PRÓXIMO SOBRE EN ${countdown}` : 'NO HAY SOBRES'}
-            </Button>
+        <div className="w-full bg-[#6e1b34]/30 py-8">
+            <div className="relative z-10 flex flex-col items-center">
+                <CardPack />
+                <Button
+                    onClick={onOpenPack}
+                    disabled={isVisitor || availablePacks <= 0}
+                    className="mt-4 w-60"
+                >
+                    {availablePacks > 0 ? `ABRIR SOBRE (${availablePacks})` : countdown ? `PRÓXIMO SOBRE EN ${countdown}` : 'NO HAY SOBRES'}
+                </Button>
+            </div>
         </div>
 
 
