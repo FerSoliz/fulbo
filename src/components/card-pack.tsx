@@ -6,13 +6,13 @@ const packImageUrl = 'https://i.postimg.cc/qM6GyVNg/sobre-base-campeones-de-qata
 
 export function CardPack() {
   return (
-    <div className="flex flex-col items-center justify-center p-8">
+    <div className="flex flex-col items-center justify-center p-4">
        <motion.div
             initial={{ scale: 1, rotate: 0 }}
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.2 }}
         >
-            <Image src={packImageUrl} alt="Sobre de cartas" width={300} height={420} priority />
+            <Image src={packImageUrl} alt="Sobre de cartas" width={150} height={210} priority />
         </motion.div>
     </div>
   );
