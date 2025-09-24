@@ -36,8 +36,6 @@ export function FloatingActionButtons() {
   const { user: currentUser, allUsers } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  const [isReportOpen, setIsReportOpen] = useState(false);
-  const [reportText, setReportText] = useState('');
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
@@ -52,57 +50,6 @@ export function FloatingActionButtons() {
     return null; // Don't show for visitors
   }
   
-  const handleReportSubmit = () => {
-    if (!reportText.trim()) {
-      toast({ title: "Error", description: "Por favor, describe el error.", variant: "destructive" });
-      return;
-    }
-  
-    const adminUser = allUsers.find(u => u.role === 'admin');
-    if (!adminUser) {
-      toast({ title: "Error", description: "No se pudo encontrar al administrador para enviar el reporte.", variant: "destructive" });
-      return;
-    }
-  
-    const conversationId = [currentUser.id, adminUser.id].sort().join('-');
-    const savedConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
-    let conversation = savedConversations.find((c: Conversation) => c.id === conversationId);
-  
-    const newMessage: Message = {
-      id: `msg-${Date.now()}`,
-      senderId: currentUser.id,
-      text: `REPORTE DE ERROR: ${reportText}`,
-      timestamp: Date.now(),
-    };
-  
-    let updatedConversations;
-    if (conversation) {
-      // Add message to existing conversation
-      conversation.messages.push(newMessage);
-      conversation.lastMessage = { text: newMessage.text, timestamp: newMessage.timestamp };
-      updatedConversations = savedConversations.map((c: Conversation) => c.id === conversationId ? conversation : c);
-    } else {
-      // Create new conversation
-      const newConversation: Conversation = {
-        id: conversationId,
-        participants: [currentUser.id, adminUser.id],
-        messages: [newMessage],
-        lastMessage: { text: newMessage.text, timestamp: newMessage.timestamp },
-      };
-      updatedConversations = [...savedConversations, newConversation];
-    }
-  
-    localStorage.setItem('conversations', JSON.stringify(updatedConversations));
-    
-    // Update local state if needed for reactivity
-    const userConversations = updatedConversations.filter((c: Conversation) => c.participants.includes(currentUser.id));
-    setConversations(userConversations);
-  
-    toast({ title: "¡Gracias!", description: "Tu reporte de error ha sido enviado al administrador." });
-    setReportText('');
-    setIsReportOpen(false);
-  };
-  
   const formatTimestamp = (timestamp: number) => {
     const date = new Date(timestamp);
     if(isToday(date)) return format(date, 'p', { locale: es });
@@ -114,22 +61,6 @@ export function FloatingActionButtons() {
     <>
       <div className="fixed bottom-6 right-6 z-40 flex items-center gap-4">
         <TooltipProvider>
-            {/* Botón de Reportar Error */}
-            <Tooltip>
-                 <TooltipTrigger asChild>
-                     <Button 
-                        className="rounded-full h-11 w-11 shadow-lg bg-primary hover:bg-primary/90 text-primary-foreground" 
-                        size="icon"
-                        onClick={() => setIsReportOpen(true)}
-                    >
-                        <Bug className="h-6 w-6" />
-                    </Button>
-                </TooltipTrigger>
-                 <TooltipContent side="left">
-                    <p>Reportar un Error</p>
-                </TooltipContent>
-            </Tooltip>
-            
             {/* Botón de Mensajes */}
             <DropdownMenu>
                 <Tooltip>
@@ -188,34 +119,6 @@ export function FloatingActionButtons() {
 
         </TooltipProvider>
       </div>
-
-      {/* Dialog para Reportar Error */}
-      <Dialog open={isReportOpen} onOpenChange={setIsReportOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reportar un Error</DialogTitle>
-            <DialogDescription>
-              Describe el problema que encontraste. Agradecemos tu ayuda para mejorar la plataforma.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Label htmlFor="report-text" className="sr-only">Descripción del error</Label>
-            <Textarea 
-                id="report-text"
-                placeholder="Ej: El botón de 'Me Gusta' no funciona en las publicaciones..." 
-                rows={5}
-                value={reportText}
-                onChange={(e) => setReportText(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-                <Button type="button" variant="secondary">Cancelar</Button>
-            </DialogClose>
-            <Button onClick={handleReportSubmit}>Enviar Reporte</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
