@@ -43,7 +43,7 @@ const menuItems = [
     { href: '/leagues', icon: Trophy, label: 'LIGAS EN CURSO' },
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
     { href: '/store', icon: Store, label: 'TIENDA' },
-    { href: '/collectibles', icon: Swords, label: 'COLECCIONABLES' },
+    { href: '/collectibles', icon: Swords, label: 'TGC SUDONE' },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
     { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
     { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN' },
@@ -219,6 +219,10 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
 
   const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)[]) => {
     return items.map((item) => {
+      if ('adminOnly' in item && item.adminOnly && user?.role !== 'admin' && user?.role !== 'editor') {
+        return null;
+      }
+
       let finalHref = item.href;
       if(item.label === 'MI PERFIL' && user && user.id !== 'visitor') {
           finalHref = `/profile/${user.id}`;
@@ -229,8 +233,10 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
       const isPanelAdmin = item.label === 'PANEL DE ADMIN';
       const isActive = pathname === finalHref || (finalHref !== '/' && pathname.startsWith(finalHref) && finalHref.length > 1);
 
+      const isCollectibles = item.label === 'TGC SUDONE';
+
       return (
-        <li key={item.href}>
+        <li key={item.href} className={cn(isCollectibles && '')}>
           <Link href={finalHref} passHref onClick={isPanelAdmin ? handleAdminPanelClick : handleMenuClick}>
             <Button
               variant='ghost'
