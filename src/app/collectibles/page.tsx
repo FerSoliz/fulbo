@@ -265,10 +265,8 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
     const hasFreePack = availablePacks > 0;
     
     const menuItems = [
-      { id: 'pack', label: 'ABRIR SOBRE', icon: PackageOpen, disabled: isVisitor || !hasFreePack, action: onOpenPack, subtext: hasFreePack ? `${availablePacks}` : countdown || '...'},
       { id: 'collection', label: 'MI COLECCIÓN', icon: Layers, href: '/collectibles/collection' },
       { id: 'team', label: 'MI EQUIPO', icon: Users, disabled: true, action: () => setView("formation") },
-      { id: 'match', label: 'PARTIDO VS', icon: Swords, disabled: true, action: () => setView("vs_match") },
       { id: 'trade', label: 'INTERCAMBIOS', icon: ArrowLeftRight, disabled: true },
     ];
 
@@ -284,14 +282,8 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
             >
                 <div className="relative">
                   <item.icon className="w-7 h-7 mb-1"/>
-                  {item.id === 'pack' && hasFreePack && (
-                      <div className="absolute -top-1 -right-2 text-xs font-bold bg-destructive text-white rounded-full px-1.5 py-0.5 shadow-lg text-[10px]">
-                          {item.subtext}
-                      </div>
-                  )}
                 </div>
                 <span className="text-xs font-semibold uppercase tracking-wider">{item.label}</span>
-                {item.id === 'pack' && !hasFreePack && <span className="text-[10px] font-mono">{item.subtext}</span>}
             </div>
         );
 
