@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect } from 'react';
 import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
@@ -242,7 +241,6 @@ export default function CollectibleCardsPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 text-white min-h-screen flex items-center justify-center">
       <div className="w-full">
-        <h1 className="text-3xl font-bold mb-6 text-center tracking-wider uppercase">Cartas Coleccionables</h1>
         <div className="flex justify-center">
             {renderView()}
         </div>
