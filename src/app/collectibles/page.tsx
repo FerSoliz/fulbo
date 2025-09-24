@@ -310,7 +310,7 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
     }
     
     return (
-     <div className="w-full h-screen flex flex-col relative">
+     <div className="w-full h-screen flex flex-col items-center justify-between relative">
         <motion.div
             className="fixed top-0 left-0 right-0 z-10 w-full"
             initial={{ y: "-100%" }}
@@ -415,6 +415,17 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
           className="z-0"
           priority
         />
+        
+        <div className="relative z-10 flex flex-col items-center">
+            <CardPack />
+            <Button
+                onClick={onOpenPack}
+                disabled={isVisitor || availablePacks <= 0}
+                className="mt-4 w-60"
+            >
+                {availablePacks > 0 ? `ABRIR SOBRE (${availablePacks})` : countdown ? `PRÓXIMO SOBRE EN ${countdown}` : 'NO HAY SOBRES'}
+            </Button>
+        </div>
 
 
         <motion.div 
@@ -750,5 +761,3 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
         </div>
     );
 }
-
-    
