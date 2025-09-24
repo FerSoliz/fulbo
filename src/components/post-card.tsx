@@ -67,26 +67,37 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
     const videoItem = media.find(item => item.type === 'video');
 
     if (videoItem) {
-        return (
+        const isTwitch = videoItem.videoType === 'twitch' && videoItem.videoId;
+        const twitchUrl = `https://www.twitch.tv/${videoItem.videoId}`;
+
+        const VideoPreview = () => (
+             <div className="relative cursor-pointer group">
+                <Image 
+                    src={videoItem.url} 
+                    alt="Video thumbnail" 
+                    width={1280} 
+                    height={720} 
+                    className="w-full h-auto rounded-lg object-cover bg-muted"
+                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}
+                 />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
+                    <Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" />
+                </div>
+            </div>
+        );
+
+        return isTwitch ? (
+            <Link href={twitchUrl} target="_blank" rel="noopener noreferrer">
+                <VideoPreview />
+            </Link>
+        ) : (
              <Dialog>
                 <DialogTrigger asChild>
-                    <div className="relative cursor-pointer group">
-                        <Image 
-                            src={videoItem.url} 
-                            alt="Video thumbnail" 
-                            width={1280} 
-                            height={720} 
-                            className="w-full h-auto rounded-lg object-cover bg-muted"
-                            onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}
-                         />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
-                            <Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" />
-                        </div>
-                    </div>
+                    <VideoPreview />
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl p-0">
                     <div className="aspect-video">
-                        {videoItem.videoType === 'youtube' && videoItem.videoId ? (
+                        {videoItem.videoType === 'youtube' && videoItem.videoId && (
                             <iframe
                                 src={`https://www.youtube.com/embed/${videoItem.videoId}`}
                                 title="YouTube video player"
@@ -95,15 +106,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
                                 allowFullScreen
                                 className="w-full h-full"
                             ></iframe>
-                        ) : videoItem.videoType === 'twitch' && videoItem.videoId ? (
-                             <iframe
-                                src={`https://player.twitch.tv/?channel=${videoItem.videoId}&parent=${typeof window !== "undefined" ? window.location.host : ''}`}
-                                frameBorder="0"
-                                allowFullScreen={true}
-                                scrolling="no"
-                                className="w-full h-full">
-                            </iframe>
-                        ) : null}
+                        )}
                     </div>
                 </DialogContent>
             </Dialog>
