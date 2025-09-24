@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
 import { CollectibleCard } from '@/components/collectible-card';
 import { CardPack } from '@/components/card-pack';
@@ -15,8 +15,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-context';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+
 
 type View = 'menu' | 'pack' | 'formation' | 'vs_match';
 
@@ -239,12 +238,22 @@ export default function CollectibleCardsPage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 text-white min-h-screen flex items-center justify-center">
-      <div className="w-full">
-        <div className="flex justify-center">
+    <div className="collectible-page-background text-white min-h-screen">
+      <div id="stars-container" />
+       <AnimatePresence>
+        {view === 'menu' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="w-full h-full flex items-center justify-center"
+          >
             {renderView()}
-        </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {view !== 'menu' && renderView()}
     </div>
   );
 }
@@ -252,80 +261,62 @@ export default function CollectibleCardsPage() {
 const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { onOpenPack: () => void, setView: (v: View) => void, user: any, availablePacks: number, countdown: string }) => {
     const isVisitor = user?.id === 'visitor';
     const hasFreePack = availablePacks > 0;
-
+    
+    const menuItems = [
+      { id: 'pack', label: 'ABRIR SOBRE', icon: PackageOpen, disabled: isVisitor || !hasFreePack, action: onOpenPack, subtext: hasFreePack ? `(${availablePacks})` : countdown || '...'},
+      { id: 'collection', label: 'MI COLECCIÓN', icon: Layers, href: '/collectibles/collection' },
+      { id: 'team', label: 'MI EQUIPO', icon: Users, disabled: true, action: () => setView("formation") },
+      { id: 'match', label: 'PARTIDO VS', icon: Swords, disabled: true, action: () => setView("vs_match") },
+      { id: 'trade', label: 'INTERCAMBIOS', icon: ArrowLeftRight, disabled: true },
+    ];
+    
     return (
-    <Card className="w-full max-w-lg bg-card/70">
-      <div className="grid grid-cols-1 md:grid-cols-3">
-        <div className="relative md:col-span-1 h-64 md:h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-r-none">
-          <Image
-               src="https://i.postimg.cc/QMqLDWsL/BANNER-GAME.png"
-               alt="Banner del juego de cartas coleccionables"
-               fill
-               className="object-cover"
-           />
+     <div className="w-full h-full flex">
+      <motion.div 
+        className="w-1/4 p-8 flex flex-col justify-center"
+        initial={{ x: -200, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+      >
+        <div className="space-y-3">
+          {menuItems.map((item, index) => {
+            const ButtonContent = () => (
+              <Button
+                key={item.id}
+                className={cn("w-full h-auto p-3 justify-start text-base font-semibold border-b-4 border-r-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:scale-105 hover:bg-red-600 rounded-lg", item.disabled && "opacity-50 cursor-not-allowed")}
+                onClick={item.action}
+                disabled={item.disabled}
+              >
+                <div className="flex items-center gap-4">
+                  <item.icon className="w-6 h-6" />
+                  <span>{item.label}</span>
+                  {item.subtext && <span className="text-xs opacity-80">{item.subtext}</span>}
+                </div>
+              </Button>
+            );
+            return item.href ? (
+              <Link href={item.href} key={item.id}><ButtonContent /></Link>
+            ) : (
+              <ButtonContent key={item.id} />
+            );
+          })}
         </div>
-        <div className="md:col-span-2 p-4 flex flex-col justify-center">
-          <CardHeader className="p-2">
-            <CardTitle className="text-2xl font-bold uppercase">MENU</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2">
-            <div className="space-y-4">
-              <div>
-                <Button
-                     className={cn("w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full", (isVisitor || !hasFreePack) && "opacity-60 cursor-not-allowed")}
-                     onClick={onOpenPack}
-                     disabled={isVisitor || !hasFreePack}
-                >
-                  <div className="relative flex items-center gap-3">
-                    {hasFreePack && <div className="absolute -left-4 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></div>}
-                    <PackageOpen className="w-5 h-5" />
-                     {hasFreePack ? <span>ABRIR SOBRE ({availablePacks})</span> : <span>{countdown || '...'}</span>}
-                  </div>
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
-              </div>
-              <div>
-                <Link href="/collectibles/collection">
-                  <Button className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full">
-                    <div className="flex items-center gap-3"><Layers className="w-5 h-5" /><span>MI COLECCIÓN</span></div>
-                    <ChevronRight className="w-5 h-5" />
-                  </Button>
-                </Link>
-              </div>
-              <div>
-                <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
-                     onClick={() => setView("formation")}
-                     disabled
-                >
-                  <div className="flex items-center gap-3"><Users className="w-5 h-5" /><span>MI EQUIPO</span></div>
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
-              </div>
-              <div>
-                <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
-                     onClick={() => setView("vs_match")}
-                     disabled
-                >
-                  <div className="flex items-center gap-3"><Swords className="w-5 h-5" /><span>PARTIDO VS</span></div>
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
-              </div>
-              <div>
-                <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
-                     disabled
-                >
-                  <div className="flex items-center gap-3"><ArrowLeftRight className="w-5 h-5" /><span>INTERCAMBIOS</span></div>
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </div>
-      </div>
-    </Card>
+      </motion.div>
+      <motion.div 
+        className="w-3/4 flex items-center justify-center"
+        initial={{ scale: 0.5, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
+      >
+        <Image
+           src="https://i.postimg.cc/QMqLDWsL/BANNER-GAME.png"
+           alt="Banner del juego de cartas coleccionables"
+           width={800}
+           height={600}
+           className="object-contain"
+         />
+      </motion.div>
+    </div>
  )
 };
 
