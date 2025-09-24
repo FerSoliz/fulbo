@@ -15,6 +15,8 @@ import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautif
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useUser } from '@/context/user-context';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 
 type View = 'menu' | 'pack' | 'formation' | 'vs_match';
@@ -271,9 +273,16 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
     ];
     
     return (
-     <div className="w-full h-full flex">
+     <div className="w-full h-screen flex relative">
+      <Image
+          src="https://i.postimg.cc/RFLjRbfW/wallpaper-TCG-SUDONE.png"
+          alt="Fondo del juego de cartas"
+          layout="fill"
+          objectFit="cover"
+          className="z-0"
+      />
       <motion.div 
-        className="w-1/4 p-8 flex flex-col justify-center"
+        className="w-1/4 p-8 flex flex-col justify-center z-10"
         initial={{ x: -200, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
@@ -301,20 +310,6 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
             );
           })}
         </div>
-      </motion.div>
-      <motion.div 
-        className="w-3/4 flex items-center justify-center"
-        initial={{ scale: 0.5, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.8, delay: 0.3, ease: "easeOut" }}
-      >
-        <Image
-           src="https://i.postimg.cc/QMqLDWsL/BANNER-GAME.png"
-           alt="Banner del juego de cartas coleccionables"
-           width={800}
-           height={600}
-           className="object-contain"
-         />
       </motion.div>
     </div>
  )
