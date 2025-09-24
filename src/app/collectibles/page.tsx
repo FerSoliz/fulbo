@@ -4,7 +4,7 @@ import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
 import { CollectibleCard } from '@/components/collectible-card';
 import { CardPack } from '@/components/card-pack';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Dices, Shield, Swords, PackageOpen, Layers, Users, ChevronRight, ArrowLeftRight, MoreVertical, Gift } from 'lucide-react';
+import { ArrowLeft, Dices, Shield, Swords, PackageOpen, Layers, Users, ChevronRight, ArrowLeftRight, MoreVertical, Gift, Store } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
@@ -427,6 +427,16 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
                     {availablePacks > 0 ? `ABRIR SOBRE (${availablePacks})` : countdown ? `PRÓXIMO SOBRE EN ${countdown}` : 'NO HAY SOBRES'}
                 </Button>
             </div>
+        </div>
+
+        <div className="relative z-10 mt-6">
+            <Button
+                disabled
+                className="w-40 h-40 bg-red-700/80 border-2 border-red-500/90 hover:bg-red-600/80 text-white rounded-2xl flex-col gap-2 shadow-lg backdrop-blur-sm"
+            >
+                <Store className="w-12 h-12" />
+                <span className="text-xl font-bold">TIENDA</span>
+            </Button>
         </div>
 
 
