@@ -4,7 +4,7 @@ import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
 import { CollectibleCard } from '@/components/collectible-card';
 import { CardPack } from '@/components/card-pack';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Dices, Shield, Swords, PackageOpen, Layers, Users, ChevronRight, ArrowLeftRight } from 'lucide-react';
+import { ArrowLeft, Dices, Shield, Swords, PackageOpen, Layers, Users, ChevronRight, ArrowLeftRight, MoreVertical, Gift } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
@@ -19,6 +19,14 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { sudonepassConfig } from '@/lib/sudonepass-config';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 
 type View = 'menu' | 'pack' | 'formation' | 'vs_match';
@@ -309,55 +317,91 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
             animate={{ y: "0%" }}
             transition={{ duration: 0.5, ease: "easeOut" }}
         >
-            <div className="flex justify-center items-center h-20 relative">
-                 <div className="absolute left-4 top-1/2 -translate-y-1/2">
-                    <Link href="/" passHref>
-                        <Button variant="ghost">
-                            <ArrowLeft className="mr-2 h-4 w-4" />
-                            Salir del Juego
-                        </Button>
-                    </Link>
-                 </div>
-                 {user && (
-                    <div className="flex flex-col items-center">
-                        <div className="relative w-20 h-20">
-                            <svg className="w-full h-full" viewBox="0 0 100 100">
-                                <circle
-                                    className="text-muted/20"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                    cx="50"
-                                    cy="50"
-                                    r="40"
-                                    fill="transparent"
-                                />
-                                <motion.circle
-                                    className="text-accent"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                    cx="50"
-                                    cy="50"
-                                    r="40"
-                                    fill="transparent"
-                                    strokeLinecap="round"
-                                    strokeDasharray={2 * Math.PI * 40}
-                                    strokeDashoffset={2 * Math.PI * 40 * (1 - passProgress / 100)}
-                                    transform="rotate(-90 50 50)"
-                                    initial={{ strokeDashoffset: 2 * Math.PI * 40 }}
-                                    animate={{ strokeDashoffset: 2 * Math.PI * 40 * (1 - passProgress / 100) }}
-                                    transition={{ duration: 1, ease: "easeOut" }}
-                                />
-                            </svg>
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <Avatar className="w-16 h-16">
-                                    <AvatarImage src={user.avatar} />
-                                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
+            <div className="flex justify-between items-center h-20 px-4 relative">
+                <div className="w-1/3">
+                    {/* Placeholder for left content */}
+                </div>
+                 <div className="w-1/3 flex flex-col items-center">
+                    {user && (
+                        <>
+                            <div className="relative w-20 h-20">
+                                <svg className="w-full h-full" viewBox="0 0 100 100">
+                                    <circle
+                                        className="text-muted/20"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                        cx="50"
+                                        cy="50"
+                                        r="40"
+                                        fill="transparent"
+                                    />
+                                    <motion.circle
+                                        className="text-accent"
+                                        stroke="currentColor"
+                                        strokeWidth="4"
+                                        cx="50"
+                                        cy="50"
+                                        r="40"
+                                        fill="transparent"
+                                        strokeLinecap="round"
+                                        strokeDasharray={2 * Math.PI * 40}
+                                        strokeDashoffset={2 * Math.PI * 40 * (1 - passProgress / 100)}
+                                        transform="rotate(-90 50 50)"
+                                        initial={{ strokeDashoffset: 2 * Math.PI * 40 }}
+                                        animate={{ strokeDashoffset: 2 * Math.PI * 40 * (1 - passProgress / 100) }}
+                                        transition={{ duration: 1, ease: "easeOut" }}
+                                    />
+                                </svg>
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <Avatar className="w-16 h-16">
+                                        <AvatarImage src={user.avatar} />
+                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                </div>
                             </div>
-                        </div>
-                        <span className="font-bold text-xs -mt-2 bg-card px-2 rounded-full">LVL {level}</span>
-                    </div>
-                )}
+                            <span className="font-bold text-xs -mt-2 bg-card px-2 rounded-full">LVL {level}</span>
+                        </>
+                    )}
+                 </div>
+                 <div className="w-1/3 flex justify-end items-center gap-2">
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                             <Button variant="ghost" size="icon" className="relative">
+                                <Gift className="w-6 h-6"/>
+                                {availablePacks > 0 && (
+                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full flex items-center justify-center text-xs font-bold text-white">
+                                        {availablePacks}
+                                    </div>
+                                )}
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                             <DropdownMenuLabel>Recompensas</DropdownMenuLabel>
+                             <DropdownMenuSeparator />
+                             <DropdownMenuItem onClick={onOpenPack} disabled={availablePacks <= 0}>
+                                <PackageOpen className="mr-2 h-4 w-4" />
+                                {availablePacks > 0 ? `Abrir Sobre (${availablePacks})` : "No hay sobres"}
+                             </DropdownMenuItem>
+                             {countdown && <DropdownMenuItem disabled>Próximo sobre en: {countdown}</DropdownMenuItem>}
+                        </DropdownMenuContent>
+                     </DropdownMenu>
+
+                    <DropdownMenu>
+                         <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                                <MoreVertical className="w-6 h-6"/>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem asChild>
+                                 <Link href="/">
+                                    <ArrowLeft className="mr-2 h-4 w-4" />
+                                    Salir del Juego
+                                </Link>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                 </div>
             </div>
         </motion.div>
 
