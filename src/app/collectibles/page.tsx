@@ -429,13 +429,22 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown }: { on
             </div>
         </div>
 
-        <div className="relative z-10 mt-6 w-full flex justify-start pl-8">
+        <div className="relative z-10 mt-6 w-full flex justify-start pl-8 gap-4">
             <button className="transition-transform hover:scale-105" disabled>
                 <Image 
                     src="https://i.postimg.cc/t4NZKwwX/SHOP-CARD.png" 
                     alt="Tienda de cartas"
-                    width={128}
-                    height={128}
+                    width={154}
+                    height={154}
+                    className="opacity-60 cursor-not-allowed"
+                />
+            </button>
+             <button className="transition-transform hover:scale-105" disabled>
+                <Image 
+                    src="https://i.postimg.cc/0QRpxDZv/BOTON-VS.png" 
+                    alt="Modo VS"
+                    width={154}
+                    height={154}
                     className="opacity-60 cursor-not-allowed"
                 />
             </button>
