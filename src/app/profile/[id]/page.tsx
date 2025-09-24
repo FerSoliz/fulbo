@@ -565,7 +565,7 @@ export default function ProfilePage() {
                    <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}>
                        <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
                    </button>
-                   <div className="mt-4 col-start-1">
+                   <div className="mt-1 col-start-1">
                       <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}>
                          <Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={150} height={50} className="rounded-lg w-full h-auto" />
                      </button>
