@@ -275,10 +275,6 @@ export default function CollectibleCardsPage() {
     }
 
   const renderCentralContent = () => {
-    if (showWelcome) {
-        return <WelcomeBanner onEnter={() => setShowWelcome(false)} />;
-    }
-
     switch (view) {
       case 'menu':
         return <MainMenu onOpenPack={handleOpenPack} availablePacks={availablePacks} countdown={countdown} user={user} />;
@@ -427,9 +423,12 @@ export default function CollectibleCardsPage() {
         </motion.div>
 
         <main className="flex-1 flex items-center justify-center w-full z-0">
+             <AnimatePresence>
+                {showWelcome && <WelcomeBanner onEnter={() => setShowWelcome(false)} />}
+             </AnimatePresence>
              <AnimatePresence mode="wait">
                 <motion.div
-                  key={view === 'menu' && showWelcome ? 'welcome' : view}
+                  key={view}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
@@ -459,28 +458,42 @@ export default function CollectibleCardsPage() {
 
 const WelcomeBanner = ({ onEnter }: { onEnter: () => void }) => {
     return (
-        <div className="relative w-[600px] h-[338px] flex items-center justify-center">
-            <Image
-                src="https://i.postimg.cc/ZK0k14zx/BANNE-2.png"
-                alt="Banner de bienvenida"
-                layout="fill"
-                objectFit="contain"
-            />
-            <motion.div
-                className="absolute"
-                style={{ bottom: '22%', left: '50%', transform: 'translateX(-50%)' }}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
+        <motion.div 
+            className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+            initial={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            onClick={onEnter}
+        >
+            <motion.div 
+                className="relative w-[70vw] aspect-[600/338]"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                onClick={(e) => e.stopPropagation()}
             >
-                <Button 
-                    onClick={onEnter} 
-                    className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-10 text-lg rounded-md"
+                <Image
+                    src="https://i.postimg.cc/ZK0k14zx/BANNE-2.png"
+                    alt="Banner de bienvenida"
+                    layout="fill"
+                    objectFit="contain"
+                />
+                <motion.div
+                    className="absolute"
+                    style={{ bottom: '22%', left: '50%', transform: 'translateX(-50%)' }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 0.7, duration: 0.5 }}
                 >
-                    ENTRAR
-                </Button>
+                    <Button 
+                        onClick={onEnter} 
+                        className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-10 text-lg rounded-md"
+                    >
+                        ENTRAR
+                    </Button>
+                </motion.div>
             </motion.div>
-        </div>
+        </motion.div>
     );
 };
 
