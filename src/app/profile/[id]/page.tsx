@@ -552,27 +552,25 @@ export default function ProfilePage() {
         
         <Card>
            <CardContent className="p-4 relative">
-              <div className="flex flex-col items-center gap-4">
-                  <div className="grid grid-cols-4 gap-5 w-full">
-                      <button className="transition-transform hover:scale-105" onClick={() => setView('history')}>
-                          <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
-                      </button>
-                      <button className="transition-transform hover:scale-105" onClick={() => setView('next_match')}>
-                          <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} className="rounded-lg w-full h-auto" />
-                      </button>
-                      <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}>
-                          <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} className="rounded-lg w-full h-auto" />
-                      </button>
-                      <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}>
-                          <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
-                      </button>
-                  </div>
-                   <div className="grid grid-cols-1 w-full px-20">
-                     <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}>
-                        <Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={300} height={50} className="rounded-lg w-full h-auto" />
-                    </button>
-                  </div>
-              </div>
+               <div className="grid grid-cols-4 gap-5">
+                   <button className="transition-transform hover:scale-105" onClick={() => setView('history')}>
+                       <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
+                   </button>
+                   <button className="transition-transform hover:scale-105" onClick={() => setView('next_match')}>
+                       <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} className="rounded-lg w-full h-auto" />
+                   </button>
+                   <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}>
+                       <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} className="rounded-lg w-full h-auto" />
+                   </button>
+                   <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}>
+                       <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
+                   </button>
+                   <div className="mt-4 col-start-1">
+                      <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}>
+                         <Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={150} height={50} className="rounded-lg w-full h-auto" />
+                     </button>
+                   </div>
+               </div>
           </CardContent>
         </Card>
 
@@ -801,5 +799,3 @@ export default function ProfilePage() {
     </>
   );
 }
-
-    
