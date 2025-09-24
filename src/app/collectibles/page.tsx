@@ -1,4 +1,3 @@
-
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
@@ -478,6 +477,17 @@ const MainMenu = ({ onOpenPack, setView, user, availablePacks, countdown, userTe
                     alt="Modo VS"
                     width={154}
                     height={154}
+                />
+            </button>
+        </div>
+
+        <div className="relative z-10 mt-2 w-full flex justify-end pr-8">
+            <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
+                <Image 
+                    src="https://i.postimg.cc/02ZN8tL8/MISIONES-ICONO.png"
+                    alt="Misiones"
+                    width={70}
+                    height={70}
                 />
             </button>
         </div>
