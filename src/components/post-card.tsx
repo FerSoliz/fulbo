@@ -97,7 +97,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
                             ></iframe>
                         ) : videoItem.videoType === 'twitch' && videoItem.videoId ? (
                              <iframe
-                                src={`https://player.twitch.tv/?channel=${videoItem.videoId}&parent=${window.location.hostname}`}
+                                src={`https://player.twitch.tv/?channel=${videoItem.videoId}&parent=${typeof window !== "undefined" ? window.location.host : ''}`}
                                 frameBorder="0"
                                 allowFullScreen={true}
                                 scrolling="no"
