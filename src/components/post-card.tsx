@@ -199,7 +199,7 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
         )}
       </CardHeader>
       <CardContent>
-        <h2 className="text-xl font-bold mb-2">{post.title}</h2>
+        {post.title && <h2 className="text-xl font-bold mb-2">{post.title}</h2>}
         <p className="text-sm whitespace-pre-wrap mb-4">{post.content}</p>
         {renderMedia()}
       </CardContent>

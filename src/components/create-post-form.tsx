@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Image as ImageIcon, Video, X, Play, Star } from 'lucide-react';
@@ -20,7 +19,6 @@ interface CreatePostFormProps {
 }
 
 export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) {
-  const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -85,7 +83,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
   const handleSubmit = async () => {
     let media: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string; }[] = [];
     
-    if (!title && !content && filesToUpload.length === 0 && !youtubeVideoId && !twitchChannelName) return;
+    if (!content && filesToUpload.length === 0 && !youtubeVideoId && !twitchChannelName) return;
     
     if(filesToUpload.length > 0) {
       const uploadedImageUrls = await uploadMultipleFiles(filesToUpload, `posts/${currentUser.id}`);
@@ -98,14 +96,13 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
 
     onAddPost({
       authorId: currentUser.id,
-      title,
+      title: '', // No title anymore
       content,
       media: media,
       isPinned,
     });
 
     // Reset form
-    setTitle('');
     setContent('');
     setFilesToUpload([]);
     setImagePreviews([]);
@@ -127,19 +124,12 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
           <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="w-full">
-          <Input
-            placeholder="Título de la publicación..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="text-lg font-bold border-none shadow-none focus-visible:ring-0 px-0"
-            disabled={isUploading}
-          />
           <Textarea
             placeholder={`¿Qué estás pensando, ${currentUser.name}? Pega un link de YouTube o Twitch...`}
             value={content}
             onChange={handleContentChange}
             className="border-none shadow-none focus-visible:ring-0 px-0 resize-none"
-            rows={2}
+            rows={3}
             disabled={isUploading}
           />
         </div>
@@ -197,12 +187,11 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
         <div className="flex gap-2">
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading || hasVideo}
           >
-            <ImageIcon className="mr-2 h-4 w-4" />
-            Foto
+            <ImageIcon className="h-5 w-5 text-muted-foreground" />
           </Button>
           <input
             type="file"
@@ -218,7 +207,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             <Button variant="ghost" size="icon" onClick={() => setIsPinned(!isPinned)} disabled={isUploading}>
                 <Star className={cn("h-5 w-5 text-muted-foreground", isPinned && "fill-accent text-accent")} />
             </Button>
-            <Button onClick={handleSubmit} disabled={(!title && !content && filesToUpload.length === 0 && !hasVideo) || isUploading}>
+            <Button onClick={handleSubmit} disabled={(!content && filesToUpload.length === 0 && !hasVideo) || isUploading}>
               {isUploading ? `Publicando... ${Math.round(progress)}%` : 'Publicar'}
             </Button>
         </div>

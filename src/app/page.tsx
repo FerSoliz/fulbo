@@ -63,6 +63,7 @@ export default function HomePage() {
 
     const newPost: Post = {
         ...newPostData,
+        title: '', // Title is no longer used
         id: Date.now(),
         createdAt: new Date().toISOString(),
         likes: [],
