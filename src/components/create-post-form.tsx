@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Image as ImageIcon, Video, X, Play, Star } from 'lucide-react';
 import { User, Post } from '@/lib/data';
@@ -40,7 +40,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     return match ? match[1] : null;
   }
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleContentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newContent = e.target.value;
     setContent(newContent);
     
@@ -118,18 +118,17 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
 
   return (
     <Card className="p-4">
-      <div className="flex items-start gap-4">
+      <div className="flex items-center gap-4">
         <Avatar>
           <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
           <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="w-full">
-          <Textarea
-            placeholder={`¿Qué estás pensando, ${currentUser.name}? Pega un link de YouTube o Twitch...`}
+          <Input
+            placeholder={`¿Qué estás pensando, ${currentUser.name}?`}
             value={content}
             onChange={handleContentChange}
-            className="border-none shadow-none focus-visible:ring-0 px-0 resize-none"
-            rows={3}
+            className="border-none shadow-none focus-visible:ring-0 px-0 h-12 rounded-full bg-muted text-base pl-4"
             disabled={isUploading}
           />
         </div>
