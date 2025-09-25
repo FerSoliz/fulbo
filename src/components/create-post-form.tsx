@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Image as ImageIcon, Video, X, Play, Star } from 'lucide-react';
 import { User, Post } from '@/lib/data';
@@ -12,6 +11,7 @@ import Image from 'next/image';
 import { useUpload } from '@/hooks/use-upload';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { Textarea } from '@/components/ui/textarea';
 
 interface CreatePostFormProps {
   currentUser: User;
@@ -26,7 +26,15 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
   const [twitchChannelName, setTwitchChannelName] = useState<string | null>(null);
   const [isPinned, setIsPinned] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { uploadMultipleFiles, isUploading, progress } = useUpload();
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [content]);
 
   const getYoutubeVideoId = (url: string): string | null => {
     const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/;
@@ -40,7 +48,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     return match ? match[1] : null;
   }
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newContent = e.target.value;
     setContent(newContent);
     
@@ -118,24 +126,26 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
 
   return (
     <Card className="p-4">
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         <Avatar>
           <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
           <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
         </Avatar>
         <div className="w-full">
-          <Input
-            placeholder={`¿Qué estás pensando, ${currentUser.name}?`}
-            value={content}
-            onChange={handleContentChange}
-            className="border-none shadow-none focus-visible:ring-0 px-0 h-12 rounded-full bg-muted text-base pl-4"
-            disabled={isUploading}
-          />
+            <Textarea
+              ref={textareaRef}
+              placeholder={`¿Qué estás pensando, ${currentUser.name}? Pega un link de YouTube o Twitch...`}
+              value={content}
+              onChange={handleContentChange}
+              className="border-none shadow-none focus-visible:ring-0 px-0 resize-none overflow-hidden text-base"
+              rows={1}
+              disabled={isUploading}
+            />
         </div>
       </div>
        
        {hasVideo && (
-        <div className="mt-4 relative group">
+        <div className="mt-4 relative group ml-14">
            <Image
                 src={youtubeVideoId ? `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg` : `https://static-cdn.jtvnw.net/previews-ttv/live_user_${twitchChannelName}-1280x720.jpg`}
                 alt="Video thumbnail"
@@ -160,7 +170,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
        )}
 
       {imagePreviews.length > 0 && !hasVideo && (
-        <ScrollArea className="w-full whitespace-nowrap rounded-md mt-4">
+        <ScrollArea className="w-full whitespace-nowrap rounded-md mt-4 ml-14">
             <div className="flex space-x-2 p-1">
                 {imagePreviews.map((url, index) => (
                     <div key={index} className="relative h-24 w-24 flex-shrink-0">
