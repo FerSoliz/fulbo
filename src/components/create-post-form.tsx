@@ -131,13 +131,13 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
           <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
           <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
         </Avatar>
-        <div className="w-full">
+        <div className="w-full bg-muted rounded-full flex items-center px-4 py-1">
             <Textarea
               ref={textareaRef}
-              placeholder={`¿Qué estás pensando, ${currentUser.name}? Pega un link de YouTube o Twitch...`}
+              placeholder={`¿Qué estás pensando, ${currentUser.name}?`}
               value={content}
               onChange={handleContentChange}
-              className="border-none shadow-none focus-visible:ring-0 px-0 resize-none overflow-hidden text-base"
+              className="border-none shadow-none focus-visible:ring-0 px-0 resize-none overflow-hidden text-base bg-transparent min-h-[2.5rem] flex items-center"
               rows={1}
               disabled={isUploading}
             />
