@@ -1,7 +1,4 @@
 
-
-
-
 export interface User {
   id: string;
   name: string;
@@ -129,25 +126,6 @@ export const leagues = [
     { name: 'Leyenda del Fútbol', divisions: 1, color: '#ff4500', icon: 'Star', nextLeague: null },
 ];
 
-export const defaultVisitor: User = {
-    id: 'visitor',
-    name: 'VISITANTE',
-    username: 'visitante',
-    role: 'user', 
-    avatar: 'https://avatar.vercel.sh/visitor.png',
-    isVerified: false,
-    isBlocked: false,
-    location: '',
-    profileBackground: 'https://i.postimg.cc/76dmQW2x/interfaz-menu-png-1.png',
-    sudpoints: 0,
-    baseSudpoints: 0,
-    league: 'Bronce',
-    division: 4,
-    stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-    interactions: 0,
-    packsOpened: 0,
-};
-
 export const initialUsers: User[] = [
   {
     id: 'admin-user',
@@ -194,63 +172,6 @@ export const initialUsers: User[] = [
     packsOpened: 0,
   },
 ];
-
-export const posts: Post[] = [
-     {
-        id: 4,
-        authorId: 'admin-user',
-        title: "Nuevas funcionalidades en la plataforma",
-        content: "Hemos estado trabajando duro para traerles nuevas características. ¡Pronto podrán disfrutar del sistema de ranking de jugadores y las cartas coleccionables! 🔥",
-        media: [
-             { type: "image", url: "https://i.postimg.cc/SRHq90Yg/sudone-features.png" }
-        ],
-        likes: ['editor-user'],
-        comments: [],
-        createdAt: "2024-05-23T12:00:00Z"
-    },
-    {
-        id: 3,
-        authorId: 'admin-user',
-        title: "¡Inscripciones Abiertas - Copa Verano!",
-        content: "Ya están abiertas las inscripciones para la edición de verano de nuestra copa. ¡No te quedes afuera! Equipos limitados. Más info en la sección 'Inscribirme'.",
-        media: [
-             { type: "image", url: "https://i.postimg.cc/W3d9b4Vf/copa-verano.png" }
-        ],
-        likes: [],
-        comments: [],
-        createdAt: "2024-05-22T18:00:00Z"
-    },
-    {
-        id: 1,
-        authorId: 'admin-user',
-        title: "¡Arrancó la Liga Anual 2024!",
-        content: "Estamos muy emocionados de anunciar el comienzo de la Liga Anual de SUDONE. Prepárense para competir y demostrar quién es el mejor. ¡Mucha suerte a todos los participantes!",
-        media: [
-            { type: "image", url: "https://i.postimg.cc/NfHBrS60/liga-anual.png" },
-        ],
-        likes: ['editor-user'],
-        comments: [
-            { id: 1, authorId: 'editor-user', content: "¡Vamos con todo!", createdAt: "2024-05-20T11:00:00Z" }
-        ],
-        createdAt: "2024-05-20T10:00:00Z"
-    },
-    {
-        id: 2,
-        authorId: 'editor-user',
-        title: "Recordando la final del mundo",
-        content: "Un momento inolvidable para todos los argentinos. Comparto este video del resumen del partido. ¿Cuál fue su momento favorito?",
-        media: [
-            { type: "video", url: "https://img.youtube.com/vi/FG_wffPU-yM/maxresdefault.jpg", videoType: 'youtube', videoId: 'FG_wffPU-yM' },
-        ],
-        likes: ['admin-user'],
-        comments: [
-             { id: 3, authorId: 'admin-user', content: "El gol de Fideo. ¡Qué locura!", createdAt: "2024-05-21T16:00:00Z" }
-        ],
-        createdAt: "2024-05-21T14:00:00Z"
-    },
-];
-
-export const initialProducts: Product[] = [];
 
 
 export const initialNotifications: Notification[] = [

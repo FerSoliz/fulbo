@@ -1,7 +1,7 @@
 'use client';
 // Import the functions you need from the SDKs you need
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 import { 
     getFirestore,
@@ -44,4 +44,4 @@ if (isMockConfig && typeof window !== 'undefined') {
 }
 
 
-export { app, auth, storage, db, GoogleAuthProvider, signInWithPopup, collection, doc, setDoc, getDoc, getDocs, writeBatch, deleteDoc, updateDoc, onSnapshot, query, where, limit, orderBy };
+export { app, auth, storage, db, GoogleAuthProvider, signInWithPopup, collection, doc, setDoc, getDoc, getDocs, writeBatch, deleteDoc, updateDoc, onSnapshot, query, where, limit, orderBy, sendPasswordResetEmail, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut };

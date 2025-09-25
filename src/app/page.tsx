@@ -5,8 +5,7 @@ import { CreatePostForm } from '@/components/create-post-form';
 import { PostCard } from '@/components/post-card';
 import { Post, User } from '@/lib/data';
 import { useUser } from '@/context/user-context';
-import { db } from '@/lib/firebase';
-import { collection, getDocs, doc, setDoc, deleteDoc, updateDoc, orderBy, query } from 'firebase/firestore';
+import { db, collection, getDocs, doc, setDoc, deleteDoc, updateDoc, orderBy, query } from '@/lib/firebase';
 
 export default function HomePage() {
   const { user: currentUser, allUsers } = useUser();
@@ -64,7 +63,6 @@ export default function HomePage() {
 
     const newPost: Post = {
         ...newPostData,
-        authorId: currentUser.id,
         id: Date.now(),
         createdAt: new Date().toISOString(),
         likes: [],
