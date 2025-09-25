@@ -89,7 +89,7 @@ export default function CollectionPage() {
             >
                 <motion.div 
                     layoutId={`card-${selectedCard.id}`} 
-                    className="w-72 md:w-80"
+                    className="w-full max-w-[280px] sm:max-w-[320px]"
                     onClick={(e) => e.stopPropagation()}
                 >
                     <CollectibleCard card={selectedCard} />
