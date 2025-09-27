@@ -176,6 +176,7 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
   const handleInstallClick = () => {
       if (!installPrompt) return;
       installPrompt.prompt();
+      if (onLinkClick) onLinkClick();
   };
 
   const handleAdminPanelClick = (e: React.MouseEvent) => {
@@ -219,8 +220,8 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
 
   const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)[]) => {
     return items.map((item) => {
-      if ('adminOnly' in item && item.adminOnly && user?.role !== 'admin' && user?.role !== 'editor') {
-        return null;
+      if (item.label === 'PANEL DE ADMIN' && user?.role !== 'admin' && user?.role !== 'editor') {
+        return null; // Don't show admin panel if not admin/editor
       }
 
       let finalHref = item.href;
@@ -326,20 +327,20 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
                             </Link>
                         </li>
                     ))}
-                    {installPrompt && (
-                        <li>
-                            <Button
-                                variant='destructive'
-                                size="icon"
-                                className='bg-red-600 hover:bg-red-700 text-white'
-                                onClick={handleInstallClick}
-                            >
-                                <Download className="h-5 w-5" />
-                            </Button>
-                        </li>
-                    )}
                 </div>
                 {user && user.id !== 'visitor' && renderMenuItems(footerMenuItems)}
+                 {installPrompt && (
+                    <li>
+                        <Button
+                            variant="ghost"
+                            className="main-sidebar-button w-full justify-start gap-2 text-foreground"
+                            onClick={handleInstallClick}
+                        >
+                            <Download className="h-5 w-5" />
+                            <span className="lg:text-base">DESCARGAR APP</span>
+                        </Button>
+                    </li>
+                 )}
                  <li>
                     <Button
                         variant="ghost"
