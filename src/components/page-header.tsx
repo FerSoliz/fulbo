@@ -30,14 +30,6 @@ import { MainSidebar } from './main-sidebar';
 import { GlobalSearch } from './global-search';
 
 
-const favorites = [
-    { id: '1', type: 'tournament', name: 'Liga Anual 2024', avatar: 'https://i.postimg.cc/NfHBrS60/liga-anual.png', hasNewContent: true, abbrev: "LI"},
-    { id: '2', type: 'tournament', name: 'Copa Verano', avatar: 'https://i.postimg.cc/W3d9b4Vf/copa-verano.png', hasNewContent: true, abbrev: "CO" },
-    { id: '3', type: 'tournament', name: 'Torneo Relámpago', avatar: 'https://i.postimg.cc/8zJ17B67/torneo-relampago.png', hasNewContent: false, abbrev: "TO" },
-    { id: '4', type: 'user', name: '@leomessi', avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg', hasNewContent: false, abbrev: "LM" },
-    { id: '5', type: 'user', name: '@dibumartinez', avatar: 'https://i.postimg.cc/44rD55vT/dibu.jpg', hasNewContent: false, abbrev: "DM" },
-];
-
 const notificationIcons: { [key: string]: React.ElementType } = {
   post: FileText,
   sudpoints: Trophy,
@@ -99,31 +91,6 @@ export function PageHeader() {
                 <div className="flex-1">
                     <GlobalSearch />
                 </div>
-                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                        <Star className="h-5 w-5"/>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-64">
-                    <DropdownMenuLabel>Favoritos</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    {favorites.map(fav => (
-                         <DropdownMenuItem key={fav.id} asChild>
-                            <Link href="#" className="flex items-center justify-between">
-                                 <div className="flex items-center gap-2">
-                                     <Avatar className="w-6 h-6">
-                                        <AvatarImage src={fav.avatar} />
-                                        <AvatarFallback>{fav.abbrev}</AvatarFallback>
-                                    </Avatar>
-                                    <span className="text-sm">{fav.name}</span>
-                                 </div>
-                                {fav.hasNewContent && <div className="h-2 w-2 rounded-full bg-accent" />}
-                            </Link>
-                         </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
             </div>
             <div className="flex flex-shrink-0 items-center justify-end gap-2">
                 {loading ? (
