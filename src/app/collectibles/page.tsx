@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
@@ -458,7 +459,7 @@ const MainMenu = ({ onOpenPack, availablePacks, countdown, user }: { onOpenPack:
     return (
      <div className="w-full h-full flex flex-col items-center justify-center relative">
         <Image
-          src="https://i.postimg.cc/yY075BRG/FONDO-JUEGUITO.png"
+          src="https://i.postimg.cc/hG6rcV44/FONDO-JUEGUITO.jpg"
           alt="Fondo del juego de cartas"
           layout="fill"
           objectFit="cover"
@@ -835,4 +836,6 @@ const VsMatchSimulation = ({ userTeam, botTeam, setView }: { userTeam: typeof in
 
 
     
+    
+
     
