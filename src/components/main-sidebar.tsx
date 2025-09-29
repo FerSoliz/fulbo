@@ -258,7 +258,7 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
 
   const sidebarClasses = cn(
     "flex flex-col bg-card/80 backdrop-blur-sm h-full",
-    { "fixed left-0 hidden md:flex m-4 h-[calc(100vh-2rem)] w-64 flex-col rounded-xl border": !isMobile },
+    { "fixed left-0 hidden h-screen w-64 flex-col border-r md:flex": !isMobile },
   );
 
   return (
