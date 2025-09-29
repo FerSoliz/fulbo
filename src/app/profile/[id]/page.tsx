@@ -612,6 +612,9 @@ export default function ProfilePage() {
                    <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}>
                        <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} className="rounded-lg w-full h-auto" />
                    </button>
+                   <button className="transition-transform hover:scale-105">
+                       <Image src="https://i.postimg.cc/cLsMSW3v/boton-mi-equipo.png" alt="Mi Equipo" width={150} height={50} className="rounded-lg w-full h-auto" />
+                   </button>
                    <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}>
                        <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
                    </button>
@@ -967,5 +970,6 @@ export default function ProfilePage() {
     </>
   );
 }
+
 
 
