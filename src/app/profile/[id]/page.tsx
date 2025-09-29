@@ -52,6 +52,7 @@ import {
   MapPin,
   Crown,
   Flag,
+  Handshake,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -68,6 +69,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
 import {
   Dialog,
@@ -302,6 +306,43 @@ const mockTournamentStats = {
     ]
 }
 
+const TransferStatusBadge = ({ user, onTransferClick }: { user: User; onTransferClick: () => void; }) => {
+    const { transferStatus } = user;
+    if (!transferStatus) return null;
+
+    const statusConfig = {
+        libre: { text: "LIBRE", color: "bg-green-500 hover:bg-green-600", icon: <Handshake className="w-4 h-4" /> },
+        traspaso: { text: "TRASPASO", color: "bg-yellow-500 hover:bg-yellow-600", icon: <Handshake className="w-4 h-4" /> },
+        blindado: { text: "BLINDADO", color: "bg-red-600 hover:bg-red-700", icon: <Lock className="w-4 h-4" /> },
+    };
+
+    const config = statusConfig[transferStatus];
+    const isClickable = transferStatus !== 'blindado';
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <button
+                        onClick={isClickable ? onTransferClick : undefined}
+                        className={cn("flex items-center gap-2 text-white font-bold text-xs px-3 py-1 rounded-full shadow-md transition-transform transform hover:scale-105",
+                            config.color,
+                            isClickable ? "cursor-pointer" : "cursor-default"
+                        )}
+                    >
+                        {config.icon}
+                        <span>{config.text}</span>
+                    </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>{isClickable ? `Contactar a ${user.name}` : `${user.name} no acepta ofertas`}</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+};
+
+
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -418,6 +459,17 @@ export default function ProfilePage() {
     router.push(`/messages?recipient=${profileUser.id}`);
   };
 
+  const handleTransferClick = () => {
+    if (!profileUser || !currentUser || isOwnProfile || profileUser.transferStatus === 'blindado' || currentUser.id === 'visitor') return;
+    router.push(`/messages?recipient=${profileUser.id}`);
+  };
+  
+  const handleChangeTransferStatus = (status: 'libre' | 'traspaso' | 'blindado') => {
+      if (!profileUser || !isOwnProfile) return;
+      handleSaveProfile({ ...profileUser, transferStatus: status });
+  };
+
+
   if (loading || userLoading)
     return (
       <div className="p-8 text-center">
@@ -442,6 +494,7 @@ export default function ProfilePage() {
     profileBackground,
     sudonepassLevel = 1,
     sudonepassExp = 0,
+    transferStatus,
   } = profileUser;
 
   const finalStats =
@@ -535,6 +588,17 @@ export default function ProfilePage() {
                           Editar Perfil
                       </DropdownMenuItem>
                     </EditProfileDialog>
+                    <DropdownMenuSub>
+                        <DropdownMenuSubTrigger>
+                            <Handshake className="mr-2 h-4 w-4" />
+                            <span>Estado de Fichaje</span>
+                        </DropdownMenuSubTrigger>
+                        <DropdownMenuSubContent>
+                            <DropdownMenuItem onClick={() => handleChangeTransferStatus('libre')}>Libre</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleChangeTransferStatus('traspaso')}>Traspaso</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleChangeTransferStatus('blindado')}>Blindado</DropdownMenuItem>
+                        </DropdownMenuSubContent>
+                    </DropdownMenuSub>
                   </DropdownMenuContent>
                 </DropdownMenu>
               )}
@@ -581,8 +645,11 @@ export default function ProfilePage() {
           </CardHeader>
           
           <CardContent className="px-6 space-y-4">
-            <div className="flex items-center gap-4">
-              <DivisionBadge league={league} division={division} />
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                    <DivisionBadge league={league} division={division} />
+                    {transferStatus && <TransferStatusBadge user={profileUser} onTransferClick={handleTransferClick} />}
+                </div>
             </div>
             <div className="w-full">
               <Progress value={sudpoints} className="h-2 my-1 bg-[#201538]" />
@@ -970,6 +1037,3 @@ export default function ProfilePage() {
     </>
   );
 }
-
-
-
