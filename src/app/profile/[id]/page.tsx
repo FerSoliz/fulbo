@@ -506,6 +506,7 @@ export default function ProfilePage() {
     sudonepassLevel = 1,
     sudonepassExp = 0,
     transferStatus,
+    team,
   } = profileUser;
 
   const finalStats =
@@ -743,10 +744,26 @@ export default function ProfilePage() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Volver al Perfil
             </Button>
-            {/* El contenido de Mi Equipo irá aquí */}
-            <div className="h-full w-full flex items-center justify-center border-2 border-dashed rounded-lg">
-                <p className="text-muted-foreground">Contenido de Mi Equipo...</p>
-            </div>
+            {dni && team ? (
+              <div className='space-y-4'>
+                <div className="flex items-center gap-4 rounded-lg bg-card p-4">
+                    <Image src={team.crestUrl} alt={`Escudo de ${team.name}`} width={64} height={64} className="rounded-full bg-muted" />
+                    <h2 className="text-2xl font-bold">{team.name}</h2>
+                </div>
+                {/* Futuro contenido de la página de equipo */}
+                <div className="h-96 w-full flex items-center justify-center border-2 border-dashed rounded-lg">
+                  <p className="text-muted-foreground">Más detalles del equipo aquí...</p>
+                </div>
+              </div>
+            ) : (
+               <div className="h-full w-full flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg">
+                  <ShieldAlert className="w-16 h-16 text-muted-foreground mb-4"/>
+                  <h2 className="text-xl font-semibold">No estás en ningún equipo</h2>
+                  <p className="text-muted-foreground mt-2 max-w-sm">
+                    Para ver la información de tu equipo, primero debes vincular tu perfil con tu DNI en la sección de "Editar Perfil".
+                  </p>
+                </div>
+            )}
           </motion.div>
         )}
 

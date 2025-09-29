@@ -30,6 +30,10 @@ export interface User {
     rojas: number;
     mvps: number;
   };
+  team?: {
+    name: string;
+    crestUrl: string;
+  };
   interactions?: number;
   packsOpened?: number;
 }
@@ -149,6 +153,7 @@ export const initialUsers: User[] = [
     sudonepassExp: 45,
     transferStatus: 'blindado',
     stats: { partidosJugados: 100, victorias: 80, empates: 10, derrotas: 10, goles: 150, asistencias: 50, amarillas: 2, rojas: 0, mvps: 40 },
+    team: { name: 'Puerto F.C.', crestUrl: 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png' },
     interactions: 0,
     packsOpened: 0,
   },
@@ -172,6 +177,7 @@ export const initialUsers: User[] = [
     sudonepassExp: 90,
     transferStatus: 'libre',
     stats: { partidosJugados: 10, victorias: 8, empates: 1, derrotas: 1, goles: 15, asistencias: 5, amarillas: 0, rojas: 0, mvps: 7 },
+    team: { name: 'SUDONE FC', crestUrl: 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png' },
     interactions: 0,
     packsOpened: 0,
   },
