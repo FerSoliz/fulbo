@@ -58,6 +58,11 @@ import {
   Search,
   MessageCircle as MessageCircleIcon,
   Users2,
+  CheckCircle,
+  XCircle,
+  MinusCircle,
+  DoorClosed,
+  X,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -291,16 +296,16 @@ const mockNextMatch = {
     location: "Complejo Parque Norte"
 }
 
-const mockTeamRoster: { name: string }[] = [
-    { name: "Lucio Mingrone" },
-    { name: "Faustino Depaoli" },
-    { name: "Joaquín Paradelo" },
-    { name: "Felipe Vicente" },
-    { name: "Bautista Pécora" },
-    { name: "Agustín Corrales" },
-    { name: "Máximo Soto" },
-    { name: "Facundo Costantini" },
-    { name: "Valentín Coria" },
+const mockTeamRoster: { name: string, id: string }[] = [
+    { name: "Lucio Mingrone", id: "admin-user" },
+    { name: "Faustino Depaoli", id: "player-2" },
+    { name: "Joaquín Paradelo", id: "player-3" },
+    { name: "Felipe Vicente", id: "player-4" },
+    { name: "Bautista Pécora", id: "player-5" },
+    { name: "Agustín Corrales", id: "player-6" },
+    { name: "Máximo Soto", id: "player-7" },
+    { name: "Facundo Costantini", id: "player-8" },
+    { name: "Valentín Coria", id: "player-9" },
 ];
 
 
@@ -363,7 +368,7 @@ const TransferStatusBadge = ({ user, onTransferClick }: { user: User; onTransfer
 };
 
 type View = 'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass' | 'ranking_preview' | 'favorite_tournaments' | 'my_team';
-
+type AttendanceStatus = 'confirmed' | 'denied' | 'pending';
 
 export default function ProfilePage() {
   const params = useParams();
@@ -385,7 +390,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<View>('buttons');
   const [claimedRewards, setClaimedRewards] = useState<number[]>([]);
-  const [attendance, setAttendance] = useState<{[key: string]: boolean}>({});
+  const [attendance, setAttendance] = useState<{[key: string]: AttendanceStatus}>({});
 
   useEffect(() => {
     const targetUser = allUsers.find((u) => u.id === userId);
@@ -398,6 +403,19 @@ export default function ProfilePage() {
             setClaimedRewards(JSON.parse(savedClaims));
         }
     }
+    
+    // Set initial attendance for example
+    const initialAttendance: {[key: string]: AttendanceStatus} = {};
+    mockTeamRoster.forEach(player => {
+        if (player.name === "Lucio Mingrone" || player.name === "Faustino Depaoli") {
+            initialAttendance[player.id] = 'confirmed';
+        } else if (player.name === "Joaquín Paradelo") {
+            initialAttendance[player.id] = 'denied';
+        } else {
+            initialAttendance[player.id] = 'pending';
+        }
+    });
+    setAttendance(initialAttendance);
 
   }, [userId, allUsers]);
 
@@ -499,13 +517,20 @@ export default function ProfilePage() {
     });
   };
 
-  const handleAttendanceChange = (playerName: string) => {
-    const newAttendance = { ...attendance, [playerName]: !attendance[playerName] };
+  const handleAttendanceChange = (status: AttendanceStatus) => {
+    if (!currentUser) return;
+    const newAttendance = { ...attendance, [currentUser.id]: status };
     setAttendance(newAttendance);
-    if(newAttendance[playerName]) {
+    if(status === 'confirmed') {
         toast({
             title: '¡Asistencia Confirmada!',
-            description: `${playerName} confirmó asistencia contra ${mockNextMatch.opponent}. (Notificación simulada al capitán)`,
+            description: `${currentUser.name} confirmó asistencia contra ${mockNextMatch.opponent}. (Notificación simulada al capitán)`,
+        });
+    } else if (status === 'denied') {
+         toast({
+            title: 'Asistencia Denegada',
+            description: `${currentUser.name} ha indicado que no asistirá. (Notificación simulada al capitán)`,
+            variant: "destructive"
         });
     }
   }
@@ -790,7 +815,7 @@ export default function ProfilePage() {
                                 <DialogHeader>
                                     <DialogTitle>Confirmar Asistencia</DialogTitle>
                                     <DialogDescription>
-                                        Marca la casilla si vas a asistir al próximo partido. Esto notificará a tu capitán.
+                                        Revisa el estado de asistencia del equipo y confirma tu participación para el próximo partido.
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-2 py-4">
@@ -799,23 +824,30 @@ export default function ProfilePage() {
                                      <p className="text-center text-xs text-muted-foreground">{mockNextMatch.date} - {mockNextMatch.time}hs · {mockNextMatch.location}</p>
                                 </div>
                                 <Separator />
-                                <ScrollArea className="h-72 mt-4">
+                                <ScrollArea className="h-60 mt-4">
                                     <div className="space-y-3 pr-4">
-                                        {mockTeamRoster.map((player, index) => (
-                                            <div key={index} className="flex items-center justify-between rounded-md p-2 bg-muted/50">
-                                                <p className="font-medium">{player.name}</p>
-                                                <Checkbox
-                                                    id={`attendance-${index}`}
-                                                    checked={attendance[player.name] || false}
-                                                    onCheckedChange={() => handleAttendanceChange(player.name)}
-                                                    disabled={!isOwnProfile}
-                                                />
-                                            </div>
-                                        ))}
+                                        {mockTeamRoster.map((player) => {
+                                            const status = attendance[player.id] || 'pending';
+                                            const isCurrentUser = player.id === currentUser?.id;
+                                            return (
+                                                <div key={player.id} className="flex items-center justify-between rounded-md p-2 bg-muted/50">
+                                                    <p className={cn("font-medium", isCurrentUser && "text-accent")}>{player.name}</p>
+                                                    {status === 'confirmed' && <CheckCircle className="w-5 h-5 text-green-500" />}
+                                                    {status === 'denied' && <XCircle className="w-5 h-5 text-destructive" />}
+                                                    {status === 'pending' && <MinusCircle className="w-5 h-5 text-muted-foreground" />}
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </ScrollArea>
-                                <DialogFooter>
-                                    <DialogClose asChild><Button variant="secondary">Cerrar</Button></DialogClose>
+                                <DialogFooter className="sm:justify-between pt-4">
+                                    <DialogClose asChild><Button variant="outline"><DoorClosed /> Cerrar</Button></DialogClose>
+                                    {isOwnProfile && (
+                                        <div className="flex gap-2">
+                                            <Button variant="destructive" onClick={() => handleAttendanceChange('denied')}><X className="mr-2"/> No Asistiré</Button>
+                                            <Button className="bg-green-600 hover:bg-green-700" onClick={() => handleAttendanceChange('confirmed')}><Check className="mr-2"/> Confirmar Asistencia</Button>
+                                        </div>
+                                    )}
                                 </DialogFooter>
                             </DialogContent>
                           </Dialog>
