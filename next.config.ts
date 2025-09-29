@@ -50,7 +50,13 @@ const nextConfig: NextConfig = {
         hostname: 'static-cdn.jtvnw.net',
         port: '',
         pathname: '/**',
-      }
+      },
+      {
+        protocol: 'https',
+        hostname: 'avatar.vercel.sh',
+        port: '',
+        pathname: '/**',
+      } 
     ],
   },
 };
