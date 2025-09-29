@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedAvatar } from '@/components/ui/animated-avatar';
-import { DivisionBadge } from '@/components/division-badge';
+import { DivisionBadge } from '@/components/ui/division-badge';
 import {
   User,
   initialUsers,
@@ -113,6 +113,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import React from 'react';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const EditProfileDialog = ({
   user,
@@ -537,7 +538,7 @@ export default function ProfilePage() {
         className="w-full max-w-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <Card className="max-h-[80vh] overflow-y-auto">
+        <Card className="max-h-[80vh]">
           {children}
         </Card>
       </motion.div>
@@ -712,22 +713,24 @@ export default function ProfilePage() {
       <AnimatePresence>
         {view === 'history' && (
           <OverlayView>
-            <CardHeader>
+             <CardHeader>
                 <CardTitle className="text-center">Historial de Partidos</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3 px-2">
-                 {mockMatchHistory.map((match, index) => (
-                    <Fragment key={match.id}>
-                        <div className="flex justify-between items-center text-sm py-2 px-1">
-                           <span className="w-1/6 text-muted-foreground">{match.date}</span>
-                           <span className="font-semibold truncate text-right flex-1">{match.myTeam}</span>
-                           <span className="font-bold text-lg mx-3">{match.myScore} - {match.opponentScore}</span>
-                           <span className="font-semibold truncate text-left flex-1">{match.opponent}</span>
-                        </div>
-                        {index < mockMatchHistory.length - 1 && <Separator />}
-                    </Fragment>
-                ))}
-            </CardContent>
+            <ScrollArea className="h-[60vh]">
+              <CardContent className="space-y-3 px-2">
+                  {mockMatchHistory.map((match, index) => (
+                      <Fragment key={match.id}>
+                          <div className="flex justify-between items-center text-sm py-2 px-1">
+                            <span className="w-1/6 text-muted-foreground">{match.date}</span>
+                            <span className="font-semibold truncate text-right flex-1">{match.myTeam}</span>
+                            <span className="font-bold text-lg mx-3">{match.myScore} - {match.opponentScore}</span>
+                            <span className="font-semibold truncate text-left flex-1">{match.opponent}</span>
+                          </div>
+                          {index < mockMatchHistory.length - 1 && <Separator />}
+                      </Fragment>
+                  ))}
+              </CardContent>
+            </ScrollArea>
              <CardFooter>
                 <Button variant="ghost" onClick={() => setView('buttons')} className="w-full">
                     Volver
@@ -741,55 +744,57 @@ export default function ProfilePage() {
               <CardHeader>
                 <CardTitle className="text-center">Estadísticas del Jugador</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 text-white">
-                <div className="text-center">
-                  <p className="text-sm uppercase text-muted-foreground">Winrate</p>
-                  <p className="text-5xl font-bold">{winrate}%</p>
-                </div>
-                <Separator />
-                <div className="grid grid-cols-4 gap-4 text-center">
-                  <div>
-                    <p className="text-2xl font-bold">{finalStats.partidosJugados}</p>
-                    <p className="text-xs text-muted-foreground">JUGADOS</p>
+              <ScrollArea className="h-[60vh]">
+                <CardContent className="space-y-4 text-white">
+                  <div className="text-center">
+                    <p className="text-sm uppercase text-muted-foreground">Winrate</p>
+                    <p className="text-5xl font-bold">{winrate}%</p>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold">{finalStats.victorias}</p>
-                    <p className="text-xs text-muted-foreground">GANADOS</p>
+                  <Separator />
+                  <div className="grid grid-cols-4 gap-4 text-center">
+                    <div>
+                      <p className="text-2xl font-bold">{finalStats.partidosJugados}</p>
+                      <p className="text-xs text-muted-foreground">JUGADOS</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{finalStats.victorias}</p>
+                      <p className="text-xs text-muted-foreground">GANADOS</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{finalStats.empates}</p>
+                      <p className="text-xs text-muted-foreground">EMPATADOS</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{finalStats.derrotas}</p>
+                      <p className="text-xs text-muted-foreground">PERDIDOS</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold">{finalStats.empates}</p>
-                    <p className="text-xs text-muted-foreground">EMPATADOS</p>
+                  <Separator />
+                  <div className="grid grid-cols-4 gap-4 text-center">
+                    <div>
+                      <p className="text-2xl font-bold">{finalStats.goles}</p>
+                      <p className="text-xs text-muted-foreground">GOLES</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{finalStats.mvps}</p>
+                      <p className="text-xs text-muted-foreground">MVPs</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{finalStats.amarillas}</p>
+                      <p className="text-xs text-muted-foreground">AMARILLAS</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold">{finalStats.rojas}</p>
+                      <p className="text-xs text-muted-foreground">ROJAS</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold">{finalStats.derrotas}</p>
-                    <p className="text-xs text-muted-foreground">PERDIDOS</p>
+                  <Separator />
+                  <div className="text-center">
+                    <p className="text-sm uppercase text-muted-foreground">Promedio de Gol</p>
+                    <p className="text-5xl font-bold">{goalAverage}</p>
                   </div>
-                </div>
-                <Separator />
-                <div className="grid grid-cols-4 gap-4 text-center">
-                  <div>
-                    <p className="text-2xl font-bold">{finalStats.goles}</p>
-                    <p className="text-xs text-muted-foreground">GOLES</p>
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{finalStats.mvps}</p>
-                    <p className="text-xs text-muted-foreground">MVPs</p>
-                  </div>
-                   <div>
-                    <p className="text-2xl font-bold">{finalStats.amarillas}</p>
-                    <p className="text-xs text-muted-foreground">AMARILLAS</p>
-                  </div>
-                   <div>
-                    <p className="text-2xl font-bold">{finalStats.rojas}</p>
-                    <p className="text-xs text-muted-foreground">ROJAS</p>
-                  </div>
-                </div>
-                <Separator />
-                 <div className="text-center">
-                  <p className="text-sm uppercase text-muted-foreground">Promedio de Gol</p>
-                  <p className="text-5xl font-bold">{goalAverage}</p>
-                </div>
-              </CardContent>
+                </CardContent>
+              </ScrollArea>
                <CardFooter>
                   <Button variant="ghost" onClick={() => setView('buttons')} className="w-full">
                       Volver
@@ -846,20 +851,22 @@ export default function ProfilePage() {
                 <CardHeader>
                     <CardTitle className="text-center">Posición en el Ranking</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                    {mockRanking.map((player) => (
-                        <div key={player.rank} className={cn(
-                            "flex items-center justify-between p-3 rounded-lg",
-                            player.name === profileUser.name ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50"
-                        )}>
-                            <div className="flex items-center gap-4">
-                                <span className="font-bold text-lg w-6 text-center">{player.rank === 1 ? <Crown className="w-5 h-5 text-amber-400" /> : player.rank}</span>
-                                <p className={cn("font-semibold", player.name === profileUser.name && "text-accent")}>{player.name}</p>
-                            </div>
-                            <p className="font-bold">{player.sudpoints} SP</p>
-                        </div>
-                    ))}
-                </CardContent>
+                <ScrollArea className="h-[60vh]">
+                  <CardContent className="space-y-2">
+                      {mockRanking.map((player) => (
+                          <div key={player.rank} className={cn(
+                              "flex items-center justify-between p-3 rounded-lg",
+                              player.name === profileUser.name ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50"
+                          )}>
+                              <div className="flex items-center gap-4">
+                                  <span className="font-bold text-lg w-6 text-center">{player.rank === 1 ? <Crown className="w-5 h-5 text-amber-400" /> : player.rank}</span>
+                                  <p className={cn("font-semibold", player.name === profileUser.name && "text-accent")}>{player.name}</p>
+                              </div>
+                              <p className="font-bold">{player.sudpoints} SP</p>
+                          </div>
+                      ))}
+                  </CardContent>
+                </ScrollArea>
                  <CardFooter>
                     <Button variant="ghost" onClick={() => setView('buttons')} className="w-full">
                         Volver
@@ -880,53 +887,55 @@ export default function ProfilePage() {
                         <Progress value={passProgress} />
                     </div>
                 </CardHeader>
-                <CardContent className="space-y-2">
-                    {Array.from({ length: 10 }).map((_, index) => {
-                        const level = index + 1;
-                        const isUnlocked = level <= sudonepassLevel;
-                        const isClaimed = claimedRewards.includes(level);
-                        return (
-                            <div key={level} className={cn("flex items-center justify-between p-3 rounded-lg", isUnlocked ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
-                                <div className="flex items-center gap-4">
-                                     <div className="flex flex-col items-center justify-center w-12">
-                                        <span className="text-xs text-muted-foreground">NIVEL</span>
-                                        <span className="text-xl font-bold">{level}</span>
-                                     </div>
-                                     <div className="relative">
-                                         <Image 
-                                            src="https://i.postimg.cc/qM6GyVNg/sobre-base-campeones-de-qatar.png"
-                                            alt="Recompensa sobre de cartas"
-                                            width={80}
-                                            height={100}
-                                            className={cn("object-contain transition-opacity", !isUnlocked && "opacity-30")}
-                                        />
-                                        {!isUnlocked && <Lock className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-white"/>}
-                                     </div>
-                                     <div className="font-semibold">
-                                         SOBRE
-                                     </div>
+                 <ScrollArea className="h-[50vh] pr-4">
+                    <CardContent className="space-y-2">
+                        {Array.from({ length: 10 }).map((_, index) => {
+                            const level = index + 1;
+                            const isUnlocked = level <= sudonepassLevel;
+                            const isClaimed = claimedRewards.includes(level);
+                            return (
+                                <div key={level} className={cn("flex items-center justify-between p-3 rounded-lg", isUnlocked ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex flex-col items-center justify-center w-12">
+                                            <span className="text-xs text-muted-foreground">NIVEL</span>
+                                            <span className="text-xl font-bold">{level}</span>
+                                        </div>
+                                        <div className="relative">
+                                            <Image 
+                                                src="https://i.postimg.cc/qM6GyVNg/sobre-base-campeones-de-qatar.png"
+                                                alt="Recompensa sobre de cartas"
+                                                width={80}
+                                                height={100}
+                                                className={cn("object-contain transition-opacity", !isUnlocked && "opacity-30")}
+                                            />
+                                            {!isUnlocked && <Lock className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-white"/>}
+                                        </div>
+                                        <div className="font-semibold">
+                                            SOBRE
+                                        </div>
+                                    </div>
+                                    <Button
+                                    size="sm"
+                                    disabled={!isUnlocked || isClaimed}
+                                    variant={isClaimed ? "outline" : "default"}
+                                    onClick={() => handleClaimReward(level)}
+                                    >
+                                    {isClaimed ? (
+                                        <>
+                                        <CheckCircle2 className="mr-2 h-4 w-4" />
+                                        Reclamado
+                                        </>
+                                    ) : isUnlocked ? (
+                                        "Reclamar"
+                                    ) : (
+                                        "Bloqueado"
+                                    )}
+                                    </Button>
                                 </div>
-                                <Button
-                                  size="sm"
-                                  disabled={!isUnlocked || isClaimed}
-                                  variant={isClaimed ? "outline" : "default"}
-                                  onClick={() => handleClaimReward(level)}
-                                >
-                                  {isClaimed ? (
-                                    <>
-                                      <CheckCircle2 className="mr-2 h-4 w-4" />
-                                      Reclamado
-                                    </>
-                                  ) : isUnlocked ? (
-                                    "Reclamar"
-                                  ) : (
-                                    "Bloqueado"
-                                  )}
-                                </Button>
-                            </div>
-                        )
-                    })}
-                </CardContent>
+                            )
+                        })}
+                    </CardContent>
+                </ScrollArea>
                 <CardFooter>
                     <Button variant="ghost" onClick={() => setView('buttons')} className="w-full">
                         Volver
@@ -940,95 +949,97 @@ export default function ProfilePage() {
                 <CardHeader>
                     <CardTitle className="text-center text-2xl">Torneos Favoritos</CardTitle>
                 </CardHeader>
-                <CardContent>
-                    <Tabs defaultValue="positions" className="w-full">
-                        <TabsList className="grid w-full grid-cols-5">
-                          <TabsTrigger value="positions">Posiciones</TabsTrigger>
-                          <TabsTrigger value="scorers">Goleadores</TabsTrigger>
-                          <TabsTrigger value="goalkeepers">Valla</TabsTrigger>
-                          <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
-                          <TabsTrigger value="penalties">Penales</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="positions" className="mt-4">
-                           <div className="rounded-lg border">
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead className="w-[40px]">#</TableHead>
-                                    <TableHead>Equipo</TableHead>
-                                    <TableHead className="text-center">PJ</TableHead>
-                                    <TableHead className="text-right">Puntos</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {mockTournamentStats.positions.map((pos) => (
-                                    <TableRow key={pos.team}>
-                                      <TableCell className="font-bold">{pos.rank}</TableCell>
-                                      <TableCell>{pos.team}</TableCell>
-                                      <TableCell className="text-center">{pos.played}</TableCell>
-                                      <TableCell className="text-right font-bold">{pos.points}</TableCell>
+                 <ScrollArea className="h-[60vh]">
+                    <CardContent>
+                        <Tabs defaultValue="positions" className="w-full">
+                            <TabsList className="grid w-full grid-cols-5">
+                            <TabsTrigger value="positions">Posiciones</TabsTrigger>
+                            <TabsTrigger value="scorers">Goleadores</TabsTrigger>
+                            <TabsTrigger value="goalkeepers">Valla</TabsTrigger>
+                            <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
+                            <TabsTrigger value="penalties">Penales</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="positions" className="mt-4">
+                            <div className="rounded-lg border">
+                                <Table>
+                                    <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[40px]">#</TableHead>
+                                        <TableHead>Equipo</TableHead>
+                                        <TableHead className="text-center">PJ</TableHead>
+                                        <TableHead className="text-right">Puntos</TableHead>
                                     </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                           </div>
-                        </TabsContent>
-                        <TabsContent value="scorers" className="mt-4">
-                           <div className="rounded-lg border">
-                              <Table>
-                                 <TableHeader>
-                                  <TableRow>
-                                    <TableHead className="w-[50px]">#</TableHead>
-                                    <TableHead>Jugador</TableHead>
-                                    <TableHead className="text-right">Goles</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {mockTournamentStats.scorers.map((scorer) => (
-                                     <TableRow key={scorer.player}>
-                                      <TableCell className="font-bold">{scorer.rank}</TableCell>
-                                      <TableCell>{scorer.player}</TableCell>
-                                      <TableCell className="text-right font-bold">{scorer.goals}</TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                           </div>
-                        </TabsContent>
-                        <TabsContent value="goalkeepers" className="mt-4">
-                           <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                                <p className="text-muted-foreground">La tabla de valla menos vencida aparecerá aquí.</p>
+                                    </TableHeader>
+                                    <TableBody>
+                                    {mockTournamentStats.positions.map((pos) => (
+                                        <TableRow key={pos.team}>
+                                        <TableCell className="font-bold">{pos.rank}</TableCell>
+                                        <TableCell>{pos.team}</TableCell>
+                                        <TableCell className="text-center">{pos.played}</TableCell>
+                                        <TableCell className="text-right font-bold">{pos.points}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    </TableBody>
+                                </Table>
                             </div>
-                        </TabsContent>
-                         <TabsContent value="sanctions" className="mt-4">
-                           <div className="rounded-lg border">
-                              <Table>
-                                 <TableHeader>
-                                  <TableRow>
-                                    <TableHead>Jugador</TableHead>
-                                    <TableHead className="text-center">Amarillas</TableHead>
-                                    <TableHead className="text-center">Rojas</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {mockTournamentStats.sanctions.map((s, i) => (
-                                     <TableRow key={i}>
-                                      <TableCell>{s.player}</TableCell>
-                                      <TableCell className="text-center font-bold text-amber-400">{s.yellow}</TableCell>
-                                      <TableCell className="text-center font-bold text-destructive">{s.red}</TableCell>
+                            </TabsContent>
+                            <TabsContent value="scorers" className="mt-4">
+                            <div className="rounded-lg border">
+                                <Table>
+                                    <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[50px]">#</TableHead>
+                                        <TableHead>Jugador</TableHead>
+                                        <TableHead className="text-right">Goles</TableHead>
                                     </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                           </div>
-                        </TabsContent>
-                         <TabsContent value="penalties" className="mt-4">
-                           <div className="text-center py-10 border-2 border-dashed rounded-lg">
-                                <p className="text-muted-foreground">La tabla de penales aparecerá aquí.</p>
+                                    </TableHeader>
+                                    <TableBody>
+                                    {mockTournamentStats.scorers.map((scorer) => (
+                                        <TableRow key={scorer.player}>
+                                        <TableCell className="font-bold">{scorer.rank}</TableCell>
+                                        <TableCell>{scorer.player}</TableCell>
+                                        <TableCell className="text-right font-bold">{scorer.goals}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    </TableBody>
+                                </Table>
                             </div>
-                        </TabsContent>
-                    </Tabs>
-                </CardContent>
+                            </TabsContent>
+                            <TabsContent value="goalkeepers" className="mt-4">
+                            <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                                    <p className="text-muted-foreground">La tabla de valla menos vencida aparecerá aquí.</p>
+                                </div>
+                            </TabsContent>
+                            <TabsContent value="sanctions" className="mt-4">
+                            <div className="rounded-lg border">
+                                <Table>
+                                    <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Jugador</TableHead>
+                                        <TableHead className="text-center">Amarillas</TableHead>
+                                        <TableHead className="text-center">Rojas</TableHead>
+                                    </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                    {mockTournamentStats.sanctions.map((s, i) => (
+                                        <TableRow key={i}>
+                                        <TableCell>{s.player}</TableCell>
+                                        <TableCell className="text-center font-bold text-amber-400">{s.yellow}</TableCell>
+                                        <TableCell className="text-center font-bold text-destructive">{s.red}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
+                            </TabsContent>
+                            <TabsContent value="penalties" className="mt-4">
+                            <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                                    <p className="text-muted-foreground">La tabla de penales aparecerá aquí.</p>
+                                </div>
+                            </TabsContent>
+                        </Tabs>
+                    </CardContent>
+                </ScrollArea>
                 <CardFooter>
                     <Button variant="ghost" onClick={() => setView('buttons')} className="w-full">
                         Volver
@@ -1040,3 +1051,5 @@ export default function ProfilePage() {
     </>
   );
 }
+
+    
