@@ -74,13 +74,13 @@ export default function AdminPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor'))) {
+    if (!loading && (!currentUser || currentUser.role !== 'admin')) {
         router.replace('/');
     }
   }, [currentUser, loading, router]);
 
 
-  if (loading || !currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) {
+  if (loading || !currentUser || currentUser.role !== 'admin') {
     return <div className="p-8 text-center">Cargando...</div>;
   }
 
