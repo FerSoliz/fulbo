@@ -53,6 +53,7 @@ import {
   Crown,
   Flag,
   Handshake,
+  UserPlus,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -468,6 +469,13 @@ export default function ProfilePage() {
       if (!profileUser || !isOwnProfile) return;
       handleSaveProfile({ ...profileUser, transferStatus: status });
   };
+  
+  const handleAddFriend = () => {
+    toast({
+        title: 'Solicitud Enviada',
+        description: `Se ha enviado una solicitud de amistad a ${profileUser?.name}.`,
+    });
+  };
 
 
   if (loading || userLoading)
@@ -558,16 +566,6 @@ export default function ProfilePage() {
                     <Image src={currentCrest} alt="Escudo de equipo" width={40} height={40} />
                   </div>
               )}
-              {currentUser && !isOwnProfile && (
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  onClick={() => setIsFavorite(!isFavorite)}
-                  className="rounded-full bg-black/30 text-white hover:bg-black/50"
-                >
-                  <Star className={cn('w-5 h-5', isFavorite && 'fill-accent text-accent')} />
-                </Button>
-              )}
               {isOwnProfile && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -629,6 +627,11 @@ export default function ProfilePage() {
             <div className="flex flex-col items-start">
               <div className="flex items-center gap-2">
                 <CardTitle className="text-2xl">{name}</CardTitle>
+                 {currentUser && !isOwnProfile && (
+                     <button className="w-8 h-8" onClick={handleAddFriend}>
+                       <Image src="https://i.postimg.cc/fbCMnQ7J/AGREGAR-AMIGO.png" alt="Agregar Amigo" width={32} height={32}/>
+                     </button>
+                  )}
                 {isVerified && (
                   <TooltipProvider>
                     <Tooltip>
