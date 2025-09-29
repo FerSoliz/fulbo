@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
@@ -6,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { initialNotifications, initialUsers } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
-import { auth } from '@/lib/firebase';
+import { auth, dbRealtime, dbRTExports } from '@/lib/firebase'; // Importar dbRealtime y dbRTExports
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
@@ -53,7 +52,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [allUsers, setAllUsers] = useState<User[]>(initialUsers);
+  const [allUsers, setAllUsers] = useState<User[]>(initialUsers); // allUsers sigue con initialUsers por ahora
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [availablePacks, setAvailablePacks] = useState(0);
@@ -62,60 +61,57 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { toast } = useToast();
   
-  useEffect(() => {
-    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    setAllUsers(prev => {
-        const combined = [...initialUsers, ...storedUsers];
-        return Array.from(new Map(combined.map(u => [u.id, u])).values());
-    });
-  }, []);
+  // Eliminamos el useEffect que cargaba allUsers de localStorage
 
-  const updateUserInStorage = (updatedUser: User) => {
-    const newAllUsers = allUsers.map((u) => (u.id === updatedUser.id ? updatedUser : u));
-    setAllUsers(newAllUsers);
+  const updateUserInStorage = async (updatedUser: User) => {
+    // Actualizar en Realtime Database
+    const userRef = dbRTExports.ref(dbRealtime, `users/${updatedUser.id}`);
+    await dbRTExports.set(userRef, updatedUser);
     
-    const usersToStore = newAllUsers.filter(
-      (u) => !initialUsers.some((iu) => iu.id === u.id)
-    );
-    localStorage.setItem("users", JSON.stringify(usersToStore));
+    // Si necesitas actualizar allUsers en el estado local, hazlo aquí (opcional)
+    setAllUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
   };
 
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const combinedUsers = [...initialUsers, ...storedUsers];
-        let foundUser = combinedUsers.find(u => u.id === firebaseUser.uid || u.email === firebaseUser.email);
-        
-        // Ensure admin user always gets correct role and data from initialUsers
-        if (firebaseUser.email === 'admin@sudone.com') {
-            foundUser = initialUsers.find(u => u.role === 'admin');
-        }
+        const userRef = dbRTExports.ref(dbRealtime, `users/${firebaseUser.uid}`);
+        const snapshot = await dbRTExports.get(userRef);
+        let foundUser: User | null = null;
 
-        if (!foundUser) {
-            foundUser = {
-                id: firebaseUser.uid,
-                name: firebaseUser.displayName || 'Nuevo Usuario',
-                username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now()}`,
-                email: firebaseUser.email!,
-                avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
-                role: 'user',
-                isVerified: firebaseUser.emailVerified,
-                isBlocked: false,
-                location: 'Desconocida',
-                sudpoints: 0,
-                baseSudpoints: 0,
-                league: 'Bronce',
-                division: 4,
-                stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-                interactions: 0,
-                packsOpened: 0,
-            };
-            const updatedUsers = [...storedUsers, foundUser];
-            localStorage.setItem('users', JSON.stringify(updatedUsers));
-            setAllUsers(prev => [...prev, foundUser!]);
+        if (snapshot.exists()) {
+          foundUser = snapshot.val() as User;
+        } else {
+          // Si no existe en Realtime DB, creamos un perfil inicial
+          // Podemos buscar si es uno de los initialUsers para usar sus datos base
+          const initialData = initialUsers.find(u => u.id === firebaseUser.uid || u.email === firebaseUser.email);
+
+          foundUser = {
+              id: firebaseUser.uid,
+              name: firebaseUser.displayName || initialData?.name || 'Nuevo Usuario',
+              username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || initialData?.username || `user${Date.now()}`,
+              email: firebaseUser.email!,
+              avatar: firebaseUser.photoURL || initialData?.avatar || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
+              role: initialData?.role || 'user', // Asignar rol de initialUsers o 'user' por defecto
+              isVerified: firebaseUser.emailVerified,
+              isBlocked: initialData?.isBlocked || false,
+              location: initialData?.location || 'Desconocida',
+              sudpoints: initialData?.sudpoints || 0,
+              baseSudpoints: initialData?.baseSudpoints || 0,
+              league: initialData?.league || 'Bronce',
+              division: initialData?.division || 4,
+              dni: initialData?.dni,
+              profileBackground: initialData?.profileBackground,
+              sudonepassLevel: initialData?.sudonepassLevel,
+              sudonepassExp: initialData?.sudonepassExp,
+              transferStatus: initialData?.transferStatus,
+              stats: initialData?.stats || { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+              interactions: initialData?.interactions || 0,
+              packsOpened: initialData?.packsOpened || 0,
+          };
+          await dbRTExports.set(userRef, foundUser);
         }
         
         setUser(foundUser!);
@@ -235,10 +231,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
             interactions: 0,
             packsOpened: 0,
         };
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-        const updatedUsers = [...storedUsers, newUser];
-        localStorage.setItem('users', JSON.stringify(updatedUsers));
-        setAllUsers(prev => [...prev, newUser]);
+        
+        // Guardar el nuevo usuario en Realtime Database
+        const userRef = dbRTExports.ref(dbRealtime, `users/${newUser.id}`);
+        await dbRTExports.set(userRef, newUser);
+
+        setAllUsers(prev => [...prev, newUser]); // Actualizar allUsers localmente si es necesario
         setUser(newUser);
         toast({
           title: "¡Cuenta Creada!",
@@ -270,7 +268,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   };
   
-  const trackInteraction = useCallback(() => {
+  const trackInteraction = useCallback(async () => { // Hacemos async para usar await en updateUserInStorage
     if (!user || user.id === 'visitor') return;
 
     const updatedUser = {
@@ -278,10 +276,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
       interactions: (user.interactions || 0) + 1,
     };
     setUser(updatedUser);
-    updateUserInStorage(updatedUser);
-  }, [user, allUsers]);
+    await updateUserInStorage(updatedUser);
+  }, [user, updateUserInStorage]); // Añadir updateUserInStorage a dependencias
 
-  const trackPackOpening = useCallback(() => {
+  const trackPackOpening = useCallback(async () => { // Hacemos async para usar await en updateUserInStorage
     if (!user || user.id === 'visitor') return;
 
     const updatedUser = {
@@ -289,8 +287,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       packsOpened: (user.packsOpened || 0) + 1,
     };
     setUser(updatedUser);
-    updateUserInStorage(updatedUser);
-  }, [user, allUsers]);
+    await updateUserInStorage(updatedUser);
+  }, [user, updateUserInStorage]); // Añadir updateUserInStorage a dependencias
 
 
   const contextValue: UserContextType = {
