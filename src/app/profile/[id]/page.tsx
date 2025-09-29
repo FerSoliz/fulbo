@@ -670,7 +670,7 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2">
                       <CardTitle className="text-2xl">{name}</CardTitle>
                       {currentUser && !isOwnProfile && (
-                          <button className="w-8 h-8">
+                          <button className="w-8 h-8" onClick={handleAddFriend}>
                             <Image src="https://i.postimg.cc/fbCMnQ7J/AGREGAR-AMIGO.png" alt="Agregar Amigo" width={32} height={32}/>
                           </button>
                       )}
@@ -776,8 +776,8 @@ export default function ProfilePage() {
             </Button>
               <div className='space-y-4'>
                 <div className="flex items-center gap-4 rounded-lg bg-card p-4">
-                    <Image src={team?.crestUrl || ''} alt={`Escudo de ${team?.name}`} width={64} height={64} className="rounded-full bg-muted" />
-                    <h2 className="text-2xl font-bold">{team?.name}</h2>
+                    <Image src={profileUser.team?.crestUrl || 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png'} alt={`Escudo de ${team?.name}`} width={64} height={64} className="rounded-full bg-muted" />
+                    <h2 className="text-2xl font-bold">{profileUser.team?.name || 'SUDONE F.C'}</h2>
                 </div>
                  <Card className="bg-card/80">
                    <CardContent className="p-4">
@@ -819,9 +819,80 @@ export default function ProfilePage() {
                                 </DialogFooter>
                             </DialogContent>
                           </Dialog>
-                          <Button variant="outline" className="h-20 flex-col gap-1" disabled><Users2 className="h-5 w-5"/>Formación</Button>
-                          <Button variant="outline" className="h-20 flex-col gap-1" disabled><MessageCircleIcon className="h-5 w-5"/>Chat de Equipo</Button>
-                          <Button variant="outline" className="h-20 flex-col gap-1" disabled><Search className="h-5 w-5"/>Buscar Jugador</Button>
+                           <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" className="h-20 flex-col gap-1"><Users2 className="h-5 w-5"/>Formación</Button>
+                            </DialogTrigger>
+                             <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                    <DialogTitle>Armar Formación</DialogTitle>
+                                    <DialogDescription>Arrastra los jugadores para definir los titulares y suplentes. (Función en desarrollo)</DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4 space-y-4">
+                                    <div className="p-2 bg-muted rounded-md text-center">
+                                        <p>PROMEDIO DE GOL: <span className="font-bold">1.8</span></p>
+                                        <p>WINRATE: <span className="font-bold">65%</span></p>
+                                        <p className="text-destructive font-bold mt-2">¡Atención! Hay 1 jugador suspendido.</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h4 className="font-bold text-center">TITULARES</h4>
+                                        <div className="grid grid-cols-5 gap-2 h-24 bg-green-900/20 rounded-md p-2 border-2 border-dashed border-green-500">
+                                            {Array(5).fill(null).map((_, i) => <div key={i} className="bg-background/50 rounded flex items-center justify-center text-xs text-muted-foreground">Vacío</div>)}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h4 className="font-bold text-center">SUPLENTES</h4>
+                                        <div className="grid grid-cols-5 gap-2 h-24 bg-yellow-900/20 rounded-md p-2 border-2 border-dashed border-yellow-500">
+                                            {Array(5).fill(null).map((_, i) => <div key={i} className="bg-background/50 rounded flex items-center justify-center text-xs text-muted-foreground">Vacío</div>)}
+                                        </div>
+                                    </div>
+                                </div>
+                                <DialogFooter><DialogClose asChild><Button>Guardar</Button></DialogClose></DialogFooter>
+                             </DialogContent>
+                           </Dialog>
+                           <Dialog>
+                             <DialogTrigger asChild>
+                               <Button variant="outline" className="h-20 flex-col gap-1"><MessageCircleIcon className="h-5 w-5"/>Chat de Equipo</Button>
+                              </DialogTrigger>
+                               <DialogContent>
+                                <DialogHeader><DialogTitle>Chat: {profileUser.team?.name || 'SUDONE F.C'}</DialogTitle></DialogHeader>
+                                <div className="h-80 flex flex-col bg-muted/50 rounded-md p-2">
+                                    <div className="flex-grow space-y-2">
+                                        <p className="text-sm"><span className="font-bold">Capitán:</span> ¡Recuerden confirmar asistencia para el sábado!</p>
+                                        <p className="text-sm"><span className="font-bold text-green-400">Lucio Mingrone:</span> Confirmado.</p>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <Input placeholder="Escribe un mensaje..." />
+                                        <Button>Enviar</Button>
+                                    </div>
+                                </div>
+                               </DialogContent>
+                           </Dialog>
+                           <Dialog>
+                            <DialogTrigger asChild>
+                               <Button variant="outline" className="h-20 flex-col gap-1"><Search className="h-5 w-5"/>Buscar Jugador</Button>
+                            </DialogTrigger>
+                             <DialogContent>
+                                <DialogHeader><DialogTitle>Buscar Fichajes</DialogTitle></DialogHeader>
+                                <Input placeholder="Buscar por nombre..." className="my-4"/>
+                                <ScrollArea className="h-72">
+                                    <div className="space-y-2">
+                                        {allUsers.filter(u => u.transferStatus === 'libre' || u.transferStatus === 'traspaso').map(p => (
+                                        <div key={p.id} className="flex items-center justify-between p-2 bg-muted/50 rounded-md">
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="h-8 w-8"><AvatarImage src={p.avatar} /><AvatarFallback>{p.name.charAt(0)}</AvatarFallback></Avatar>
+                                                <div>
+                                                    <p className="font-semibold">{p.name}</p>
+                                                    <p className={cn("text-xs font-bold", p.transferStatus === 'libre' ? 'text-green-400' : 'text-yellow-400')}>{p.transferStatus?.toUpperCase()}</p>
+                                                </div>
+                                            </div>
+                                            <Button size="sm">Contactar</Button>
+                                        </div>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
+                             </DialogContent>
+                           </Dialog>
                       </div>
                    </CardContent>
                  </Card>
