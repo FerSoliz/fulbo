@@ -53,7 +53,6 @@ export default function ForgotPasswordPage() {
                   src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
                   alt="SUDONE Logo"
                   width={200}
-                  height={60}
                   priority
                   className="h-auto"
                   />
