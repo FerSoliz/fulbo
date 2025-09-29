@@ -263,7 +263,7 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
 
   return (
     <>
-    <aside className={sidebarClasses}>
+    <aside className={cn(sidebarClasses, "rounded-r-xl")}>
         <div className="flex h-16 items-center justify-center border-b p-2">
           <Link href="/" onClick={onLinkClick}>
             <Image
