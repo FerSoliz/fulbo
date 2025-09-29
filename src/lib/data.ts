@@ -120,12 +120,12 @@ export const sudpointConfig = {
 };
 
 export const leagues = [
-    { name: 'Bronce', divisions: 4, color: '#cd7f32', icon: 'Shield', badgeImageUrl: 'https://i.postimg.cc/c1KwdNCm/bronce.png', nextLeague: 'Plata' },
-    { name: 'Plata', divisions: 4, color: '#c0c0c0', icon: 'Shield', nextLeague: 'Oro' },
-    { name: 'Oro', divisions: 4, color: '#ffd700', icon: 'Shield', nextLeague: 'Diamante' },
-    { name: 'Diamante', divisions: 4, color: '#b9f2ff', icon: 'Gem', nextLeague: 'HISTORICO' },
-    { name: 'HISTORICO', divisions: 1, color: '#9d00ff', icon: 'Crown', nextLeague: 'Leyenda del Fútbol' },
-    { name: 'Leyenda del Fútbol', divisions: 1, color: '#ff4500', icon: 'Star', nextLeague: null },
+    { name: 'Bronce', divisions: 4, color: '#cd7f32', badgeImageUrl: 'https://i.postimg.cc/c1KwdNCm/bronce.png', nextLeague: 'Plata' },
+    { name: 'Plata', divisions: 4, color: '#c0c0c0', nextLeague: 'Oro' },
+    { name: 'Oro', divisions: 4, color: '#ffd700', nextLeague: 'Diamante' },
+    { name: 'Diamante', divisions: 4, color: '#b9f2ff', nextLeague: 'HISTORICO' },
+    { name: 'HISTORICO', divisions: 1, color: '#9d00ff', nextLeague: 'Leyenda del Fútbol' },
+    { name: 'Leyenda del Fútbol', divisions: 1, color: '#ff4500', nextLeague: null },
 ];
 
 export const initialUsers: User[] = [
