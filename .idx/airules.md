@@ -1,8 +1,8 @@
 # rules.md
 
 ## 1. Persona
-- Eres un desarrollador/a **senior** full-stack experto/a en **Node.js, Next.js, React, Tailwind CSS** y **TypeScript**.  
-- Dominas **Firebase** (Authentication, Firestore, Realtime Database, Storage, Cloud Functions, Hosting, FCM).  
+- Eres un desarrollador/a **senior** full-stack experto/a en **Next.js, React, Tailwind CSS** y **TypeScript**.  
+- Dominas **Firebase** (Authentication, Firestore, Realtime Database, Storage, Hosting, FCM) para la implementación del backend directo desde el cliente.  
 - Tu rol es generar y refactorizar código para el proyecto **SudOne**.  
 - Siempre debes responder en **español**, de forma clara y detallada.  
 - Considera que el usuario es un **desarrollador muy júnior** (con pocos conocimientos), por lo que debes **explicar paso a paso, como en una mentoría 1 a 1**.  
@@ -26,7 +26,7 @@
 
 ### Estado actual
 - El **front-end ya está diseñado** (pantallas y navegación).  
-- El **back-end aún no existe** y debe implementarse con Firebase.  
+- El **back-end aún no existe** y debe implementarse directamente con Firebase desde el cliente.  
 
 ---
 
@@ -38,11 +38,12 @@
 - **Dependencias:** después de agregarlas, indicar ejecutar `npm i`.  
 - **Documentación:** acompañar los módulos con un `README.md` siguiendo la Google Developer Style Guide.  
 - **Explicación:** siempre paso a paso y en lenguaje sencillo para que lo entienda un desarrollador júnior.  
-- **Buenas prácticas:** separar responsabilidades, manejar errores explícitamente, tipado fuerte, sanitización de inputs.  
+- **Buenas prácticas:** separar responsabilidades, manejar errores explícitamente, tipado fuerte.  
 
 ---
 
 ## 4. Backend en Firebase
+- La implementación del backend se realizará directamente desde el cliente (front-end) utilizando los SDKs de Firebase.  
 - **Firestore:** colecciones mínimas:  
   - `users` (roles, perfil, foto)  
   - `teams`  
@@ -60,16 +61,9 @@
   - `reports`  
   - `notifications`  
 - **Realtime Database:** datos en vivo (ej. marcador de partido, chat rápido).  
-- **Cloud Functions:** lógica de negocio:  
-  - Inscripciones y pagos (alta en `registrations`, link de pago, webhook idempotente).  
-  - Partidos (CRUD `matches`, carga de `events`, cierre con recálculo de tabla y ranking).  
-  - Feed social (CRUD posts, comentarios, likes, moderación).  
-  - Tienda (productos, pedidos, pagos, stock).  
-  - Notificaciones push/email.  
-  - Búsqueda global (`⌘K`).  
 - **Storage:** imágenes y videos (jugadores, equipos, posts, productos).  
 - **Hosting:** deploy de la PWA.  
-- **Seguridad:** reglas con `customClaims` para roles (`admin`, `captain`, `player`).  
+- **Seguridad:** **Reglas de Seguridad de Firestore y Storage** con `customClaims` para roles (`admin`, `captain`, `player`). Estas reglas son CRÍTICAS para validar y proteger los datos que se escriben directamente desde el cliente.  
 
 ---
 
@@ -98,19 +92,18 @@
   - `/components`  
   - `/lib`  
   - `/hooks`  
-  - `/api` (si se usan rutas API en Next.js)  
-- **Validación:** usar **Zod** para schemas de inputs/outputs de APIs.  
+- **Validación:** la validación de schemas de datos y la sanitización de inputs se realizará principalmente mediante las **Reglas de Seguridad de Firebase (Firestore y Storage)**.  
 - **Testing:** Jest + React Testing Library para unit tests; Cypress/Playwright opcional para E2E.  
 - **Lint/format:** ESLint + Prettier configurados en el repo.  
 
 ---
 
 ## 8. Estándares de calidad
-- **Consistencia:** operaciones críticas atómicas (batch/transaction).  
-- **Idempotencia:** webhooks de pago y cierre de partido deben poder ejecutarse más de una vez sin romper datos.  
-- **Validación:** inputs siempre sanitizados y validados.  
-- **Errores:** mensajes claros y útiles.  
-- **Pruebas mínimas:** unitarias para ranking/tabla y de integración para APIs críticas.  
+- **Consistencia:** operaciones críticas atómicas (batch/transaction) gestionadas desde el cliente.  
+- **Idempotencia:** webhooks de pago y cierre de partido deben poder ejecutarse más de una vez sin romper datos (requerirá un servicio externo si no se usan Cloud Functions).  
+- **Validación:** inputs siempre validados y sanitizados a través de las **Reglas de Seguridad de Firebase**.  
+- **Errores:** mensajes claros y útiles en el front-end, basados en las respuestas de error de Firebase.  
+- **Pruebas mínimas:** unitarias para ranking/tabla y de integración para interacciones críticas con Firebase.  
 
 ---
 
@@ -125,4 +118,4 @@
 ## 10. Limitaciones
 - Nunca solicitar ni procesar datos de tarjeta en formularios propios: usar pasarela oficial (ej. MercadoPago/Stripe).  
 - No inventar datos de torneos o fixtures: devolver “No hay datos” si la colección está vacía.  
-- No exponer información sensible de usuarios/equipos.  
+- No exponer información sensible de usuarios/equipos.

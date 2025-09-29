@@ -1,226 +1,149 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Image as ImageIcon, Video, X, Play, Star } from 'lucide-react';
-import { User, Post } from '@/lib/data';
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import Image from 'next/image';
-import { useUpload } from '@/hooks/use-upload';
-import { Progress } from '@/components/ui/progress';
-import { cn } from '@/lib/utils';
+import { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Post, User } from '@/lib/data';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast'; // Importamos useToast
 
 interface CreatePostFormProps {
-  currentUser: User;
-  onAddPost: (post: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments'>) => void;
+  currentUser: User | null;
+  onAddPost: (newPostData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments' | 'media'>, imageFile?: File | null) => Promise<void>; // Aseguramos que onAddPost devuelve una promesa
 }
 
 export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) {
   const [content, setContent] = useState('');
-  const [filesToUpload, setFilesToUpload] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [youtubeVideoId, setYoutubeVideoId] = useState<string | null>(null);
-  const [twitchChannelName, setTwitchChannelName] = useState<string | null>(null);
   const [isPinned, setIsPinned] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { uploadMultipleFiles, isUploading, progress } = useUpload();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast(); // Inicializamos useToast
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!content.trim() && !imageFile) {
+      toast({
+        title: "Error",
+        description: "El post no puede estar vacío ni sin imagen.",
+        variant: "destructive",
+      });
+      return;
     }
-  }, [content]);
-
-  const getYoutubeVideoId = (url: string): string | null => {
-    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/;
-    const match = url.match(youtubeRegex);
-    return match ? match[1] : null;
-  };
-
-  const getTwitchChannelName = (url: string): string | null => {
-    const twitchRegex = /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]+)\/?$/;
-    const match = url.match(twitchRegex);
-    return match ? match[1] : null;
-  }
-
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const newContent = e.target.value;
-    setContent(newContent);
-    
-    const ytbId = getYoutubeVideoId(newContent);
-    const twChannel = getTwitchChannelName(newContent);
-
-    setYoutubeVideoId(ytbId);
-    setTwitchChannelName(twChannel);
-  };
-
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const newFiles = Array.from(event.target.files);
-      setFilesToUpload((prevFiles) => [...prevFiles, ...newFiles]);
-      
-      const newPreviews = newFiles.map(file => URL.createObjectURL(file));
-      setImagePreviews(prevPreviews => [...prevPreviews, ...newPreviews]);
-    }
-  };
-
-  const removeImage = (indexToRemove: number) => {
-    setFilesToUpload(prevFiles => prevFiles.filter((_, i) => i !== indexToRemove));
-    setImagePreviews(prevPreviews => {
-      const newPreviews = prevPreviews.filter((_, i) => i !== indexToRemove);
-      // Clean up blob urls to prevent memory leaks
-      const urlToRemove = imagePreviews[indexToRemove];
-      if (urlToRemove.startsWith('blob:')) {
-          URL.revokeObjectURL(urlToRemove);
-      }
-      return newPreviews;
-    });
-  };
-  
-  const removeVideo = () => {
-    setYoutubeVideoId(null);
-    setTwitchChannelName(null);
-  }
-
-  const handleSubmit = async () => {
-    let media: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string; }[] = [];
-    
-    if (!content && filesToUpload.length === 0 && !youtubeVideoId && !twitchChannelName) return;
-    
-    if(filesToUpload.length > 0) {
-      const uploadedImageUrls = await uploadMultipleFiles(filesToUpload, `posts/${currentUser.id}`);
-      media = uploadedImageUrls.map(url => ({ type: 'image', url }));
-    } else if (youtubeVideoId) {
-       media.push({ type: 'video', url: `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`, videoType: 'youtube', videoId: youtubeVideoId });
-    } else if (twitchChannelName) {
-       media.push({ type: 'video', url: `https://static-cdn.jtvnw.net/previews-ttv/live_user_${twitchChannelName}-1280x720.jpg`, videoType: 'twitch', videoId: twitchChannelName });
+    if (!currentUser || currentUser.id === 'visitor') { // Aseguramos que el usuario esté realmente logueado
+        toast({
+            title: "Error",
+            description: "Debes iniciar sesión para publicar.",
+            variant: "destructive",
+        });
+        return;
     }
 
-    onAddPost({
-      authorId: currentUser.id,
-      title: '', // No title anymore
-      content,
-      media: media,
-      isPinned,
-    });
-
-    // Reset form
-    setContent('');
-    setFilesToUpload([]);
-    setImagePreviews([]);
-    setYoutubeVideoId(null);
-    setTwitchChannelName(null);
-    setIsPinned(false);
-    if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+    setIsSubmitting(true);
+    try {
+        await onAddPost(
+            {
+                authorId: currentUser.id,
+                content,
+                isPinned,
+            },
+            imageFile
+        );
+        setContent('');
+        setIsPinned(false);
+        setImageFile(null);
+        setImagePreview(null);
+        toast({
+            title: "Publicación exitosa",
+            description: "Tu post ha sido publicado en el feed.",
+        });
+    } catch (error) {
+        console.error("Error al intentar añadir post desde el formulario:", error);
+        // Aquí mostramos el error al usuario usando el toast
+        toast({
+            title: "Error al publicar",
+            description: "No se pudo publicar tu post. Asegúrate de tener los permisos necesarios o inténtalo de nuevo.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsSubmitting(false);
     }
   };
-  
-  const hasVideo = !!youtubeVideoId || !!twitchChannelName;
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setImageFile(file);
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setImageFile(null);
+      setImagePreview(null);
+    }
+  };
 
   return (
-    <Card className="p-4">
-      <div className="flex items-start gap-4">
+    <form onSubmit={handleSubmit} className="bg-card p-4 rounded-lg shadow-sm">
+      <div className="flex items-center space-x-3 mb-4">
         <Avatar>
-          <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
-          <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
+          <AvatarImage src={currentUser?.avatar || 'https://github.com/shadcn.png'} alt="Avatar" />
+          <AvatarFallback>CN</AvatarFallback>
         </Avatar>
-        <div className="w-full bg-muted rounded-full flex items-center px-4 py-1">
-            <Textarea
-              ref={textareaRef}
-              placeholder={`¿Qué estás pensando, ${currentUser.name}?`}
-              value={content}
-              onChange={handleContentChange}
-              className="border-none shadow-none focus-visible:ring-0 px-0 resize-none overflow-hidden text-base bg-transparent min-h-[2.5rem] flex items-center"
-              rows={1}
-              disabled={isUploading}
-            />
-        </div>
+        <p className="font-semibold text-card-foreground">{currentUser?.name || 'Usuario Invitado'}</p>
       </div>
-       
-       {hasVideo && (
-        <div className="mt-4 relative group ml-14">
-           <Image
-                src={youtubeVideoId ? `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg` : `https://static-cdn.jtvnw.net/previews-ttv/live_user_${twitchChannelName}-1280x720.jpg`}
-                alt="Video thumbnail"
-                width={1280}
-                height={720}
-                className="w-full h-auto rounded-lg object-cover bg-muted"
-                // In case twitch thumbnail fails
-                onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}
-            />
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
-                <Play className="h-16 w-16 text-white" />
-            </div>
-            {!isUploading && <Button
-                variant="destructive"
-                size="icon"
-                className="absolute top-2 right-2 h-7 w-7 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={removeVideo}
+
+      <Textarea
+        placeholder="¿Qué estás pensando?"
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        className="mb-4 bg-background border-border text-foreground"
+        rows={4}
+      />
+
+      <div className="mb-4">
+        <Label htmlFor="post-image" className="text-sm font-medium text-foreground">Adjuntar imagen (opcional)</Label>
+        <input
+          id="post-image"
+          type="file"
+          accept="image/*"
+          onChange={handleImageChange}
+          className="block w-full text-sm text-foreground file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+        />
+        {imagePreview && (
+          <div className="mt-4 relative w-full h-48 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+            <img src={imagePreview} alt="Previsualización de imagen" className="max-h-full max-w-full object-contain" />
+            <Button
+              type="button"
+              onClick={() => { setImageFile(null); setImagePreview(null); }}
+              className="absolute top-2 right-2 p-2 rounded-full bg-background/70 hover:bg-background"
+              size="icon"
             >
-                <X className="h-4 w-4" />
-            </Button>}
-        </div>
-       )}
-
-      {imagePreviews.length > 0 && !hasVideo && (
-        <ScrollArea className="w-full whitespace-nowrap rounded-md mt-4 ml-14">
-            <div className="flex space-x-2 p-1">
-                {imagePreviews.map((url, index) => (
-                    <div key={index} className="relative h-24 w-24 flex-shrink-0">
-                        <Image src={url} alt={`Preview ${index}`} fill className="object-cover rounded-md" />
-                        {!isUploading && <Button
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-1 right-1 h-5 w-5 rounded-full"
-                            onClick={() => removeImage(index)}
-                        >
-                            <X className="h-3 w-3" />
-                        </Button>}
-                    </div>
-                ))}
-            </div>
-            <ScrollBar orientation="horizontal" />
-        </ScrollArea>
-      )}
-
-      {isUploading && <Progress value={progress} className="mt-4" />}
-
-      <div className="flex justify-between items-center mt-4 pt-4 border-t">
-        <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploading || hasVideo}
-          >
-            <ImageIcon className="h-5 w-5 text-muted-foreground" />
-          </Button>
-          <input
-            type="file"
-            ref={fileInputRef}
-            className="hidden"
-            accept="image/*"
-            multiple
-            onChange={handleFileChange}
-            disabled={hasVideo}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={() => setIsPinned(!isPinned)} disabled={isUploading}>
-                <Star className={cn("h-5 w-5 text-muted-foreground", isPinned && "fill-accent text-accent")} />
+                X
             </Button>
-            <Button onClick={handleSubmit} disabled={(!content && filesToUpload.length === 0 && !hasVideo) || isUploading}>
-              {isUploading ? `Publicando... ${Math.round(progress)}%` : 'Publicar'}
-            </Button>
-        </div>
+          </div>
+        )}
       </div>
-    </Card>
+
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="pin-post"
+            checked={isPinned}
+            onCheckedChange={setIsPinned}
+            className="data-[state=checked]:bg-primary data-[state=unchecked]:bg-input"
+          />
+          <Label htmlFor="pin-post" className="text-sm text-foreground">Fijar publicación (12 horas)</Label>
+        </div>
+        <Button type="submit" disabled={isSubmitting || (!content.trim() && !imageFile)} className="bg-primary text-primary-foreground hover:bg-primary/90">
+          {isSubmitting ? 'Publicando...' : 'Publicar'}
+        </Button>
+      </div>
+    </form>
   );
 }

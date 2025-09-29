@@ -3,36 +3,45 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Reglas para la colección 'users'
-    // Cualquiera puede crear su propio perfil de usuario al registrarse.
-    // Solo el propio usuario o un admin puede leer o actualizar sus datos.
+    // Regla para la colección de usuarios
+    // Un usuario solo puede leer y escribir en su propio documento
+    // Los administradores pueden leer y escribir en todos los documentos de usuario
     match /users/{userId} {
-      allow read, update: if request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-      allow create: if request.auth.uid == userId;
+      allow read: if request.auth != null && (request.auth.uid == userId || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow create: if request.auth != null && request.auth.uid == userId; // Solo crear su propio perfil
+      allow update: if request.auth != null && request.auth.uid == userId && (
+        // Permitir actualizar campos específicos, pero no el rol por sí mismo desde el cliente
+        // Si el rol debe ser modificado, debe ser a través de un admin.
+        // Aquí puedes listar los campos que SÍ pueden actualizar:
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'username', 'avatar', 'location', 'profileBackground', 'dni'])
+        // Si hay otros campos que el usuario puede actualizar, añádelos aquí.
+        // Por ahora, solo permitimos cambios en nombre, username, avatar, location, profileBackground, dni
+      ) || (request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      allow delete: if false; // Los usuarios no pueden eliminar sus propios perfiles directamente desde la app
     }
 
-    // Reglas para la colección 'posts'
-    // Cualquiera puede leer los posts.
+    // Regla para la colección de posts
     match /posts/{postId} {
+      // Todos pueden leer los posts
       allow read: if true;
-      
-      // Solo usuarios con rol 'admin' o 'captain' pueden crear posts.
-      // Además, validamos que los datos que llegan son correctos.
-      allow create: if request.auth != null && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'captain')
-                    && request.resource.data.title is string
-                    && request.resource.data.content is string
-                    && request.resource.data.authorId == request.auth.uid;
 
-      // Solo el autor original del post o un admin puede actualizarlo o borrarlo.
-      allow update, delete: if request.auth != null && (resource.data.authorId == request.auth.uid || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin');
+      // Solo administradores y capitanes pueden crear posts
+      // El authorId del post debe coincidir con el uid del usuario que lo crea
+      allow create: if request.auth != null && request.resource.data.authorId == request.auth.uid && (
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'captain'
+      );
+
+      // Solo administradores y el autor original pueden actualizar o eliminar un post
+      allow update, delete: if request.auth != null && (
+        request.resource.data.authorId == request.auth.uid || // El autor puede actualizar/eliminar su propio post
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' // Un admin puede actualizar/eliminar cualquier post
+      );
     }
 
-    // --- Placeholder para otras colecciones (¡Debemos definirlas!) ---
-    // Es importante añadir reglas para el resto de colecciones:
-    // teams, tournaments, registrations, matches, etc.
-    // Por ahora, denegaremos el acceso por defecto para ser seguros.
+    // Regla por defecto para cualquier otra colección (denegar todo por seguridad)
     match /{document=**} {
-        allow read, write: if false;
+      allow read, write: if false;
     }
   }
 }

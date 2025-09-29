@@ -1,45 +1,64 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Directorios de dependencias
+node_modules
+.next/        # Directorio de build de Next.js
+out/         # Directorio de exportación estática de Next.js (si lo usas)
+dist/        # Directorio de distribución general (ej. si compilas TypeScript para una librería)
+build/       # Directorio de build general
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Archivos de log
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# vercel
-.vercel
+# Archivos de configuración de entorno (variables de entorno sensibles)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.staging.local
 
-# typescript
-*.tsbuildinfo
-next-env.d.ts
+# Archivos de caché
+.DS_Store                  # macOS
+*.tgz
+.yarn/                     # Directorio de caché de Yarn
+.cache/                    # Caché de Next.js u otras herramientas
+.next/cache/               # Caché específico de Next.js
+.eslintcache               # Caché de ESLint
+.firebase/                 # Caché de Firebase CLI
 
-.genkit/*
-.env*
+# IDEs y editores
+.vscode/                   # Configuraciones de VS Code (opcional, si es personal y no de proyecto)
+.idea/                     # IntelliJ IDEA
+*.sublime-project
+*.sublime-workspace
 
-# firebase
+# Varios
+.local/
+.npm/
+
+# Firebase
 firebase-debug.log
-firestore-debug.log
+firebase-debug.*.log
+.firebase/
+# `firebase-admin.json` o cualquier otro archivo de credenciales de servicio, si lo usas directamente en el código
+# ¡MUY IMPORTANTE! NO SUBIR ARCHIVOS CON CLAVES SENSIBLES.
+# Si tienes un archivo con credenciales de Firebase Admin SDK (ej. una cuenta de servicio),
+# asegúrate de que esté listado aquí si se usa localmente y no debe ir al repo.
+# Por ejemplo: my-firebase-admin-sdk-key.json
+
+# Directorio de Cloud Functions (si tienes un node_modules dentro de functions/)
+functions/node_modules/
+functions/lib/ # Si Cloud Functions se compilan a JS aquí
+
+# Archivos de TypeScript (archivos .js y .js.map generados)
+*.js
+*.js.map
+!*.spec.js # Si tienes tests en .js y quieres incluirlos.
+!*.d.ts    # Si tienes archivos de definición de tipos y quieres incluirlos.
+
+# Archivos temporales
+*.tmp
+*.bak

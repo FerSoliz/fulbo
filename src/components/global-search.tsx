@@ -1,20 +1,22 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Search, User, Trophy, Gamepad2, Newspaper, History, X } from 'lucide-react';
+import { Search, Trophy, Gamepad2, Newspaper, History, X } from 'lucide-react'; // Se remueve UserIcon
+// Avatar y useUser se mantienen porque currentUser puede ser necesario para algo más
+// pero ya no se usará allUsers
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useUser } from '@/context/user-context';
 import { cn } from '@/lib/utils';
 
 type SearchResult = {
-  type: 'USUARIO' | 'TORNEO' | 'PÁGINA' | 'JUEGO';
+  type: 'TORNEO' | 'PÁGINA' | 'JUEGO'; // Se remueve USUARIO del tipo
   id: string;
   name: string;
-  avatar?: string;
+  avatar?: string; // Avatar se mantiene por si en el futuro se usa para torneos, etc.
   path: string;
 };
 
@@ -27,39 +29,31 @@ const staticPages: SearchResult[] = [
 
 export function GlobalSearch() {
   const router = useRouter();
-  const { allUsers } = useUser();
+  const { user: currentUser } = useUser(); // Mantenemos currentUser por si se usa en otro lugar del componente
   const [open, setOpen] = useState(false);
+  // Eliminamos usersData y su useEffect de carga
   const [allData, setAllData] = useState<SearchResult[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [history, setHistory] = useState<SearchResult[]>([]);
   const [filteredData, setFilteredData] = useState<SearchResult[]>([]);
 
-
+  // useEffect para cargar solo datos de torneos (de localStorage) y páginas estáticas
   useEffect(() => {
-    // Load all searchable data
-    const userResults: SearchResult[] = allUsers.map(user => ({
-      type: 'USUARIO',
-      id: user.id,
-      name: user.name,
-      avatar: user.avatar,
-      path: `/profile/${user.id}`,
-    }));
-
     const storedTournaments = JSON.parse(localStorage.getItem('tournaments') || '[]');
-    const tournamentResults: SearchResult[] = storedTournaments.map((t: any) => ({
+    const tournamentResults: SearchResult[] = Array.isArray(storedTournaments) ? storedTournaments.map((t: any) => ({
         type: 'TORNEO',
         id: t.id,
         name: t.name,
         path: `/leagues`,
-    }));
+    })) : [];
 
-    setAllData([...userResults, ...tournamentResults, ...staticPages]);
+    setAllData([...tournamentResults, ...staticPages]);
     
-    // Load search history from localStorage
+    // Cargar historial de búsqueda de localStorage
     const savedHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
-    setHistory(savedHistory);
+    setHistory(Array.isArray(savedHistory) ? savedHistory : []);
 
-  }, [allUsers]);
+  }, []); // Dependencias vacías, solo se ejecuta una vez al montar
 
    useEffect(() => {
     if (searchValue.length >= 3) {
@@ -92,7 +86,7 @@ export function GlobalSearch() {
   };
   
   const removeFromHistory = (e: React.MouseEvent, id: string) => {
-      e.stopPropagation(); // Prevent item selection
+      e.stopPropagation(); // Evita la selección del ítem
       const newHistory = history.filter(h => h.id !== id);
       setHistory(newHistory);
       localStorage.setItem('searchHistory', JSON.stringify(newHistory));
@@ -107,7 +101,7 @@ export function GlobalSearch() {
   
   const getIcon = (type: SearchResult['type']) => {
     switch (type) {
-        case 'USUARIO': return <User className="h-4 w-4 mr-3 text-muted-foreground"/>;
+        // case 'USUARIO': return <UserIcon className="h-4 w-4 mr-3 text-muted-foreground"/>; // Se remueve
         case 'TORNEO': return <Trophy className="h-4 w-4 mr-3 text-muted-foreground"/>;
         case 'PÁGINA': return <Newspaper className="h-4 w-4 mr-3 text-muted-foreground"/>;
         case 'JUEGO': return <Gamepad2 className="h-4 w-4 mr-3 text-muted-foreground"/>;
@@ -133,7 +127,7 @@ export function GlobalSearch() {
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
              <Command shouldFilter={false}>
                 <CommandInput 
-                    placeholder="Busca un perfil, torneo, página..." 
+                    placeholder="Busca un torneo, página, juego..." // Placeholder actualizado
                     value={searchValue}
                     onValueChange={setSearchValue}
                 />
@@ -156,17 +150,7 @@ export function GlobalSearch() {
                     {searchValue.length >= 3 && (
                        <>
                          <CommandEmpty>No se encontraron resultados.</CommandEmpty>
-                         {filteredData.filter(i => i.type === 'USUARIO').length > 0 && <CommandGroup heading="Usuarios">
-                             {filteredData.filter(i => i.type === 'USUARIO').map(item => (
-                                 <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)}>
-                                     <Avatar className="h-6 w-6 mr-3">
-                                         <AvatarImage src={item.avatar}/>
-                                         <AvatarFallback>{item.name.charAt(0)}</AvatarFallback>
-                                     </Avatar>
-                                     {item.name}
-                                 </CommandItem>
-                             ))}
-                         </CommandGroup>}
+                         {/* Se remueve la sección de búsqueda de usuarios */}
                          {filteredData.filter(i => i.type === 'TORNEO').length > 0 && <CommandGroup heading="Torneos">
                              {filteredData.filter(i => i.type === 'TORNEO').map(item => (
                                  <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)}>

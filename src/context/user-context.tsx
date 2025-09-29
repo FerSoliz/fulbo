@@ -3,9 +3,16 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
-import { initialNotifications, initialUsers } from '@/lib/data';
+import { initialNotifications } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
-import { auth, dbRealtime, dbRTExports } from '@/lib/firebase'; // Importar dbRealtime y dbRTExports
+import {
+  auth,
+  db,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
+} from '@/lib/firebase';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
@@ -14,7 +21,7 @@ const defaultVisitor: User = {
     id: 'visitor',
     name: 'VISITANTE',
     username: 'visitante',
-    role: 'user', 
+    role: 'user',
     avatar: 'https://avatar.vercel.sh/visitor.png',
     isVerified: false,
     isBlocked: false,
@@ -30,12 +37,11 @@ const defaultVisitor: User = {
 
 interface UserContextType {
   user: User | null;
-  allUsers: User[];
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
-  setAllUsers: React.Dispatch<React.SetStateAction<User[]>>;
   loading: boolean;
   login: (email: string, pass: string) => Promise<boolean>;
-  register: (name: string, username: string, email: string, pass: string, dni: string) => Promise<boolean>;
+  // ¡CORREGIDO! Se añade el sexto parámetro para el fondo de perfil.
+  register: (name: string, username: string, email: string, pass: string, dni: string, profileBackgroundUrl: string) => Promise<boolean>;
   logout: () => Promise<void>;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
@@ -52,7 +58,6 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [allUsers, setAllUsers] = useState<User[]>(initialUsers); // allUsers sigue con initialUsers por ahora
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [availablePacks, setAvailablePacks] = useState(0);
@@ -60,72 +65,86 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [countdown, setCountdown] = useState('');
   const router = useRouter();
   const { toast } = useToast();
-  
-  // Eliminamos el useEffect que cargaba allUsers de localStorage
 
-  const updateUserInStorage = async (updatedUser: User) => {
-    // Actualizar en Realtime Database
-    const userRef = dbRTExports.ref(dbRealtime, `users/${updatedUser.id}`);
-    await dbRTExports.set(userRef, updatedUser);
-    
-    // Si necesitas actualizar allUsers en el estado local, hazlo aquí (opcional)
-    setAllUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
-  };
-
+  const updateUserInFirestore = useCallback(async (updatedUser: User) => {
+    if (!db) {
+      console.error("Firestore DB no está inicializada.");
+      return;
+    }
+    try {
+      const userRef = doc(db, `users`, updatedUser.id);
+      await setDoc(userRef, updatedUser, { merge: true });
+      console.log(`Usuario ${updatedUser.id} actualizado en Firestore.`);
+    } catch (error) {
+      console.error("Error al actualizar usuario en Firestore:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo actualizar la información del usuario.",
+        variant: "destructive",
+      });
+    }
+  }, [toast]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
-        const userRef = dbRTExports.ref(dbRealtime, `users/${firebaseUser.uid}`);
-        const snapshot = await dbRTExports.get(userRef);
+        if (!db) {
+          console.error("Firestore DB no está inicializada al cargar usuario.");
+          setUser(defaultVisitor);
+          setLoading(false);
+          return;
+        }
+
+        const userRef = doc(db, `users`, firebaseUser.uid);
+        const userDoc = await getDoc(userRef);
         let foundUser: User | null = null;
 
-        if (snapshot.exists()) {
-          foundUser = snapshot.val() as User;
+        if (userDoc.exists()) {
+          foundUser = userDoc.data() as User;
+          if (!foundUser.role) {
+              foundUser = { ...foundUser, role: 'user' };
+              await updateDoc(userRef, { role: 'user' });
+          }
         } else {
-          // Si no existe en Realtime DB, creamos un perfil inicial
-          // Podemos buscar si es uno de los initialUsers para usar sus datos base
-          const initialData = initialUsers.find(u => u.id === firebaseUser.uid || u.email === firebaseUser.email);
-
           foundUser = {
               id: firebaseUser.uid,
-              name: firebaseUser.displayName || initialData?.name || 'Nuevo Usuario',
-              username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || initialData?.username || `user${Date.now()}`,
+              name: firebaseUser.displayName || 'Nuevo Usuario',
+              username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now()}`,
               email: firebaseUser.email!,
-              avatar: firebaseUser.photoURL || initialData?.avatar || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
-              role: initialData?.role || 'user', // Asignar rol de initialUsers o 'user' por defecto
+              avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
+              role: 'user',
               isVerified: firebaseUser.emailVerified,
-              isBlocked: initialData?.isBlocked || false,
-              location: initialData?.location || 'Desconocida',
-              sudpoints: initialData?.sudpoints || 0,
-              baseSudpoints: initialData?.baseSudpoints || 0,
-              league: initialData?.league || 'Bronce',
-              division: initialData?.division || 4,
-              dni: initialData?.dni,
-              profileBackground: initialData?.profileBackground,
-              sudonepassLevel: initialData?.sudonepassLevel,
-              sudonepassExp: initialData?.sudonepassExp,
-              transferStatus: initialData?.transferStatus,
-              stats: initialData?.stats || { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-              interactions: initialData?.interactions || 0,
-              packsOpened: initialData?.packsOpened || 0,
+              isBlocked: false,
+              location: 'Desconocida',
+              sudpoints: 0,
+              baseSudpoints: 0,
+              league: 'Bronce',
+              division: 4,
+              dni: '',
+              profileBackground: '',
+              sudonepassLevel: 0,
+              sudonepassExp: 0,
+              transferStatus: 'available',
+              stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+              interactions: 0,
+              packsOpened: 0,
           };
-          await dbRTExports.set(userRef, foundUser);
+          await setDoc(userRef, foundUser);
+          console.log(`Nuevo usuario ${foundUser.id} creado en Firestore.`);
         }
-        
+
         setUser(foundUser!);
         const notifs = JSON.parse(localStorage.getItem(`notifications_${foundUser!.id}`) || 'null');
         setNotifications(notifs || initialNotifications);
 
-        // Load packs data for the logged-in user
         const savedPacksData = localStorage.getItem(`userCardPacksData_${foundUser!.id}`);
         if (savedPacksData) {
             const { packs, timestamp } = JSON.parse(savedPacksData);
             setAvailablePacks(packs);
             setNextPackTimestamp(timestamp);
         } else {
-            setAvailablePacks(1); // Start with 1 free pack
+            setAvailablePacks(1);
             setNextPackTimestamp(null);
         }
 
@@ -140,8 +159,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [updateUserInFirestore, toast]);
 
 
   useEffect(() => {
@@ -150,13 +168,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user, notifications]);
 
-  // Packs logic moved from collectibles page
   useEffect(() => {
     if (!user || user.id === 'visitor') return;
-
     const packsData = { packs: availablePacks, timestamp: nextPackTimestamp };
     localStorage.setItem(`userCardPacksData_${user.id}`, JSON.stringify(packsData));
-
   }, [availablePacks, nextPackTimestamp, user]);
 
   useEffect(() => {
@@ -171,7 +186,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             if (newPacks < 2) {
               setNextPackTimestamp(now + SIX_HOURS_IN_MS);
             } else {
-              setNextPackTimestamp(null); // Stop timer if max packs reached
+              setNextPackTimestamp(null);
             }
             return newPacks;
           });
@@ -189,12 +204,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(timer);
   }, [nextPackTimestamp]);
 
-
   const login = async (email: string, pass: string): Promise<boolean> => {
     setLoading(true);
     try {
         await signInWithEmailAndPassword(auth, email, pass);
-        // onAuthStateChanged will handle setting the user
         return true;
     } catch(error: any) {
         console.error(error);
@@ -207,8 +220,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
         return false;
     }
   };
-  
-  const register = async (name: string, username: string, email: string, pass: string, dni: string): Promise<boolean> => {
+
+  // ¡CORREGIDO! Se actualiza la firma y la lógica de la función register
+  const register = async (name: string, username: string, email: string, pass: string, dni: string, profileBackgroundUrl: string): Promise<boolean> => {
     setLoading(true);
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
@@ -219,7 +233,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
             email: email,
             dni: dni,
             avatar: `https://avatar.vercel.sh/${username}.png`,
-            role: 'user',
+            role: 'user', 
+            profileBackground: profileBackgroundUrl, // ¡DATO AÑADIDO!
             isVerified: false,
             isBlocked: false,
             location: 'Desconocida',
@@ -231,30 +246,36 @@ export function UserProvider({ children }: { children: ReactNode }) {
             interactions: 0,
             packsOpened: 0,
         };
-        
-        // Guardar el nuevo usuario en Realtime Database
-        const userRef = dbRTExports.ref(dbRealtime, `users/${newUser.id}`);
-        await dbRTExports.set(userRef, newUser);
 
-        setAllUsers(prev => [...prev, newUser]); // Actualizar allUsers localmente si es necesario
-        setUser(newUser);
+        if (!db) {
+          throw new Error("La base de datos de Firestore no está disponible.");
+        }
+        const userRef = doc(db, `users`, newUser.id);
+        await setDoc(userRef, newUser); // Guardar el usuario en Firestore
+        
+        setUser(newUser); // Actualizar el estado del contexto
+
+        // ¡TOAST DE ÉXITO PROFESIONAL!
         toast({
-          title: "¡Cuenta Creada!",
-          description: "Tu cuenta ha sido creada exitosamente.",
+          title: `¡Bienvenido a SUDONE, ${username}!`,
+          description: "Tu cuenta ha sido creada exitosamente. Ya puedes iniciar sesión.",
+          variant: "default", 
         });
+
         router.push('/');
         return true;
     } catch (error: any) {
-        console.error(error);
-        let errorMessage = "Ocurrió un error al registrar la cuenta.";
+        console.error("Error en el registro:", error);
+        let errorMessage = "Ocurrió un error inesperado al registrar la cuenta.";
         if (error.code === 'auth/email-already-in-use') {
-            errorMessage = "Este correo electrónico ya está en uso.";
+            errorMessage = "Este correo electrónico ya se encuentra registrado.";
         } else if (error.code === 'auth/weak-password') {
-            errorMessage = "La contraseña debe tener al menos 6 caracteres.";
+            errorMessage = "La contraseña es muy débil. Debe tener al menos 6 caracteres.";
         }
-        toast({ title: "Error de registro", description: errorMessage, variant: "destructive" });
+        toast({ title: "Error de Registro", description: errorMessage, variant: "destructive" });
         return false;
     } finally {
+        // ¡IMPORTANTE! Asegurarse de que el loading se detenga siempre.
         setLoading(false);
     }
   };
@@ -267,8 +288,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     router.push('/login');
     setLoading(false);
   };
-  
-  const trackInteraction = useCallback(async () => { // Hacemos async para usar await en updateUserInStorage
+
+  const trackInteraction = useCallback(async () => {
     if (!user || user.id === 'visitor') return;
 
     const updatedUser = {
@@ -276,10 +297,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
       interactions: (user.interactions || 0) + 1,
     };
     setUser(updatedUser);
-    await updateUserInStorage(updatedUser);
-  }, [user, updateUserInStorage]); // Añadir updateUserInStorage a dependencias
+    await updateUserInFirestore(updatedUser);
+  }, [user, updateUserInFirestore]);
 
-  const trackPackOpening = useCallback(async () => { // Hacemos async para usar await en updateUserInStorage
+  const trackPackOpening = useCallback(async () => {
     if (!user || user.id === 'visitor') return;
 
     const updatedUser = {
@@ -287,15 +308,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
       packsOpened: (user.packsOpened || 0) + 1,
     };
     setUser(updatedUser);
-    await updateUserInStorage(updatedUser);
-  }, [user, updateUserInStorage]); // Añadir updateUserInStorage a dependencias
-
+    await updateUserInFirestore(updatedUser);
+  }, [user, updateUserInFirestore]);
 
   const contextValue: UserContextType = {
       user,
-      allUsers,
       setUser,
-      setAllUsers,
       loading,
       login,
       register,
@@ -321,7 +339,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 export function useUser() {
   const context = useContext(UserContext);
   if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
+    throw new Error('useUser debe ser usado dentro de un UserProvider');
   }
   return context;
 }

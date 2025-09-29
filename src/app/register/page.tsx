@@ -28,14 +28,26 @@ export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
+  // ¡CORREGIDO! Usamos try...finally para asegurar que el loading se desactive siempre.
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const success = await register(name, username, email, password, dni, selectedBackground.url);
-    if (success) {
-      router.push('/');
+    try {
+      const success = await register(name, username, email, password, dni, selectedBackground.url);
+      if (success) {
+        // La redirección y el toast de éxito ya son manejados por el contexto.
+        // No es estrictamente necesario el router.push aquí si el contexto ya lo hace,
+        // pero lo mantenemos por si se cambia la lógica del contexto en el futuro.
+        router.push('/');
+      }
+    } catch (error) {
+      // El toast de error ya es manejado por el contexto. 
+      // No necesitamos hacer nada aquí, solo asegurarnos de que el finally se ejecute.
+      console.error("Error capturado en la página de registro:", error);
+    } finally {
+      // Esta línea se ejecutará siempre, tanto si el registro tuvo éxito como si falló.
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   return (
@@ -47,6 +59,7 @@ export default function RegisterPage() {
                   src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
                   alt="SUDONE Logo"
                   width={200}
+                  height={60} // Altura añadida en el paso anterior
                   priority
                   className="h-auto"
                   />
