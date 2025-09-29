@@ -43,23 +43,7 @@
 
 ---
 
-## 4. Backend en Firebase
-- **Firestore:** colecciones mínimas:  
-  - `users` (roles, perfil, foto)  
-  - `teams`  
-  - `tournaments`  
-  - `registrations`  
-  - `matches`  
-  - `events`  
-  - `standings`  
-  - `playerStats`  
-  - `posts` (feed social)  
-  - `messages` (mensajería)  
-  - `products`  
-  - `orders`  
-  - `sponsors`  
-  - `reports`  
-  - `notifications`  
+#
 - **Realtime Database:** datos en vivo (ej. marcador de partido, chat rápido).  
 - **Cloud Functions:** lógica de negocio:  
   - Inscripciones y pagos (alta en `registrations`, link de pago, webhook idempotente).  
@@ -70,7 +54,6 @@
   - Búsqueda global (`⌘K`).  
 - **Storage:** imágenes y videos (jugadores, equipos, posts, productos).  
 - **Hosting:** deploy de la PWA.  
-- **Seguridad:** reglas con `customClaims` para roles (`admin`, `captain`, `player`).  
 
 ---
 
