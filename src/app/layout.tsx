@@ -62,7 +62,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex">
             <MainSidebar />
-            <div className="flex flex-1 flex-col md:ml-64">
+            <div className="flex flex-1 flex-col md:ml-72">
                 <PageHeader />
                 <main>{children}</main>
             </div>
