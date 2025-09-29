@@ -54,6 +54,10 @@ import {
   Flag,
   Handshake,
   UserPlus,
+  Check,
+  Search,
+  MessageCircle as MessageCircleIcon,
+  Users2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -114,6 +118,7 @@ import {
 import { db } from '@/lib/firebase';
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Checkbox } from '@/components/ui/checkbox';
 
 const EditProfileDialog = ({
   user,
@@ -277,14 +282,27 @@ const mockMatchHistory = [
 ]
 
 const mockNextMatch = {
-    myTeam: "SUDONE FC",
-    opponent: "AC Milan",
-    time: "22:00 hs",
-    date: "31 de Mayo",
-    referee: "Néstor Pitana",
-    instance: "Fecha 5 - Liga Anual",
-    location: "Complejo San Cristóbal"
+    myTeam: "PUERTO F.C.",
+    opponent: "Los Eltons",
+    time: "21:00 hs",
+    date: "Sábado 8 de Junio",
+    referee: "Facundo Tello",
+    instance: "Fecha 6 - Liga de los Sábados",
+    location: "Complejo Parque Norte"
 }
+
+const mockTeamRoster: { name: string }[] = [
+    { name: "Lucio Mingrone" },
+    { name: "Faustino Depaoli" },
+    { name: "Joaquín Paradelo" },
+    { name: "Felipe Vicente" },
+    { name: "Bautista Pécora" },
+    { name: "Agustín Corrales" },
+    { name: "Máximo Soto" },
+    { name: "Facundo Costantini" },
+    { name: "Valentín Coria" },
+];
+
 
 const mockRanking = [
     { rank: 1, name: 'Faustino', sudpoints: 1250 },
@@ -367,6 +385,7 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<View>('buttons');
   const [claimedRewards, setClaimedRewards] = useState<number[]>([]);
+  const [attendance, setAttendance] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     const targetUser = allUsers.find((u) => u.id === userId);
@@ -479,6 +498,17 @@ export default function ProfilePage() {
         description: `Se ha enviado una solicitud de amistad a ${profileUser?.name}.`,
     });
   };
+
+  const handleAttendanceChange = (playerName: string) => {
+    const newAttendance = { ...attendance, [playerName]: !attendance[playerName] };
+    setAttendance(newAttendance);
+    if(newAttendance[playerName]) {
+        toast({
+            title: '¡Asistencia Confirmada!',
+            description: `${playerName} confirmó asistencia contra ${mockNextMatch.opponent}. (Notificación simulada al capitán)`,
+        });
+    }
+  }
 
 
   if (loading || userLoading)
@@ -640,7 +670,7 @@ export default function ProfilePage() {
                     <div className="flex items-center gap-2">
                       <CardTitle className="text-2xl">{name}</CardTitle>
                       {currentUser && !isOwnProfile && (
-                          <button className="w-8 h-8" onClick={handleAddFriend}>
+                          <button className="w-8 h-8">
                             <Image src="https://i.postimg.cc/fbCMnQ7J/AGREGAR-AMIGO.png" alt="Agregar Amigo" width={32} height={32}/>
                           </button>
                       )}
@@ -750,10 +780,52 @@ export default function ProfilePage() {
                     <Image src={team.crestUrl} alt={`Escudo de ${team.name}`} width={64} height={64} className="rounded-full bg-muted" />
                     <h2 className="text-2xl font-bold">{team.name}</h2>
                 </div>
-                {/* Futuro contenido de la página de equipo */}
-                <div className="h-96 w-full flex items-center justify-center border-2 border-dashed rounded-lg">
-                  <p className="text-muted-foreground">Más detalles del equipo aquí...</p>
-                </div>
+                 <Card className="bg-card/80">
+                   <CardContent className="p-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button variant="outline" className="h-20 flex-col gap-1"><Check className="h-5 w-5"/>Confirmar Asistencia</Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-2xl">
+                                <DialogHeader>
+                                    <DialogTitle>Confirmar Asistencia</DialogTitle>
+                                    <DialogDescription>
+                                        Marca la casilla si vas a asistir al próximo partido. Esto notificará a tu capitán.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-2 py-4">
+                                     <h3 className="font-semibold text-center">{mockNextMatch.instance}</h3>
+                                     <p className="text-center text-sm text-muted-foreground">{mockNextMatch.myTeam} vs {mockNextMatch.opponent}</p>
+                                     <p className="text-center text-xs text-muted-foreground">{mockNextMatch.date} - {mockNextMatch.time}hs · {mockNextMatch.location}</p>
+                                </div>
+                                <Separator />
+                                <ScrollArea className="h-72 mt-4">
+                                    <div className="space-y-3 pr-4">
+                                        {mockTeamRoster.map((player, index) => (
+                                            <div key={index} className="flex items-center justify-between rounded-md p-2 bg-muted/50">
+                                                <p className="font-medium">{player.name}</p>
+                                                <Checkbox
+                                                    id={`attendance-${index}`}
+                                                    checked={attendance[player.name] || false}
+                                                    onCheckedChange={() => handleAttendanceChange(player.name)}
+                                                    disabled={!isOwnProfile}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
+                                <DialogFooter>
+                                    <DialogClose asChild><Button variant="secondary">Cerrar</Button></DialogClose>
+                                </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                          <Button variant="outline" className="h-20 flex-col gap-1" disabled><Users2 className="h-5 w-5"/>Formación</Button>
+                          <Button variant="outline" className="h-20 flex-col gap-1" disabled><MessageCircleIcon className="h-5 w-5"/>Chat de Equipo</Button>
+                          <Button variant="outline" className="h-20 flex-col gap-1" disabled><Search className="h-5 w-5"/>Buscar Jugador</Button>
+                      </div>
+                   </CardContent>
+                 </Card>
               </div>
             ) : (
                <div className="h-full w-full flex flex-col items-center justify-center text-center border-2 border-dashed rounded-lg">
@@ -1107,5 +1179,3 @@ export default function ProfilePage() {
     </>
   );
 }
-
-    
