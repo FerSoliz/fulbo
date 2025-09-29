@@ -344,6 +344,8 @@ const TransferStatusBadge = ({ user, onTransferClick }: { user: User; onTransfer
     );
 };
 
+type View = 'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass' | 'ranking_preview' | 'favorite_tournaments' | 'my_team';
+
 
 export default function ProfilePage() {
   const params = useParams();
@@ -363,7 +365,7 @@ export default function ProfilePage() {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [view, setView] = useState<'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass' | 'ranking_preview' | 'favorite_tournaments'>('buttons');
+  const [view, setView] = useState<View>('buttons');
   const [claimedRewards, setClaimedRewards] = useState<number[]>([]);
 
   useEffect(() => {
@@ -547,170 +549,207 @@ export default function ProfilePage() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
-        <Card>
-          <div className="relative w-full aspect-[4/1]">
-            {profileBackground && (
-              <Image
-                src={profileBackground}
-                alt="Imagen de fondo del perfil"
-                layout="fill"
-                className="object-cover rounded-t-lg"
-                priority
-              />
-            )}
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent rounded-t-lg" />
-            
-            <div className="absolute top-2 right-2 z-10 flex gap-2 items-center">
-              {currentCrest && (
-                  <div className="w-10 h-10">
-                    <Image src={currentCrest} alt="Escudo de equipo" width={40} height={40} />
-                  </div>
-              )}
-              {isOwnProfile && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button className="w-10 h-10">
-                      <Image src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png" alt="Opciones" width={40} height={40} />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <BackgroundChangerDialog user={profileUser} onSave={handleSaveProfile}>
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                            <ImageIcon className="mr-2 h-4 w-4" />
-                            Cambiar Fondo
-                        </DropdownMenuItem>
-                    </BackgroundChangerDialog>
-                    <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
-                      <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Editar Perfil
-                      </DropdownMenuItem>
-                    </EditProfileDialog>
-                    <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>
-                            <Handshake className="mr-2 h-4 w-4" />
-                            <span>Estado de Fichaje</span>
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent>
-                            <DropdownMenuItem onClick={() => handleChangeTransferStatus('libre')}>Libre</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleChangeTransferStatus('traspaso')}>Traspaso</DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleChangeTransferStatus('blindado')}>Blindado</DropdownMenuItem>
-                        </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </div>
-            
-            <div className="absolute bottom-0 left-6 translate-y-1/2">
-              <div
-                className={cn('relative group', isOwnProfile && 'cursor-pointer hover:opacity-80 transition-opacity')}
-                onClick={handleAvatarClick}
-              >
-                <AnimatedAvatar>
-                  <Avatar className="w-24 h-24 md:w-32 md:h-32 text-4xl border-4 border-background">
-                    <AvatarImage src={avatar} alt={name} />
-                    <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                </AnimatedAvatar>
-                {isUploading && (
-                  <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center">
-                    <Loader2 className="w-8 h-8 animate-spin text-white" />
-                    <p className="text-white text-xs mt-2">{Math.round(progress)}%</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <CardHeader className="pt-16 md:pt-20 pb-4 px-6">
-            <div className="flex flex-col items-start">
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-2xl">{name}</CardTitle>
-                 {currentUser && !isOwnProfile && (
-                     <button className="w-8 h-8" onClick={handleAddFriend}>
-                       <Image src="https://i.postimg.cc/fbCMnQ7J/AGREGAR-AMIGO.png" alt="Agregar Amigo" width={32} height={32}/>
-                     </button>
+      <AnimatePresence>
+        {view === 'buttons' && (
+          <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
+            <motion.div
+              initial={false}
+              animate={{ y: 0 }}
+              exit={{ y: '-100%', opacity: 0 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+            >
+              <Card>
+                <div className="relative w-full aspect-[4/1]">
+                  {profileBackground && (
+                    <Image
+                      src={profileBackground}
+                      alt="Imagen de fondo del perfil"
+                      layout="fill"
+                      className="object-cover rounded-t-lg"
+                      priority
+                    />
                   )}
-                {isVerified && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={24} height={24} />
-                      </TooltipTrigger>
-                      <TooltipContent><p>Usuario Verificado</p></TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                )}
-              </div>
-              <CardDescription>@{username} · {role === 'admin' || role === 'editor' ? 'Administrador' : 'Jugador'}</CardDescription>
-            </div>
-          </CardHeader>
-          
-          <CardContent className="px-6 space-y-4">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                    <DivisionBadge league={league} division={division} />
-                    {transferStatus && <TransferStatusBadge user={profileUser} onTransferClick={handleTransferClick} />}
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent rounded-t-lg" />
+                  
+                  <div className="absolute top-2 right-2 z-10 flex gap-2 items-center">
+                    {currentCrest && (
+                        <div className="w-10 h-10">
+                          <Image src={currentCrest} alt="Escudo de equipo" width={40} height={40} />
+                        </div>
+                    )}
+                    {isOwnProfile && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="w-10 h-10">
+                            <Image src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png" alt="Opciones" width={40} height={40} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <BackgroundChangerDialog user={profileUser} onSave={handleSaveProfile}>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                  <ImageIcon className="mr-2 h-4 w-4" />
+                                  Cambiar Fondo
+                              </DropdownMenuItem>
+                          </BackgroundChangerDialog>
+                          <EditProfileDialog user={profileUser} onSave={handleSaveProfile}>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <Pencil className="mr-2 h-4 w-4" />
+                                Editar Perfil
+                            </DropdownMenuItem>
+                          </EditProfileDialog>
+                          <DropdownMenuSub>
+                              <DropdownMenuSubTrigger>
+                                  <Handshake className="mr-2 h-4 w-4" />
+                                  <span>Estado de Fichaje</span>
+                              </DropdownMenuSubTrigger>
+                              <DropdownMenuSubContent>
+                                  <DropdownMenuItem onClick={() => handleChangeTransferStatus('libre')}>Libre</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleChangeTransferStatus('traspaso')}>Traspaso</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleChangeTransferStatus('blindado')}>Blindado</DropdownMenuItem>
+                              </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                  
+                  <div className="absolute bottom-0 left-6 translate-y-1/2">
+                    <div
+                      className={cn('relative group', isOwnProfile && 'cursor-pointer hover:opacity-80 transition-opacity')}
+                      onClick={handleAvatarClick}
+                    >
+                      <AnimatedAvatar>
+                        <Avatar className="w-24 h-24 md:w-32 md:h-32 text-4xl border-4 border-background">
+                          <AvatarImage src={avatar} alt={name} />
+                          <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                      </AnimatedAvatar>
+                      {isUploading && (
+                        <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center">
+                          <Loader2 className="w-8 h-8 animate-spin text-white" />
+                          <p className="text-white text-xs mt-2">{Math.round(progress)}%</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-            </div>
-            <div className="w-full">
-              <Progress value={sudpoints} className="h-2 my-1 bg-[#201538]" />
-              <div className="flex justify-between">
-                <p className="text-xs text-muted-foreground mt-1">Siguiente división</p>
-                <p className="text-sm font-semibold">{sudpoints} / 100 SP</p>
-              </div>
-            </div>
-            {currentUser && !isOwnProfile && (
-              <Button onClick={handleSendMessage} className="w-full">
-                <MessageSquare className="mr-2 h-4 w-4" />
-                Enviar Mensaje
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-        
-        <Card>
-           <CardContent className="p-4 relative">
-               <div className="grid grid-cols-4 gap-4">
-                   <button className="transition-transform hover:scale-105" onClick={() => setView('history')}>
-                       <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
-                   </button>
-                   <button className="transition-transform hover:scale-105" onClick={() => setView('next_match')}>
-                       <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} className="rounded-lg w-full h-auto" />
-                   </button>
-                   <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}>
-                       <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} className="rounded-lg w-full h-auto" />
-                   </button>
-                   <button className="transition-transform hover:scale-105">
-                       <Image src="https://i.postimg.cc/cLsMSW3v/boton-mi-equipo.png" alt="Mi Equipo" width={150} height={50} className="rounded-lg w-full h-auto" />
-                   </button>
-                   <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}>
-                       <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
-                   </button>
-                   <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}>
-                         <Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={150} height={50} className="rounded-lg w-full h-auto" />
-                   </button>
-                   <button className="transition-transform hover:scale-105" onClick={() => setView('favorite_tournaments')}>
-                         <Image src="https://i.postimg.cc/yYnD2Q1z/boton-favorito-torneo.png" alt="Torneos Favoritos" width={150} height={50} className="rounded-lg w-full h-auto" />
-                   </button>
-               </div>
-          </CardContent>
-        </Card>
 
+                <CardHeader className="pt-16 md:pt-20 pb-4 px-6">
+                  <div className="flex flex-col items-start">
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="text-2xl">{name}</CardTitle>
+                      {currentUser && !isOwnProfile && (
+                          <button className="w-8 h-8" onClick={handleAddFriend}>
+                            <Image src="https://i.postimg.cc/fbCMnQ7J/AGREGAR-AMIGO.png" alt="Agregar Amigo" width={32} height={32}/>
+                          </button>
+                      )}
+                      {isVerified && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={24} height={24} />
+                            </TooltipTrigger>
+                            <TooltipContent><p>Usuario Verificado</p></TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
+                    </div>
+                    <CardDescription>@{username} · {role === 'admin' || role === 'editor' ? 'Administrador' : 'Jugador'}</CardDescription>
+                  </div>
+                </CardHeader>
+                
+                <CardContent className="px-6 space-y-4">
+                  <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                          <DivisionBadge league={league} division={division} />
+                          {transferStatus && <TransferStatusBadge user={profileUser} onTransferClick={handleTransferClick} />}
+                      </div>
+                  </div>
+                  <div className="w-full">
+                    <Progress value={sudpoints} className="h-2 my-1 bg-[#201538]" />
+                    <div className="flex justify-between">
+                      <p className="text-xs text-muted-foreground mt-1">Siguiente división</p>
+                      <p className="text-sm font-semibold">{sudpoints} / 100 SP</p>
+                    </div>
+                  </div>
+                  {currentUser && !isOwnProfile && (
+                    <Button onClick={handleSendMessage} className="w-full">
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      Enviar Mensaje
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          
+            <motion.div
+              initial={false}
+              animate={{ y: 0 }}
+              exit={{ y: '100%', opacity: 0 }}
+              transition={{ duration: 0.5, ease: 'easeInOut' }}
+            >
+              <Card>
+                <CardContent className="p-4 relative">
+                    <div className="grid grid-cols-4 gap-4">
+                        <button className="transition-transform hover:scale-105" onClick={() => setView('history')}>
+                            <Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial de Partidos" width={150} height={50} className="rounded-lg w-full h-auto" />
+                        </button>
+                        <button className="transition-transform hover:scale-105" onClick={() => setView('next_match')}>
+                            <Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} className="rounded-lg w-full h-auto" />
+                        </button>
+                        <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}>
+                            <Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} className="rounded-lg w-full h-auto" />
+                        </button>
+                        <button className="transition-transform hover:scale-105" onClick={() => setView('my_team')}>
+                            <Image src="https://i.postimg.cc/cLsMSW3v/boton-mi-equipo.png" alt="Mi Equipo" width={150} height={50} className="rounded-lg w-full h-auto" />
+                        </button>
+                        <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}>
+                            <Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} className="rounded-lg w-full h-auto" />
+                        </button>
+                        <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}>
+                              <Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={150} height={50} className="rounded-lg w-full h-auto" />
+                        </button>
+                        <button className="transition-transform hover:scale-105" onClick={() => setView('favorite_tournaments')}>
+                              <Image src="https://i.postimg.cc/yYnD2Q1z/boton-favorito-torneo.png" alt="Torneos Favoritos" width={150} height={50} className="rounded-lg w-full h-auto" />
+                        </button>
+                    </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
-        <input
-          type="file"
-          ref={fileInputRef}
-          onChange={handleAvatarChange}
-          className="hidden"
-          accept="image/*"
-          disabled={isUploading}
-        />
-      </div>
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleAvatarChange}
+        className="hidden"
+        accept="image/*"
+        disabled={isUploading}
+      />
       
       <AnimatePresence>
+        {view === 'my_team' && (
+           <motion.div
+            key="my_team_view"
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ duration: 0.5, ease: 'easeInOut' }}
+            className="fixed inset-0 bg-background z-50 p-4 sm:p-6 lg:p-8"
+          >
+            <Button variant="ghost" onClick={() => setView('buttons')} className="mb-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Volver al Perfil
+            </Button>
+            {/* El contenido de Mi Equipo irá aquí */}
+            <div className="h-full w-full flex items-center justify-center border-2 border-dashed rounded-lg">
+                <p className="text-muted-foreground">Contenido de Mi Equipo...</p>
+            </div>
+          </motion.div>
+        )}
+
         {view === 'history' && (
           <OverlayView>
              <CardHeader>
