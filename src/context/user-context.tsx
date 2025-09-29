@@ -98,7 +98,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
               sudpoints: initialData?.sudpoints || 0,
               baseSudpoints: initialData?.baseSudpoints || 0,
               league: initialData?.league || 'Bronce',
-              division: initialData?.division || 4,
+              division: 4,
               dni: initialData?.dni ?? null,
               profileBackground: initialData?.profileBackground ?? null,
               sudonepassLevel: initialData?.sudonepassLevel ?? null,
@@ -227,7 +227,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
             profileBackground: profileBackground, // Guardar el fondo de perfil seleccionado
         };
         
-        // Guardar el nuevo usuario en Realtime Database
         await dbRTExports.set(dbRTExports.ref(dbRealtime, 'users/' + newUser.id), newUser);
 
         setAllUsers(prev => [...prev, newUser]);
@@ -243,7 +242,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         let errorMessage = "Ocurrió un error al registrar la cuenta.";
         if (error.code === 'auth/email-already-in-use') {
             errorMessage = "Este correo electrónico ya está en uso.";
-        } else if (error.code === 'auth/weak-password') {
+        }
+        if (error.code === 'auth/weak-password') {
             errorMessage = "La contraseña debe tener al menos 6 caracteres.";
         }
         toast({ title: "Error de registro", description: errorMessage, variant: "destructive" });

@@ -43,8 +43,25 @@
 
 ---
 
-#
-- **Realtime Database:** datos en vivo (ej. marcador de partido, chat rápido).  
+## 4. Backend en Firebase
+- **Firestore:** colecciones mínimas para datos estructurados y escalables:  
+  - `teams`  
+  - `tournaments`  
+  - `registrations`  
+  - `matches`  
+  - `events`  
+  - `standings`  
+  - `playerStats`  
+  - `posts` (feed social)  
+  - `messages` (mensajería)  
+  - `products`  
+  - `orders`  
+  - `sponsors`  
+  - `reports`  
+  - `notifications`  
+- **Realtime Database:** Se utiliza para datos en vivo y perfiles de usuario.  
+  - `users` (roles, perfil completo, foto, estado de conexión, etc.)  
+  - Otros datos en vivo (ej. marcador de partido, chat rápido).  
 - **Cloud Functions:** lógica de negocio:  
   - Inscripciones y pagos (alta en `registrations`, link de pago, webhook idempotente).  
   - Partidos (CRUD `matches`, carga de `events`, cierre con recálculo de tabla y ranking).  
