@@ -213,7 +213,8 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
     if (onLinkClick) onLinkClick();
     if (user?.id === 'visitor') {
         router.push('/login');
-    } else {
+    }
+    else {
         await logout();
     }
   }
@@ -265,14 +266,17 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
     <>
     <aside className={cn(sidebarClasses, "rounded-r-xl")}>
         <div className="flex h-16 items-center justify-center border-b p-2">
-          <Link href="/" onClick={onLinkClick}>
-            <Image
-              src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
-              alt="SUDONE Logo"
-              width={140}
-              height={40}
-              priority
-            />
+           <Link href="/" onClick={onLinkClick}>
+            <div className="relative" style={{ width: '140px', height: '40px' }}>
+              <Image
+                src="/sudone-titulo.png"
+                alt="SUDONE Logo"
+                fill
+                style={{ objectFit: 'contain' }}
+                priority
+                sizes="140px"
+              />
+            </div>
           </Link>
         </div>
         <div className="flex items-center gap-2 p-2">
