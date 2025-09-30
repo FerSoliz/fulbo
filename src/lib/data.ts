@@ -1,12 +1,12 @@
 
-
 export interface User {
   id: string;
   name: string;
   username: string;
   email?: string;
   dni?: string;
-  role: 'user' | 'editor' | 'admin';
+  // CORRECCIÓN: Alineado con los roles definidos en rules.md
+  role: 'player' | 'captain' | 'admin';
   avatar: string;
   isBlocked?: boolean;
   sudpoints: number;
@@ -50,24 +50,27 @@ export interface PlayerDetails {
   email: string;
 }
 
+// REFACTOR: Adaptado para Realtime Database
 export interface Comment {
-  id: string; // Cambiado a string para consistencia con Firestore
+  id: string; 
   authorId: string;
   content: string;
   createdAt: string;
 }
 
+// REFACTOR: Estructura de Post completamente adaptada para Realtime Database
 export interface Post {
-  id: string; // ¡CORRECCIÓN CRÍTICA: Cambiado a string para IDs de Firestore!
-  authorId: string;
-  title: string;
+  id: string; // El ID será la clave generada por push()
+  authorId: string; // UID del creador
   content: string;
-  media: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string; }[];
-  likes: string[];
-  comments: Comment[];
-  createdAt: string;
+  media?: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string; }[];
+  url?: string; // Campo opcional para enlaces externos
+  // Es más eficiente en RTDB usar un objeto para likes/favoritos
+  likes?: Record<string, boolean>; // { userId1: true, userId2: true }
+  comments?: Record<string, Comment>; // { commentId1: {...}, commentId2: {...} }
+  createdAt: string; // ISO String. RTDB también puede usar ServerValue.TIMESTAMP
   isPinned?: boolean;
-  pinnedUntil: string | null; 
+  pinnedUntil?: string | null; 
 }
 
 export interface Product {
@@ -132,6 +135,7 @@ export const leagues = [
     { name: 'Leyenda del Fútbol', divisions: 1, color: '#ff4500', nextLeague: null },
 ];
 
+// CORRECCIÓN: Roles actualizados en los datos iniciales
 export const initialUsers: User[] = [
   {
     id: 'admin-user',
@@ -158,14 +162,14 @@ export const initialUsers: User[] = [
     packsOpened: 0,
   },
   {
-    id: 'editor-user',
+    id: 'captain-user', // ID actualizado
     name: 'Leo Messi',
     username: 'leomessi',
-    email: 'editor@sudone.com',
+    email: 'captain@sudone.com', // Email actualizado
     avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg',
     location: 'Rosario, Argentina',
     isVerified: true,
-    role: 'user',
+    role: 'captain', // Rol actualizado
     isBlocked: false,
     sudpoints: 80,
     baseSudpoints: 0,

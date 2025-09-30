@@ -4,27 +4,17 @@ import { initializeApp, getApps, getApp, FirebaseOptions } from "firebase/app";
 import { getAuth, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
-// --- Firestore Imports ---
-import { 
-    getFirestore,
-    collection,
-    doc,
-    setDoc,
-    addDoc, 
-    getDoc,
-    getDocs,
-    writeBatch,
-    deleteDoc,
-    updateDoc,
-    onSnapshot,
-    query,
-    where,
-    limit,
-    orderBy
-} from "firebase/firestore";
-
 // --- Realtime Database Imports ---
-import * as RTDB from "firebase/database"; 
+import { 
+    getDatabase,
+    ref,
+    set,
+    push,
+    onValue,
+    update,
+    remove,
+    serverTimestamp // Útil para marcas de tiempo consistentes
+} from "firebase/database"; 
 
 // Your web app's Firebase configuration (using environment variables)
 const firebaseConfig: FirebaseOptions = {
@@ -37,41 +27,28 @@ const firebaseConfig: FirebaseOptions = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-console.log("Firebase Config Loaded:", firebaseConfig); // <--- NUEVO console.log aquí
-
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const storage = getStorage(app);
 
-// --- Initialize BOTH databases ---
-const db = getFirestore(app); 
-const dbRealtime = RTDB.getDatabase(app); 
+// --- Initialize Realtime Database ---
+const rtdb = getDatabase(app); 
 
 // --- EXPORTS ---
 export { 
     app, 
     auth, 
     storage, 
-    // Firestore exports
-    db, 
-    collection, 
-    doc, 
-    setDoc, 
-    addDoc, 
-    getDoc, 
-    getDocs, 
-    writeBatch, 
-    deleteDoc, 
-    updateDoc, 
-    onSnapshot, 
-    query, 
-    where, 
-    limit, 
-    orderBy,
-    // Realtime Database exports (accessing via RTDB alias)
-    dbRealtime, 
-    RTDB as dbRTExports, 
+    // Realtime Database exports
+    rtdb, 
+    ref,
+    set,
+    push,
+    onValue,
+    update,
+    remove,
+    serverTimestamp,
     // Auth exports
     GoogleAuthProvider, 
     signInWithPopup, 
