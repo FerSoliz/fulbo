@@ -51,14 +51,14 @@ export interface PlayerDetails {
 }
 
 export interface Comment {
-  id: number;
+  id: string; // Cambiado a string para consistencia con Firestore
   authorId: string;
   content: string;
   createdAt: string;
 }
 
 export interface Post {
-  id: number;
+  id: string; // ¡CORRECCIÓN CRÍTICA: Cambiado a string para IDs de Firestore!
   authorId: string;
   title: string;
   content: string;
@@ -67,7 +67,7 @@ export interface Post {
   comments: Comment[];
   createdAt: string;
   isPinned?: boolean;
-  pinnedUntil?: string;
+  pinnedUntil: string | null; 
 }
 
 export interface Product {

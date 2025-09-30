@@ -10,6 +10,7 @@ import {
     collection,
     doc,
     setDoc,
+    addDoc, 
     getDoc,
     getDocs,
     writeBatch,
@@ -23,7 +24,7 @@ import {
 } from "firebase/firestore";
 
 // --- Realtime Database Imports ---
-import * as RTDB from "firebase/database"; // Import entire module as RTDB
+import * as RTDB from "firebase/database"; 
 
 // Your web app's Firebase configuration (using environment variables)
 const firebaseConfig: FirebaseOptions = {
@@ -36,14 +37,16 @@ const firebaseConfig: FirebaseOptions = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
+console.log("Firebase Config Loaded:", firebaseConfig); // <--- NUEVO console.log aquí
+
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const auth = getAuth(app);
 const storage = getStorage(app);
 
 // --- Initialize BOTH databases ---
-const db = getFirestore(app); // Firestore instance
-const dbRealtime = RTDB.getDatabase(app); // Realtime Database instance, using RTDB.getDatabase
+const db = getFirestore(app); 
+const dbRealtime = RTDB.getDatabase(app); 
 
 // --- EXPORTS ---
 export { 
@@ -55,6 +58,7 @@ export {
     collection, 
     doc, 
     setDoc, 
+    addDoc, 
     getDoc, 
     getDocs, 
     writeBatch, 
@@ -67,7 +71,7 @@ export {
     orderBy,
     // Realtime Database exports (accessing via RTDB alias)
     dbRealtime, 
-    RTDB as dbRTExports, // Exporting RTDB for other files to use if needed
+    RTDB as dbRTExports, 
     // Auth exports
     GoogleAuthProvider, 
     signInWithPopup, 

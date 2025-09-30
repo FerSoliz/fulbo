@@ -1,0 +1,26 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ADVERTENCIA CRÍTICA: ESTAS REGLAS SON SÓLO PARA DEPURACIÓN. 
+    // Permiten acceso total a la colección 'posts' (lectura/escritura a cualquiera) y a la colección 'users' (lectura a cualquiera).
+    // No uses esto en producción. Tu base de datos estaría completamente expuesta y vulnerable.
+
+    // Reglas para la colección 'users'
+    // Se mantiene la lectura pública para depuración.
+    match /users/{userId} {
+      allow read: if true; 
+      // No permitimos update/delete/create para no complicar el diagnóstico inicial de posts, 
+      // pero recuerda que estas deben ser ajustadas para permitir a los usuarios gestionar su propio perfil.
+    }
+
+    // Reglas para la colección 'posts'
+    // ¡ACCESO TOTAL PARA DEPURACIÓN! CUALQUIERA PUEDE LEER Y ESCRIBIR.
+    match /posts/{postId} {
+      allow read, write: if true; // <--- CAMBIO EXTREMO AQUÍ
+    }
+
+    // IMPORTANTE: Se elimina la regla 'match /{document=**} { allow read, write: if false; }' 
+    // para evitar conflictos durante esta etapa de depuración extrema.
+  }
+}
