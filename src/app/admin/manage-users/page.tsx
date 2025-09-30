@@ -59,8 +59,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-import { collection, doc, getDocs, updateDoc, deleteDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+// Importaciones corregidas para Realtime Database
+import { rtdb, ref, update, remove } from '@/lib/firebase';
 
 export default function ManageUsersPage() {
   const { user: currentUser, loading: userLoading, allUsers, setAllUsers } = useUser();
@@ -69,39 +69,44 @@ export default function ManageUsersPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // allUsers from context is now the source of truth
-    setLoading(false);
-  }, [allUsers]);
+    // El contexto de usuario (useUser) ya nos provee los usuarios de RTDB, 
+    // por lo que esta página ya recibe los datos correctos.
+    if (!userLoading) {
+        setLoading(false);
+    }
+  }, [userLoading]);
 
-  const saveUserUpdate = async (updatedUser: User) => {
+  // Función de guardado traducida a Realtime Database
+  const saveUserUpdate = async (updatedUser: Partial<User> & { id: string }) => {
     try {
-        const userRef = doc(db, "users", updatedUser.id);
-        await updateDoc(userRef, { ...updatedUser });
+        const userRef = ref(rtdb, `users/${updatedUser.id}`);
+        await update(userRef, updatedUser);
 
+        // Actualizamos el estado local que viene del contexto
         setAllUsers((prev) =>
-          prev.map((u) => (u.id === updatedUser.id ? updatedUser : u))
+          prev.map((u) => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u))
         );
     } catch (error) {
-        console.error("Error updating user: ", error);
+        console.error("Error actualizando usuario en RTDB: ", error);
         toast({ title: "Error", description: "No se pudo actualizar el usuario.", variant: "destructive" });
     }
   };
 
-
   const handleToggleBlock = (userId: string) => {
     const userToUpdate = allUsers.find((u) => u.id === userId);
     if (!userToUpdate) return;
-    const updatedUser = { ...userToUpdate, isBlocked: !userToUpdate.isBlocked };
+    const updatedUser = { id: userId, isBlocked: !userToUpdate.isBlocked };
     saveUserUpdate(updatedUser);
     toast({
       title: `Usuario ${updatedUser.isBlocked ? 'bloqueado' : 'desbloqueado'}`,
     });
   };
 
-  const handleChangeRole = (userId: string, newRole: 'user' | 'editor' | 'admin') => {
+  // Lógica de roles corregida a 'player', 'captain', 'admin'
+  const handleChangeRole = (userId: string, newRole: 'player' | 'captain' | 'admin') => {
     const userToUpdate = allUsers.find((u) => u.id === userId);
     if (!userToUpdate) return;
-    const updatedUser = { ...userToUpdate, role: newRole };
+    const updatedUser = { id: userId, role: newRole };
     saveUserUpdate(updatedUser);
     toast({
       title: 'Rol actualizado',
@@ -109,9 +114,13 @@ export default function ManageUsersPage() {
     });
   };
 
+  // Función de eliminación traducida a Realtime Database
   const handleDeleteUser = async (userId: string) => {
     try {
-      await deleteDoc(doc(db, "users", userId));
+      const userRef = ref(rtdb, `users/${userId}`);
+      await remove(userRef);
+      
+      // Actualizamos el estado local
       setAllUsers((prev) => prev.filter((u) => u.id !== userId));
       toast({
         title: 'Usuario Eliminado',
@@ -119,7 +128,7 @@ export default function ManageUsersPage() {
         variant: 'destructive',
       });
     } catch (error) {
-       console.error("Error deleting user: ", error);
+       console.error("Error eliminando usuario de RTDB: ", error);
        toast({ title: "Error", description: "No se pudo eliminar el usuario.", variant: "destructive" });
     }
   };
@@ -169,8 +178,6 @@ export default function ManageUsersPage() {
                     <TableHead className="hidden sm:table-cell">Email</TableHead>
                     <TableHead>Rol</TableHead>
                     <TableHead className="text-center">Estado</TableHead>
-                    <TableHead className="text-center">Interacciones</TableHead>
-                    <TableHead className="text-center">Sobres Abiertos</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -194,7 +201,7 @@ export default function ManageUsersPage() {
                           variant={
                             user.role === 'admin'
                               ? 'destructive'
-                              : user.role === 'editor'
+                              : user.role === 'captain'
                               ? 'secondary'
                               : 'outline'
                           }
@@ -208,18 +215,6 @@ export default function ManageUsersPage() {
                         ) : (
                           <Badge variant="default" className="bg-green-500">Activo</Badge>
                         )}
-                      </TableCell>
-                       <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-2">
-                             <MousePointerClick className="w-4 h-4 text-muted-foreground" />
-                             <span className="font-bold">{user.interactions || 0}</span>
-                          </div>
-                      </TableCell>
-                      <TableCell className="text-center">
-                          <div className="flex items-center justify-center gap-2">
-                            <PackageOpen className="w-4 h-4 text-muted-foreground" />
-                            <span className="font-bold">{user.packsOpened || 0}</span>
-                          </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
@@ -245,11 +240,11 @@ export default function ManageUsersPage() {
                                      <Pencil className="mr-2 h-4 w-4" /> Cambiar Rol
                                 </DropdownMenuSubTrigger>
                                 <DropdownMenuSubContent>
-                                    <DropdownMenuItem onClick={() => handleChangeRole(user.id, 'user')}>
-                                        <Shield className="mr-2 h-4 w-4" /> User
+                                    <DropdownMenuItem onClick={() => handleChangeRole(user.id, 'player')}>
+                                        <Shield className="mr-2 h-4 w-4" /> Player
                                     </DropdownMenuItem>
-                                     <DropdownMenuItem onClick={() => handleChangeRole(user.id, 'editor')}>
-                                        <Pencil className="mr-2 h-4 w-4" /> Editor
+                                     <DropdownMenuItem onClick={() => handleChangeRole(user.id, 'captain')}>
+                                        <Pencil className="mr-2 h-4 w-4" /> Captain
                                     </DropdownMenuItem>
                                      <DropdownMenuItem onClick={() => handleChangeRole(user.id, 'admin')}>
                                         <ShieldAlert className="mr-2 h-4 w-4" /> Admin
@@ -293,6 +288,11 @@ export default function ManageUsersPage() {
                 </TableBody>
               </Table>
             </div>
+            {filteredUsers.length === 0 && (
+                 <div className="text-center p-8 text-muted-foreground">
+                    <p>No se encontraron usuarios con ese criterio de búsqueda.</p>
+                </div>
+            )}
           </CardContent>
         </Card>
       </div>
