@@ -272,7 +272,6 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
               width={140}
               height={40}
               priority
-              className="h-auto" // ¡Corregido!
             />
           </Link>
         </div>

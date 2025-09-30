@@ -47,9 +47,8 @@ export default function RegisterPage() {
                   src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
                   alt="SUDONE Logo"
                   width={200}
-                  height={60} // Agregamos la altura explícita aquí para que Next.js la use como base
+                  height={60}
                   priority
-                  className="h-auto" // Esto asegura que la imagen mantenga su relación de aspecto si se modifica el ancho con CSS
                   />
               </Link>
           </div>
