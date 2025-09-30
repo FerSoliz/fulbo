@@ -162,11 +162,13 @@ export function PageHeader() {
          <div className="px-4 pb-2">
             <Link href="https://www.monsterenergy.com" target="_blank" rel="noopener noreferrer">
                 <Image
-                    src="https://i.postimg.cc/PNGVGZ92/banner-monster.png"
+                    src="/banner-monster.png" // Ruta local
                     alt="Monster Energy Banner"
-                    width={1200}
-                    height={150}
-                    className="w-full h-auto rounded-lg"
+                    width={1200} // Dimensiones intrínsecas de la imagen
+                    height={150} // Dimensiones intrínsecas de la imagen
+                    layout="responsive" // ¡Clave para la responsividad!
+                    priority
+                    className="rounded-lg" // Clases directamente en el Image
                 />
             </Link>
         </div>
