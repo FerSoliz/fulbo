@@ -1,7 +1,6 @@
 'use client';
 
 // --- 1. Imports ---
-// Se importan las herramientas necesarias de React, ShadCN, Zod y React Hook Form.
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
@@ -16,46 +15,38 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { createPostSchema, CreatePostInput } from '@/lib/validators'; // <= ¡Nuestro nuevo validador!
 
-// --- 2. Props del Componente ---
-interface CreatePostFormProps {
-  currentUser: User;
-  onAddPost: (post: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments'>) => void;
+interface CreatePostInput {
+  content: string;
+  files: File[];
+  isPinned: boolean;
 }
 
-// --- 3. Componente Principal ---
+interface CreatePostFormProps {
+  onAddPost: (post: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments'>) => Promise<void>;
+  currentUser: User;
+}
+
 export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) {
-  // Estado local para la UI que no forma parte del formulario (previsualizaciones, videos, etc.)
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [youtubeVideoId, setYoutubeVideoId] = useState<string | null>(null);
   const [twitchChannelName, setTwitchChannelName] = useState<string | null>(null);
   
-  // Hook para la subida de archivos y su estado de carga
   const { uploadMultipleFiles, isUploading, progress } = useUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // --- 4. Integración con React Hook Form y Zod ---
-  // Aquí se inicializa el formulario.
   const form = useForm<CreatePostInput>({
-    // Se le dice a react-hook-form que use nuestro schema de Zod para la validación.
-    resolver: zodResolver(createPostSchema),
-    // Valores por defecto del formulario.
     defaultValues: {
       content: "",
       files: [],
       isPinned: false,
-      authorId: currentUser.id, // <--- ¡Añadido! Ahora Zod sabe el authorId desde el inicio
     },
-    // La validación se activa cuando el usuario interactúa con los campos.
     mode: "onChange",
   });
   
-  // Observamos el valor del campo 'content' para detectar enlaces de video en tiempo real.
   const contentValue = form.watch('content');
+  const filesValue = form.watch('files');
 
-  // --- 5. Lógica para detectar videos (YouTube/Twitch) ---
   useEffect(() => {
     const getYoutubeVideoId = (url: string): string | null => {
         const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/;
@@ -72,46 +63,47 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     setYoutubeVideoId(getYoutubeVideoId(contentValue));
     setTwitchChannelName(getTwitchChannelName(contentValue));
 
-    // --- DEPURACIÓN: Añadimos logs para ver el estado de la validación ---
-    form.trigger(); // Dispara la validación de todo el formulario
-
-    console.log('--- useEffect Revalidation Triggered ---');
-    console.log('Current contentValue:', contentValue); // El texto actual en el textarea
-    console.log('YouTube ID detected:', youtubeVideoId);
-    console.log('Twitch Channel detected:', twitchChannelName);
-    console.log('Form isValid in useEffect:', form.formState.isValid); // Estado de validez
-    console.log('Form errors in useEffect:', form.formState.errors); // Cualquier error de validación
-    console.log('------------------------------------------');
-
-  }, [contentValue, form, youtubeVideoId, twitchChannelName, currentUser.id]); // <--- Añadido currentUser.id a las dependencias
+  }, [contentValue]); 
   
   const hasVideo = !!youtubeVideoId || !!twitchChannelName;
+  const hasContent = !!contentValue.trim() || (filesValue && filesValue.length > 0) || hasVideo;
   
-  // --- 6. Función de Envío del Formulario (onSubmit) ---
-  // Esta función solo se ejecuta si la validación de Zod es exitosa.
   const onSubmit = async (data: CreatePostInput) => {
     let media: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string; }[] = [];
-    
-    // Subir imágenes si existen
-    if(data.files && data.files.length > 0) {
-      const uploadedImageUrls = await uploadMultipleFiles(data.files, `posts/${currentUser.id}`);
-      media = uploadedImageUrls.map(url => ({ type: 'image', url }));
-    } else if (youtubeVideoId) {
-       media.push({ type: 'video', url: `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`, videoType: 'youtube', videoId: youtubeVideoId });
-    } else if (twitchChannelName) {
-       media.push({ type: 'video', url: `https://static-cdn.jtvnw.net/previews-ttv/live_user_${twitchChannelName}-1280x720.jpg`, videoType: 'twitch', videoId: twitchChannelName });
-    }
+    let externalUrl: string | undefined = undefined;
 
-    // Llamar a la función del componente padre para añadir el post
-    onAddPost({
+    if (youtubeVideoId) {
+       media.push({ type: 'video', url: `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`, videoType: 'youtube', videoId: youtubeVideoId });
+       externalUrl = `https://www.youtube.com/watch?v=${youtubeVideoId}`;
+    }
+    
+    if (twitchChannelName) {
+       media.push({ type: 'video', url: `https://static-cdn.jtvnw.net/previews-ttv/live_user_${twitchChannelName}-1280x720.jpg`, videoType: 'twitch', videoId: twitchChannelName });
+       externalUrl = `https://www.twitch.tv/${twitchChannelName}`;
+    }
+    
+    if(data.files && data.files.length > 0) {
+      if (hasVideo) {
+        form.setError("root", { message: "No puedes añadir imágenes y un video en la misma publicación." });
+        return;
+      }
+      // --- ESTE ES EL CAMBIO CLAVE ---
+      // 1. ESPERAMOS (await) a que TODAS las imágenes se suban y obtenemos las URLs.
+      const uploadedImageUrls = await uploadMultipleFiles(data.files, `posts/${currentUser.id}`);
+      const imageMedia = uploadedImageUrls.map(url => ({ type: 'image' as const, url }));
+      media.push(...imageMedia);
+    }
+    
+    // 2. SOLO DESPUÉS de tener las URLs, llamamos a onAddPost
+    await onAddPost({
       authorId: currentUser.id,
-      title: '', // El título ya no se usa
-      content: data.content || '', // Aseguramos que sea string si es opcional
+      content: data.content || '',
       media: media,
+      url: externalUrl,
       isPinned: data.isPinned,
     });
 
-    // Resetear el formulario y el estado local
+    // 3. Y SOLO si todo lo anterior fue exitoso, reseteamos el formulario.
     form.reset();
     setImagePreviews([]);
     setYoutubeVideoId(null);
@@ -121,10 +113,8 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     }
   };
 
-  // --- 7. Renderizado del Componente (JSX) ---
   return (
     <Card className="p-4">
-      {/* El componente Form de ShadCN envuelve todo y se conecta con react-hook-form */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
           <div className="flex items-start gap-4">
@@ -133,13 +123,11 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
               <AvatarFallback>{currentUser.name.charAt(0)}</AvatarFallback>
             </Avatar>
             
-            {/* Campo de texto (Textarea) controlado por React Hook Form */}
             <FormField
               control={form.control}
               name="content"
               render={({ field }) => (
                 <FormItem className="w-full">
-                  {/* Etiqueta para accesibilidad (oculta visualmente) */}
                   <FormLabel className="sr-only">Contenido del post</FormLabel>
                   <FormControl>
                     <Textarea
@@ -147,17 +135,15 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
                       className="border-none shadow-none focus-visible:ring-0 px-0 resize-none overflow-hidden text-base bg-transparent min-h-[2.5rem] flex items-center"
                       rows={1}
                       disabled={isUploading}
-                      {...field} // Conecta el textarea al estado del formulario
+                      {...field}
                     />
                   </FormControl>
-                  {/* Aquí se mostrarán los mensajes de error para este campo si la validación falla */}
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
 
-          {/* Previsualización de Videos y Imágenes */}
           {hasVideo && (
             <div className="mt-4 relative group ml-14">
               <Image
@@ -190,7 +176,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
                                 form.setValue('files', updatedFiles, { shouldValidate: true });
 
                                 const updatedPreviews = imagePreviews.filter((_, i) => i !== index);
-                                URL.revokeObjectURL(imagePreviews[index]); // Limpiar memoria
+                                URL.revokeObjectURL(imagePreviews[index]);
                                 setImagePreviews(updatedPreviews);
                               }}
                           >
@@ -205,13 +191,11 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
           
           {isUploading && <Progress value={progress} className="w-full" />}
 
-          {/* Mensaje de error general para la validación a nivel de objeto (regla 'refine') */}
           {form.formState.errors.root && (
             <p className="text-sm font-medium text-destructive">{form.formState.errors.root.message}</p>
           )}
 
           <div className="flex justify-between items-center pt-4 border-t">
-            {/* Campo para subir archivos */}
             <FormField
               control={form.control}
               name="files"
@@ -240,9 +224,8 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
                         const newFiles = Array.from(e.target.files || []);
                         const currentFiles = field.value || [];
                         const combinedFiles = [...currentFiles, ...newFiles];
-                        field.onChange(combinedFiles); // Actualiza el estado del formulario
+                        field.onChange(combinedFiles); 
                         
-                        // Genera previsualizaciones
                         const newPreviews = newFiles.map(file => URL.createObjectURL(file));
                         setImagePreviews(prev => [...prev, ...newPreviews]);
                       }}
@@ -254,7 +237,6 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             />
             
             <div className="flex items-center gap-2">
-              {/* Botón para fijar el post */}
               <FormField
                 control={form.control}
                 name="isPinned"
@@ -276,8 +258,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
                 )}
               />
               
-              {/* Botón de envío */}
-              <Button type="submit" disabled={!form.formState.isValid || isUploading}>
+              <Button type="submit" disabled={!hasContent || isUploading}>
                 {isUploading ? `Publicando... ${Math.round(progress)}%` : 'Publicar'}
               </Button>
             </div>

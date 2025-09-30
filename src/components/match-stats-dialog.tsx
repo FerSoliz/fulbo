@@ -195,8 +195,14 @@ export function MatchStatsDialog({
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-4xl p-4">
+        <DialogHeader>
+            <DialogTitle>Estadísticas del Partido: {match.home} vs {match.away}</DialogTitle>
+            <DialogDescription>
+                Aquí puedes cargar los goles, tarjetas y jugador del partido (MVP). Los cambios se guardan al presionar 'Guardar'.
+            </DialogDescription>
+        </DialogHeader>
         
-        <div className="grid grid-cols-2 items-start gap-x-4">
+        <div className="grid grid-cols-2 items-start gap-x-4 pt-4">
             {renderTeamColumn(homeRoster, match.home, 'home')}
             {renderTeamColumn(awayRoster, match.away, 'away')}
         </div>
