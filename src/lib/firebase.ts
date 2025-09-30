@@ -25,15 +25,15 @@ import {
 // --- Realtime Database Imports ---
 import * as RTDB from "firebase/database"; // Import entire module as RTDB
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration (using environment variables)
 const firebaseConfig: FirebaseOptions = {
-  apiKey: "AIzaSyDrZo9X6NNtazx4J9kS9L5D1NUswQTQ0SM",
-  authDomain: "studio-1084069868-b52ab.firebaseapp.com",
-  databaseURL: "https://studio-1084069868-b52ab-default-rtdb.firebaseio.com",
-  projectId: "studio-1084069868-b52ab",
-  storageBucket: "studio-1084069868-b52ab.firebasestorage.app",
-  messagingSenderId: "243075375047",
-  appId: "1:243075375047:web:eddc9c9e86681afe82c3e2"
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  databaseURL: process.env.NEXT_PUBLIC_FIREBASE_DATABASE_URL,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
 // Initialize Firebase
