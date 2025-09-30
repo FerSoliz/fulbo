@@ -166,7 +166,6 @@ export function PageHeader() {
                     alt="Monster Energy Banner"
                     width={1200} // Dimensiones intrínsecas de la imagen
                     height={150} // Dimensiones intrínsecas de la imagen
-                    layout="responsive" // ¡Clave para la responsividad!
                     priority
                     className="rounded-lg" // Clases directamente en el Image
                 />
