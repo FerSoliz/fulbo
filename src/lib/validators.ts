@@ -6,11 +6,11 @@ export const createPostSchema = z
   .object({
     /**
      * El contenido de texto de la publicación. Es un string que debe tener como máximo
-     * 280 caracteres, similar a Twitter. Zod se encarga de validar esto.
+     * 280 caracteres, similar a Twitter. Se permite que esté vacío si se adjuntan archivos o videos.
      */
     content: z.string().max(280, {
       message: "El contenido no puede exceder los 280 caracteres.",
-    }),
+    }).optional(), // <--- Ahora es opcional
 
     /**
      * Un array de URLs de archivos adjuntos (imágenes o videos). Es opcional y por
@@ -33,24 +33,25 @@ export const createPostSchema = z
      */
     isPinned: z.boolean().default(false),
   })
-  // 3. Añadimos una validación a nivel del objeto completo.
+  // 3. Añadimos una validación a nivel del objeto completo (refine).
+  //    Esta validación general asegura que *algo* de contenido esté presente en la publicación.
   .refine(data => {
-      // La publicación es válida si...
-      // ...tiene contenido de texto, O...
-      // ...tiene archivos adjuntos, O...
-      // ...el texto contiene un enlace a un video de YouTube o Twitch.
-      const hasText = data.content.trim().length > 0;
+      // Una publicación es válida si tiene:
+      // 1. Contenido de texto real (después de eliminar espacios), O
+      // 2. Archivos adjuntos (imágenes), O
+      // 3. Un enlace válido de video (YouTube o Twitch) dentro del texto.
+      const hasTextContent = (data.content || '').trim().length > 0; // Añadimos || '' para manejar undefined
       const hasFiles = data.files && data.files.length > 0;
       
       // Usamos regex para detectar enlaces de video directamente en el contenido
       const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/;
       const twitchRegex = /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]+)\/?$/;
-      const hasVideoLink = youtubeRegex.test(data.content) || twitchRegex.test(data.content);
+      const hasVideoLink = youtubeRegex.test(data.content || '') || twitchRegex.test(data.content || ''); // Añadimos || ''
 
-  return hasText || hasFiles || hasVideoLink;
+  return hasTextContent || hasFiles || hasVideoLink;
   }, {
-    // 4. Si la validación 'refine' falla, se usará este mensaje de error.
-    message: "No puedes crear una publicación vacía. Añade texto, imágenes o un enlace de YouTube/Twitch.",
+    // 4. Si la validación 'refine' falla, se usará este mensaje de error más específico.
+    message: "Tu publicación no puede estar vacía. Añade texto, una o más imágenes, o un enlace de YouTube/Twitch.",
   });
   
   // 5. Finalmente, inferimos el tipo de TypeScript directamente desde el esquema de Zod.

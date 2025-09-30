@@ -54,7 +54,7 @@ export default function HomePage() {
   const handleAddPost = async (newPostData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments'>) => {
     if (!currentUser || currentUser.id === 'visitor') return;
     
-    let pinnedUntil: string | undefined = undefined;
+    let pinnedUntil: string | null = null; // <--- CORRECCIÓN: De undefined a null
     if (newPostData.isPinned) {
         const expiryDate = new Date();
         expiryDate.setHours(expiryDate.getHours() + 12);
@@ -123,7 +123,7 @@ export default function HomePage() {
     }
   };
 
-  const canPost = currentUser?.role === 'admin' || currentUser?.role === 'editor';
+  const canPost = currentUser?.role === 'admin' || currentUser?.role === 'editor' || currentUser?.role === 'captain';
 
   return (
     <div className="max-w-2xl mx-auto space-y-4 p-4">

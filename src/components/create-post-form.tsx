@@ -46,6 +46,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
       content: "",
       files: [],
       isPinned: false,
+      authorId: currentUser.id, // <--- ¡Añadido! Ahora Zod sabe el authorId desde el inicio
     },
     // La validación se activa cuando el usuario interactúa con los campos.
     mode: "onChange",
@@ -70,7 +71,19 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     
     setYoutubeVideoId(getYoutubeVideoId(contentValue));
     setTwitchChannelName(getTwitchChannelName(contentValue));
-  }, [contentValue]);
+
+    // --- DEPURACIÓN: Añadimos logs para ver el estado de la validación ---
+    form.trigger(); // Dispara la validación de todo el formulario
+
+    console.log('--- useEffect Revalidation Triggered ---');
+    console.log('Current contentValue:', contentValue); // El texto actual en el textarea
+    console.log('YouTube ID detected:', youtubeVideoId);
+    console.log('Twitch Channel detected:', twitchChannelName);
+    console.log('Form isValid in useEffect:', form.formState.isValid); // Estado de validez
+    console.log('Form errors in useEffect:', form.formState.errors); // Cualquier error de validación
+    console.log('------------------------------------------');
+
+  }, [contentValue, form, youtubeVideoId, twitchChannelName, currentUser.id]); // <--- Añadido currentUser.id a las dependencias
   
   const hasVideo = !!youtubeVideoId || !!twitchChannelName;
   
@@ -93,7 +106,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     onAddPost({
       authorId: currentUser.id,
       title: '', // El título ya no se usa
-      content: data.content,
+      content: data.content || '', // Aseguramos que sea string si es opcional
       media: media,
       isPinned: data.isPinned,
     });
