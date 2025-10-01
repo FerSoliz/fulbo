@@ -86,10 +86,27 @@ export default {
             height: '0',
           },
         },
+        shine: {
+          '0%': {
+            transform: 'translateX(-100%)',
+          },
+          '100%': {
+            transform: 'translateX(100%)',
+          },
+        },
+        'border-spin': {
+          '100%': {
+            transform: 'rotate(360deg)',
+          },
+        },
+        // Eliminado 'border-rotate'
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        shine: 'shine 1.5s infinite linear',
+        'border-spin': 'border-spin 8s linear infinite', // Aseguramos que solo esté esta animación
+        // Eliminado 'border-rotate'
       },
     },
   },

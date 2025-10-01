@@ -1,8 +1,45 @@
-
+// src/lib/firebase/db.ts
 import { get, ref, query, orderByChild, equalTo, push, update, remove, set } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import type { FoundPlayer } from '@/components/search/PlayerSearch';
 import type { RosterPlayer } from '@/components/team/RosterManager';
+
+// --- Interfaces para el perfil de usuario (UserProfile) ---
+// Esta interfaz refleja la estructura que esperamos para los usuarios en Realtime Database
+export interface UserProfile {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  avatar?: string;
+  role?: 'player' | 'captain' | 'admin';
+  dni?: string;
+  profileBackground?: string;
+  isVerified?: boolean;
+  sudpoints?: number;
+  league?: string;
+  division?: string;
+  sudonepassLevel?: number;
+  sudonepassExp?: number;
+  transferStatus?: 'libre' | 'traspaso' | 'blindado';
+  team?: {
+    id: string;
+    name: string;
+    crestUrl?: string;
+  };
+  stats?: {
+    partidosJugados: number;
+    victorias: number;
+    empates: number;
+    derrotas: number;
+    goles: number;
+    asistencias: number;
+    amarillas: number;
+    rojas: number;
+    mvps: number;
+  };
+  // Añade otros campos si son necesarios y están en tu DB
+}
 
 export interface TeamSummary {
     id: string;
@@ -10,12 +47,54 @@ export interface TeamSummary {
     logoUrl?: string;
 }
 
-// Interfaz para los detalles completos de un equipo
 export interface TeamDetails {
   id: string;
   name: string;
   logoUrl?: string;
 }
+
+// --- Funciones para UserProfile --- //
+
+/**
+ * Obtiene el perfil completo de un usuario por su ID desde Realtime Database.
+ * @param userId El ID del usuario.
+ * @returns Una promesa que resuelve con el perfil del usuario o null si no se encuentra.
+ */
+export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+  try {
+    const userRef = ref(db, `users/${userId}`);
+    const snapshot = await get(userRef);
+
+    if (snapshot.exists()) {
+      return { id: userId, ...snapshot.val() } as UserProfile;
+    } else {
+      console.warn(`[getUserProfile] No se encontró el usuario con ID: ${userId}`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`[getUserProfile] Error obteniendo perfil del usuario ${userId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Actualiza campos específicos de un perfil de usuario en Realtime Database.
+ * @param userId El ID del usuario a actualizar.
+ * @param updates Un objeto con los campos a actualizar (Partial<UserProfile>).
+ * @returns Una promesa que resuelve a true si la actualización fue exitosa, false en caso contrario.
+ */
+export async function updateUserProfile(userId: string, updates: Partial<UserProfile>): Promise<boolean> {
+  try {
+    const userRef = ref(db, `users/${userId}`);
+    await update(userRef, updates);
+    return true;
+  } catch (error) {
+    console.error(`[updateUserProfile] Error actualizando perfil del usuario ${userId}:`, error);
+    return false;
+  }
+}
+
+// --- Funciones existentes (sin cambios) ---
 
 export async function findUserByDni(dni: string): Promise<FoundPlayer | null> {
   try {
@@ -38,6 +117,7 @@ export async function findUserByDni(dni: string): Promise<FoundPlayer | null> {
     
     const guestPlayerRef = ref(db, `guestPlayers/${dni}`);
     const guestSnapshot = await get(guestPlayerRef);
+
     if (guestSnapshot.exists()) {
         const guestData = guestSnapshot.val();
         return {
