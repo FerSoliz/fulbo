@@ -70,14 +70,12 @@ import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// --- IMPORTACIONES DE REALTIME DATABASE ---
-// Usamos 'onValue' para la escucha en tiempo real
 import { ref, update, onValue, off } from 'firebase/database';
 import { db } from '@/lib/firebase';
 
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Checkbox } from '@/components/ui/checkbox';
+
 
 const EditProfileDialog = ({ user, onSave, children }: { user: UserProfile; onSave: (updatedUser: Partial<UserProfile>) => void; children: React.ReactNode; }) => {
   const [name, setName] = useState(user.name);
@@ -90,26 +88,21 @@ const EditProfileDialog = ({ user, onSave, children }: { user: UserProfile; onSa
     setDni(user.dni || '');
   }, [user]);
 
-  const handleSave = () => {
-    onSave({ name, username, dni });
-  };
+  const handleSave = () => onSave({ name, username, dni });
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog><DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Editar Perfil</DialogTitle>
-        </DialogHeader>
+        <DialogHeader><DialogTitle>Editar Perfil</DialogTitle></DialogHeader>
         <div className="space-y-4 py-4">
-          <div className="space-y-2"><Label htmlFor="name">Nombre y Apellido</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} /></div>
-          <div className="space-y-2"><Label htmlFor="username">Nombre de Usuario</Label><Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} /></div>
-          <div className="space-y-2"><Label htmlFor="dni">DNI</Label><Input id="dni" value={dni} onChange={(e) => setDni(e.target.value)} /></div>
-          <div className="space-y-2"><Label htmlFor="email">Email (no editable)</Label><Input id="email" value={user.email || ''} disabled /></div>
+            <div className="space-y-2"><Label htmlFor="name">Nombre y Apellido</Label><Input id="name" value={name} onChange={(e) => setName(e.target.value)} /></div>
+            <div className="space-y-2"><Label htmlFor="username">Nombre de Usuario</Label><Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} /></div>
+            <div className="space-y-2"><Label htmlFor="dni">DNI</Label><Input id="dni" value={dni} onChange={(e) => setDni(e.target.value)} /></div>
+            <div className="space-y-2"><Label htmlFor="email">Email (no editable)</Label><Input id="email" value={user.email || ''} disabled /></div>
         </div>
         <DialogFooter>
-          <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
-          <DialogClose asChild><Button type="button" onClick={handleSave}>Guardar</Button></DialogClose>
+            <DialogClose asChild><Button type="button" variant="secondary">Cancelar</Button></DialogClose>
+            <DialogClose asChild><Button type="button" onClick={handleSave}>Guardar</Button></DialogClose>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -120,12 +113,9 @@ const backgrounds = ['https://i.postimg.cc/1RfWNTCC/lusail.png', 'https://i.post
 const crestMap: { [key: string]: string } = { 'https://i.postimg.cc/1RfWNTCC/lusail.png': 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png', 'https://i.postimg.cc/BnnbJSjY/ELMONUMENTALRIVERPLATE2.png': 'https://i.postimg.cc/3wts3GNd/escudito-river.png', 'https://i.postimg.cc/fL20hVKv/LABOMBONERABOCAJUNIORS.jpg': 'https://i.postimg.cc/50jZytQp/escudito-de-boca.png' };
 
 const BackgroundChangerDialog = ({ user, onSave, children }: { user: UserProfile; onSave: (updatedData: Partial<UserProfile>) => void; children: React.ReactNode; }) => {
-  const handleSelect = (url: string) => {
-    onSave({ profileBackground: url });
-  };
+  const handleSelect = (url: string) => onSave({ profileBackground: url });
   return (
-    <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog><DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader><DialogTitle>Cambiar Fondo de Perfil</DialogTitle></DialogHeader>
         <div className="grid grid-cols-2 gap-4 py-4">
@@ -163,14 +153,13 @@ const TransferStatusBadge = ({ user, onTransferClick }: { user: UserProfile; onT
 };
 
 type View = 'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass' | 'ranking_preview' | 'favorite_tournaments' | 'my_team';
-type AttendanceStatus = 'confirmed' | 'denied' | 'pending';
 
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
   const userId = params.id as string;
   const { toast } = useToast();
-  const { user: currentUser, setUser: setCurrentUser, loading: userLoading, allUsers, setAllUsers } = useUser();
+  const { user: currentUser, setUser: setCurrentUser, loading: userLoading } = useUser();
   const { uploadFile, isUploading, progress } = useUpload();
 
   const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
@@ -178,77 +167,63 @@ export default function ProfilePage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<View>('buttons');
   const [claimedRewards, setClaimedRewards] = useState<number[]>([]);
-  const [attendance, setAttendance] = useState<{[key: string]: AttendanceStatus}>({});
 
-  // --- EFECTO REFACTORIZADO CON ONVALUE PARA TIEMPO REAL ---
   useEffect(() => {
     if (!userId) return;
-
     setLoading(true);
-    // 1. Creamos una referencia al nodo del usuario. Esto no cambia.
     const userRef = ref(db, `users/${userId}`);
 
-    // 2. Usamos onValue para escuchar cambios en tiempo real.
     const unsubscribe = onValue(userRef, (snapshot) => {
       if (snapshot.exists()) {
-        // 3. Cuando los datos cambian, actualizamos el estado.
         const userData = snapshot.val() as UserProfile;
         setProfileUser(userData);
-
-        // Esto puede seguir siendo local o migrarse a DB después
         const savedClaims = localStorage.getItem(`claimedRewards_${userData.id}`);
         if (savedClaims) setClaimedRewards(JSON.parse(savedClaims));
-
       } else {
         setProfileUser(null);
         toast({ title: "Error", description: "Usuario no encontrado.", variant: "destructive" });
       }
       setLoading(false);
     }, (error) => {
-      console.error("Error con la escucha de Realtime Database:", error);
-      toast({ title: "Error de Red", description: "No se pudo conectar con la base de datos.", variant: "destructive" });
+      console.error("Error en Realtime Database:", error);
+      toast({ title: "Error de Red", variant: "destructive" });
       setLoading(false);
     });
 
-    // 4. ¡MUY IMPORTANTE! Función de limpieza.
-    // Cuando el componente se desmonta (el usuario navega a otra página),
-    // dejamos de escuchar para liberar recursos.
-    return () => {
-      off(userRef, 'value', unsubscribe);
-    };
-
+    return () => off(userRef, 'value', unsubscribe);
   }, [userId, toast]);
 
   const handleSaveProfile = async (updatedData: Partial<UserProfile>) => {
     if (!profileUser) return;
     const userRef = ref(db, `users/${profileUser.id}`);
     try {
-      // Ya no necesitamos la actualización optimista aquí,
-      // porque onValue se encargará de actualizar la UI cuando Firebase confirme el cambio.
       await update(userRef, updatedData);
-      toast({ title: '¡Perfil Actualizado!', description: 'Tus cambios han sido guardados.' });
+      toast({ title: '¡Perfil Actualizado!' });
     } catch (error) {
-      console.error('Error al actualizar perfil:', error);
-      toast({ title: 'Error', description: 'No se pudo actualizar el perfil.', variant: 'destructive' });
+      toast({ title: 'Error al actualizar', variant: 'destructive' });
     }
   };
+  
+  const handleClaimReward = (level: number) => {
+    if (!profileUser) return;
+    const newClaims = [...claimedRewards, level];
+    setClaimedRewards(newClaims);
+    localStorage.setItem(`claimedRewards_${profileUser.id}`, JSON.stringify(newClaims));
+    toast({ title: `¡Nivel ${level} Reclamado!` });
+  }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && profileUser) {
       const file = e.target.files[0];
-      try {
-        const uploadedUrl = await uploadFile(file, `avatars/${profileUser.id}`);
-        await handleSaveProfile({ avatar: uploadedUrl });
-      } catch (error) { /* El hook de upload ya muestra el error */ }
+      const uploadedUrl = await uploadFile(file, `avatars/${profileUser.id}`);
+      if (uploadedUrl) await handleSaveProfile({ avatar: uploadedUrl });
     }
   };
   
-  // El resto de los handlers no cambian
   const handleChangeTransferStatus = (status: 'libre' | 'traspaso' | 'blindado') => handleSaveProfile({ transferStatus: status });
   const handleAvatarClick = () => { if (currentUser?.id === profileUser?.id && !isUploading) fileInputRef.current?.click(); };
   const handleSendMessage = () => router.push(`/messages?recipient=${profileUser?.id}`);
   const handleTransferClick = () => router.push(`/messages?recipient=${profileUser?.id}`);
-  const handleAddFriend = () => toast({ title: 'Solicitud Enviada', description: `Se ha enviado una solicitud de amistad.` });
 
   if (loading || userLoading) return <div className="p-8 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></div>;
   if (!profileUser) return <div className="p-8 text-center">Usuario no encontrado.</div>;
@@ -257,13 +232,24 @@ export default function ProfilePage() {
   const { stats, name, username, role, league, division, sudpoints = 0, isVerified, avatar, profileBackground, sudonepassLevel = 1, sudonepassExp = 0, transferStatus, team } = profileUser;
   const finalStats = stats || { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 };
   const winrate = finalStats.partidosJugados > 0 ? Math.round((finalStats.victorias / finalStats.partidosJugados) * 100) : 0;
+  const goalAverage = finalStats.partidosJugados > 0 ? (finalStats.goles / finalStats.partidosJugados).toFixed(2) : '0.00';
   const currentCrest = profileBackground ? crestMap[profileBackground] : null;
+  const expToNextLevel = 100;
+  const passProgress = (sudonepassExp / expToNextLevel) * 100;
+
+  const OverlayView = ({ children }: { children: React.ReactNode }) => (
+    <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setView('buttons')}>
+      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }} className="w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+        <Card className="max-h-[80vh]">{children}</Card>
+      </motion.div>
+    </motion.div>
+  );
 
   return (
     <>
       <AnimatePresence>
         {view === 'buttons' && (
-          <div className="max-w-4xl mx-auto space-y-6 p-4">
+          <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
             <motion.div initial={false} animate={{ y: 0 }} exit={{ y: '-100%', opacity: 0 }}>
               <Card>
                 <div className="relative w-full aspect-[4/1]">
@@ -291,49 +277,126 @@ export default function ProfilePage() {
                   </div>
                   <div className="absolute bottom-0 left-6 translate-y-1/2">
                     <div className={cn('relative group', isOwnProfile && 'cursor-pointer')} onClick={handleAvatarClick}>
-                      <AnimatedAvatar>
-                        <Avatar className="w-24 h-24 text-4xl border-4 border-background"><AvatarImage src={avatar} alt={name} /><AvatarFallback>{name.charAt(0)}</AvatarFallback></Avatar>
-                      </AnimatedAvatar>
-                      {isUploading && <div className="absolute inset-0 bg-black/60 rounded-full flex flex-col items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-white" /><p className="text-white text-xs mt-2">{Math.round(progress)}%</p></div>}
+                      <AnimatedAvatar><Avatar className="w-24 h-24 text-4xl border-4 border-background"><AvatarImage src={avatar} alt={name} /><AvatarFallback>{name.charAt(0)}</AvatarFallback></Avatar></AnimatedAvatar>
+                      {isUploading && <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin"/></div>}
                     </div>
                   </div>
                 </div>
                 <CardHeader className="pt-16 pb-4 px-6">
                   <div className="flex items-center gap-2">
                     <CardTitle className="text-2xl">{name}</CardTitle>
-                    {isVerified && <TooltipProvider><Tooltip><TooltipTrigger><Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={24} height={24} /></TooltipTrigger><TooltipContent><p>Usuario Verificado</p></TooltipContent></Tooltip></TooltipProvider>}
+                    {isVerified && <TooltipProvider><Tooltip><TooltipTrigger><Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={24} height={24} /></TooltipTrigger><TooltipContent><p>Verificado</p></TooltipContent></Tooltip></TooltipProvider>}
                   </div>
                   <CardDescription>@{username} · {role}</CardDescription>
                 </CardHeader>
                 <CardContent className="px-6 space-y-4">
-                  <div className="flex items-center gap-4">
-                    <DivisionBadge league={league} division={division} />
-                    {transferStatus && <TransferStatusBadge user={profileUser} onTransferClick={handleTransferClick} />}
-                  </div>
-                  <div className="w-full">
-                    <Progress value={(sudpoints / 1000) * 100} className="h-2" />
-                    <div className="flex justify-between"><p className="text-xs text-muted-foreground mt-1">Siguiente división</p><p className="text-sm font-semibold">{sudpoints} / 1000 SP</p></div>
-                  </div>
-                  {!isOwnProfile && <Button onClick={handleSendMessage} className="w-full"><MessageSquare className="mr-2 h-4 w-4" />Enviar Mensaje</Button>}
+                    <div className="flex items-center gap-4">
+                        <DivisionBadge league={league} division={division} />
+                        {transferStatus && <TransferStatusBadge user={profileUser} onTransferClick={handleTransferClick} />}
+                    </div>
+                    <div className="w-full">
+                        <Progress value={passProgress} className="h-2" />
+                        <div className="flex justify-between"><p className="text-xs text-muted-foreground mt-1">Siguiente nivel</p><p className="text-sm font-semibold">{sudonepassExp} / {expToNextLevel} EXP</p></div>
+                    </div>
+                    {!isOwnProfile && <Button onClick={handleSendMessage} className="w-full"><MessageSquare className="mr-2 h-4 w-4" />Enviar Mensaje</Button>}
                 </CardContent>
               </Card>
             </motion.div>
             <motion.div initial={false} animate={{ y: 0 }} exit={{ y: '100%', opacity: 0 }}>
               <Card>
                 <CardContent className="p-4 grid grid-cols-4 gap-4">
-                  <button onClick={() => setView('history')}><Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial" width={150} height={50} /></button>
-                  <button onClick={() => setView('next_match')}><Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} /></button>
-                  <button onClick={() => setView('stats')}><Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} /></button>
-                  <button onClick={() => setView('my_team')}><Image src="https://i.postimg.cc/cLsMSW3v/boton-mi-equipo.png" alt="Mi Equipo" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('history')}><Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('next_match')}><Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}><Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('my_team')}><Image src="https://i.postimg.cc/cLsMSW3v/boton-mi-equipo.png" alt="Mi Equipo" width={150} height={50} /></button>
+                    {/* --- BOTONES RESTAURADOS --- */}
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}><Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}><Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('favorite_tournaments')}><Image src="https://i.postimg.cc/yYnD2Q1z/boton-favorito-torneo.png" alt="Torneos Favoritos" width={150} height={50} /></button>
                 </CardContent>
               </Card>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
+
       <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" disabled={isUploading}/>
+
+      {/* --- VISTAS MODALES RESTAURADAS --- */}
       <AnimatePresence>
-        {/* Vistas modales... */}
+        {view === 'history' && <OverlayView><CardHeader><CardTitle>Historial</CardTitle></CardHeader><CardContent><p>...</p></CardContent></OverlayView>}
+        {view === 'stats' && <OverlayView><CardHeader><CardTitle>Estadísticas</CardTitle></CardHeader><CardContent><p>...</p></CardContent></OverlayView>}
+        {view === 'next_match' && <OverlayView><CardHeader><CardTitle>Próximo Partido</CardTitle></CardHeader><CardContent><p>...</p></CardContent></OverlayView>}
+        {view === 'my_team' && <OverlayView><CardHeader><CardTitle>Mi Equipo</CardTitle></CardHeader><CardContent><p>...</p></CardContent></OverlayView>}
+
+        {view === 'sudone_pass' && (
+            <OverlayView>
+                <CardHeader>
+                    <CardTitle className="text-center text-2xl">SUDONE PASS</CardTitle>
+                    <div className="pt-4">
+                        <div className="flex justify-between items-end mb-1"><span className="font-bold text-lg">NIVEL {sudonepassLevel}</span><span className="text-sm text-muted-foreground">{sudonepassExp} / {expToNextLevel} EXP</span></div>
+                        <Progress value={passProgress} />
+                    </div>
+                </CardHeader>
+                 <ScrollArea className="h-[50vh] pr-4">
+                    <CardContent className="space-y-2">
+                        {Array.from({ length: 10 }).map((_, index) => {
+                            const level = index + 1;
+                            const isUnlocked = level <= sudonepassLevel;
+                            const isClaimed = claimedRewards.includes(level);
+                            return (
+                                <div key={level} className={cn("flex items-center justify-between p-3 rounded-lg", isUnlocked ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex flex-col items-center justify-center w-12"><span className="text-xs text-muted-foreground">NIVEL</span><span className="text-xl font-bold">{level}</span></div>
+                                        <div className="relative"><Image src="https://i.postimg.cc/qM6GyVNg/sobre-base-campeones-de-qatar.png" alt="Recompensa" width={80} height={100} className={cn(!isUnlocked && "opacity-30")} />{!isUnlocked && <Lock className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6"/>}</div>
+                                        <div className="font-semibold">SOBRE</div>
+                                    </div>
+                                    <Button size="sm" disabled={!isUnlocked || isClaimed} variant={isClaimed ? "outline" : "default"} onClick={() => handleClaimReward(level)}>{isClaimed ? <><CheckCircle2 className="mr-2 h-4 w-4" />Reclamado</> : isUnlocked ? "Reclamar" : "Bloqueado"}</Button>
+                                </div>
+                            )
+                        })}
+                    </CardContent>
+                </ScrollArea>
+                <CardFooter><Button variant="ghost" onClick={() => setView('buttons')} className="w-full">Volver</Button></CardFooter>
+            </OverlayView>
+        )}
+
+        {view === 'ranking_preview' && (
+             <OverlayView>
+                <CardHeader><CardTitle className="text-center">Ranking</CardTitle></CardHeader>
+                <ScrollArea className="h-[60vh]">
+                  <CardContent className="space-y-2">
+                      {mockRanking.map((player) => (
+                          <div key={player.rank} className={cn("flex items-center justify-between p-3 rounded-lg", player.name === name ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
+                              <div className="flex items-center gap-4">
+                                  <span className="font-bold text-lg w-6 text-center">{player.rank === 1 ? <Crown className="w-5 h-5 text-amber-400" /> : player.rank}</span>
+                                  <p className={cn(player.name === name && "text-accent")}>{player.name}</p>
+                              </div>
+                              <p className="font-bold">{player.sudpoints} SP</p>
+                          </div>
+                      ))}
+                  </CardContent>
+                </ScrollArea>
+                 <CardFooter><Button variant="ghost" onClick={() => setView('buttons')} className="w-full">Volver</Button></CardFooter>
+            </OverlayView>
+        )}
+
+        {view === 'favorite_tournaments' && (
+            <OverlayView>
+                <CardHeader><CardTitle className="text-center">Torneos Favoritos</CardTitle></CardHeader>
+                 <ScrollArea className="h-[60vh]">
+                    <CardContent>
+                        <Tabs defaultValue="positions" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3"><TabsTrigger value="positions">Posiciones</TabsTrigger><TabsTrigger value="scorers">Goleadores</TabsTrigger><TabsTrigger value="sanctions">Sanciones</TabsTrigger></TabsList>
+                            <TabsContent value="positions" className="mt-4"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Equipo</TableHead><TableHead>PJ</TableHead><TableHead>Ptos</TableHead></TableRow></TableHeader><TableBody>{mockTournamentStats.positions.map((pos) => (<TableRow key={pos.team}><TableCell>{pos.rank}</TableCell><TableCell>{pos.team}</TableCell><TableCell>{pos.played}</TableCell><TableCell>{pos.points}</TableCell></TableRow>))}</TableBody></Table></TabsContent>
+                            <TabsContent value="scorers" className="mt-4"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Jugador</TableHead><TableHead>Goles</TableHead></TableRow></TableHeader><TableBody>{mockTournamentStats.scorers.map((s) => (<TableRow key={s.player}><TableCell>{s.rank}</TableCell><TableCell>{s.player}</TableCell><TableCell>{s.goals}</TableCell></TableRow>))}</TableBody></Table></TabsContent>
+                            <TabsContent value="sanctions" className="mt-4"><Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Amarillas</TableHead><TableHead>Rojas</TableHead></TableRow></TableHeader><TableBody>{mockTournamentStats.sanctions.map((s, i) => (<TableRow key={i}><TableCell>{s.player}</TableCell><TableCell>{s.yellow}</TableCell><TableCell>{s.red}</TableCell></TableRow>))}</TableBody></Table></TabsContent>
+                        </Tabs>
+                    </CardContent>
+                </ScrollArea>
+                <CardFooter><Button variant="ghost" onClick={() => setView('buttons')} className="w-full">Volver</Button></CardFooter>
+            </OverlayView>
+        )}
       </AnimatePresence>
     </>
   );
