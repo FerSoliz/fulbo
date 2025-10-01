@@ -57,7 +57,7 @@ const adminActions = [
     title: 'Gestionar Equipos',
     description: 'Administra las plantillas, logos y datos de los equipos inscritos.',
     icon: Users,
-    href: '/admin/manage-tournaments', // Link to manager to select a tournament first
+    href: '/admin/manage-teams', // Corregido el enlace
     color: 'bg-purple-500 hover:bg-purple-600',
   },
   {

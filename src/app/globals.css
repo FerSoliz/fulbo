@@ -210,9 +210,3 @@
     background-color: hsl(var(--sidebar-accent));
     color: hsl(var(--accent-foreground));
 }
-
-.sudone-logo {
-  width: 140px !important;
-  height: 40px !important;
-  object-fit: contain !important;
-}

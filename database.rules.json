@@ -1,42 +1,30 @@
 {
   "rules": {
-    // Reglas para la rama de usuarios
     "users": {
-      ".read": "auth != null", // Usuarios autenticados pueden leer todos los perfiles de usuario
-      // Asegúrate de que el perfil de usuario tenga el campo 'role' para que las reglas de posts puedan leerlo.
-      // Un usuario solo puede escribir en su propio perfil (crear/actualizar)
+      ".read": "auth != null",
       "$uid": {
         ".write": "auth != null && auth.uid == $uid",
-        // Validaciones básicas para los campos del usuario al escribir
         "role": { ".validate": "newData.isString() && (newData.val() == 'player' || newData.val() == 'captain' || newData.val() == 'admin')" },
-        "name": { ".validate": "newData.isString() && newData.val().length > 0" },
-        // ... puedes añadir más validaciones de campos aquí
+        "name": { ".validate": "newData.isString() && newData.val().length > 0" }
       }
     },
-
-    // Reglas para la rama de posts
     "posts": {
-      ".read": "true", // Todos pueden leer los posts (incluso no autenticados)
+      ".read": "true",
       ".write": "auth != null && (root.child('users/' + auth.uid + '/role').val() == 'admin' || root.child('users/' + auth.uid + '/role').val() == 'captain')",
-      // Validaciones para la estructura de un nuevo post o un post actualizado
       "$postId": {
-        // Permitir solo la creación (push) o actualización por admin/captain
         ".validate": "newData.hasChildren(['authorId', 'content', 'createdAt']) && newData.child('authorId').val() == auth.uid",
         "authorId": { ".validate": "newData.isString() && newData.val().length > 0" },
         "content": { ".validate": "newData.isString() && newData.val().length > 0" },
-        "createdAt": { ".validate": "newData.isString()" }, // Asumimos ISO String
-        "media": { ".validate": "newData.isBoolean() || newData.isNumber() || newData.isString() || newData.isMap()"}, // Puede ser un array de objetos o vacío
+        "createdAt": { ".validate": "newData.isString()" },
+        "media": { ".validate": "newData.isBoolean() || newData.isNumber() || newData.isString() || newData.isMap()"},
         "url": { ".validate": "newData.isString() || !newData.exists()" },
         "isPinned": { ".validate": "newData.isBoolean() || !newData.exists()" },
         "pinnedUntil": { ".validate": "newData.isString() || !newData.exists()" },
-        
         "likes": {
-          // Cualquier usuario autenticado puede añadir/quitar su like
           ".write": "auth != null",
-          "$uid": { ".validate": "newData.isBoolean()" } // El like es simplemente true/false por UID
+          "$uid": { ".validate": "newData.isBoolean()" }
         },
         "comments": {
-          // Solo usuarios autenticados (no 'player') pueden añadir comentarios
           ".write": "auth != null && (root.child('users/' + auth.uid + '/role').val() == 'admin' || root.child('users/' + auth.uid + '/role').val() == 'captain')",
           "$commentId": {
             ".validate": "newData.hasChildren(['authorId', 'content', 'createdAt']) && newData.child('authorId').val() == auth.uid",
@@ -47,8 +35,13 @@
         }
       }
     },
-
-    // Regla predeterminada: negar el acceso a cualquier otra rama no especificada.
+    "matches": {
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users/' + auth.uid + '/role').val() == 'admin'",
+      "$matchId": {
+        ".validate": "newData.hasChildren(['id', 'tournamentId', 'round', 'homeTeamId', 'awayTeamId', 'status'])"
+      }
+    },
     ".read": "false",
     ".write": "false"
   }

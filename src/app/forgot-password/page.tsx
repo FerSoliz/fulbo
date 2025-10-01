@@ -48,13 +48,14 @@ export default function ForgotPasswordPage() {
       <div className="w-full min-h-screen flex items-center justify-center p-4 bg-background">
         <div className="w-full max-w-md space-y-6">
           <div className="flex justify-center">
-              <Link href="/">
+              <Link href="/" className="relative w-[200px] h-[60px]">
                   <Image
-                  src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
-                  alt="SUDONE Logo"
-                  width={200}
-                  height={60}
-                  priority
+                    src="/sudone-titulo.png"
+                    alt="SUDONE Logo"
+                    fill
+                    priority
+                    sizes="200px" // <-- ¡SOLUCIÓN AÑADIDA!
+                    style={{ objectFit: 'contain' }}
                   />
               </Link>
           </div>

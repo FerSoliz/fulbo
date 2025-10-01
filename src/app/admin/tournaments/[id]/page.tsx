@@ -264,7 +264,7 @@ export default function TournamentFixturePage() {
                     </TabsContent>
                     <TabsContent value="positions" className="mt-6">
                         <Card>
-                            <CardHeader><CardTitle>Tabla de Posiciones</CardTitle><CardDescription>Se actualiza al finalizar un partido.</CardDescription></Header>
+                            <CardHeader><CardTitle>Tabla de Posiciones</CardTitle><CardDescription>Se actualiza al finalizar un partido.</CardDescription></CardHeader>
                             <CardContent>
                                 {stats?.positions && stats.positions.length > 0 ? (
                                     <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead className="w-[40px]">#</TableHead><TableHead>Equipo</TableHead><TableHead className="text-center">PJ</TableHead><TableHead className="text-center">G</TableHead><TableHead className="text-center">E</TableHead><TableHead className="text-center">P</TableHead><TableHead className="hidden md:table-cell text-center">GF</TableHead><TableHead className="hidden md:table-cell text-center">GC</TableHead><TableHead className="hidden md:table-cell text-center">DG</TableHead><TableHead className="text-right">Puntos</TableHead></TableRow></TableHeader><TableBody>{stats.positions.map((pos, index) => (<TableRow key={pos.teamId}><TableCell className="font-bold">{index + 1}</TableCell><TableCell>{pos.teamName}</TableCell><TableCell className="text-center">{pos.played}</TableCell><TableCell className="text-center">{pos.won}</TableCell><TableCell className="text-center">{pos.drawn}</TableCell><TableCell className="text-center">{pos.lost}</TableCell><TableCell className="hidden md:table-cell text-center">{pos.gf}</TableCell><TableCell className="hidden md:table-cell text-center">{pos.gc}</TableCell><TableCell className="hidden md:table-cell text-center">{pos.dg}</TableCell><TableCell className="text-right font-bold">{pos.points}</TableCell></TableRow>))}</TableBody></Table></div>
@@ -274,7 +274,7 @@ export default function TournamentFixturePage() {
                     </TabsContent>
                     <TabsContent value="scorers" className="mt-6">
                         <Card>
-                            <CardHeader><CardTitle>Tabla de Goleadores</CardTitle><CardDescription>Se actualiza al finalizar un partido.</CardDescription></Header>
+                            <CardHeader><CardTitle>Tabla de Goleadores</CardTitle><CardDescription>Se actualiza al finalizar un partido.</CardDescription></CardHeader>
                              <CardContent>
                                 {stats?.scorers && stats.scorers.length > 0 ? (
                                     <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead className="w-[40px]">#</TableHead><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead className="text-right">Goles</TableHead></TableRow></TableHeader><TableBody>{stats.scorers.map((scorer, index) => (<TableRow key={scorer.playerInfo.id}><TableCell className="font-bold">{index + 1}</TableCell><TableCell>{`${scorer.playerInfo.name} ${scorer.playerInfo.lastName}`}</TableCell><TableCell>{scorer.teamName}</TableCell><TableCell className="text-right font-bold">{scorer.goals}</TableCell></TableRow>))}</TableBody></Table></div>
@@ -284,7 +284,7 @@ export default function TournamentFixturePage() {
                     </TabsContent>
                     <TabsContent value="sanctions" className="mt-6">
                         <Card>
-                            <CardHeader><CardTitle>Tabla de Sanciones</CardTitle><CardDescription>Se actualiza al finalizar un partido.</CardDescription></Header>
+                            <CardHeader><CardTitle>Tabla de Sanciones</CardTitle><CardDescription>Se actualiza al finalizar un partido.</CardDescription></CardHeader>
                              <CardContent>
                                 {stats?.sanctions && stats.sanctions.length > 0 ? (
                                     <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead className="text-center">Amarillas</TableHead><TableHead className="text-center">Rojas</TableHead></TableRow></TableHeader><TableBody>{stats.sanctions.map((p, index) => (<TableRow key={p.playerInfo.id}><TableCell>{`${p.playerInfo.name} ${p.playerInfo.lastName}`}</TableCell><TableCell>{p.teamName}</TableCell><TableCell className="text-center font-bold">{p.yellowCards}</TableCell><TableCell className="text-center font-bold">{p.redCards}</TableCell></TableRow>))}</TableBody></Table></div>
