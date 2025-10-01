@@ -8,8 +8,8 @@ import { useToast } from '@/hooks/use-toast';
 // --- ¡CORRECCIÓN DE IMPORTACIONES! ---
 // 1. Importamos solo los servicios principales desde nuestra configuración de Firebase.
 import { auth, db } from '@/lib/firebase'; 
-// 2. Importamos las funciones de la base de datos directamente desde el SDK.
-import { ref, onValue, get, set } from 'firebase/database';
+// 2. Importamos las funciones de la base de datos directamente desde el SDK, incluyendo 'update' e 'increment'.
+import { ref, onValue, get, set, update, increment } from 'firebase/database';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
@@ -65,15 +65,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { toast } = useToast();
 
-  const updateUserInStorage = useCallback(async (updatedUser: User) => {
-    // Usamos `db` en lugar de `rtdb`
-    const userRef = ref(db, `users/${updatedUser.id}`);
-    await set(userRef, updatedUser);
-    setAllUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
-  }, []);
+  // REMOVED: The dangerous updateUserInStorage function is gone.
 
   useEffect(() => {
-    // Usamos `db` en lugar de `rtdb`
     const usersRef = ref(db, 'users');
     const unsubscribe = onValue(usersRef, (snapshot) => {
       const data = snapshot.val();
@@ -93,7 +87,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
-        // Usamos `db` en lugar de `rtdb`
         const userRef = ref(db, `users/${firebaseUser.uid}`);
         const snapshot = await get(userRef);
         let foundUser: User | null = null;
@@ -236,7 +229,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
             packsOpened: 0,
             profileBackground: profileBackground,
         };
-        // Usamos `db` en lugar de `rtdb`
         await set(ref(db, 'users/' + newUser.id), newUser);
         toast({ title: "¡Cuenta Creada!", description: "Tu cuenta ha sido creada exitosamente." });
         router.push('/');
@@ -263,19 +255,37 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   };
 
+  // --- IMPLEMENTACIÓN SEGURA ---
   const trackInteraction = useCallback(async () => {
     if (!user || user.id === 'visitor') return;
-    const updatedUser = { ...user, interactions: (user.interactions || 0) + 1 };
-    setUser(updatedUser);
-    await updateUserInStorage(updatedUser);
-  }, [user, updateUserInStorage]);
+    const userRef = ref(db, `users/${user.id}`);
+    try {
+      await update(userRef, { interactions: increment(1) });
+      setUser(currentUser => 
+        currentUser && currentUser.id !== 'visitor' 
+        ? { ...currentUser, interactions: (currentUser.interactions || 0) + 1 } 
+        : currentUser
+      );
+    } catch (error) {
+      console.error("Error al registrar la interacción: ", error);
+    }
+  }, [user]);
 
+  // --- IMPLEMENTACIÓN SEGURA ---
   const trackPackOpening = useCallback(async () => {
     if (!user || user.id === 'visitor') return;
-    const updatedUser = { ...user, packsOpened: (user.packsOpened || 0) + 1 };
-    setUser(updatedUser);
-    await updateUserInStorage(updatedUser);
-  }, [user, updateUserInStorage]);
+    const userRef = ref(db, `users/${user.id}`);
+    try {
+      await update(userRef, { packsOpened: increment(1) });
+      setUser(currentUser => 
+        currentUser && currentUser.id !== 'visitor'
+        ? { ...currentUser, packsOpened: (currentUser.packsOpened || 0) + 1 }
+        : currentUser
+      );
+    } catch (error) {
+      console.error("Error al registrar la apertura de sobre: ", error);
+    }
+  }, [user]);
 
   const contextValue: UserContextType = {
       user,
