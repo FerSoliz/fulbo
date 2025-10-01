@@ -50,8 +50,6 @@ import {
   Shield,
   Pencil,
   Search,
-  PackageOpen,
-  MousePointerClick,
 } from 'lucide-react';
 import { useUser } from '@/context/user-context';
 import type { User } from '@/lib/data';
@@ -59,8 +57,9 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-// Importaciones corregidas para Realtime Database
-import { rtdb, ref, update, remove } from '@/lib/firebase';
+// --- CORRECCIÓN DE IMPORTACIONES ---
+import { db } from '@/lib/firebase';
+import { ref, update, remove } from 'firebase/database';
 
 export default function ManageUsersPage() {
   const { user: currentUser, loading: userLoading, allUsers, setAllUsers } = useUser();
@@ -69,20 +68,17 @@ export default function ManageUsersPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    // El contexto de usuario (useUser) ya nos provee los usuarios de RTDB, 
-    // por lo que esta página ya recibe los datos correctos.
     if (!userLoading) {
         setLoading(false);
     }
   }, [userLoading]);
 
-  // Función de guardado traducida a Realtime Database
   const saveUserUpdate = async (updatedUser: Partial<User> & { id: string }) => {
     try {
-        const userRef = ref(rtdb, `users/${updatedUser.id}`);
+        // Usamos `db` en lugar de `rtdb`
+        const userRef = ref(db, `users/${updatedUser.id}`);
         await update(userRef, updatedUser);
 
-        // Actualizamos el estado local que viene del contexto
         setAllUsers((prev) =>
           prev.map((u) => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u))
         );
@@ -102,7 +98,6 @@ export default function ManageUsersPage() {
     });
   };
 
-  // Lógica de roles corregida a 'player', 'captain', 'admin'
   const handleChangeRole = (userId: string, newRole: 'player' | 'captain' | 'admin') => {
     const userToUpdate = allUsers.find((u) => u.id === userId);
     if (!userToUpdate) return;
@@ -114,13 +109,12 @@ export default function ManageUsersPage() {
     });
   };
 
-  // Función de eliminación traducida a Realtime Database
   const handleDeleteUser = async (userId: string) => {
     try {
-      const userRef = ref(rtdb, `users/${userId}`);
+      // Usamos `db` en lugar de `rtdb`
+      const userRef = ref(db, `users/${userId}`);
       await remove(userRef);
       
-      // Actualizamos el estado local
       setAllUsers((prev) => prev.filter((u) => u.id !== userId));
       toast({
         title: 'Usuario Eliminado',

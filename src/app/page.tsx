@@ -5,7 +5,9 @@ import { CreatePostForm } from '@/components/create-post-form';
 import { PostCard } from '@/components/post-card';
 import { Post, Comment } from '@/lib/data';
 import { useUser } from '@/context/user-context';
-import { rtdb, ref, onValue, push, set, remove, update } from '@/lib/firebase';
+// --- CORRECCIÓN DE IMPORTACIONES ---
+import { db } from '@/lib/firebase';
+import { ref, onValue, push, set, remove } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 import { PostCardSkeleton } from '@/components/post-card-skeleton';
 
@@ -21,7 +23,8 @@ export default function HomePage() {
 
   useEffect(() => {
     setLoadingState({ status: 'loading', data: [] });
-    const postsRef = ref(rtdb, 'posts');
+    // Usamos `db` en lugar de `rtdb`.
+    const postsRef = ref(db, 'posts');
 
     const unsubscribe = onValue(postsRef, (snapshot) => {
       try {
@@ -75,7 +78,8 @@ export default function HomePage() {
     };
 
     try {
-      await push(ref(rtdb, 'posts'), postToSave);
+      // Usamos `db` en lugar de `rtdb`.
+      await push(ref(db, 'posts'), postToSave);
       toast({ title: "Publicación creada", description: "Tu publicación ha sido añadida al feed." });
     } catch (error: any) {
       console.error("Error al añadir publicación en RTDB: ", error);
@@ -89,7 +93,8 @@ export default function HomePage() {
         return;
     }
     const userId = currentUser.id;
-    const postLikesRef = ref(rtdb, `posts/${postId}/likes/${userId}`);
+    // Usamos `db` en lugar de `rtdb`.
+    const postLikesRef = ref(db, `posts/${postId}/likes/${userId}`);
 
     try {
         if (currentLikes.includes(userId)) {
@@ -110,7 +115,8 @@ export default function HomePage() {
     }
     if (!commentText.trim()) return;
 
-    const commentsRef = ref(rtdb, `posts/${postId}/comments`);
+    // Usamos `db` en lugar de `rtdb`.
+    const commentsRef = ref(db, `posts/${postId}/comments`);
     const newCommentRef = push(commentsRef);
 
     const newComment: Omit<Comment, 'id'> = {
@@ -129,14 +135,14 @@ export default function HomePage() {
   };
 
   const handleDeletePost = async (postId: string) => {
-    // La lógica de permisos ya está en el PostCard, pero una doble verificación nunca está de más.
     const postToDelete = loadingState.data.find(p => p.id === postId);
     if (!currentUser || (currentUser.role !== 'admin' && currentUser.id !== postToDelete?.authorId)) {
       toast({ title: "Acceso denegado", description: "No tienes permiso para eliminar esta publicación.", variant: "destructive" });
       return;
     }
     try {
-      await remove(ref(rtdb, `posts/${postId}`));
+      // Usamos `db` en lugar de `rtdb`.
+      await remove(ref(db, `posts/${postId}`));
       toast({ title: "Publicación eliminada" });
     } catch (error: any) {
       console.error("Error al eliminar publicación de RTDB: ", error);
@@ -159,8 +165,8 @@ export default function HomePage() {
               key={post.id}
               post={post}
               currentUser={currentUser}
-              onLikeToggle={handleLikeToggle} // Prop actualizada
-              onAddComment={handleAddComment} // Prop nueva
+              onLikeToggle={handleLikeToggle} 
+              onAddComment={handleAddComment} 
               onDeletePost={handleDeletePost}
               allUsers={allUsers}
             />
