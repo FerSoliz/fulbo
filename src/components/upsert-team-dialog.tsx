@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { rtdb, storage, ref as dbRef, set, push } from '@/lib/firebase';
+// --- CORRECCIÓN DE IMPORTACIONES ---
+// Cambiamos la importación de `rtdb` a `db` para que coincida con el archivo de configuración.
+import { db, storage } from '@/lib/firebase';
+import { ref as dbRef, set, push } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,7 +25,7 @@ interface Team {
 interface UpsertTeamDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  teamToEdit?: Team | null; // Lo usaremos más adelante para editar
+  teamToEdit?: Team | null;
   onSuccess: () => void;
 }
 
@@ -39,16 +43,13 @@ export function UpsertTeamDialog({ open, onOpenChange, teamToEdit, onSuccess }: 
   const isEditMode = !!teamToEdit;
 
   useEffect(() => {
-    // Si pasamos un equipo para editar, llenamos el formulario con sus datos.
     if (teamToEdit) {
       setName(teamToEdit.name);
       setLogoPreview(teamToEdit.logoUrl || null);
     } else {
-      // Si es para crear, reseteamos el formulario.
       setName('');
       setLogoPreview(null);
     }
-    // Reseteamos el estado de errores y archivos al abrir/cambiar de modo.
     setLogoFile(null);
     setError(null);
   }, [teamToEdit, open]);
@@ -76,19 +77,19 @@ export function UpsertTeamDialog({ open, onOpenChange, teamToEdit, onSuccess }: 
 
     try {
       let logoUrl = teamToEdit?.logoUrl || '';
-      const teamId = teamToEdit?.id || push(dbRef(rtdb, 'teams')).key;
+      // Usamos `db` en lugar de `rtdb`.
+      const teamId = teamToEdit?.id || push(dbRef(db, 'teams')).key;
 
       if (!teamId) throw new Error("No se pudo generar un ID para el equipo.");
 
-      // Si se seleccionó un nuevo archivo de logo, lo subimos.
       if (logoFile) {
         const logoStorageRef = storageRef(storage, `team-logos/${teamId}`);
         const uploadResult = await uploadBytes(logoStorageRef, logoFile);
         logoUrl = await getDownloadURL(uploadResult.ref);
       }
 
-      // Guardamos/actualizamos los datos en la Realtime Database.
-      await set(dbRef(rtdb, `teams/${teamId}`), {
+      // Usamos `db` en lugar de `rtdb`.
+      await set(dbRef(db, `teams/${teamId}`), {
         name: name.trim(),
         logoUrl: logoUrl,
       });
@@ -99,7 +100,7 @@ export function UpsertTeamDialog({ open, onOpenChange, teamToEdit, onSuccess }: 
         className: 'bg-green-500 text-white',
       });
       
-      onSuccess(); // Llamamos al callback de éxito.
+      onSuccess();
 
     } catch (err) {
       console.error(err);

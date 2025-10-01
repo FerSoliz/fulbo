@@ -10,6 +10,13 @@ export interface TeamSummary {
     logoUrl?: string;
 }
 
+// Interfaz para los detalles completos de un equipo
+export interface TeamDetails {
+  id: string;
+  name: string;
+  logoUrl?: string;
+}
+
 export async function findUserByDni(dni: string): Promise<FoundPlayer | null> {
   try {
     const usersRef = ref(db, 'users');
@@ -29,17 +36,16 @@ export async function findUserByDni(dni: string): Promise<FoundPlayer | null> {
       };
     }
     
-    // Si no se encuentra en usuarios, buscar en jugadores invitados
     const guestPlayerRef = ref(db, `guestPlayers/${dni}`);
     const guestSnapshot = await get(guestPlayerRef);
     if (guestSnapshot.exists()) {
         const guestData = guestSnapshot.val();
         return {
-            id: dni, // Para un invitado, el ID es su DNI
+            id: dni, 
             name: guestData.name,
             dni: guestData.dni,
-            username: 'invitado', // Los invitados no tienen usuario
-            avatar: `https://avatar.vercel.sh/${guestData.dni}.png`, // Avatar genérico para invitados
+            username: 'invitado', 
+            avatar: `https://avatar.vercel.sh/${guestData.dni}.png`, 
             isGuest: true
         };
     }
@@ -51,12 +57,8 @@ export async function findUserByDni(dni: string): Promise<FoundPlayer | null> {
   }
 }
 
-/**
- * Añade un nuevo jugador "invitado" a la base de datos usando su DNI como ID.
- */
 export async function addGuestPlayerToTeam(name: string, dni: string, teamId: string): Promise<RosterPlayer | null> {
     try {
-        // La ID del jugador invitado es su propio DNI.
         const guestId = dni;
 
         const guestPlayerData = {
@@ -65,16 +67,14 @@ export async function addGuestPlayerToTeam(name: string, dni: string, teamId: st
             createdAt: new Date().toISOString(),
         };
 
-        // Preparamos una actualización atómica para garantizar la consistencia de los datos.
         const updates: { [key: string]: any } = {};
-        updates[`/guestPlayers/${guestId}`] = guestPlayerData; // Crea o actualiza al jugador invitado en la tabla global.
-        updates[`/teams/${teamId}/players/${guestId}`] = { isGuest: true }; // Añade la referencia del invitado al equipo.
+        updates[`/guestPlayers/${guestId}`] = guestPlayerData;
+        updates[`/teams/${teamId}/players/${guestId}`] = { isGuest: true };
 
         await update(ref(db), updates);
 
-        // Devolvemos el objeto RosterPlayer para que la UI se actualice al instante.
         return {
-            id: guestId, // El ID ahora es el DNI.
+            id: guestId,
             name: name,
             dni: dni,
             isGuest: true,
@@ -84,7 +84,6 @@ export async function addGuestPlayerToTeam(name: string, dni: string, teamId: st
         return null;
     }
 }
-
 
 export async function addRegisteredPlayerToTeam(playerId: string, teamId:string): Promise<boolean> {
     try {
@@ -113,8 +112,6 @@ export async function getTeamRoster(teamId: string): Promise<RosterPlayer[]> {
             const playerInfo = playersData[id];
             const isGuest = playerInfo.isGuest;
 
-            // Si el ID del jugador es un DNI (para invitados), la referencia es a guestPlayers.
-            // Si no, es un UID de Firebase, y la referencia es a users.
             const playerRef = isGuest ? ref(db, `guestPlayers/${id}`) : ref(db, `users/${id}`);
             const playerDataSnapshot = await get(playerRef);
 
@@ -139,6 +136,30 @@ export async function getTeamRoster(teamId: string): Promise<RosterPlayer[]> {
     }
 }
 
+/**
+ * Obtiene los detalles de un equipo específico (nombre, logo).
+ */
+export async function getTeamDetails(teamId: string): Promise<TeamDetails | null> {
+    try {
+        const teamRef = ref(db, `teams/${teamId}`);
+        const snapshot = await get(teamRef);
+
+        if (!snapshot.exists()) {
+            console.warn(`No se encontró el equipo con ID: ${teamId}`);
+            return null;
+        }
+
+        const teamData = snapshot.val();
+        return {
+            id: teamId,
+            name: teamData.name || 'Equipo sin nombre',
+            logoUrl: teamData.logoUrl,
+        };
+    } catch (error) {
+        console.error(`Error obteniendo los detalles del equipo ${teamId}:`, error);
+        return null;
+    }
+}
 
 export async function removePlayerFromTeam(playerId: string, teamId: string): Promise<boolean> {
     try {
@@ -150,7 +171,6 @@ export async function removePlayerFromTeam(playerId: string, teamId: string): Pr
         return false;
     }
 }
-
 
 export async function getAllTeams(): Promise<TeamSummary[]> {
     try {

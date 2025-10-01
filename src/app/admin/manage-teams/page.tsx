@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link'; // <-- ¡IMPORTANTE! Añadimos la importación de Link.
-// Importamos todo lo necesario de Firebase para la base de datos y el almacenamiento
-import { rtdb, storage, ref as dbRef, onValue, remove } from '@/lib/firebase';
+import Link from 'next/link';
+// --- CORRECCIÓN DE IMPORTACIONES ---
+// Cambiamos la importación de `rtdb` a `db` para que coincida con el archivo de configuración.
+import { db, storage } from '@/lib/firebase';
+import { ref as dbRef, onValue, remove } from 'firebase/database';
 import { ref as storageRef, deleteObject } from 'firebase/storage';
 
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
 
-// Eliminamos la importación de PageHeader, ya que se renderiza desde el layout principal.
-// import { PageHeader } from '@/components/page-header'; 
 import { UpsertTeamDialog } from '@/components/upsert-team-dialog';
 import { ConfirmDeleteDialog } from '@/components/confirm-delete-dialog'; 
 
@@ -25,10 +25,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-// Añadimos el ícono `Users` que ya usamos en el RosterManager para consistencia.
 import { Loader2, PlusCircle, Users, ShieldAlert, XCircle, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 
-// --- TIPOS DE DATOS ---
 interface Team {
   id: string;
   name: string;
@@ -43,7 +41,6 @@ export default function ManageTeamsPage() {
   const [pageState, setPageState] = useState<PageState>('LOADING');
   const [teams, setTeams] = useState<Team[]>([]);
   
-  // --- ESTADOS PARA LOS DIÁLOGOS ---
   const [isUpsertDialogOpen, setIsUpsertDialogOpen] = useState(false);
   const [teamToEdit, setTeamToEdit] = useState<Team | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -60,7 +57,8 @@ export default function ManageTeamsPage() {
       return;
     }
 
-    const teamsRef = dbRef(rtdb, 'teams');
+    // Usamos `db` en lugar de `rtdb`.
+    const teamsRef = dbRef(db, 'teams');
     const unsubscribe = onValue(teamsRef, (snapshot) => {
       if (snapshot.exists()) {
         const teamsData = snapshot.val();
@@ -79,7 +77,6 @@ export default function ManageTeamsPage() {
     return () => unsubscribe();
   }, [user, userLoading]);
   
-  // --- MANEJADORES DE ACCIONES CRUD ---
   const handleOpenCreateDialog = () => {
     setTeamToEdit(null);
     setIsUpsertDialogOpen(true);
@@ -104,13 +101,12 @@ export default function ManageTeamsPage() {
     if (!teamToDelete) return;
     setIsDeleting(true);
     try {
-      // 1. Borrar el logo de Storage si existe.
       if (teamToDelete.logoUrl) {
         const logoStorageRef = storageRef(storage, `team-logos/${teamToDelete.id}`);
         await deleteObject(logoStorageRef);
       }
-      // 2. Borrar los datos del equipo de la Realtime Database.
-      await remove(dbRef(rtdb, `teams/${teamToDelete.id}`));
+      // Usamos `db` en lugar de `rtdb`.
+      await remove(dbRef(db, `teams/${teamToDelete.id}`));
 
       toast({
         title: "¡Equipo eliminado!",
@@ -118,10 +114,9 @@ export default function ManageTeamsPage() {
       });
 
     } catch (error: any) {
-        // Manejo de error específico por si el archivo no existe en Storage pero sí en DB
         if (error.code === 'storage/object-not-found') {
             console.warn("El logo no se encontró en Storage, pero se procederá a borrar de la base de datos.");
-            await remove(dbRef(rtdb, `teams/${teamToDelete.id}`)); // Reintenta borrar solo de DB
+            await remove(dbRef(db, `teams/${teamToDelete.id}`)); // Usamos `db`
             toast({ title: "Equipo eliminado (con advertencia)", description: "Se borraron los datos, aunque el logo no se encontró en el almacenamiento."});
         } else {
             console.error("Error al eliminar el equipo:", error);
@@ -134,7 +129,6 @@ export default function ManageTeamsPage() {
     }
   };
   
-  // --- RENDERIZADO CONDICIONAL DE LA UI ---
   const renderContent = () => {
     switch (pageState) {
         case 'LOADING':
@@ -158,8 +152,6 @@ export default function ManageTeamsPage() {
                           <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Abrir menú</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            
-                            {/* --- ¡AQUÍ ESTÁ LA MAGIA! --- */}
                             <DropdownMenuItem asChild>
                               <Link href={`/admin/teams/${team.id}`}>
                                 <Users className="mr-2 h-4 w-4" />
@@ -186,8 +178,7 @@ export default function ManageTeamsPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
-      {/* Eliminado PageHeader de aquí, ya que el layout principal lo renderiza */}
-      <div className="mt-6 mb-8"> {/* Contenedor para el botón de crear equipo */}
+      <div className="mt-6 mb-8">
         <Button onClick={handleOpenCreateDialog} disabled={pageState !== 'READY' && pageState !== 'EMPTY'}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Crear Nuevo Equipo
