@@ -5,7 +5,11 @@ import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { initialNotifications } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
-import { auth, rtdb, ref, onValue, get, set } from '@/lib/firebase';
+// --- ¡CORRECCIÓN DE IMPORTACIONES! ---
+// 1. Importamos solo los servicios principales desde nuestra configuración de Firebase.
+import { auth, db } from '@/lib/firebase'; 
+// 2. Importamos las funciones de la base de datos directamente desde el SDK.
+import { ref, onValue, get, set } from 'firebase/database';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
@@ -62,13 +66,15 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   const updateUserInStorage = useCallback(async (updatedUser: User) => {
-    const userRef = ref(rtdb, `users/${updatedUser.id}`);
+    // Usamos `db` en lugar de `rtdb`
+    const userRef = ref(db, `users/${updatedUser.id}`);
     await set(userRef, updatedUser);
     setAllUsers(prev => prev.map(u => (u.id === updatedUser.id ? updatedUser : u)));
   }, []);
 
   useEffect(() => {
-    const usersRef = ref(rtdb, 'users');
+    // Usamos `db` en lugar de `rtdb`
+    const usersRef = ref(db, 'users');
     const unsubscribe = onValue(usersRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
@@ -87,7 +93,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
-        const userRef = ref(rtdb, `users/${firebaseUser.uid}`);
+        // Usamos `db` en lugar de `rtdb`
+        const userRef = ref(db, `users/${firebaseUser.uid}`);
         const snapshot = await get(userRef);
         let foundUser: User | null = null;
 
@@ -229,7 +236,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
             packsOpened: 0,
             profileBackground: profileBackground,
         };
-        await set(ref(rtdb, 'users/' + newUser.id), newUser);
+        // Usamos `db` en lugar de `rtdb`
+        await set(ref(db, 'users/' + newUser.id), newUser);
         toast({ title: "¡Cuenta Creada!", description: "Tu cuenta ha sido creada exitosamente." });
         router.push('/');
         return true;

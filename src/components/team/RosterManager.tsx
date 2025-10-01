@@ -1,16 +1,15 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Loader2, UserX } from 'lucide-react';
 import { PlayerSearch, FoundPlayer } from '@/components/search/PlayerSearch';
 import { AddGuestPlayerForm } from '@/components/team/AddGuestPlayerForm';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-// Asumimos que estas funciones existen y están correctamente implementadas en tu archivo de base de datos
 import { getTeamRoster, addGuestPlayerToTeam, addRegisteredPlayerToTeam, removePlayerFromTeam } from '@/lib/firebase/db';
 
-// La interfaz RosterPlayer se mantiene igual
 export interface RosterPlayer {
   id: string;
   name: string;
@@ -33,7 +32,6 @@ export function RosterManager({ teamId }: RosterManagerProps) {
   const [foundPlayer, setFoundPlayer] = useState<FoundPlayer | null>(null);
   const { toast } = useToast();
 
-  // --- LÓGICA DE DATOS CENTRALIZADA ---
   const fetchRoster = useCallback(async () => {
     setLoading(true);
     try {
@@ -51,7 +49,6 @@ export function RosterManager({ teamId }: RosterManagerProps) {
     fetchRoster();
   }, [fetchRoster]);
 
-  // --- MANEJADORES DE ESTADO DEL PANEL DERECHO ---
   const handlePlayerFound = (player: FoundPlayer) => {
     setFoundPlayer(player);
     setRightPanel('PLAYER_FOUND');
@@ -68,13 +65,12 @@ export function RosterManager({ teamId }: RosterManagerProps) {
     setFoundPlayer(null);
   };
 
-  // --- ACCIONES CON LA BASE DE DATOS REFACTORIZADAS ---
   const handleAddRegisteredPlayer = async (player: FoundPlayer) => {
     setIsSubmitting(true);
     const success = await addRegisteredPlayerToTeam(player.id, teamId);
     if (success) {
       toast({ title: "¡Éxito!", description: `${player.name} fue añadido al equipo.` });
-      await fetchRoster(); // ¡La magia! Volvemos a cargar desde la fuente de verdad.
+      await fetchRoster();
       resetRightPanel();
     } else {
       toast({ title: "Error", description: `No se pudo añadir a ${player.name}. Puede que ya esté en el equipo.`, variant: "destructive" });
@@ -87,7 +83,7 @@ export function RosterManager({ teamId }: RosterManagerProps) {
     const newRosterPlayer = await addGuestPlayerToTeam(name, dni, teamId);
     if (newRosterPlayer) {
       toast({ title: "¡Éxito!", description: `Jugador invitado ${name} fue añadido al equipo.` });
-      await fetchRoster(); // ¡La magia! Volvemos a cargar desde la fuente de verdad.
+      await fetchRoster();
       resetRightPanel();
     } else {
       toast({ title: "Error", description: "No se pudo añadir al jugador invitado.", variant: "destructive" });
@@ -100,14 +96,13 @@ export function RosterManager({ teamId }: RosterManagerProps) {
     const success = await removePlayerFromTeam(playerId, teamId);
     if (success) {
       toast({ title: "Jugador Eliminado", description: `${playerName} fue eliminado de la plantilla.` });
-      await fetchRoster(); // ¡La magia! Volvemos a cargar desde la fuente de verdad.
+      await fetchRoster();
     } else {
       toast({ title: "Error", description: "No se pudo eliminar al jugador.", variant: "destructive" });
     }
     setIsSubmitting(false);
   };
 
-  // --- RENDERIZADO (sin cambios significativos en el JSX) ---
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8" aria-live="polite" aria-busy="true">
@@ -166,19 +161,30 @@ export function RosterManager({ teamId }: RosterManagerProps) {
               dni={dniToRegister} 
               onAddGuest={handleAddGuestPlayer} 
               onCancel={resetRightPanel} 
-              isSubmitting={isSubmitting} // Pasamos el estado de carga
+              isSubmitting={isSubmitting}
             />
           )}
 
           {rightPanel === 'PLAYER_FOUND' && foundPlayer && (
-             <Card className="bg-green-50 dark:bg-green-900/20 border-green-500">
+             <Card>
                 <CardHeader>
                     <CardTitle>Jugador Encontrado</CardTitle>
+                    <CardDescription>
+                        Hemos encontrado un jugador con este DNI. Confirma que es la persona correcta antes de añadirla a tu equipo.
+                    </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4 text-sm">
-                    <p><span className="font-semibold">Nombre:</span> {foundPlayer.name}</p>
-                    <p><span className="font-semibold">Usuario:</span> @{foundPlayer.username}</p>
-                    <p><span className="font-semibold">DNI:</span> {foundPlayer.dni}</p>
+                <CardContent>
+                    <div className="flex items-center space-x-4">
+                        <Avatar className="h-16 w-16">
+                            <AvatarImage src={foundPlayer.avatar} alt={`Avatar de ${foundPlayer.name}`} />
+                            <AvatarFallback>{foundPlayer.name.charAt(0).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="space-y-1">
+                            <p className="text-xl font-bold">{foundPlayer.name}</p>
+                            <p className="text-sm text-muted-foreground">@{foundPlayer.username}</p>
+                            <p className="text-sm text-muted-foreground">DNI: {foundPlayer.dni}</p>
+                        </div>
+                    </div>
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
                     <Button variant="ghost" onClick={resetRightPanel} disabled={isSubmitting}>Cancelar</Button>

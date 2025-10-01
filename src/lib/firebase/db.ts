@@ -1,19 +1,15 @@
 
-import { get, ref, query, orderByChild, equalTo, push, update, remove } from 'firebase/database';
+import { get, ref, query, orderByChild, equalTo, push, update, remove, set } from 'firebase/database';
 import { db } from '@/lib/firebase';
-import { FoundPlayer } from '@/components/search/PlayerSearch';
-import { RosterPlayer } from '@/components/team/RosterManager';
+import type { FoundPlayer } from '@/components/search/PlayerSearch';
+import type { RosterPlayer } from '@/components/team/RosterManager';
 
-// Definimos una interfaz para la estructura básica de un equipo
 export interface TeamSummary {
     id: string;
     name: string;
     logoUrl?: string;
 }
 
-/**
- * Busca un usuario en la base de datos por su DNI.
- */
 export async function findUserByDni(dni: string): Promise<FoundPlayer | null> {
   try {
     const usersRef = ref(db, 'users');
@@ -29,9 +25,25 @@ export async function findUserByDni(dni: string): Promise<FoundPlayer | null> {
         name: userData.name,
         dni: userData.dni,
         username: userData.username,
-        profilePicture: userData.profilePicture || undefined,
+        avatar: userData.avatar || `https://avatar.vercel.sh/${userData.username}.png`,
       };
     }
+    
+    // Si no se encuentra en usuarios, buscar en jugadores invitados
+    const guestPlayerRef = ref(db, `guestPlayers/${dni}`);
+    const guestSnapshot = await get(guestPlayerRef);
+    if (guestSnapshot.exists()) {
+        const guestData = guestSnapshot.val();
+        return {
+            id: dni, // Para un invitado, el ID es su DNI
+            name: guestData.name,
+            dni: guestData.dni,
+            username: 'invitado', // Los invitados no tienen usuario
+            avatar: `https://avatar.vercel.sh/${guestData.dni}.png`, // Avatar genérico para invitados
+            isGuest: true
+        };
+    }
+
     return null;
   } catch (error) {
     console.error('Error buscando usuario por DNI:', error);
@@ -40,31 +52,29 @@ export async function findUserByDni(dni: string): Promise<FoundPlayer | null> {
 }
 
 /**
- * Añade un nuevo jugador "invitado" a la base de datos y lo asigna a un equipo.
+ * Añade un nuevo jugador "invitado" a la base de datos usando su DNI como ID.
  */
 export async function addGuestPlayerToTeam(name: string, dni: string, teamId: string): Promise<RosterPlayer | null> {
     try {
-        const guestPlayersRef = ref(db, 'guestPlayers');
-        const newGuestPlayerRef = push(guestPlayersRef);
-        const guestId = newGuestPlayerRef.key;
-
-        if (!guestId) throw new Error("No se pudo generar una ID para el jugador invitado.");
+        // La ID del jugador invitado es su propio DNI.
+        const guestId = dni;
 
         const guestPlayerData = {
             name,
             dni,
-            teamId,
             createdAt: new Date().toISOString(),
         };
 
+        // Preparamos una actualización atómica para garantizar la consistencia de los datos.
         const updates: { [key: string]: any } = {};
-        updates[`/guestPlayers/${guestId}`] = guestPlayerData;
-        updates[`/teams/${teamId}/players/${guestId}`] = { isGuest: true };
+        updates[`/guestPlayers/${guestId}`] = guestPlayerData; // Crea o actualiza al jugador invitado en la tabla global.
+        updates[`/teams/${teamId}/players/${guestId}`] = { isGuest: true }; // Añade la referencia del invitado al equipo.
 
         await update(ref(db), updates);
 
+        // Devolvemos el objeto RosterPlayer para que la UI se actualice al instante.
         return {
-            id: guestId,
+            id: guestId, // El ID ahora es el DNI.
             name: name,
             dni: dni,
             isGuest: true,
@@ -75,9 +85,7 @@ export async function addGuestPlayerToTeam(name: string, dni: string, teamId: st
     }
 }
 
-/**
- * Asigna un jugador ya registrado en la plataforma a un equipo.
- */
+
 export async function addRegisteredPlayerToTeam(playerId: string, teamId:string): Promise<boolean> {
     try {
         const updates: { [key: string]: any } = {};
@@ -91,9 +99,6 @@ export async function addRegisteredPlayerToTeam(playerId: string, teamId:string)
     }
 }
 
-/**
- * Obtiene la plantilla completa de un equipo, combinando jugadores registrados e invitados.
- */
 export async function getTeamRoster(teamId: string): Promise<RosterPlayer[]> {
     try {
         const teamPlayersRef = ref(db, `teams/${teamId}/players`);
@@ -105,8 +110,11 @@ export async function getTeamRoster(teamId: string): Promise<RosterPlayer[]> {
         const playerIds = Object.keys(playersData);
 
         const playerPromises = playerIds.map(async (id) => {
-            const isGuest = playersData[id].isGuest;
+            const playerInfo = playersData[id];
+            const isGuest = playerInfo.isGuest;
 
+            // Si el ID del jugador es un DNI (para invitados), la referencia es a guestPlayers.
+            // Si no, es un UID de Firebase, y la referencia es a users.
             const playerRef = isGuest ? ref(db, `guestPlayers/${id}`) : ref(db, `users/${id}`);
             const playerDataSnapshot = await get(playerRef);
 
@@ -131,9 +139,7 @@ export async function getTeamRoster(teamId: string): Promise<RosterPlayer[]> {
     }
 }
 
-/**
- * Elimina un jugador (registrado o invitado) de la plantilla de un equipo.
- */
+
 export async function removePlayerFromTeam(playerId: string, teamId: string): Promise<boolean> {
     try {
         const playerInTeamRef = ref(db, `teams/${teamId}/players/${playerId}`);
@@ -145,9 +151,7 @@ export async function removePlayerFromTeam(playerId: string, teamId: string): Pr
     }
 }
 
-/**
- * Obtiene una lista de todos los equipos del sistema.
- */
+
 export async function getAllTeams(): Promise<TeamSummary[]> {
     try {
         const teamsRef = ref(db, 'teams');
@@ -159,7 +163,7 @@ export async function getAllTeams(): Promise<TeamSummary[]> {
 
         return Object.keys(teamsData).map(teamId => ({
             id: teamId,
-            name: teamsData[teamId].name || 'Nombre no definido', // Fallback por si el equipo no tiene nombre
+            name: teamsData[teamId].name || 'Nombre no definido',
             logoUrl: teamsData[teamId].logoUrl
         }));
 
