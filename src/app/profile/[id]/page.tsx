@@ -22,7 +22,7 @@ import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { DivisionBadge } from '@/components/ui/division-badge';
 import { UserProfile } from '@/lib/types';
 import {
-  Loader2, MessageSquare, Lock, CheckCircle2, Crown, Handshake, Pencil, Image as ImageIcon, ShieldCheck
+  Loader2, MessageSquare, Lock, CheckCircle2, Crown, Handshake, Pencil, Image as ImageIcon, ShieldCheck, Trophy
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -291,9 +291,15 @@ export default function ProfilePage() {
   if (!profileUser) return <div className="p-8 text-center">Usuario no encontrado.</div>;
 
   const isOwnProfile = currentUser?.id === profileUser.id;
-  const { name, username, role, league, division, isVerified, avatar, profileBackground, sudonepassLevel = 1, sudonepassExp = 0, transferStatus, claimedPassRewards = [], team } = profileUser;
-  const expToNextLevel = 100;
-  const passProgress = (sudonepassExp / expToNextLevel) * 100;
+  const { name, username, role, league, division, isVerified, avatar, profileBackground, sudpoints = 0, team, claimedPassRewards = [], transferStatus = undefined } = profileUser;
+  
+  const expToNextLevel = 100; // Puntos necesarios para cada nivel
+  const currentSudpoints = sudpoints; // Usamos los sudpoints del usuario
+  const currentLevel = Math.floor(currentSudpoints / expToNextLevel) + 1; // Nivel actual
+  const progressInCurrentLevel = currentSudpoints % expToNextLevel; // Progreso dentro del nivel actual
+  const passProgress = (progressInCurrentLevel / expToNextLevel) * 100; // Para la barra de progreso
+  const pointsToNextLevel = expToNextLevel - progressInCurrentLevel; // Puntos que faltan
+
   const currentCrest = profileBackground ? crestMap[profileBackground] : null;
 
   const OverlayView = ({ children }: { children: React.ReactNode }) => (
@@ -357,13 +363,21 @@ export default function ProfilePage() {
                     </div>
                     <div className="w-full">
                         <Progress value={passProgress} className="h-2" />
-                        <div className="flex justify-between"><p className="text-xs text-muted-foreground mt-1">Siguiente nivel</p><p className="text-sm font-semibold">{sudonepassExp} / {expToNextLevel} EXP</p></div>
+                        <div className="flex justify-between mt-1">
+                           <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                              <p className="text-xs text-muted-foreground">Siguiente nivel</p>
+                           </TooltipTrigger><TooltipContent><p>{pointsToNextLevel} Sudpoints para el siguiente nivel</p></TooltipContent></Tooltip></TooltipProvider>
+                            <p className="text-sm font-semibold flex items-center gap-1">
+                                <Trophy className="h-4 w-4 text-amber-500" />
+                                {currentSudpoints} Sudpoints
+                            </p>
+                        </div>
                     </div>
                     {!isOwnProfile && <Button onClick={handleSendMessage} className="w-full"><MessageSquare className="mr-2 h-4 w-4" />Enviar Mensaje</Button>}
                 </CardContent>
               </Card>
             </motion.div>
-            <motion.div initial={false} animate={{ y: 0 }} exit={{ y: '100%', opacity: 0 }}>
+            <motion.div initial={false} animate={{ y: 0 }} exit={{ y: '-100%', opacity: 0 }}>
               <Card>
                 <CardContent className="p-4 grid grid-cols-4 gap-4">
                     <button className="transition-transform hover:scale-105" onClick={() => setView('history')}><Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial" width={150} height={50} /></button>
@@ -393,7 +407,7 @@ export default function ProfilePage() {
                 <CardHeader>
                     <CardTitle className="text-center text-2xl">SUDONE PASS</CardTitle>
                     <div className="pt-4">
-                        <div className="flex justify-between items-end mb-1"><span className="font-bold text-lg">NIVEL {sudonepassLevel}</span><span className="text-sm text-muted-foreground">{sudonepassExp} / {expToNextLevel} EXP</span></div>
+                        <div className="flex justify-between items-end mb-1"><span className="font-bold text-lg">NIVEL {currentLevel}</span><span className="text-sm text-muted-foreground"><Trophy className="inline-block h-4 w-4 text-amber-500 mr-1" />{currentSudpoints} Sudpoints</span></div>
                         <Progress value={passProgress} />
                     </div>
                 </CardHeader>
@@ -401,7 +415,7 @@ export default function ProfilePage() {
                     <CardContent className="space-y-2">
                         {Array.from({ length: 10 }).map((_, index) => {
                             const level = index + 1;
-                            const isUnlocked = level <= sudonepassLevel;
+                            const isUnlocked = level <= currentLevel; // Usamos currentLevel
                             const isClaimed = claimedPassRewards.includes(level);
                             return (
                                 <div key={level} className={cn("flex items-center justify-between p-3 rounded-lg", isUnlocked ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
