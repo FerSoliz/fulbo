@@ -1,6 +1,6 @@
 'use client';
 
-// --- 1. Imports ---
+// --- 1. Imports ---'
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
@@ -70,7 +70,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
   
   const onSubmit = async (data: CreatePostInput) => {
     let media: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string; }[] = [];
-    let externalUrl: string | undefined = undefined;
+    let externalUrl: string | null = null;
 
     if (youtubeVideoId) {
        media.push({ type: 'video', url: `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg`, videoType: 'youtube', videoId: youtubeVideoId });
@@ -87,7 +87,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
         form.setError("root", { message: "No puedes añadir imágenes y un video en la misma publicación." });
         return;
       }
-      // --- ESTE ES EL CAMBIO CLAVE ---
+      // --- ESTE ES EL CAMBIO CLAVE ---'
       // 1. ESPERAMOS (await) a que TODAS las imágenes se suban y obtenemos las URLs.
       const uploadedImageUrls = await uploadMultipleFiles(data.files, `posts/${currentUser.id}`);
       const imageMedia = uploadedImageUrls.map(url => ({ type: 'image' as const, url }));
