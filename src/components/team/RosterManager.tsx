@@ -6,8 +6,11 @@ import { Loader2, UserX } from 'lucide-react';
 import { PlayerSearch, FoundPlayer } from '@/components/search/PlayerSearch';
 import { AddGuestPlayerForm } from '@/components/team/AddGuestPlayerForm';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+// Asumimos que estas funciones existen y están correctamente implementadas en tu archivo de base de datos
 import { getTeamRoster, addGuestPlayerToTeam, addRegisteredPlayerToTeam, removePlayerFromTeam } from '@/lib/firebase/db';
 
+// La interfaz RosterPlayer se mantiene igual
 export interface RosterPlayer {
   id: string;
   name: string;
@@ -28,18 +31,27 @@ export function RosterManager({ teamId }: RosterManagerProps) {
   const [rightPanel, setRightPanel] = useState<RightPanelState>('SEARCH');
   const [dniToRegister, setDniToRegister] = useState<string | null>(null);
   const [foundPlayer, setFoundPlayer] = useState<FoundPlayer | null>(null);
+  const { toast } = useToast();
 
+  // --- LÓGICA DE DATOS CENTRALIZADA ---
   const fetchRoster = useCallback(async () => {
     setLoading(true);
-    const teamRoster = await getTeamRoster(teamId);
-    setRoster(teamRoster);
-    setLoading(false);
-  }, [teamId]);
+    try {
+      const teamRoster = await getTeamRoster(teamId);
+      setRoster(teamRoster);
+    } catch (error) {
+      console.error("Error al cargar la plantilla:", error);
+      toast({ title: "Error", description: "No se pudo cargar la plantilla del equipo.", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  }, [teamId, toast]);
 
   useEffect(() => {
     fetchRoster();
   }, [fetchRoster]);
 
+  // --- MANEJADORES DE ESTADO DEL PANEL DERECHO ---
   const handlePlayerFound = (player: FoundPlayer) => {
     setFoundPlayer(player);
     setRightPanel('PLAYER_FOUND');
@@ -50,13 +62,23 @@ export function RosterManager({ teamId }: RosterManagerProps) {
     setRightPanel('ADD_GUEST');
   };
 
+  const resetRightPanel = () => {
+    setRightPanel('SEARCH');
+    setDniToRegister(null);
+    setFoundPlayer(null);
+  };
+
+  // --- ACCIONES CON LA BASE DE DATOS REFACTORIZADAS ---
   const handleAddRegisteredPlayer = async (player: FoundPlayer) => {
     setIsSubmitting(true);
     const success = await addRegisteredPlayerToTeam(player.id, teamId);
     if (success) {
-      setRoster(prev => [...prev, { id: player.id, name: player.name, dni: player.dni, isGuest: false }]);
+      toast({ title: "¡Éxito!", description: `${player.name} fue añadido al equipo.` });
+      await fetchRoster(); // ¡La magia! Volvemos a cargar desde la fuente de verdad.
+      resetRightPanel();
+    } else {
+      toast({ title: "Error", description: `No se pudo añadir a ${player.name}. Puede que ya esté en el equipo.`, variant: "destructive" });
     }
-    resetRightPanel();
     setIsSubmitting(false);
   };
 
@@ -64,27 +86,28 @@ export function RosterManager({ teamId }: RosterManagerProps) {
     setIsSubmitting(true);
     const newRosterPlayer = await addGuestPlayerToTeam(name, dni, teamId);
     if (newRosterPlayer) {
-      setRoster(prev => [...prev, newRosterPlayer]);
+      toast({ title: "¡Éxito!", description: `Jugador invitado ${name} fue añadido al equipo.` });
+      await fetchRoster(); // ¡La magia! Volvemos a cargar desde la fuente de verdad.
+      resetRightPanel();
+    } else {
+      toast({ title: "Error", description: "No se pudo añadir al jugador invitado.", variant: "destructive" });
     }
-    resetRightPanel();
     setIsSubmitting(false);
   };
 
-  const handleRemovePlayer = async (playerId: string) => {
-      setIsSubmitting(true);
-      const success = await removePlayerFromTeam(playerId, teamId);
-      if (success) {
-          setRoster(prev => prev.filter(p => p.id !== playerId));
-      }
-      setIsSubmitting(false);
-  }
+  const handleRemovePlayer = async (playerId: string, playerName: string) => {
+    setIsSubmitting(true);
+    const success = await removePlayerFromTeam(playerId, teamId);
+    if (success) {
+      toast({ title: "Jugador Eliminado", description: `${playerName} fue eliminado de la plantilla.` });
+      await fetchRoster(); // ¡La magia! Volvemos a cargar desde la fuente de verdad.
+    } else {
+      toast({ title: "Error", description: "No se pudo eliminar al jugador.", variant: "destructive" });
+    }
+    setIsSubmitting(false);
+  };
 
-  const resetRightPanel = () => {
-      setRightPanel('SEARCH');
-      setDniToRegister(null);
-      setFoundPlayer(null);
-  }
-
+  // --- RENDERIZADO (sin cambios significativos en el JSX) ---
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8" aria-live="polite" aria-busy="true">
@@ -109,12 +132,12 @@ export function RosterManager({ teamId }: RosterManagerProps) {
                 {roster.map(player => (
                   <li key={player.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
                     <div>
-                        <p className="font-semibold">{player.name}</p>
-                        <p className="text-sm text-muted-foreground">DNI: {player.dni} {player.isGuest && <span className='text-xs font-bold text-accent-foreground'>(Invitado)</span>}</p>
+                      <p className="font-semibold">{player.name}</p>
+                      <p className="text-sm text-muted-foreground">DNI: {player.dni} {player.isGuest && <span className='text-xs font-bold text-accent-foreground'>(Invitado)</span>}</p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => handleRemovePlayer(player.id)} disabled={isSubmitting}>
-                        <UserX className="h-4 w-4 text-destructive"/>
-                        <span className="sr-only">Quitar jugador {player.name}</span>
+                    <Button variant="ghost" size="icon" onClick={() => handleRemovePlayer(player.id, player.name)} disabled={isSubmitting}>
+                      <UserX className="h-4 w-4 text-destructive"/>
+                      <span className="sr-only">Quitar jugador {player.name}</span>
                     </Button>
                   </li>
                 ))}
@@ -143,6 +166,7 @@ export function RosterManager({ teamId }: RosterManagerProps) {
               dni={dniToRegister} 
               onAddGuest={handleAddGuestPlayer} 
               onCancel={resetRightPanel} 
+              isSubmitting={isSubmitting} // Pasamos el estado de carga
             />
           )}
 

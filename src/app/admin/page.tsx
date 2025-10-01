@@ -60,13 +60,6 @@ const adminActions = [
     href: '/admin/manage-teams', // Corregido el enlace
     color: 'bg-purple-500 hover:bg-purple-600',
   },
-  {
-    title: 'Postear Contenido',
-    description: 'Crea y publica noticias, anuncios y actualizaciones en el feed principal.',
-    icon: FileText,
-    href: '/admin/post-content',
-    color: 'bg-indigo-500 hover:bg-indigo-600',
-  },
 ];
 
 export default function AdminPage() {
