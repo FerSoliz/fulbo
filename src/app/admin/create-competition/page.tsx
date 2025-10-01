@@ -16,16 +16,19 @@ import {
   ArrowLeft,
   Save,
   Loader2,
+  Calendar as CalendarIcon
 } from 'lucide-react';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-// Importaciones corregidas para Realtime Database
 import { rtdb, ref, push, update, serverTimestamp } from '@/lib/firebase';
 import { useUser } from '@/context/user-context';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { cn } from '@/lib/utils';
+import { Slider } from '@/components/ui/slider';
 
 type TournamentType = 'Liga' | 'Copa';
 type TournamentFormat = '5v5' | '7v7' | '11v11';
@@ -37,17 +40,17 @@ export default function CreateCompetitionPage() {
   const [competitionName, setCompetitionName] = useState('');
   const [competitionType, setCompetitionType] = useState<TournamentType>('Liga');
   const [competitionFormat, setCompetitionFormat] = useState<TournamentFormat>('7v7');
+  const [startDate, setStartDate] = useState<Date>();
   const [teamCount, setTeamCount] = useState(8);
   const [teamNames, setTeamNames] = useState<string[]>(Array(8).fill(''));
   const [isLoading, setIsLoading] = useState(false);
 
-  // Protección de ruta
   if (user && user.role !== 'admin') {
       router.push('/');
   }
 
   const handleTeamCountChange = (value: number) => {
-    const newCount = Math.max(2, Math.min(32, value)); // Mínimo 2 equipos, máximo 32
+    const newCount = Math.max(2, Math.min(32, value));
     setTeamCount(newCount);
     const newTeamNames = Array(newCount).fill('');
     teamNames.slice(0, newCount).forEach((name, i) => {
@@ -67,6 +70,10 @@ export default function CreateCompetitionPage() {
         toast({ title: "Error de validación", description: "El nombre de la competencia es obligatorio.", variant: "destructive" });
         return;
     }
+    if (!startDate) {
+        toast({ title: "Error de validación", description: "Debes seleccionar una fecha de inicio para el torneo.", variant: "destructive" });
+        return;
+    }
 
     const validTeams = teamNames.map(name => name.trim()).filter(name => name !== '');
     if (validTeams.length !== teamCount) {
@@ -78,36 +85,29 @@ export default function CreateCompetitionPage() {
 
     try {
       const updates: { [key: string]: any } = {};
-      
-      // 1. Generar ID único para el nuevo torneo
       const newTournamentRef = push(ref(rtdb, 'tournaments'));
       const tournamentId = newTournamentRef.key;
 
       if (!tournamentId) throw new Error("No se pudo generar el ID para el torneo");
 
-      // 2. Preparar el objeto de equipos que irá DENTRO del torneo
       const teamsForTournament: { [key: string]: boolean } = {};
 
-      // 3. Iterar sobre los nombres de equipo para llenar las actualizaciones
       validTeams.forEach(teamName => {
-          const newTeamRef = push(ref(rtdb, `teams`)); // Genera un ID único en la rama global de equipos
+          const newTeamRef = push(ref(rtdb, `teams`));
           const teamId = newTeamRef.key;
-          if (!teamId) return; // Salta si no se pudo crear el ID del equipo
+          if (!teamId) return;
 
-          // Añade la creación del equipo a la rama global /teams/
           updates[`/teams/${teamId}`] = {
               id: teamId,
               name: teamName,
               logoUrl: `https://avatar.vercel.sh/${encodeURIComponent(teamName)}.png`,
-              tournamentId: tournamentId, // Enlace de vuelta al torneo
+              tournamentId: tournamentId,
               createdAt: serverTimestamp(),
           };
 
-          // Añade el ID del equipo a la lista del torneo
           teamsForTournament[teamId] = true;
       });
 
-      // 4. Construir el objeto del torneo completo, incluyendo el objeto de equipos
       const newTournamentData = {
         id: tournamentId,
         name: competitionName,
@@ -115,15 +115,13 @@ export default function CreateCompetitionPage() {
         format: competitionFormat,
         teamCount: teamCount,
         status: 'upcoming',
-        startDate: new Date().toISOString(),
+        startDate: startDate.toISOString(),
         createdAt: serverTimestamp(),
-        teams: teamsForTournament, // Objeto de equipos anidado
+        teams: teamsForTournament,
       };
 
-      // 5. Añadir la creación del torneo a la ruta /tournaments/
       updates[`/tournaments/${tournamentId}`] = newTournamentData;
 
-      // 6. Ejecutar la actualización atómica (sin conflictos de ancestros)
       await update(ref(rtdb), updates);
 
       toast({
@@ -168,24 +166,52 @@ export default function CreateCompetitionPage() {
               <Input id="competition-name" value={competitionName} onChange={(e) => setCompetitionName(e.target.value)} placeholder="Ej: Copa SudOne - Apertura 2024" />
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-4">
-                  <Label className="text-lg font-semibold">Tipo</Label>
-                  <RadioGroup value={competitionType} onValueChange={(value: string) => setCompetitionType(value as TournamentType)} className="flex gap-4">
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Liga" id="type-liga" /><Label htmlFor="type-liga">Liga</Label></div>
-                    <div className="flex items-center space-x-2"><RadioGroupItem value="Copa" id="type-copa" /><Label htmlFor="type-copa">Copa</Label></div>
-                  </RadioGroup>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Tipo</Label>
+                  <Select value={competitionType} onValueChange={(value: string) => setCompetitionType(value as TournamentType)}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="Liga">Liga</SelectItem>
+                            <SelectItem value="Copa">Copa</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
-                <div className="space-y-4">
-                  <Label className="text-lg font-semibold">Formato</Label>
+                <div className="space-y-3">
+                  <Label className="text-base font-semibold">Formato</Label>
                    <Select value={competitionFormat} onValueChange={(value: string) => setCompetitionFormat(value as TournamentFormat)}>
-                        <SelectTrigger><SelectValue placeholder="Seleccionar formato" /></SelectTrigger>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="5v5">Fútbol 5</SelectItem>
                             <SelectItem value="7v7">Fútbol 7</SelectItem>
                             <SelectItem value="11v11">Fútbol 11</SelectItem>
                         </SelectContent>
                     </Select>
+                </div>
+                <div className="space-y-3">
+                    <Label className="text-base font-semibold">Fecha de Inicio</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <Button
+                            variant={"outline"}
+                            className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !startDate && "text-muted-foreground"
+                            )}
+                        >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {startDate ? format(startDate, "PPP", { locale: es }) : <span>Elige una fecha</span>}
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                        <Calendar
+                            mode="single"
+                            selected={startDate}
+                            onSelect={setStartDate}
+                            initialFocus
+                        />
+                        </PopoverContent>
+                    </Popover>
                 </div>
             </div>
 

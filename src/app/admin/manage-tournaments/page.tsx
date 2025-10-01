@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -17,8 +17,8 @@ import {
   Calendar,
   Users,
   Pen,
-  Check,
   Loader2,
+  Settings,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -32,13 +32,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { rtdb, ref, onValue, remove, update } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-context';
 
-// Modelo de datos para un Torneo en Realtime Database
 interface Tournament {
   id: string;
   name: string;
@@ -53,34 +51,24 @@ interface Tournament {
 
 export default function ManageTournamentsPage() {
   const router = useRouter();
-  const { user } = useUser(); // Para proteger la ruta
+  const { user } = useUser();
   const { toast } = useToast();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingTournamentId, setEditingTournamentId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState('');
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  // Protección de la ruta para que solo accedan los admins
   useEffect(() => {
-    if (user === null) router.push('/'); // Redirige si no está logueado
-    if (user && user.role !== 'admin') router.push('/'); // Redirige si no es admin
+    if (user === null) router.push('/');
+    if (user && user.role !== 'admin') router.push('/');
   }, [user, router]);
 
-  // Leer torneos de Realtime Database
   useEffect(() => {
     const tournamentsRef = ref(rtdb, 'tournaments');
     const unsubscribe = onValue(tournamentsRef, (snapshot) => {
       const data = snapshot.val();
-      if (data) {
-        const tournamentsList: Tournament[] = Object.keys(data).map(key => ({
-          id: key,
-          ...data[key]
-        }));
-        setTournaments(tournamentsList.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()));
-      } else {
-        setTournaments([]);
-      }
+      const tournamentsList: Tournament[] = data 
+        ? Object.keys(data).map(key => ({ id: key, ...data[key] })) 
+        : [];
+      setTournaments(tournamentsList.sort((a, b) => new Date(b.startDate || 0).getTime() - new Date(a.startDate || 0).getTime()));
       setLoading(false);
     }, (error) => {
         console.error("Error al cargar torneos desde RTDB: ", error);
@@ -88,58 +76,25 @@ export default function ManageTournamentsPage() {
         setLoading(false);
     });
 
-    // Limpiar el listener al desmontar el componente
     return () => unsubscribe();
   }, [toast]);
 
-  useEffect(() => {
-    if (editingTournamentId && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [editingTournamentId]);
-
-  // Eliminar torneo en Realtime Database
   const handleDeleteTournament = async (tournamentId: string) => {
+    const updates: { [key: string]: null } = {};
+    updates[`/tournaments/${tournamentId}`] = null;
+    
+    // You might want to also remove teams, matches, stats etc. associated with the tournament
+    // This part needs careful implementation based on your data structure to avoid leaving orphaned data.
+    
     try {
-        const tournamentRef = ref(rtdb, `tournaments/${tournamentId}`);
-        await remove(tournamentRef);
-        toast({ title: "Torneo eliminado", description: "El torneo ha sido eliminado permanentemente." });
+      await update(ref(rtdb), updates);
+      toast({ title: "Torneo Eliminado", description: "El torneo ha sido eliminado." });
     } catch (error) {
-        console.error("Error al eliminar torneo de RTDB: ", error);
-         toast({ title: "Error al eliminar", description: "Hubo un problema al eliminar el torneo.", variant: "destructive" });
+      console.error("Error en la eliminación: ", error);
+      toast({ title: "Error al eliminar", description: "Hubo un problema al eliminar el torneo.", variant: "destructive" });
     }
   };
 
-  const handleEditClick = (tournament: Tournament) => {
-    setEditingTournamentId(tournament.id);
-    setEditingName(tournament.name);
-  };
-
-  // Actualizar nombre del torneo en Realtime Database
-  const handleSaveName = async (tournamentId: string) => {
-    const originalName = tournaments.find(t => t.id === tournamentId)?.name;
-    if (originalName === editingName.trim() || editingName.trim() === '') {
-        setEditingTournamentId(null);
-        return;
-    }
-
-    try {
-        const tournamentRef = ref(rtdb, `tournaments/${tournamentId}`);
-        await update(tournamentRef, { name: editingName });
-        toast({ title: "Nombre actualizado", description: "El nombre del torneo se ha guardado." });
-    } catch (error) {
-        console.error("Error al actualizar nombre en RTDB: ", error);
-        toast({ title: "Error al guardar", description: "No se pudo actualizar el nombre del torneo.", variant: "destructive" });
-    } finally {
-        setEditingTournamentId(null);
-    }
-  };
-
-  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, tournamentId: string) => {
-    if (e.key === 'Enter') handleSaveName(tournamentId);
-    if (e.key === 'Escape') setEditingTournamentId(null);
-  };
-  
   if (!user || user.role !== 'admin') {
       return <div className="p-8 text-center">Acceso denegado. Redirigiendo...</div>;
   }
@@ -156,9 +111,7 @@ export default function ManageTournamentsPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Administrar Torneos</CardTitle>
-            <CardDescription>
-              Gestiona, edita o elimina los torneos existentes.
-            </CardDescription>
+            <CardDescription>Gestiona, edita o elimina los torneos existentes.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {loading ? (
@@ -171,39 +124,31 @@ export default function ManageTournamentsPage() {
                 {tournaments.map((tournament) => (
                   <Card key={tournament.id} className="flex flex-col">
                     <CardHeader>
-                      {editingTournamentId === tournament.id ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            ref={inputRef}
-                            value={editingName}
-                            onChange={(e) => setEditingName(e.target.value)}
-                            onKeyDown={(e) => handleInputKeyDown(e, tournament.id)}
-                            onBlur={() => handleSaveName(tournament.id)}
-                            className="text-lg font-bold"
-                          />
-                          <Button size="icon" onClick={() => handleSaveName(tournament.id)}><Check className="h-4 w-4" /></Button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          <CardTitle className="cursor-pointer hover:text-accent" onClick={() => handleEditClick(tournament)}>{tournament.name}</CardTitle>
-                          <div className="flex items-center gap-2">
-                            <Button variant="ghost" size="icon" onClick={() => handleEditClick(tournament)}><Pen className="h-4 w-4" /></Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild><Button variant="destructive" size="icon"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-                                  <AlertDialogDescription>Esta acción no se puede deshacer. Se eliminará permanentemente el torneo.</AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                  <AlertDialogAction onClick={() => handleDeleteTournament(tournament.id)}>Eliminar</AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
+                      <div className="flex items-start justify-between">
+                          <CardTitle>{tournament.name}</CardTitle>
+                          <div className="flex items-center gap-1 -mt-2 -mr-2">
+                              <Button asChild variant="ghost" size="icon">
+                                  <Link href={`/admin/tournaments/${tournament.id}/edit`}>
+                                      <Pen className="h-4 w-4 text-muted-foreground" />
+                                  </Link>
+                              </Button>
+                              <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                      <Button variant="ghost" size="icon"><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                          <AlertDialogTitle>¿Estás realmente seguro?</AlertDialogTitle>
+                                          <AlertDialogDescription>Esta acción eliminará la entrada del torneo. No eliminará equipos, partidos o estadísticas asociadas.</AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                          <AlertDialogAction className="bg-destructive hover:bg-destructive/80" onClick={() => handleDeleteTournament(tournament.id)}>Sí, eliminar torneo</AlertDialogAction>
+                                      </AlertDialogFooter>
+                                  </AlertDialogContent>
+                              </AlertDialog>
                           </div>
-                        </div>
-                      )}
+                      </div>
                       <CardDescription>{tournament.type} - {tournament.format}</CardDescription>
                     </CardHeader>
                     <CardContent className="flex-grow">

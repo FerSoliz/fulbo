@@ -8,8 +8,6 @@ import { PageHeader } from "@/components/page-header";
 import type { User } from "@/lib/data";
 import { UserProvider, useUser } from '@/context/user-context';
 import { usePathname } from 'next/navigation';
-import { FloatingActionButtons } from '@/components/floating-action-buttons';
-
 
 export default function RootLayout({
   children,
@@ -54,7 +52,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
           <>
             <main>{children}</main>
             <Toaster />
-            {!isImmersivePage && <FloatingActionButtons />}
           </>
         );
     }
@@ -67,7 +64,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <main>{children}</main>
             </div>
             <Toaster />
-            <FloatingActionButtons />
         </div>
     );
 }
