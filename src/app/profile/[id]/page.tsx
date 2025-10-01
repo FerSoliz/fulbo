@@ -363,28 +363,28 @@ export default function ProfilePage() {
                         {transferStatus && <TransferStatusBadge user={profileUser} onTransferClick={handleTransferClick} />}
                     </div>
                     {/* INICIO DE LA BARRA DE PROGRESO PERSONALIZADA */}
-                    <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden" role="progressbar" aria-valuenow={passProgress} aria-valuemin={0} aria-valuemax={100}>
-                        <motion.div
-                            className="absolute inset-y-0 left-0 bg-primary rounded-full flex items-center justify-center"
-                            initial={{ width: '0%' }}
-                            animate={{ width: `${passProgress}%` }}
-                            transition={{ duration: 0.5, ease: 'easeOut' }}
-                        >
-                            {/* Porcentaje en el centro, solo visible si hay suficiente espacio */}
-                            {passProgress > 15 && ( // Ajusta este valor si necesitas más o menos espacio
-                                <span className="absolute left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary-foreground select-none" aria-hidden="true">
-                                    {Math.round(passProgress)}%
-                                </span>
-                            )}
-                            {/* Punto en la punta de la barra cargada */}
-                            {passProgress > 0 && (
-                                <div className="absolute right-0 h-3 w-3 -translate-y-1/2 translate-x-1/2 top-1/2 bg-primary rounded-full shadow-sm border border-background" aria-hidden="true" />
-                            )}
-                        </motion.div>
-                         {/* Icono de trofeo al final de la barra */}
-                        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 flex items-center justify-center">
-                            <Trophy className="h-6 w-6 text-amber-500" aria-label="Meta de Sudpoints" />
+                    <div className="flex items-center gap-4"> {/* Nuevo contenedor flex para barra y trofeo */}
+                        <div className="relative flex-grow h-2 bg-muted rounded-full" role="progressbar" aria-valuenow={passProgress} aria-valuemin={0} aria-valuemax={100}>
+                            <motion.div
+                                className="absolute inset-y-0 left-0 bg-primary rounded-full flex items-center justify-center"
+                                initial={{ width: '0%' }}
+                                animate={{ width: `${passProgress}%` }}
+                                transition={{ duration: 0.5, ease: 'easeOut' }}
+                            >
+                                {/* Porcentaje en el centro, solo visible si hay suficiente espacio */}
+                                {passProgress > 15 && ( // Ajusta este valor si necesitas más o menos espacio
+                                    <span className="absolute left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary-foreground select-none" aria-hidden="true">
+                                        {Math.round(passProgress)}%
+                                    </span>
+                                )}
+                                {/* Punto en la punta de la barra cargada */}
+                                {passProgress > 0 && (
+                                    <div className="absolute right-0 h-3 w-3 -translate-y-1/2 translate-x-1/2 top-1/2 bg-primary rounded-full shadow-sm border border-background" aria-hidden="true" />
+                                )}
+                            </motion.div>
                         </div>
+                        {/* Icono de trofeo al final de la barra, ahora fuera del div con overflow-hidden */}
+                        <Trophy className="h-5 w-5 text-amber-500 -ml-2" aria-label="Meta de Sudpoints" />
                     </div>
                     <div className="flex justify-between mt-1">
                         <TooltipProvider><Tooltip><TooltipTrigger asChild>
