@@ -165,10 +165,22 @@ export async function addGuestPlayerToTeam(name: string, dni: string, teamId: st
     }
 }
 
-export async function addRegisteredPlayerToTeam(playerId: string, teamId:string): Promise<boolean> {
+export async function addRegisteredPlayerToTeam(playerId: string, teamId: string): Promise<boolean> {
     try {
+        const teamDetails = await getTeamDetails(teamId);
+        if (!teamDetails) {
+            throw new Error(`No se pudieron obtener los detalles del equipo ${teamId}.`);
+        }
+
+        const teamSummaryForProfile = {
+            id: teamId,
+            name: teamDetails.name,
+            crestUrl: teamDetails.logoUrl || null,
+        };
+
         const updates: { [key: string]: any } = {};
         updates[`/teams/${teamId}/players/${playerId}`] = { isGuest: false };
+        updates[`/users/${playerId}/team`] = teamSummaryForProfile;
         
         await update(ref(db), updates);
         return true;
@@ -241,10 +253,16 @@ export async function getTeamDetails(teamId: string): Promise<TeamDetails | null
     }
 }
 
-export async function removePlayerFromTeam(playerId: string, teamId: string): Promise<boolean> {
+export async function removePlayerFromTeam(playerId: string, teamId: string, isGuest: boolean): Promise<boolean> {
     try {
-        const playerInTeamRef = ref(db, `teams/${teamId}/players/${playerId}`);
-        await remove(playerInTeamRef);
+        const updates: { [key: string]: any } = {};
+        updates[`/teams/${teamId}/players/${playerId}`] = null; // Así se elimina con update
+
+        if (!isGuest) {
+            updates[`/users/${playerId}/team`] = null;
+        }
+
+        await update(ref(db), updates);
         return true;
     } catch (error) {
         console.error("Error eliminando jugador del equipo:", error);

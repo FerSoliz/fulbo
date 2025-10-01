@@ -4,6 +4,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
+import Link from 'next/link'; // Importamos Link para la navegación
 import {
   Card,
   CardContent,
@@ -21,7 +22,7 @@ import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { DivisionBadge } from '@/components/ui/division-badge';
 import { UserProfile } from '@/lib/types';
 import {
-  Loader2, MessageSquare, Lock, CheckCircle2, Crown, Handshake, Pencil, Image as ImageIcon
+  Loader2, MessageSquare, Lock, CheckCircle2, Crown, Handshake, Pencil, Image as ImageIcon, ShieldCheck
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -149,6 +150,30 @@ const TransferStatusBadge = ({ user, onTransferClick }: { user: UserProfile; onT
     );
 };
 
+// NUEVO COMPONENTE PARA MOSTRAR EL EQUIPO
+const TeamDisplay = ({ team }: { team: UserProfile['team'] }) => {
+  if (!team || !team.id) return null;
+
+  return (
+    <Link href={`/admin/teams/${team.id}`} passHref>
+      <div className="mt-4 p-3 bg-secondary/50 rounded-lg flex items-center gap-4 transition-colors hover:bg-secondary cursor-pointer">
+        <Avatar className="w-12 h-12 border-2 border-muted">
+          {team.crestUrl ? (
+            <AvatarImage src={team.crestUrl} alt={`Escudo de ${team.name}`} />
+          ) : (
+            <ShieldCheck className="w-6 h-6 text-muted-foreground" />
+          )}
+          <AvatarFallback>{team.name.substring(0, 2)}</AvatarFallback>
+        </Avatar>
+        <div>
+          <p className="text-xs text-muted-foreground font-semibold">EQUIPO ACTUAL</p>
+          <p className="font-bold text-lg text-foreground">{team.name}</p>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
 // --- PÁGINA PRINCIPAL ---
 export default function ProfilePage() {
   const params = useParams();
@@ -174,7 +199,8 @@ export default function ProfilePage() {
     const userRef = ref(db, `users/${userId}`);
     const unsubscribe = onValue(userRef, (snapshot) => {
       if (snapshot.exists()) {
-        setProfileUser(snapshot.val() as UserProfile);
+        // Importante: Firebase devuelve el objeto, pero el ID está en la key.
+        setProfileUser({ id: snapshot.key, ...snapshot.val() } as UserProfile);
       } else {
         setProfileUser(null);
         toast({ title: "Error", description: "Usuario no encontrado.", variant: "destructive" });
@@ -239,7 +265,7 @@ export default function ProfilePage() {
   };
 
   const handleClaimReward = (level: number) => {
-    if (!profileUser) return;
+    if (!profileUser || !profileUser.claimedPassRewards) return;
     const currentClaims = profileUser.claimedPassRewards || [];
     const newClaims = [...currentClaims, level];
     handleSaveProfile({ claimedPassRewards: newClaims });
@@ -265,7 +291,7 @@ export default function ProfilePage() {
   if (!profileUser) return <div className="p-8 text-center">Usuario no encontrado.</div>;
 
   const isOwnProfile = currentUser?.id === profileUser.id;
-  const { name, username, role, league, division, isVerified, avatar, profileBackground, sudonepassLevel = 1, sudonepassExp = 0, transferStatus, claimedPassRewards = [] } = profileUser;
+  const { name, username, role, league, division, isVerified, avatar, profileBackground, sudonepassLevel = 1, sudonepassExp = 0, transferStatus, claimedPassRewards = [], team } = profileUser;
   const expToNextLevel = 100;
   const passProgress = (sudonepassExp / expToNextLevel) * 100;
   const currentCrest = profileBackground ? crestMap[profileBackground] : null;
@@ -321,6 +347,8 @@ export default function ProfilePage() {
                     {isVerified && <TooltipProvider><Tooltip><TooltipTrigger><Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={24} height={24} /></TooltipTrigger><TooltipContent><p>Verificado</p></TooltipContent></Tooltip></TooltipProvider>}
                   </div>
                   <CardDescription>@{username} · {role}</CardDescription>
+                  {/* AQUÍ INTEGRAMOS EL NUEVO COMPONENTE */}
+                  <TeamDisplay team={team} />
                 </CardHeader>
                 <CardContent className="px-6 space-y-4">
                     <div className="flex items-center gap-4">

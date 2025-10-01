@@ -91,11 +91,12 @@ export function RosterManager({ teamId }: RosterManagerProps) {
     setIsSubmitting(false);
   };
 
-  const handleRemovePlayer = async (playerId: string, playerName: string) => {
+  const handleRemovePlayer = async (player: RosterPlayer) => {
     setIsSubmitting(true);
-    const success = await removePlayerFromTeam(playerId, teamId);
+    // Ahora pasamos el objeto `player` completo que contiene `isGuest`
+    const success = await removePlayerFromTeam(player.id, teamId, player.isGuest);
     if (success) {
-      toast({ title: "Jugador Eliminado", description: `${playerName} fue eliminado de la plantilla.` });
+      toast({ title: "Jugador Eliminado", description: `${player.name} fue eliminado de la plantilla.` });
       await fetchRoster();
     } else {
       toast({ title: "Error", description: "No se pudo eliminar al jugador.", variant: "destructive" });
@@ -130,7 +131,8 @@ export function RosterManager({ teamId }: RosterManagerProps) {
                       <p className="font-semibold">{player.name}</p>
                       <p className="text-sm text-muted-foreground">DNI: {player.dni} {player.isGuest && <span className='text-xs font-bold text-accent-foreground'>(Invitado)</span>}</p>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => handleRemovePlayer(player.id, player.name)} disabled={isSubmitting}>
+                    {/* Pasamos el objeto player completo al manejador */}
+                    <Button variant="ghost" size="icon" onClick={() => handleRemovePlayer(player)} disabled={isSubmitting}>
                       <UserX className="h-4 w-4 text-destructive"/>
                       <span className="sr-only">Quitar jugador {player.name}</span>
                     </Button>
