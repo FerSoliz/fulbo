@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { rtdb, ref, get, set } from '@/lib/firebase';
+import { db } from '@/lib/firebase'; // Importamos la instancia de Realtime Database
+import { ref, get, set } from 'firebase/database'; // Importamos las funciones directamente de firebase/database
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -90,11 +91,11 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
     try {
         // Ejecutamos todas las peticiones a la base de datos en paralelo para mayor eficiencia.
         const [homeTeamSnap, awayTeamSnap, homeRosterSnap, awayRosterSnap, statsSnap] = await Promise.all([
-            get(ref(rtdb, `teams/${homeTeamId}/name`)),
-            get(ref(rtdb, `teams/${awayTeamId}/name`)),
-            get(ref(rtdb, `tournaments/${tournamentId}/teams/${homeTeamId}/roster`)),
-            get(ref(rtdb, `tournaments/${tournamentId}/teams/${awayTeamId}/roster`)),
-            get(ref(rtdb, `match_stats/${matchId}`))
+            get(ref(db, `teams/${homeTeamId}/name`)),
+            get(ref(db, `teams/${awayTeamId}/name`)),
+            get(ref(db, `tournaments/${tournamentId}/teams/${homeTeamId}/roster`)),
+            get(ref(db, `tournaments/${tournamentId}/teams/${awayTeamId}/roster`)),
+            get(ref(db, `match_stats/${matchId}`))
         ]);
 
         setHomeTeam({ name: homeTeamSnap.val() || 'Local', roster: homeRosterSnap.exists() ? Object.values(homeRosterSnap.val()) : [] });
@@ -142,7 +143,7 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
-      await set(ref(rtdb, `match_stats/${matchId}`), stats);
+      await set(ref(db, `match_stats/${matchId}`), stats);
       toast({ title: "¡Éxito!", description: "Las estadísticas del partido se guardaron correctamente.", className: "bg-green-500 text-white" });
       setIsOpen(false);
     } catch (error) {

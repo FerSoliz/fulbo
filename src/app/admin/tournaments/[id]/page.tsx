@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { rtdb, ref, onValue, update, set, get } from '@/lib/firebase';
+import { ref, onValue, update, set, get } from 'firebase/database'; // Importaciones corregidas
+import { db } from '@/lib/firebase'; // Importación de la instancia 'db'
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
 
@@ -83,8 +84,8 @@ export default function TournamentFixturePage() {
         if (!tournament || !tournament.teams) return;
 
         const [matchesSnapshot, matchStatsSnapshot] = await Promise.all([
-            get(ref(rtdb, 'matches')),
-            get(ref(rtdb, 'match_stats'))
+            get(ref(db, 'matches')), // Usando 'db'
+            get(ref(db, 'match_stats')) // Usando 'db'
         ]);
 
         const allMatches: Match[] = Object.values(matchesSnapshot.val() || {}).filter((m: any) => m.tournamentId === tournamentId);
@@ -132,7 +133,7 @@ export default function TournamentFixturePage() {
         const sortedScorers = allPlayerStats.filter(p => p.goals > 0).sort((a, b) => b.goals - a.goals || a.playerInfo.lastName.localeCompare(b.playerInfo.lastName));
         const sortedSanctions = allPlayerStats.filter(p => p.redCards > 0 || p.yellowCards > 0).sort((a, b) => b.redCards - a.redCards || b.yellowCards - a.yellowCards);
 
-        await set(ref(rtdb, `tournament_stats/${tournamentId}`), { 
+        await set(ref(db, `tournament_stats/${tournamentId}`), { 
             positions: sortedPositions,
             scorers: sortedScorers,
             sanctions: sortedSanctions
@@ -145,14 +146,14 @@ export default function TournamentFixturePage() {
         if (!user || user.role !== 'admin') { setPageState('ACCESS_DENIED'); return; }
         if (!tournamentId) { setPageState('NOT_FOUND'); return; }
 
-        const tournamentRef = ref(rtdb, `tournaments/${tournamentId}`);
+        const tournamentRef = ref(db, `tournaments/${tournamentId}`); // Usando 'db'
         const unsubscribeTournament = onValue(tournamentRef, async (snapshot) => {
             if (snapshot.exists()) {
                 const tournamentData = snapshot.val();
                 setTournament({ id: snapshot.key, ...tournamentData });
                 if (tournamentData.teams) {
                     const teamIds = Object.keys(tournamentData.teams);
-                    const teamsData = await Promise.all(teamIds.map(id => get(ref(rtdb, `teams/${id}`)).then(snap => ({ id: snap.key, ...snap.val() }))));
+                    const teamsData = await Promise.all(teamIds.map(id => get(ref(db, `teams/${id}`)).then(snap => ({ id: snap.key, ...snap.val() })))); // Usando 'db'
                     setTeams(teamsData.filter(t => t.id));
                 }
                 setPageState('READY');
@@ -161,13 +162,13 @@ export default function TournamentFixturePage() {
             }
         });
 
-        const matchesRef = ref(rtdb, 'matches');
+        const matchesRef = ref(db, 'matches'); // Usando 'db'
         const unsubscribeMatches = onValue(matchesRef, (snapshot) => {
             const allMatches = snapshot.val() || {};
             setMatches(Object.values(allMatches).filter((m: any) => m.tournamentId === tournamentId).sort((a: any, b: any) => a.round - b.round) as Match[]);
         });
 
-        const statsRef = ref(rtdb, `tournament_stats/${tournamentId}`);
+        const statsRef = ref(db, `tournament_stats/${tournamentId}`); // Usando 'db'
         const unsubscribeStats = onValue(statsRef, (snapshot) => setStats(snapshot.val()));
 
         return () => { unsubscribeTournament(); unsubscribeMatches(); unsubscribeStats(); };
@@ -191,14 +192,14 @@ export default function TournamentFixturePage() {
                 const matchId = `match_${tournamentId}_r${match.round}_${match.homeTeamId.substring(0,4)}_${match.awayTeamId.substring(0,4)}_${Math.random().toString(36).substring(2, 7)}`;
                 updates[`/matches/${matchId}`] = { id: matchId, tournamentId, round: match.round, homeTeamId: match.homeTeamId, awayTeamId: match.awayTeamId, status: 'pending', result: { home: null, away: null } };
             });
-            await update(ref(rtdb), updates);
+            await update(ref(db), updates); // Usando 'db'
             toast({ title: "¡Fixture Generado!" });
         } catch (error) { console.error(error); toast({ title: "Error al generar fixture", variant: "destructive" });
         } finally { setIsGenerating(false); }
     };
 
     const updateMatchData = (matchId: string, path: string, value: any) => {
-      set(ref(rtdb, `matches/${matchId}/${path}`), value);
+      set(ref(db, `matches/${matchId}/${path}`), value); // Usando 'db'
     };
 
     const getTeamName = (teamId: string) => teams.find(t => t.id === teamId)?.name || 'Equipo...';
