@@ -17,7 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
+// import { Progress } from '@/components/ui/progress'; // Ya no usaremos este
 import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { DivisionBadge } from '@/components/ui/division-badge';
 import { UserProfile } from '@/lib/types';
@@ -55,7 +55,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-} from '@/components/ui/tabs';
+}
+from '@/components/ui/tabs';
 import {
   Table,
   TableBody,
@@ -287,8 +288,8 @@ export default function ProfilePage() {
 
 
   // --- RENDERIZADO ---
-  if (loading) return <div className="p-8 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></div>;
-  if (!profileUser) return <div className="p-8 text-center">Usuario no encontrado.</div>;
+  if (loading) return <div className="p-8 text-center" role="status" aria-live="polite"><Loader2 className="mx-auto h-8 w-8 animate-spin" /><span className="sr-only">Cargando perfil...</span></div>;
+  if (!profileUser) return <div className="p-8 text-center" aria-live="polite">Usuario no encontrado.</div>;
 
   const isOwnProfile = currentUser?.id === profileUser.id;
   const { name, username, role, league, division, isVerified, avatar, profileBackground, sudpoints = 0, team, claimedPassRewards = [], transferStatus = undefined } = profileUser;
@@ -303,7 +304,7 @@ export default function ProfilePage() {
   const currentCrest = profileBackground ? crestMap[profileBackground] : null;
 
   const OverlayView = ({ children }: { children: React.ReactNode }) => (
-      <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setView('buttons')}>
+      <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setView('buttons')} aria-modal="true" role="dialog">
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }} className="w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
           <Card className="max-h-[80vh]">{children}</Card>
         </motion.div>
@@ -318,13 +319,13 @@ export default function ProfilePage() {
             <motion.div initial={false} animate={{ y: 0 }} exit={{ y: '-100%', opacity: 0 }}>
               <Card>
                 <div className="relative w-full aspect-[4/1]">
-                  {profileBackground && <Image src={profileBackground} alt="Fondo" layout='fill' className="object-cover rounded-t-lg" priority />}
+                  {profileBackground && <Image src={profileBackground} alt="Fondo de perfil" layout='fill' className="object-cover rounded-t-lg" priority />}
                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
                   <div className="absolute top-2 right-2 z-10 flex gap-2 items-center">
-                    {currentCrest && <div className="w-10 h-10"><Image src={currentCrest} alt="Escudo" width={40} height={40} /></div>}
+                    {currentCrest && <div className="w-10 h-10"><Image src={currentCrest} alt="Escudo del equipo" width={40} height={40} /></div>}
                     {isOwnProfile && (
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild><button className="w-10 h-10"><Image src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png" alt="Opciones" width={40} height={40} /></button></DropdownMenuTrigger>
+                        <DropdownMenuTrigger asChild><button className="w-10 h-10" aria-label="Opciones de perfil"><Image src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png" alt="Opciones" width={40} height={40} /></button></DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <BackgroundChangerDialog user={profileUser} onSave={handleSaveProfile}><DropdownMenuItem onSelect={(e) => e.preventDefault()}><ImageIcon className="mr-2 h-4 w-4" />Cambiar Fondo</DropdownMenuItem></BackgroundChangerDialog>
                           <EditProfileDialog user={profileUser} onSave={handleSaveProfile}><DropdownMenuItem onSelect={(e) => e.preventDefault()}><Pencil className="mr-2 h-4 w-4" />Editar Perfil</DropdownMenuItem></EditProfileDialog>
@@ -341,16 +342,16 @@ export default function ProfilePage() {
                     )}
                   </div>
                   <div className="absolute bottom-0 left-6 translate-y-1/2">
-                    <div className={cn('relative group', isOwnProfile && 'cursor-pointer')} onClick={handleAvatarClick}>
+                    <div className={cn('relative group', isOwnProfile && 'cursor-pointer')} onClick={handleAvatarClick} role="button" aria-label={isOwnProfile ? "Cambiar avatar" : "Avatar del usuario"}>
                       <AnimatedAvatar><Avatar className="w-24 h-24 text-4xl border-4 border-background"><AvatarImage src={avatar} alt={name} /><AvatarFallback>{name.charAt(0)}</AvatarFallback></Avatar></AnimatedAvatar>
-                      {isUploading && <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin"/></div>}
+                      {isUploading && <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center" aria-live="polite" aria-label="Subiendo avatar"><Loader2 className="w-8 h-8 animate-spin"/></div>}
                     </div>
                   </div>
                 </div>
                 <CardHeader className="pt-16 pb-4 px-6">
                   <div className="flex items-center gap-2">
                     <CardTitle className="text-2xl">{name}</CardTitle>
-                    {isVerified && <TooltipProvider><Tooltip><TooltipTrigger><Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={24} height={24} /></TooltipTrigger><TooltipContent><p>Verificado</p></TooltipContent></Tooltip></TooltipProvider>}
+                    {isVerified && <TooltipProvider><Tooltip><TooltipTrigger asChild><span aria-label="Usuario verificado"><Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={24} height={24} /></span></TooltipTrigger><TooltipContent><p>Verificado</p></TooltipContent></Tooltip></TooltipProvider>}
                   </div>
                   <CardDescription>@{username} · {role}</CardDescription>
                   {/* AQUÍ INTEGRAMOS EL NUEVO COMPONENTE */}
@@ -361,18 +362,42 @@ export default function ProfilePage() {
                         <DivisionBadge league={league} division={division} />
                         {transferStatus && <TransferStatusBadge user={profileUser} onTransferClick={handleTransferClick} />}
                     </div>
-                    <div className="w-full">
-                        <Progress value={passProgress} className="h-2" />
-                        <div className="flex justify-between mt-1">
-                           <TooltipProvider><Tooltip><TooltipTrigger asChild>
-                              <p className="text-xs text-muted-foreground">Siguiente nivel</p>
-                           </TooltipTrigger><TooltipContent><p>{pointsToNextLevel} Sudpoints para el siguiente nivel</p></TooltipContent></Tooltip></TooltipProvider>
-                            <p className="text-sm font-semibold flex items-center gap-1">
-                                <Trophy className="h-4 w-4 text-amber-500" />
-                                {currentSudpoints} Sudpoints
-                            </p>
+                    {/* INICIO DE LA BARRA DE PROGRESO PERSONALIZADA */}
+                    <div className="relative w-full h-2 bg-muted rounded-full overflow-hidden" role="progressbar" aria-valuenow={passProgress} aria-valuemin={0} aria-valuemax={100}>
+                        <motion.div
+                            className="absolute inset-y-0 left-0 bg-primary rounded-full flex items-center justify-center"
+                            initial={{ width: '0%' }}
+                            animate={{ width: `${passProgress}%` }}
+                            transition={{ duration: 0.5, ease: 'easeOut' }}
+                        >
+                            {/* Porcentaje en el centro, solo visible si hay suficiente espacio */}
+                            {passProgress > 15 && ( // Ajusta este valor si necesitas más o menos espacio
+                                <span className="absolute left-1/2 -translate-x-1/2 text-[10px] font-bold text-primary-foreground select-none" aria-hidden="true">
+                                    {Math.round(passProgress)}%
+                                </span>
+                            )}
+                            {/* Punto en la punta de la barra cargada */}
+                            {passProgress > 0 && (
+                                <div className="absolute right-0 h-3 w-3 -translate-y-1/2 translate-x-1/2 top-1/2 bg-primary rounded-full shadow-sm border border-background" aria-hidden="true" />
+                            )}
+                        </motion.div>
+                         {/* Icono de trofeo al final de la barra */}
+                        <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-10 h-10 flex items-center justify-center">
+                            <Trophy className="h-6 w-6 text-amber-500" aria-label="Meta de Sudpoints" />
                         </div>
                     </div>
+                    <div className="flex justify-between mt-1">
+                        <TooltipProvider><Tooltip><TooltipTrigger asChild>
+                            <p className="text-xs text-muted-foreground">Siguiente nivel</p>
+                        </TooltipTrigger><TooltipContent><p>{pointsToNextLevel} Sudpoints para el siguiente nivel</p></TooltipContent></Tooltip></TooltipProvider>
+                        <p className="text-sm font-semibold flex items-center gap-1">
+                            {currentSudpoints} / {expToNextLevel} Sudpoints
+                        </p>
+                    </div>
+                    {/* FIN DE LA BARRA DE PROGRESO PERSONALIZADA */}
+                    {/* INPUT DE TIPO FILE MOVIDO AQUÍ DENTRO DE LA CARD PRINCIPAL */}
+                    <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" disabled={isUploading} aria-label="Subir nueva imagen de perfil"/>
+
                     {!isOwnProfile && <Button onClick={handleSendMessage} className="w-full"><MessageSquare className="mr-2 h-4 w-4" />Enviar Mensaje</Button>}
                 </CardContent>
               </Card>
@@ -380,21 +405,19 @@ export default function ProfilePage() {
             <motion.div initial={false} animate={{ y: 0 }} exit={{ y: '-100%', opacity: 0 }}>
               <Card>
                 <CardContent className="p-4 grid grid-cols-4 gap-4">
-                    <button className="transition-transform hover:scale-105" onClick={() => setView('history')}><Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial" width={150} height={50} /></button>
-                    <button className="transition-transform hover:scale-105" onClick={() => setView('next_match')}><Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} /></button>
-                    <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}><Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} /></button>
-                    <button className="transition-transform hover:scale-105" onClick={() => setView('my_team')}><Image src="https://i.postimg.cc/cLsMSW3v/boton-mi-equipo.png" alt="Mi Equipo" width={150} height={50} /></button>
-                    <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}><Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} /></button>
-                    <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}><Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={150} height={50} /></button>
-                    <button className="transition-transform hover:scale-105" onClick={() => setView('favorite_tournaments')}><Image src="https://i.postimg.cc/yYnD2Q1z/boton-favorito-torneo.png" alt="Torneos Favoritos" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('history')} aria-label="Ver historial de partidos"><Image src="https://i.postimg.cc/kMNbHH8f/boton-1.png" alt="Historial" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('next_match')} aria-label="Ver próximo partido"><Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('stats')} aria-label="Ver estadísticas"><Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('my_team')} aria-label="Ver mi equipo"><Image src="https://i.postimg.cc/cLsMSW3v/boton-mi-equipo.png" alt="Mi Equipo" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')} aria-label="Ver SUDONE PASS"><Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')} aria-label="Ver ranking de jugadores"><Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={150} height={50} /></button>
+                    <button className="transition-transform hover:scale-105" onClick={() => setView('favorite_tournaments')} aria-label="Ver torneos favoritos"><Image src="https://i.postimg.cc/yYnD2Q1z/boton-favorito-torneo.png" alt="Torneos Favoritos" width={150} height={50} /></button>
                 </CardContent>
               </Card>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
-
-      <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" disabled={isUploading}/>
 
       <AnimatePresence>
         {view === 'history' && <OverlayView><CardHeader><CardTitle>Historial</CardTitle></CardHeader><CardContent><p>Próximamente...</p></CardContent></OverlayView>}
@@ -419,17 +442,15 @@ export default function ProfilePage() {
                             const isClaimed = claimedPassRewards.includes(level);
                             return (
                                 <div key={level} className={cn("flex items-center justify-between p-3 rounded-lg", isUnlocked ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
-                                    <div className="flex items-center gap-4">
-                                        <div className="flex flex-col items-center justify-center w-12"><span className="text-xs text-muted-foreground">NIVEL</span><span className="text-xl font-bold">{level}</span></div>
-                                        <div className="relative"><Image src="https://i.postimg.cc/qM6GyVNg/sobre-base-campeones-de-qatar.png" alt="Recompensa" width={80} height={100} className={cn(!isUnlocked && "opacity-30")} />{!isUnlocked && <Lock className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6"/>}</div>
-                                        <div className="font-semibold">SOBRE</div>
-                                    </div>
-                                    <Button size="sm" disabled={!isUnlocked || isClaimed} variant={isClaimed ? "outline" : "default"} onClick={() => handleClaimReward(level)}>{isClaimed ? <><CheckCircle2 className="mr-2 h-4 w-4" />Reclamado</> : isUnlocked ? "Reclamar" : "Bloqueado"}</Button>
+                                    <div className="flex flex-col items-center justify-center w-12"><span className="text-xs text-muted-foreground">NIVEL</span><span className="text-xl font-bold">{level}</span></div>
+                                    <div className="relative"><Image src="https://i.postimg.cc/qM6GyVNg/sobre-base-campeones-de-qatar.png" alt="Recompensa" width={80} height={100} className={cn(!isUnlocked && "opacity-30")} />{!isUnlocked && <Lock className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6" aria-label="Bloqueado"/>}</div>
+                                    <div className="font-semibold">SOBRE</div>
                                 </div>
                             )
                         })}
                     </CardContent>
                 </ScrollArea>
+                <CardFooter><Button size="sm" disabled={!isUnlocked || isClaimed} variant={isClaimed ? "outline" : "default"} onClick={() => handleClaimReward(level)}>{isClaimed ? <><CheckCircle2 className="mr-2 h-4 w-4" />Reclamado</> : isUnlocked ? "Reclamar" : "Bloqueado"}</Button></CardFooter>
                 <CardFooter><Button variant="ghost" onClick={() => setView('buttons')} className="w-full">Volver</Button></CardFooter>
             </OverlayView>
         )}
@@ -440,19 +461,19 @@ export default function ProfilePage() {
                 <ScrollArea className="h-[60vh]">
                   <CardContent className="space-y-2">
                       {rankingLoading ? (
-                          <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                          <div className="flex justify-center items-center h-40" role="status" aria-live="polite"><Loader2 className="h-8 w-8 animate-spin" /><span className="sr-only">Cargando ranking...</span></div>
                       ) : rankingData.length > 0 ? (
                           rankingData.map((player) => (
                               <div key={player.rank} className={cn("flex items-center justify-between p-3 rounded-lg", player.name === name ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
                                   <div className="flex items-center gap-4">
-                                      <span className="font-bold text-lg w-6 text-center">{player.rank === 1 ? <Crown className="w-5 h-5 text-amber-400" /> : player.rank}</span>
+                                      <span className="font-bold text-lg w-6 text-center">{player.rank === 1 ? <Crown className="w-5 h-5 text-amber-400" aria-label="Primer puesto" /> : player.rank}</span>
                                       <p className={cn(player.name === name && "text-accent-foreground font-semibold")}>{player.name}</p>
                                   </div>
                                   <p className="font-bold">{player.sudpoints} SP</p>
                               </div>
                           ))
                       ) : (
-                          <p className="text-center text-muted-foreground pt-10">No hay datos de ranking disponibles.</p>
+                          <p className="text-center text-muted-foreground pt-10" aria-live="polite">No hay datos de ranking disponibles.</p>
                       )}
                   </CardContent>
                 </ScrollArea>
