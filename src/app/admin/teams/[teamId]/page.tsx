@@ -1,1 +1,39 @@
-\'use client\';\n\nimport { useParams } from \'next/navigation\';\nimport { RosterManager } from "@/components/team/RosterManager";\nimport { PageHeader } from \'@/components/page-header\';\n\n// --- Punto Clave de Mentoría: Rutas Dinámicas y Hooks ---\n// El nombre de la carpeta `[teamId]` indica una ruta dinámica.\n// En componentes de cliente (`\'use client\`), la forma moderna y recomendada\n// para acceder a estos parámetros es con el hook `useParams`.\n// Esto desacopla nuestro componente de la forma en que Next.js le pasa las props.\n\nexport default function ManageTeamPage() {\n  // Usamos el hook para obtener todos los parámetros de la URL.\n  const params = useParams();\n  // Extraemos teamId. Lo tratamos como `string` porque nuestra estructura de ruta así lo define.\n  const teamId = params.teamId as string;\n\n  // Es buena práctica manejar el caso donde el teamId aún no esté disponible.\n  if (!teamId) {\n    return (\n      <div className="p-4 sm:p-6 lg:p-8">\n        <PageHeader title="Cargando..." description="Obteniendo información del equipo." />\n      </div>\n    );\n  }\n\n  return (\n    <div className="p-4 sm:p-6 lg:p-8">\n      <PageHeader \n        title="Gestionar Plantilla"\n        description={`Añade o quita jugadores del equipo con ID: ${teamId}`}\n      />\n      <div className="mt-8">\n        <RosterManager teamId={teamId} />\n      </div>\n    </div>\n  );\n}\n
+\'use client\';
+
+import { useParams } from \'next/navigation\';
+import { RosterManager } from "@/components/team/RosterManager";
+import { PageHeader } from \'@/components/page-header\';
+
+// --- Punto Clave de Mentoría: Rutas Dinámicas y Hooks ---
+// El nombre de la carpeta `[teamId]` indica una ruta dinámica.
+// En componentes de cliente (`\'use client\`), la forma moderna y recomendada
+// para acceder a estos parámetros es con el hook `useParams`.
+// Esto desacopla nuestro componente de la forma en que Next.js le pasa las props.
+
+export default function ManageTeamPage() {
+  // Usamos el hook para obtener todos los parámetros de la URL.
+  const params = useParams();
+  // Extraemos teamId. Lo tratamos como `string` porque nuestra estructura de ruta así lo define.
+  const teamId = params.teamId as string;
+
+  // Es buena práctica manejar el caso donde el teamId aún no esté disponible.
+  if (!teamId) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8">
+        <PageHeader title="Cargando..." description="Obteniendo información del equipo." />
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8">
+      <PageHeader 
+        title="Gestionar Plantilla"
+        description={`Añade o quita jugadores del equipo con ID: ${teamId}`}
+      />
+      <div className="mt-8">
+        <RosterManager teamId={teamId} />
+      </div>
+    </div>
+  );
+}
