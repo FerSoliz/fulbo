@@ -19,10 +19,12 @@ import { useUser } from '@/context/user-context';
 import { useRouter } from 'next/navigation';
 import { Loader2, AlertCircle, Info } from 'lucide-react';
 
+// --- ¡CÓDIGO ACTUALIZADO! ---
+// Ahora las imágenes de fondo se cargan desde la carpeta /public
 const backgrounds = [
-    { name: 'AFA', url: 'https://i.postimg.cc/1RfWNTCC/lusail.png', crest: '/escudito-afa.png' },
-    { name: 'River Plate', url: 'https://i.postimg.cc/BnnbJSjY/ELMONUMENTALRIVERPLATE2.png', crest: '/escudito-river.png' },
-    { name: 'Boca Juniors', url: 'https://i.postimg.cc/fL20hVKv/LABOMBONERABOCAJUNIORS.jpg', crest: '/escudito-de-boca.png' }
+    { name: 'AFA', url: '/lusail.png', crest: '/escudito-afa.png' },
+    { name: 'River Plate', url: '/ELMONUMENTALRIVERPLATE2.png', crest: '/escudito-river.png' },
+    { name: 'Boca Juniors', url: '/LABOMBONERABOCAJUNIORS.jpg', crest: '/escudito-de-boca.png' }
 ];
 
 export default function RegisterPage() {
@@ -55,7 +57,7 @@ export default function RegisterPage() {
                     alt="SUDONE Logo"
                     fill
                     priority
-                    sizes="200px" // <-- ¡SOLUCIÓN AÑADIDA!
+                    sizes="200px"
                     style={{ objectFit: 'contain' }}
                   />
               </Link>

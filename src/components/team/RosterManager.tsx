@@ -1,0 +1,171 @@
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Loader2, UserX } from 'lucide-react';
+import { PlayerSearch, FoundPlayer } from '@/components/search/PlayerSearch';
+import { AddGuestPlayerForm } from '@/components/team/AddGuestPlayerForm';
+import { Button } from '@/components/ui/button';
+import { getTeamRoster, addGuestPlayerToTeam, addRegisteredPlayerToTeam, removePlayerFromTeam } from '@/lib/firebase/db';
+
+export interface RosterPlayer {
+  id: string;
+  name: string;
+  dni: string;
+  isGuest: boolean;
+}
+
+interface RosterManagerProps {
+  teamId: string;
+}
+
+type RightPanelState = 'SEARCH' | 'ADD_GUEST' | 'PLAYER_FOUND';
+
+export function RosterManager({ teamId }: RosterManagerProps) {
+  const [roster, setRoster] = useState<RosterPlayer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [rightPanel, setRightPanel] = useState<RightPanelState>('SEARCH');
+  const [dniToRegister, setDniToRegister] = useState<string | null>(null);
+  const [foundPlayer, setFoundPlayer] = useState<FoundPlayer | null>(null);
+
+  const fetchRoster = useCallback(async () => {
+    setLoading(true);
+    const teamRoster = await getTeamRoster(teamId);
+    setRoster(teamRoster);
+    setLoading(false);
+  }, [teamId]);
+
+  useEffect(() => {
+    fetchRoster();
+  }, [fetchRoster]);
+
+  const handlePlayerFound = (player: FoundPlayer) => {
+    setFoundPlayer(player);
+    setRightPanel('PLAYER_FOUND');
+  };
+
+  const handlePlayerNotFound = (dni: string) => {
+    setDniToRegister(dni);
+    setRightPanel('ADD_GUEST');
+  };
+
+  const handleAddRegisteredPlayer = async (player: FoundPlayer) => {
+    setIsSubmitting(true);
+    const success = await addRegisteredPlayerToTeam(player.id, teamId);
+    if (success) {
+      setRoster(prev => [...prev, { id: player.id, name: player.name, dni: player.dni, isGuest: false }]);
+    }
+    resetRightPanel();
+    setIsSubmitting(false);
+  };
+
+  const handleAddGuestPlayer = async (name: string, dni: string) => {
+    setIsSubmitting(true);
+    const newRosterPlayer = await addGuestPlayerToTeam(name, dni, teamId);
+    if (newRosterPlayer) {
+      setRoster(prev => [...prev, newRosterPlayer]);
+    }
+    resetRightPanel();
+    setIsSubmitting(false);
+  };
+
+  const handleRemovePlayer = async (playerId: string) => {
+      setIsSubmitting(true);
+      const success = await removePlayerFromTeam(playerId, teamId);
+      if (success) {
+          setRoster(prev => prev.filter(p => p.id !== playerId));
+      }
+      setIsSubmitting(false);
+  }
+
+  const resetRightPanel = () => {
+      setRightPanel('SEARCH');
+      setDniToRegister(null);
+      setFoundPlayer(null);
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-8" aria-live="polite" aria-busy="true">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <p className="ml-4 text-muted-foreground">Cargando plantilla del equipo...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+      <div className="md:col-span-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Plantilla Actual ({roster.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {roster.length === 0 ? (
+              <p className="text-center text-muted-foreground italic py-4">Tu plantilla está vacía. Usa el buscador para añadir jugadores.</p>
+            ) : (
+              <ul className="space-y-3">
+                {roster.map(player => (
+                  <li key={player.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-lg">
+                    <div>
+                        <p className="font-semibold">{player.name}</p>
+                        <p className="text-sm text-muted-foreground">DNI: {player.dni} {player.isGuest && <span className='text-xs font-bold text-accent-foreground'>(Invitado)</span>}</p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => handleRemovePlayer(player.id)} disabled={isSubmitting}>
+                        <UserX className="h-4 w-4 text-destructive"/>
+                        <span className="sr-only">Quitar jugador {player.name}</span>
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div>
+        <div className="sticky top-24 space-y-4">
+          {rightPanel === 'SEARCH' && (
+            <Card>
+              <CardHeader>
+                  <CardTitle>Añadir Jugador</CardTitle>
+                  <CardDescription>Busca por DNI para añadir un jugador existente.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <PlayerSearch onPlayerFound={handlePlayerFound} onPlayerNotFound={handlePlayerNotFound} disabled={isSubmitting} />
+              </CardContent>
+            </Card>
+          )}
+
+          {rightPanel === 'ADD_GUEST' && dniToRegister && (
+            <AddGuestPlayerForm 
+              dni={dniToRegister} 
+              onAddGuest={handleAddGuestPlayer} 
+              onCancel={resetRightPanel} 
+            />
+          )}
+
+          {rightPanel === 'PLAYER_FOUND' && foundPlayer && (
+             <Card className="bg-green-50 dark:bg-green-900/20 border-green-500">
+                <CardHeader>
+                    <CardTitle>Jugador Encontrado</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                    <p><span className="font-semibold">Nombre:</span> {foundPlayer.name}</p>
+                    <p><span className="font-semibold">Usuario:</span> @{foundPlayer.username}</p>
+                    <p><span className="font-semibold">DNI:</span> {foundPlayer.dni}</p>
+                </CardContent>
+                <CardFooter className="flex justify-end gap-2">
+                    <Button variant="ghost" onClick={resetRightPanel} disabled={isSubmitting}>Cancelar</Button>
+                    <Button onClick={() => handleAddRegisteredPlayer(foundPlayer)} disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Añadir al Equipo'}
+                    </Button>
+                </CardFooter>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

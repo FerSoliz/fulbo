@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link'; // <-- ¡IMPORTANTE! Añadimos la importación de Link.
 // Importamos todo lo necesario de Firebase para la base de datos y el almacenamiento
 import { rtdb, storage, ref as dbRef, onValue, remove } from '@/lib/firebase';
 import { ref as storageRef, deleteObject } from 'firebase/storage';
@@ -24,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+// Añadimos el ícono `Users` que ya usamos en el RosterManager para consistencia.
 import { Loader2, PlusCircle, Users, ShieldAlert, XCircle, MoreHorizontal, Edit, Trash2 } from 'lucide-react';
 
 // --- TIPOS DE DATOS ---
@@ -156,7 +158,16 @@ export default function ManageTeamsPage() {
                           <DropdownMenuTrigger asChild><Button variant="ghost" className="h-8 w-8 p-0"><span className="sr-only">Abrir menú</span><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={() => handleOpenEditDialog(team)}><Edit className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                            
+                            {/* --- ¡AQUÍ ESTÁ LA MAGIA! --- */}
+                            <DropdownMenuItem asChild>
+                              <Link href={`/admin/teams/${team.id}`}>
+                                <Users className="mr-2 h-4 w-4" />
+                                Gestionar Plantilla
+                              </Link>
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem onClick={() => handleOpenEditDialog(team)}><Edit className="mr-2 h-4 w-4" />Editar Equipo</DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={() => handleOpenDeleteDialog(team)} className="text-destructive focus:text-destructive focus:bg-destructive/10"><Trash2 className="mr-2 h-4 w-4" />Eliminar</DropdownMenuItem>
                           </DropdownMenuContent>
