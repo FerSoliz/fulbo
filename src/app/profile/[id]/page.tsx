@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useRef, Fragment } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
@@ -19,13 +19,12 @@ import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
 import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { DivisionBadge } from '@/components/ui/division-badge';
-import { UserProfile } from '@/lib/types'; 
+import { UserProfile } from '@/lib/types';
 import {
-    Medal, Shield, Swords, ShieldAlert, Calendar, Trophy, Link2, Star, Loader2, MessageSquare, Clock, UserCircle, Foot, Goal, MoreVertical, Pencil, Image as ImageIcon, Gift, Lock, CheckCircle2, ArrowLeft, MapPin, Crown, Flag, Handshake, UserPlus, Check, Search, MessageCircle as MessageCircleIcon, Users2, XCircle, MinusCircle, DoorClosed, X,
+  Loader2, MessageSquare, Lock, CheckCircle2, Crown, Handshake, Pencil, Image as ImageIcon
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
   TooltipProvider,
@@ -37,7 +36,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent
@@ -50,33 +48,34 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose,
-  DialogDescription,
 } from '@/components/ui/dialog';
 import {
-    Tabs,
-    TabsContent,
-    TabsList,
-    TabsTrigger,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@/components/ui/tabs';
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
 import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
 import { motion, AnimatePresence } from 'framer-motion';
-
-import { ref, update, onValue, off } from 'firebase/database';
+import { ref, update, onValue, off, query, orderByChild, limitToLast, get } from 'firebase/database';
 import { db } from '@/lib/firebase';
-
 import React from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+// --- TIPOS LOCALES ---
+type View = 'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass' | 'ranking_preview' | 'favorite_tournaments' | 'my_team';
+type RankingPlayer = { rank: number; name: string; sudpoints: number };
 
+// --- DIÁLOGOS ---
 const EditProfileDialog = ({ user, onSave, children }: { user: UserProfile; onSave: (updatedUser: Partial<UserProfile>) => void; children: React.ReactNode; }) => {
   const [name, setName] = useState(user.name);
   const [username, setUsername] = useState(user.username);
@@ -121,7 +120,7 @@ const BackgroundChangerDialog = ({ user, onSave, children }: { user: UserProfile
         <div className="grid grid-cols-2 gap-4 py-4">
           {backgrounds.map((bg) => (
             <div key={bg} className="relative aspect-video cursor-pointer group rounded-lg overflow-hidden" onClick={() => handleSelect(bg)}>
-              <Image src={bg} alt="Fondo" layout="fill" className="object-cover" />
+              <Image src={bg} alt="Fondo" layout='fill' objectFit='cover' />
               {user.profileBackground === bg && <div className="absolute inset-0 bg-black/50 flex items-center justify-center"><CheckCircle2 className="w-8 h-8 text-white" /></div>}
             </div>
           ))}
@@ -131,12 +130,10 @@ const BackgroundChangerDialog = ({ user, onSave, children }: { user: UserProfile
   );
 };
 
-const mockMatchHistory = [{ id: 1, myTeam: "SUDONE FC", opponent: "Los Rivales", myScore: 3, opponentScore: 1, tournament: "Liga Anual", date: "24/05" }];
-const mockNextMatch = { myTeam: "PUERTO F.C.", opponent: "Los Eltons", time: "21:00 hs", date: "Sábado 8 de Junio", referee: "Facundo Tello", instance: "Fecha 6 - Liga de los Sábados", location: "Complejo Parque Norte" };
-const mockTeamRoster: { name: string, id: string }[] = [{ name: "Lucio Mingrone", id: "admin-user" }];
-const mockRanking = [{ rank: 1, name: 'Faustino', sudpoints: 1250 }, { rank: 4, name: 'Lucio Mingrone', sudpoints: 980 }];
+// --- DATOS MOCK (PARA OTRAS VISTAS) ---
 const mockTournamentStats = { positions: [{ rank: 1, team: 'SUDONE FC', played: 4, won: 3, drawn: 1, lost: 0, points: 10 }], scorers: [{ rank: 1, player: 'L. Mingrone', team: 'SUDONE FC', goals: 6 }], sanctions: [{ player: 'F. González', team: 'SUDONE FC', yellow: 2, red: 0 }] };
 
+// --- COMPONENTES AUXILIARES ---
 const TransferStatusBadge = ({ user, onTransferClick }: { user: UserProfile; onTransferClick: () => void; }) => {
     const { transferStatus } = user;
     if (!transferStatus) return null;
@@ -152,33 +149,32 @@ const TransferStatusBadge = ({ user, onTransferClick }: { user: UserProfile; onT
     );
 };
 
-type View = 'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass' | 'ranking_preview' | 'favorite_tournaments' | 'my_team';
-
+// --- PÁGINA PRINCIPAL ---
 export default function ProfilePage() {
   const params = useParams();
   const router = useRouter();
   const userId = params.id as string;
   const { toast } = useToast();
-  const { user: currentUser, setUser: setCurrentUser, loading: userLoading } = useUser();
-  const { uploadFile, isUploading, progress } = useUpload();
+  const { user: currentUser } = useUser();
+  const { uploadFile, isUploading } = useUpload();
 
   const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [view, setView] = useState<View>('buttons');
-  const [claimedRewards, setClaimedRewards] = useState<number[]>([]);
 
+  // Estado para el ranking
+  const [rankingData, setRankingData] = useState<RankingPlayer[]>([]);
+  const [rankingLoading, setRankingLoading] = useState(false);
+
+  // Efecto para cargar el perfil del usuario
   useEffect(() => {
     if (!userId) return;
     setLoading(true);
     const userRef = ref(db, `users/${userId}`);
-
     const unsubscribe = onValue(userRef, (snapshot) => {
       if (snapshot.exists()) {
-        const userData = snapshot.val() as UserProfile;
-        setProfileUser(userData);
-        const savedClaims = localStorage.getItem(`claimedRewards_${userData.id}`);
-        if (savedClaims) setClaimedRewards(JSON.parse(savedClaims));
+        setProfileUser(snapshot.val() as UserProfile);
       } else {
         setProfileUser(null);
         toast({ title: "Error", description: "Usuario no encontrado.", variant: "destructive" });
@@ -189,10 +185,48 @@ export default function ProfilePage() {
       toast({ title: "Error de Red", variant: "destructive" });
       setLoading(false);
     });
-
     return () => off(userRef, 'value', unsubscribe);
   }, [userId, toast]);
 
+  // Efecto para cargar el ranking solo cuando se necesita
+  useEffect(() => {
+    const fetchRanking = async () => {
+      setRankingLoading(true);
+      try {
+        const usersRef = ref(db, 'users');
+        // Pedimos los 10 usuarios con más 'sudpoints'
+        const rankingQuery = query(usersRef, orderByChild('sudpoints'), limitToLast(10));
+        const snapshot = await get(rankingQuery);
+
+        if (snapshot.exists()) {
+          const usersData = snapshot.val();
+          const usersList: UserProfile[] = Object.values(usersData);
+          
+          // Ordenamos de mayor a menor y mapeamos al formato necesario
+          const sortedUsers = usersList
+            .sort((a, b) => (b.sudpoints || 0) - (a.sudpoints || 0))
+            .map((user, index) => ({
+              rank: index + 1,
+              name: user.name,
+              sudpoints: user.sudpoints || 0,
+            }));
+          setRankingData(sortedUsers);
+        } else {
+          setRankingData([]);
+        }
+      } catch (error) {
+        console.error("Error al obtener el ranking:", error);
+        toast({ title: "Error al cargar el ranking", variant: "destructive" });
+      }
+      setRankingLoading(false);
+    };
+
+    if (view === 'ranking_preview') {
+      fetchRanking();
+    }
+  }, [view, toast]);
+
+  // --- MANEJADORES DE EVENTOS ---
   const handleSaveProfile = async (updatedData: Partial<UserProfile>) => {
     if (!profileUser) return;
     const userRef = ref(db, `users/${profileUser.id}`);
@@ -203,14 +237,14 @@ export default function ProfilePage() {
       toast({ title: 'Error al actualizar', variant: 'destructive' });
     }
   };
-  
+
   const handleClaimReward = (level: number) => {
     if (!profileUser) return;
-    const newClaims = [...claimedRewards, level];
-    setClaimedRewards(newClaims);
-    localStorage.setItem(`claimedRewards_${profileUser.id}`, JSON.stringify(newClaims));
+    const currentClaims = profileUser.claimedPassRewards || [];
+    const newClaims = [...currentClaims, level];
+    handleSaveProfile({ claimedPassRewards: newClaims });
     toast({ title: `¡Nivel ${level} Reclamado!` });
-  }
+  };
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0] && profileUser) {
@@ -225,24 +259,23 @@ export default function ProfilePage() {
   const handleSendMessage = () => router.push(`/messages?recipient=${profileUser?.id}`);
   const handleTransferClick = () => router.push(`/messages?recipient=${profileUser?.id}`);
 
-  if (loading || userLoading) return <div className="p-8 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></div>;
+
+  // --- RENDERIZADO ---
+  if (loading) return <div className="p-8 text-center"><Loader2 className="mx-auto h-8 w-8 animate-spin" /></div>;
   if (!profileUser) return <div className="p-8 text-center">Usuario no encontrado.</div>;
 
   const isOwnProfile = currentUser?.id === profileUser.id;
-  const { stats, name, username, role, league, division, sudpoints = 0, isVerified, avatar, profileBackground, sudonepassLevel = 1, sudonepassExp = 0, transferStatus, team } = profileUser;
-  const finalStats = stats || { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 };
-  const winrate = finalStats.partidosJugados > 0 ? Math.round((finalStats.victorias / finalStats.partidosJugados) * 100) : 0;
-  const goalAverage = finalStats.partidosJugados > 0 ? (finalStats.goles / finalStats.partidosJugados).toFixed(2) : '0.00';
-  const currentCrest = profileBackground ? crestMap[profileBackground] : null;
+  const { name, username, role, league, division, isVerified, avatar, profileBackground, sudonepassLevel = 1, sudonepassExp = 0, transferStatus, claimedPassRewards = [] } = profileUser;
   const expToNextLevel = 100;
   const passProgress = (sudonepassExp / expToNextLevel) * 100;
+  const currentCrest = profileBackground ? crestMap[profileBackground] : null;
 
   const OverlayView = ({ children }: { children: React.ReactNode }) => (
-    <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setView('buttons')}>
-      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }} className="w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
-        <Card className="max-h-[80vh]">{children}</Card>
+      <motion.div key={view} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4" onClick={() => setView('buttons')}>
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }} className="w-full max-w-2xl" onClick={(e) => e.stopPropagation()}>
+          <Card className="max-h-[80vh]">{children}</Card>
+        </motion.div>
       </motion.div>
-    </motion.div>
   );
 
   return (
@@ -253,7 +286,7 @@ export default function ProfilePage() {
             <motion.div initial={false} animate={{ y: 0 }} exit={{ y: '-100%', opacity: 0 }}>
               <Card>
                 <div className="relative w-full aspect-[4/1]">
-                  {profileBackground && <Image src={profileBackground} alt="Fondo" layout="fill" className="object-cover rounded-t-lg" priority />}
+                  {profileBackground && <Image src={profileBackground} alt="Fondo" layout='fill' className="object-cover rounded-t-lg" priority />}
                   <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
                   <div className="absolute top-2 right-2 z-10 flex gap-2 items-center">
                     {currentCrest && <div className="w-10 h-10"><Image src={currentCrest} alt="Escudo" width={40} height={40} /></div>}
@@ -309,7 +342,6 @@ export default function ProfilePage() {
                     <button className="transition-transform hover:scale-105" onClick={() => setView('next_match')}><Image src="https://i.postimg.cc/VsBcb9QJ/proximo-partido.png" alt="Próximo Partido" width={150} height={50} /></button>
                     <button className="transition-transform hover:scale-105" onClick={() => setView('stats')}><Image src="https://i.postimg.cc/hjWHXv28/boton-estadisticas.png" alt="Estadísticas" width={150} height={50} /></button>
                     <button className="transition-transform hover:scale-105" onClick={() => setView('my_team')}><Image src="https://i.postimg.cc/cLsMSW3v/boton-mi-equipo.png" alt="Mi Equipo" width={150} height={50} /></button>
-                    {/* --- BOTONES RESTAURADOS --- */}
                     <button className="transition-transform hover:scale-105" onClick={() => setView('sudone_pass')}><Image src="https://i.postimg.cc/zfJh8FrT/boton-rojo-pase.png" alt="SUDONE PASS" width={150} height={50} /></button>
                     <button className="transition-transform hover:scale-105" onClick={() => setView('ranking_preview')}><Image src="https://i.postimg.cc/VLhYjjGw/BOTON-RANKING.png" alt="Ranking" width={150} height={50} /></button>
                     <button className="transition-transform hover:scale-105" onClick={() => setView('favorite_tournaments')}><Image src="https://i.postimg.cc/yYnD2Q1z/boton-favorito-torneo.png" alt="Torneos Favoritos" width={150} height={50} /></button>
@@ -322,12 +354,11 @@ export default function ProfilePage() {
 
       <input type="file" ref={fileInputRef} onChange={handleAvatarChange} className="hidden" accept="image/*" disabled={isUploading}/>
 
-      {/* --- VISTAS MODALES RESTAURADAS --- */}
       <AnimatePresence>
-        {view === 'history' && <OverlayView><CardHeader><CardTitle>Historial</CardTitle></CardHeader><CardContent><p>...</p></CardContent></OverlayView>}
-        {view === 'stats' && <OverlayView><CardHeader><CardTitle>Estadísticas</CardTitle></CardHeader><CardContent><p>...</p></CardContent></OverlayView>}
-        {view === 'next_match' && <OverlayView><CardHeader><CardTitle>Próximo Partido</CardTitle></CardHeader><CardContent><p>...</p></CardContent></OverlayView>}
-        {view === 'my_team' && <OverlayView><CardHeader><CardTitle>Mi Equipo</CardTitle></CardHeader><CardContent><p>...</p></CardContent></OverlayView>}
+        {view === 'history' && <OverlayView><CardHeader><CardTitle>Historial</CardTitle></CardHeader><CardContent><p>Próximamente...</p></CardContent></OverlayView>}
+        {view === 'stats' && <OverlayView><CardHeader><CardTitle>Estadísticas</CardTitle></CardHeader><CardContent><p>Próximamente...</p></CardContent></OverlayView>}
+        {view === 'next_match' && <OverlayView><CardHeader><CardTitle>Próximo Partido</CardTitle></CardHeader><CardContent><p>Próximamente...</p></CardContent></OverlayView>}
+        {view === 'my_team' && <OverlayView><CardHeader><CardTitle>Mi Equipo</CardTitle></CardHeader><CardContent><p>Próximamente...</p></CardContent></OverlayView>}
 
         {view === 'sudone_pass' && (
             <OverlayView>
@@ -343,7 +374,7 @@ export default function ProfilePage() {
                         {Array.from({ length: 10 }).map((_, index) => {
                             const level = index + 1;
                             const isUnlocked = level <= sudonepassLevel;
-                            const isClaimed = claimedRewards.includes(level);
+                            const isClaimed = claimedPassRewards.includes(level);
                             return (
                                 <div key={level} className={cn("flex items-center justify-between p-3 rounded-lg", isUnlocked ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
                                     <div className="flex items-center gap-4">
@@ -363,18 +394,24 @@ export default function ProfilePage() {
 
         {view === 'ranking_preview' && (
              <OverlayView>
-                <CardHeader><CardTitle className="text-center">Ranking</CardTitle></CardHeader>
+                <CardHeader><CardTitle className="text-center">Ranking de Jugadores</CardTitle></CardHeader>
                 <ScrollArea className="h-[60vh]">
                   <CardContent className="space-y-2">
-                      {mockRanking.map((player) => (
-                          <div key={player.rank} className={cn("flex items-center justify-between p-3 rounded-lg", player.name === name ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
-                              <div className="flex items-center gap-4">
-                                  <span className="font-bold text-lg w-6 text-center">{player.rank === 1 ? <Crown className="w-5 h-5 text-amber-400" /> : player.rank}</span>
-                                  <p className={cn(player.name === name && "text-accent")}>{player.name}</p>
+                      {rankingLoading ? (
+                          <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin" /></div>
+                      ) : rankingData.length > 0 ? (
+                          rankingData.map((player) => (
+                              <div key={player.rank} className={cn("flex items-center justify-between p-3 rounded-lg", player.name === name ? "bg-accent/20 border-l-4 border-accent" : "bg-muted/50")}>
+                                  <div className="flex items-center gap-4">
+                                      <span className="font-bold text-lg w-6 text-center">{player.rank === 1 ? <Crown className="w-5 h-5 text-amber-400" /> : player.rank}</span>
+                                      <p className={cn(player.name === name && "text-accent-foreground font-semibold")}>{player.name}</p>
+                                  </div>
+                                  <p className="font-bold">{player.sudpoints} SP</p>
                               </div>
-                              <p className="font-bold">{player.sudpoints} SP</p>
-                          </div>
-                      ))}
+                          ))
+                      ) : (
+                          <p className="text-center text-muted-foreground pt-10">No hay datos de ranking disponibles.</p>
+                      )}
                   </CardContent>
                 </ScrollArea>
                  <CardFooter><Button variant="ghost" onClick={() => setView('buttons')} className="w-full">Volver</Button></CardFooter>

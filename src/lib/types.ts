@@ -54,6 +54,7 @@ export interface UserProfile {
   // --- SUDONE PASS ---
   sudonepassLevel?: number;
   sudonepassExp?: number;
+  claimedPassRewards?: number[]; // Array con los niveles de recompensa reclamados
   
   // --- Metadatos ---
   createdAt: string; // Fecha de creación en formato ISO

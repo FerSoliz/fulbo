@@ -33,7 +33,10 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { cn } from '@/lib/utils';
-import { rtdb, ref, onValue, remove, update } from '@/lib/firebase';
+// --- CORRECCIÓN DE IMPORTACIONES --- 
+// Se importa `db` desde la configuración principal de firebase y las funciones específicas desde `firebase/database`.
+import { db } from '@/lib/firebase';
+import { ref, onValue, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-context';
 
@@ -62,7 +65,8 @@ export default function ManageTournamentsPage() {
   }, [user, router]);
 
   useEffect(() => {
-    const tournamentsRef = ref(rtdb, 'tournaments');
+    // Se utiliza `db` (la instancia importada) en lugar de `rtdb`.
+    const tournamentsRef = ref(db, 'tournaments');
     const unsubscribe = onValue(tournamentsRef, (snapshot) => {
       const data = snapshot.val();
       const tournamentsList: Tournament[] = data 
@@ -83,11 +87,9 @@ export default function ManageTournamentsPage() {
     const updates: { [key: string]: null } = {};
     updates[`/tournaments/${tournamentId}`] = null;
     
-    // You might want to also remove teams, matches, stats etc. associated with the tournament
-    // This part needs careful implementation based on your data structure to avoid leaving orphaned data.
-    
     try {
-      await update(ref(rtdb), updates);
+      // Se utiliza `db` aquí también.
+      await update(ref(db), updates);
       toast({ title: "Torneo Eliminado", description: "El torneo ha sido eliminado." });
     } catch (error) {
       console.error("Error en la eliminación: ", error);

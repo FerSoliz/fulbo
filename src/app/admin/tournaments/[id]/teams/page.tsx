@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { rtdb, ref, onValue, update, remove, push, serverTimestamp } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
+import { ref, onValue, update, remove, push, serverTimestamp } from 'firebase/database';
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -62,7 +63,7 @@ export default function ManageTeamsPage() {
 
     if (!tournamentId) return;
 
-    const tournamentRef = ref(rtdb, `tournaments/${tournamentId}`);
+    const tournamentRef = ref(db, `tournaments/${tournamentId}`);
     const unsubscribeTournament = onValue(tournamentRef, (snapshot) => {
       if (snapshot.exists()) {
         setTournament({ id: snapshot.key, ...snapshot.val() });
@@ -93,7 +94,7 @@ export default function ManageTeamsPage() {
     const teamsData: { [id: string]: Team } = {};
 
     teamIds.forEach(teamId => {
-        const teamRef = ref(rtdb, `teams/${teamId}`);
+        const teamRef = ref(db, `teams/${teamId}`);
         const listener = onValue(teamRef, (snapshot) => {
             if (snapshot.exists()) {
                 teamsData[teamId] = { id: snapshot.key, ...snapshot.val() };
@@ -123,7 +124,7 @@ export default function ManageTeamsPage() {
     }
 
     try {
-      await update(ref(rtdb), { 
+      await update(ref(db), { 
           [`teams/${teamId}/name`]: newName,
           [`teams/${teamId}/logoUrl`]: `https://avatar.vercel.sh/${encodeURIComponent(newName)}.png` // Actualizar logo también
       });
@@ -144,7 +145,7 @@ export default function ManageTeamsPage() {
         updates[`/tournaments/${tournamentId}/teams/${teamId}`] = null;
         updates[`/tournaments/${tournamentId}/teamCount`] = (tournament.teamCount || 1) - 1;
 
-        await update(ref(rtdb), updates);
+        await update(ref(db), updates);
 
         toast({ title: "Equipo Eliminado", description: `"${teamName}" fue eliminado del torneo.`});
     } catch (error) {
@@ -159,7 +160,7 @@ export default function ManageTeamsPage() {
     setIsAdding(true);
     try {
         const updates: { [key: string]: any } = {};
-        const newTeamRef = push(ref(rtdb, 'teams'));
+        const newTeamRef = push(ref(db, 'teams'));
         const newTeamId = newTeamRef.key;
 
         if (!newTeamId) throw new Error("No se pudo generar ID para el equipo");
@@ -174,7 +175,7 @@ export default function ManageTeamsPage() {
         updates[`/tournaments/${tournamentId}/teams/${newTeamId}`] = true;
         updates[`/tournaments/${tournamentId}/teamCount`] = (tournament.teamCount || 0) + 1;
 
-        await update(ref(rtdb), updates);
+        await update(ref(db), updates);
         toast({ title: "Equipo Añadido", description: `"${newTeamName}" fue inscrito en el torneo.`});
         setNewTeamName('');
     } catch (error) {
