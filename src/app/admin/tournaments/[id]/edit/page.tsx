@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { rtdb, ref, onValue, update } from '@/lib/firebase';
+// MODIFICADO: Importaciones correctas de Firebase
+import { db } from '@/lib/firebase'; // Tu instancia de la base de datos
+import { ref, onValue, update } from 'firebase/database'; // Funciones del SDK de Firebase
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -52,7 +54,8 @@ export default function EditTournamentPage() {
 
     if (!tournamentId) return;
 
-    const tournamentRef = ref(rtdb, `tournaments/${tournamentId}`);
+    // MODIFICADO: Usar 'db' en lugar de 'rtdb'
+    const tournamentRef = ref(db, `tournaments/${tournamentId}`);
     const unsubscribe = onValue(tournamentRef, (snapshot) => {
       if (snapshot.exists()) {
         setTournament({ id: snapshot.key, ...snapshot.val() });
@@ -82,7 +85,8 @@ export default function EditTournamentPage() {
 
     setIsSaving(true);
     try {
-        const tournamentRef = ref(rtdb, `tournaments/${tournamentId}`);
+        // MODIFICADO: Usar 'db' en lugar de 'rtdb'
+        const tournamentRef = ref(db, `tournaments/${tournamentId}`);
         const dataToUpdate = { ...tournament };
         delete dataToUpdate.id; // No guardar el ID dentro del objeto en Firebase
 
