@@ -119,3 +119,21 @@
 - Nunca solicitar ni procesar datos de tarjeta en formularios propios: usar pasarela oficial (ej. MercadoPago/Stripe).  
 - No inventar datos de torneos o fixtures: devolver “No hay datos” si la colección está vacía.  
 - No exponer información sensible de usuarios/equipos.  
+---
+## 11. Roadmap del Proyecto
+Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
+### Funcionalidades Implementadas
+- **Reproductor de Video en el Feed (YouTube y Twitch):**
+  - **Fecha:** 2024-05-23
+  - **Descripción:** Se ha implementado un sistema para que los posts en el feed social puedan incluir videos.
+  - **YouTube:** Los videos de YouTube se reproducen directamente en la tarjeta del post (`inline`), con una miniatura inicial y un reproductor que aparece al hacer clic. Incluye un estado de carga (`spinner`) para una mejor UX. Se han manejado las políticas de seguridad (CSP) y se ha tenido en cuenta la restricción de inserción de videos privados.
+  - **Twitch:** Los enlaces a canales o clips de Twitch se muestran como una miniatura en la que se puede hacer clic, que redirige al usuario a la plataforma de Twitch en una nueva pestaña.
+### Tareas a Futuro
+- **Soporte para más plataformas de video:**
+  - **Descripción:** Extender la lógica del formulario de creación de posts y del `PostCard` para dar soporte a otras plataformas de video relevantes como Vimeo o DailyMotion.
+  - **Prioridad:** Baja.
+---
+## 12. Gestión del Roadmap
+- La IA responsable de interactuar con este proyecto tiene la **obligación** de mantener actualizada la sección `## 11. Roadmap del Proyecto`.
+- Cuando una tarea de la lista `Tareas a Futuro` se complete, debe ser movida a la lista `Funcionalidades Implementadas`, detallando qué se hizo y la fecha de finalización.
+- Cuando se identifiquen nuevas necesidades o tareas, deben ser añadidas a la lista `Tareas a Futuro`, detallando su descripción y prioridad.
