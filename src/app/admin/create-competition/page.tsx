@@ -21,7 +21,8 @@ import {
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { rtdb, ref, push, update, serverTimestamp } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
+import { ref, push, update, serverTimestamp } from 'firebase/database';
 import { useUser } from '@/context/user-context';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
@@ -85,7 +86,7 @@ export default function CreateCompetitionPage() {
 
     try {
       const updates: { [key: string]: any } = {};
-      const newTournamentRef = push(ref(rtdb, 'tournaments'));
+      const newTournamentRef = push(ref(db, 'tournaments'));
       const tournamentId = newTournamentRef.key;
 
       if (!tournamentId) throw new Error("No se pudo generar el ID para el torneo");
@@ -93,7 +94,7 @@ export default function CreateCompetitionPage() {
       const teamsForTournament: { [key: string]: boolean } = {};
 
       validTeams.forEach(teamName => {
-          const newTeamRef = push(ref(rtdb, `teams`));
+          const newTeamRef = push(ref(db, `teams`));
           const teamId = newTeamRef.key;
           if (!teamId) return;
 
@@ -122,7 +123,7 @@ export default function CreateCompetitionPage() {
 
       updates[`/tournaments/${tournamentId}`] = newTournamentData;
 
-      await update(ref(rtdb), updates);
+      await update(ref(db), updates);
 
       toast({
         title: "¡Competencia Creada!",
