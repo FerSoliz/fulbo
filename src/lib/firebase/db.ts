@@ -112,6 +112,8 @@ export async function findUserByDni(dni: string): Promise<FoundPlayer | null> {
         dni: userData.dni,
         username: userData.username,
         avatar: userData.avatar || `https://avatar.vercel.sh/${userData.username}.png`,
+        isGuest: false,
+        team: userData.team || null,
       };
     }
     
@@ -126,7 +128,8 @@ export async function findUserByDni(dni: string): Promise<FoundPlayer | null> {
             dni: guestData.dni,
             username: 'invitado', 
             avatar: `https://avatar.vercel.sh/${guestData.dni}.png`, 
-            isGuest: true
+            isGuest: true,
+            team: guestData.team || null,
         };
     }
 
@@ -141,14 +144,31 @@ export async function addGuestPlayerToTeam(name: string, dni: string, teamId: st
     try {
         const guestId = dni;
 
+        // Primero, obtenemos los detalles del equipo para tener su nombre y logo.
+        const teamDetails = await getTeamDetails(teamId);
+        if (!teamDetails) {
+            throw new Error(`No se pudieron obtener los detalles del equipo ${teamId}.`);
+        }
+
+        // Creamos un objeto resumido del equipo para guardarlo en el perfil del invitado.
+        const teamSummaryForProfile = {
+            id: teamId,
+            name: teamDetails.name,
+            crestUrl: teamDetails.logoUrl || null,
+        };
+
+        // El objeto completo del jugador invitado, ahora incluyendo la información del equipo.
         const guestPlayerData = {
             name,
             dni,
             createdAt: new Date().toISOString(),
+            team: teamSummaryForProfile,
         };
 
         const updates: { [key: string]: any } = {};
+        // 1. Crea/actualiza al jugador invitado con sus datos Y la info del equipo.
         updates[`/guestPlayers/${guestId}`] = guestPlayerData;
+        // 2. Añade al jugador invitado a la plantilla del equipo.
         updates[`/teams/${teamId}/players/${guestId}`] = { isGuest: true };
 
         await update(ref(db), updates);
@@ -256,9 +276,15 @@ export async function getTeamDetails(teamId: string): Promise<TeamDetails | null
 export async function removePlayerFromTeam(playerId: string, teamId: string, isGuest: boolean): Promise<boolean> {
     try {
         const updates: { [key: string]: any } = {};
-        updates[`/teams/${teamId}/players/${playerId}`] = null; // Así se elimina con update
+        // 1. Quita al jugador de la plantilla del equipo.
+        updates[`/teams/${teamId}/players/${playerId}`] = null; 
 
-        if (!isGuest) {
+        // 2. Desvincula al equipo del perfil del jugador.
+        if (isGuest) {
+            // Si es un invitado, limpia la info del equipo en su nodo de guestPlayers.
+            updates[`/guestPlayers/${playerId}/team`] = null;
+        } else {
+            // Si es un usuario registrado, limpia la info del equipo en su perfil de usuario.
             updates[`/users/${playerId}/team`] = null;
         }
 

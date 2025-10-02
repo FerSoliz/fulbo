@@ -3,7 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, UserX } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert'; // NUEVO: Importar componentes de alerta
+import { Loader2, UserX, AlertTriangle } from 'lucide-react'; // NUEVO: Importar ícono de alerta
 import { PlayerSearch, FoundPlayer } from '@/components/search/PlayerSearch';
 import { AddGuestPlayerForm } from '@/components/team/AddGuestPlayerForm';
 import { Button } from '@/components/ui/button';
@@ -65,17 +66,31 @@ export function RosterManager({ teamId }: RosterManagerProps) {
     setFoundPlayer(null);
   };
 
-  const handleAddRegisteredPlayer = async (player: FoundPlayer) => {
+  // NUEVO: Lógica unificada para añadir cualquier tipo de jugador encontrado.
+  const handleAddPlayer = async (player: FoundPlayer) => {
     setIsSubmitting(true);
-    const success = await addRegisteredPlayerToTeam(player.id, teamId);
-    if (success) {
-      toast({ title: "¡Éxito!", description: `${player.name} fue añadido al equipo.` });
-      await fetchRoster();
-      resetRightPanel();
-    } else {
-      toast({ title: "Error", description: `No se pudo añadir a ${player.name}. Puede que ya esté en el equipo.`, variant: "destructive" });
+    let success = false;
+    try {
+      if (player.isGuest) {
+        const result = await addGuestPlayerToTeam(player.name, player.dni, teamId);
+        success = !!result;
+      } else {
+        success = await addRegisteredPlayerToTeam(player.id, teamId);
+      }
+
+      if (success) {
+        toast({ title: "¡Fichaje completado!", description: `${player.name} ahora forma parte de tu equipo.` });
+        await fetchRoster();
+        resetRightPanel();
+      } else {
+        toast({ title: "Error", description: `No se pudo añadir a ${player.name}.`, variant: "destructive" });
+      }
+    } catch (error) {
+      console.error("Error al añadir jugador:", error);
+      toast({ title: "Error", description: "Ocurrió un problema inesperado.", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   const handleAddGuestPlayer = async (name: string, dni: string) => {
@@ -93,7 +108,6 @@ export function RosterManager({ teamId }: RosterManagerProps) {
 
   const handleRemovePlayer = async (player: RosterPlayer) => {
     setIsSubmitting(true);
-    // Ahora pasamos el objeto `player` completo que contiene `isGuest`
     const success = await removePlayerFromTeam(player.id, teamId, player.isGuest);
     if (success) {
       toast({ title: "Jugador Eliminado", description: `${player.name} fue eliminado de la plantilla.` });
@@ -131,7 +145,6 @@ export function RosterManager({ teamId }: RosterManagerProps) {
                       <p className="font-semibold">{player.name}</p>
                       <p className="text-sm text-muted-foreground">DNI: {player.dni} {player.isGuest && <span className='text-xs font-bold text-accent-foreground'>(Invitado)</span>}</p>
                     </div>
-                    {/* Pasamos el objeto player completo al manejador */}
                     <Button variant="ghost" size="icon" onClick={() => handleRemovePlayer(player)} disabled={isSubmitting}>
                       <UserX className="h-4 w-4 text-destructive"/>
                       <span className="sr-only">Quitar jugador {player.name}</span>
@@ -172,10 +185,10 @@ export function RosterManager({ teamId }: RosterManagerProps) {
                 <CardHeader>
                     <CardTitle>Jugador Encontrado</CardTitle>
                     <CardDescription>
-                        Hemos encontrado un jugador con este DNI. Confirma que es la persona correcta antes de añadirla a tu equipo.
+                        Confirma que es la persona correcta antes de añadirla a tu equipo.
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4"> {/* NUEVO: Añadido space-y-4 para separar la alerta */}
                     <div className="flex items-center space-x-4">
                         <Avatar className="h-16 w-16">
                             <AvatarImage src={foundPlayer.avatar} alt={`Avatar de ${foundPlayer.name}`} />
@@ -187,10 +200,23 @@ export function RosterManager({ teamId }: RosterManagerProps) {
                             <p className="text-sm text-muted-foreground">DNI: {foundPlayer.dni}</p>
                         </div>
                     </div>
+                    
+                    {/* NUEVO: Bloque de alerta condicional */}
+                    {foundPlayer.team && foundPlayer.team.id !== teamId && (
+                      <Alert variant="destructive">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                          ¡Atención! Este jugador ya pertenece al equipo <strong>{foundPlayer.team.name}</strong>.
+                          Si lo añades, será transferido a tu plantilla.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
                     <Button variant="ghost" onClick={resetRightPanel} disabled={isSubmitting}>Cancelar</Button>
-                    <Button onClick={() => handleAddRegisteredPlayer(foundPlayer)} disabled={isSubmitting}>
+                    {/* NUEVO: El botón ahora llama al manejador unificado */}
+                    <Button onClick={() => handleAddPlayer(foundPlayer)} disabled={isSubmitting}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Añadir al Equipo'}
                     </Button>
                 </CardFooter>

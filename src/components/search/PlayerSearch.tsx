@@ -12,7 +12,13 @@ export interface FoundPlayer {
   name: string;
   dni: string;
   username: string;
-  profilePicture?: string;
+  avatar?: string;
+  isGuest?: boolean;
+  team?: {
+    id: string;
+    name: string;
+    crestUrl?: string | null;
+  } | null;
 }
 
 interface PlayerSearchProps {
