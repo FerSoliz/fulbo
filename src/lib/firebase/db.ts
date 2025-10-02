@@ -1,5 +1,5 @@
 // src/lib/firebase/db.ts
-import { get, ref, query, orderByChild, equalTo, push, update, remove, set } from 'firebase/database';
+import { get, ref, query, orderByChild, equalTo, push, update, remove, set, serverTimestamp } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import type { FoundPlayer } from '@/components/search/PlayerSearch';
 import type { RosterPlayer } from '@/components/team/RosterManager';
@@ -308,11 +308,53 @@ export async function getAllTeams(): Promise<TeamSummary[]> {
         return Object.keys(teamsData).map(teamId => ({
             id: teamId,
             name: teamsData[teamId].name || 'Nombre no definido',
-            logoUrl: teamsData[teamId].logoUrl
+            logoUrl: teamsData[teamId].logoUrl,
+            // Aseguramos que el objeto tenga el id que es la clave
+            ...teamsData[teamId],
+            id: teamId,
         }));
 
     } catch (error) {
         console.error("Error obteniendo todos los equipos:", error);
         return [];
+    }
+}
+
+/**
+ * Asigna un equipo ya existente a un torneo.
+ * @param teamId El ID del equipo a asignar.
+ * @param tournamentId El ID del torneo al que se va a unir.
+ * @returns Una promesa que resuelve a true si la asignación fue exitosa, false en caso contrario.
+ */
+export async function assignTeamToTournament(teamId: string, tournamentId: string): Promise<boolean> {
+    try {
+        // Primero, obtenemos los datos actuales del torneo para saber el contador de equipos.
+        const tournamentRef = ref(db, `tournaments/${tournamentId}`);
+        const tournamentSnapshot = await get(tournamentRef);
+
+        if (!tournamentSnapshot.exists()) {
+            throw new Error("El torneo especificado no existe.");
+        }
+
+        const tournamentData = tournamentSnapshot.val();
+        const currentTeamCount = tournamentData.teamCount || 0;
+
+        // Preparamos la operación atómica de actualización.
+        const updates: { [key: string]: any } = {};
+
+        // 1. Añade el equipo a la lista de equipos del torneo.
+        updates[`/tournaments/${tournamentId}/teams/${teamId}`] = true;
+        // 2. Incrementa el contador de equipos del torneo.
+        updates[`/tournaments/${tournamentId}/teamCount`] = currentTeamCount + 1;
+        // 3. Actualiza el perfil del equipo para indicar a qué torneo pertenece.
+        updates[`/teams/${teamId}/tournamentId`] = tournamentId;
+
+        // Ejecutamos todas las actualizaciones a la vez.
+        await update(ref(db), updates);
+
+        return true;
+    } catch (error) {
+        console.error(`Error al asignar el equipo ${teamId} al torneo ${tournamentId}:`, error);
+        return false;
     }
 }
