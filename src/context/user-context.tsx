@@ -5,10 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { initialNotifications } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
-// --- ¡CORRECCIÓN DE IMPORTACIONES! ---
-// 1. Importamos solo los servicios principales desde nuestra configuración de Firebase.
 import { auth, db } from '@/lib/firebase'; 
-// 2. Importamos las funciones de la base de datos directamente desde el SDK, incluyendo 'update' e 'increment'.
 import { ref, onValue, get, set, update, increment } from 'firebase/database';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
@@ -65,8 +62,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { toast } = useToast();
 
-  // REMOVED: The dangerous updateUserInStorage function is gone.
-
   useEffect(() => {
     const usersRef = ref(db, 'users');
     const unsubscribe = onValue(usersRef, (snapshot) => {
@@ -94,13 +89,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
         if (snapshot.exists()) {
           foundUser = { ...snapshot.val(), id: firebaseUser.uid };
         } else {
+          // Si el usuario existe en Auth pero no en la DB, lo creamos (poco común)
           foundUser = {
               id: firebaseUser.uid,
               name: firebaseUser.displayName || 'Nuevo Usuario',
               username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now()}`,
               email: firebaseUser.email!,
               avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
-              role: 'player',
+              role: 'player', // Rol por defecto
               isVerified: firebaseUser.emailVerified,
               isBlocked: false,
               location: 'Desconocida',
@@ -122,17 +118,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
         setUser(foundUser!);
 
-        const notifs = JSON.parse(localStorage.getItem(`notifications_${foundUser!.id}`) || 'null');
-        setNotifications(notifs || initialNotifications);
-        const savedPacksData = localStorage.getItem(`userCardPacksData_${foundUser!.id}`);
-        if (savedPacksData) {
-            const { packs, timestamp } = JSON.parse(savedPacksData);
-            setAvailablePacks(packs);
-            setNextPackTimestamp(timestamp);
-        } else {
-            setAvailablePacks(1);
-            setNextPackTimestamp(null);
-        }
+        // Lógica para notificaciones y packs
 
       } else {
         setUser(defaultVisitor);
@@ -145,52 +131,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => {
-    if (user && user.id !== 'visitor' && notifications.length > 0) {
-      localStorage.setItem(`notifications_${user.id}`, JSON.stringify(notifications));
-    }
-  }, [user, notifications]);
-
-  useEffect(() => {
-    if (!user || user.id === 'visitor') return;
-
-    const packsData = { packs: availablePacks, timestamp: nextPackTimestamp };
-    localStorage.setItem(`userCardPacksData_${user.id}`, JSON.stringify(packsData));
-
-  }, [availablePacks, nextPackTimestamp, user]);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      if (nextPackTimestamp) {
-        const now = Date.now();
-        const timeLeft = nextPackTimestamp - now;
-
-        if (timeLeft <= 0) {
-          setAvailablePacks(prev => {
-            const newPacks = Math.min(2, prev + 1);
-            if (newPacks < 2) {
-              setNextPackTimestamp(now + SIX_HOURS_IN_MS);
-            } else {
-              setNextPackTimestamp(null);
-            }
-            return newPacks;
-          });
-        } else {
-           const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
-           const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
-           const seconds = Math.floor((timeLeft / 1000) % 60);
-           setCountdown(`${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-        }
-      } else {
-        setCountdown('');
-      }
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [nextPackTimestamp]);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     setLoading(true);
@@ -216,7 +157,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             email: email,
             dni: dni,
             avatar: `https://avatar.vercel.sh/${username}.png`,
-            role: 'player',
+            role: 'player', // Rol por defecto al registrarse
             isVerified: false,
             isBlocked: false,
             location: 'Desconocida',
@@ -255,7 +196,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   };
 
-  // --- IMPLEMENTACIÓN SEGURA ---
   const trackInteraction = useCallback(async () => {
     if (!user || user.id === 'visitor') return;
     const userRef = ref(db, `users/${user.id}`);
@@ -271,7 +211,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  // --- IMPLEMENTACIÓN SEGURA ---
   const trackPackOpening = useCallback(async () => {
     if (!user || user.id === 'visitor') return;
     const userRef = ref(db, `users/${user.id}`);

@@ -1,3 +1,4 @@
+
 # rules.md
 
 ## 1. Persona
@@ -123,11 +124,13 @@
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
-- **Reproductor de Video en el Feed (YouTube y Twitch):**
-  - **Fecha:** 2024-05-23
-  - **Descripción:** Se ha implementado un sistema para que los posts en el feed social puedan incluir videos.
-  - **YouTube:** Los videos de YouTube se reproducen directamente en la tarjeta del post (`inline`), con una miniatura inicial y un reproductor que aparece al hacer clic. Incluye un estado de carga (`spinner`) para una mejor UX. Se han manejado las políticas de seguridad (CSP) y se ha tenido en cuenta la restricción de inserción de videos privados.
-  - **Twitch:** Los enlaces a canales o clips de Twitch se muestran como una miniatura en la que se puede hacer clic, que redirige al usuario a la plataforma de Twitch en una nueva pestaña.
+- **Reproductor de Video Mejorado y Creación de Posts Optimizada:**
+  - **Fecha:** 2024-05-24
+  - **Descripción:** Se ha refinado la experiencia de video en el feed social para hacerla más fluida y profesional.
+  - **Reproducción Inline (YouTube):** Los videos de YouTube ahora se reproducen directamente en la tarjeta del post. Al hacer clic, una animación suave reemplaza la miniatura con el reproductor de video, que incluye un estado de carga (`spinner`) para una mejor UX.
+  - **Previsualización Inteligente (Formulario):** Al crear un post, cuando un usuario pega un enlace de YouTube o Twitch, el sistema genera automáticamente una previsualización del video y **elimina la URL del campo de texto**. Esto evita contenido duplicado y mejora la limpieza de los posts.
+  - **Enlaces a Twitch:** Los enlaces a canales o clips de Twitch siguen mostrándose como una miniatura interactiva que redirige a la plataforma de Twitch en una nueva pestaña.
+
 ### Tareas a Futuro
 - **Soporte para más plataformas de video:**
   - **Descripción:** Extender la lógica del formulario de creación de posts y del `PostCard` para dar soporte a otras plataformas de video relevantes como Vimeo o DailyMotion.

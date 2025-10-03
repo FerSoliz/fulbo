@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Heart, MessageSquare, Bookmark, MoreHorizontal, Play, Pencil, Star } from 'lucide-react';
+import { Heart, MessageSquare, Bookmark, MoreHorizontal, Play, Pencil, Star, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Post, User } from '@/lib/data';
@@ -29,6 +29,8 @@ export function PostCard({ post, currentUser, allUsers, onLikeToggle, onAddComme
   const author = allUsers.find(u => u.id === post.authorId);
   const [commentText, setCommentText] = useState('');
   const [showComments, setShowComments] = useState(false);
+  const [isYoutubePlaying, setIsYoutubePlaying] = useState(false);
+  const [isPlayerReady, setIsPlayerReady] = useState(false);
 
   if (!author) return null;
 
@@ -50,28 +52,75 @@ export function PostCard({ post, currentUser, allUsers, onLikeToggle, onAddComme
   const isVisitor = !currentUser || currentUser.id === 'visitor';
 
   const renderMedia = () => {
-    // ... (El resto del código de renderMedia no cambia)
     const { media } = post;
     if (!media || media.length === 0) return null;
 
     const videoItem = media.find(item => item.type === 'video');
     if (videoItem) {
       const isTwitch = videoItem.videoType === 'twitch' && videoItem.videoId;
+      const isYoutube = videoItem.videoType === 'youtube' && videoItem.videoId;
+      
       const twitchUrl = `https://www.twitch.tv/${videoItem.videoId}`;
-      const VideoPreview = () => (
-          <div className="relative cursor-pointer group aspect-video bg-muted overflow-hidden">
-              <Image src={videoItem.url} alt="Video thumbnail" fill className="object-contain" onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}/>
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" /></div>
+      const youtubeUrl = `https://www.youtube.com/embed/${videoItem.videoId}?autoplay=1&modestbranding=1&rel=0`;
+
+      if (isYoutube) {
+        return (
+          <div className="relative aspect-video bg-black overflow-hidden">
+            {!isYoutubePlaying && (
+              <div 
+                className="absolute inset-0 cursor-pointer group"
+                onClick={() => setIsYoutubePlaying(true)}
+                role="button"
+                aria-label="Reproducir video de YouTube"
+              >
+                <Image 
+                  src={videoItem.url} 
+                  alt="Miniatura del video de YouTube" 
+                  fill 
+                  className="object-cover transition-opacity duration-300 group-hover:opacity-80"
+                  onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Video+No+Disponible'; }}
+                />
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <Play className="h-16 w-16 text-white transform transition-transform duration-300 group-hover:scale-110" />
+                </div>
+              </div>
+            )}
+            
+            {isYoutubePlaying && (
+              <>
+                {!isPlayerReady && (
+                   <div className="absolute inset-0 flex items-center justify-center" aria-live="polite" aria-busy="true">
+                     <Loader2 className="h-12 w-12 text-white animate-spin" />
+                   </div>
+                )}
+                <iframe
+                  src={youtubeUrl}
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className={cn(
+                    "w-full h-full transition-opacity duration-500",
+                    isPlayerReady ? "opacity-100" : "opacity-0"
+                  )}
+                  onLoad={() => setIsPlayerReady(true)}
+                ></iframe>
+              </>
+            )}
           </div>
-      );
-      return isTwitch ? (
-          <Link href={twitchUrl} target="_blank" rel="noopener noreferrer"><VideoPreview /></Link>
-      ) : (
-          <Dialog>
-              <DialogTrigger asChild><VideoPreview /></DialogTrigger>
-              <DialogContent className="max-w-4xl p-0"><div className="aspect-video">{videoItem.videoType === 'youtube' && videoItem.videoId && <iframe src={`https://www.youtube.com/embed/${videoItem.videoId}`} title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen className="w-full h-full"></iframe>}</div></DialogContent>
-          </Dialog>
-      );
+        );
+      }
+
+      if (isTwitch) {
+        return (
+            <Link href={twitchUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}>
+                <div className="relative cursor-pointer group aspect-video bg-muted overflow-hidden">
+                    <Image src={videoItem.url} alt="Miniatura del stream de Twitch" fill className="object-contain" onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}/>
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" /></div>
+                </div>
+            </Link>
+        );
+      }
     }
 
     const imageMedia = media.filter(item => item.type === 'image');

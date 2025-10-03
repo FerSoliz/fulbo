@@ -1,6 +1,5 @@
 'use client';
 
-// --- 1. Imports ---'
 import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
@@ -27,6 +26,9 @@ interface CreatePostFormProps {
   currentUser: User;
 }
 
+const YOUTUBE_REGEX = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})((?!\s).*)?$/;
+const TWITCH_REGEX = /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]+)\/?((?!\s).*)?$/;
+
 export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) {
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [youtubeVideoId, setYoutubeVideoId] = useState<string | null>(null);
@@ -46,26 +48,29 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
   
   const contentValue = form.watch('content');
   const filesValue = form.watch('files');
+  
+  // Declaración de hasVideo movida aquí, ANTES de ser usada en useEffect
+  const hasVideo = !!youtubeVideoId || !!twitchChannelName;
 
   useEffect(() => {
-    const getYoutubeVideoId = (url: string): string | null => {
-        const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/;
-        const match = url.match(youtubeRegex);
-        return match ? match[1] : null;
-    };
+    if (hasVideo) return; 
 
-    const getTwitchChannelName = (url: string): string | null => {
-        const twitchRegex = /(?:https?:\/\/)?(?:www\.)?twitch\.tv\/([a-zA-Z0-9_]+)\/?$/;
-        const match = url.match(twitchRegex);
-        return match ? match[1] : null;
-    };
-    
-    setYoutubeVideoId(getYoutubeVideoId(contentValue));
-    setTwitchChannelName(getTwitchChannelName(contentValue));
+    const youtubeMatch = contentValue.match(YOUTUBE_REGEX);
+    if (youtubeMatch && youtubeMatch[1]) {
+        setYoutubeVideoId(youtubeMatch[1]);
+        form.setValue('content', contentValue.replace(YOUTUBE_REGEX, '').trim(), { shouldValidate: true });
+        return;
+    }
 
-  }, [contentValue]); 
+    const twitchMatch = contentValue.match(TWITCH_REGEX);
+    if (twitchMatch && twitchMatch[1]) {
+        setTwitchChannelName(twitchMatch[1]);
+        form.setValue('content', contentValue.replace(TWITCH_REGEX, '').trim(), { shouldValidate: true });
+        return;
+    }
+
+  }, [contentValue, form, hasVideo]); 
   
-  const hasVideo = !!youtubeVideoId || !!twitchChannelName;
   const hasContent = !!contentValue.trim() || (filesValue && filesValue.length > 0) || hasVideo;
   
   const onSubmit = async (data: CreatePostInput) => {
@@ -87,14 +92,11 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
         form.setError("root", { message: "No puedes añadir imágenes y un video en la misma publicación." });
         return;
       }
-      // --- ESTE ES EL CAMBIO CLAVE ---'
-      // 1. ESPERAMOS (await) a que TODAS las imágenes se suban y obtenemos las URLs.
       const uploadedImageUrls = await uploadMultipleFiles(data.files, `posts/${currentUser.id}`);
       const imageMedia = uploadedImageUrls.map(url => ({ type: 'image' as const, url }));
       media.push(...imageMedia);
     }
     
-    // 2. SOLO DESPUÉS de tener las URLs, llamamos a onAddPost
     await onAddPost({
       authorId: currentUser.id,
       content: data.content || '',
@@ -103,7 +105,6 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
       isPinned: data.isPinned,
     });
 
-    // 3. Y SOLO si todo lo anterior fue exitoso, reseteamos el formulario.
     form.reset();
     setImagePreviews([]);
     setYoutubeVideoId(null);
@@ -111,6 +112,11 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
     if (fileInputRef.current) {
         fileInputRef.current.value = '';
     }
+  };
+
+  const handleRemoveVideo = () => {
+      setYoutubeVideoId(null);
+      setTwitchChannelName(null);
   };
 
   return (
@@ -146,7 +152,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
 
           {hasVideo && (
             <div className="mt-4 relative group ml-14">
-              <Image
+               <Image
                   src={youtubeVideoId ? `https://img.youtube.com/vi/${youtubeVideoId}/maxresdefault.jpg` : `https://static-cdn.jtvnw.net/previews-ttv/live_user_${twitchChannelName}-1280x720.jpg`}
                   alt="Video thumbnail"
                   width={1280}
@@ -157,6 +163,15 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
                   <Play className="h-16 w-16 text-white" />
               </div>
+              {!isUploading && <Button
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-6 w-6 rounded-full z-10"
+                  onClick={handleRemoveVideo}
+                  aria-label="Eliminar video"
+              >
+                  <X className="h-4 w-4" />
+              </Button>}
             </div>
            )}
 
