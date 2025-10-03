@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ref, onValue, update, set, get } from 'firebase/database'; // Importaciones corregidas
-import { db } from '@/lib/firebase'; // Importación de la instancia 'db'
+import { ref, onValue, update, set, get } from 'firebase/database'; 
+import { db } from '@/lib/firebase'; 
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
 
@@ -18,9 +18,7 @@ import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { ArrowLeft, Loader2, ShieldCheck, Trophy, PlusCircle, ListOrdered, XCircle, ShieldAlert } from 'lucide-react';
-import { PlanillaPartidoSVG } from '@/components/planilla-partido-svg';
-import { toPng } from 'html-to-image';
-import React from 'react';
+
 
 // Tipos
 interface Tournament { id: string; name: string; teamCount: number; teams: { [key: string]: { roster: { [playerId: string]: Player } } }; }
@@ -61,31 +59,13 @@ export default function TournamentFixturePage() {
     const [matches, setMatches] = useState<Match[]>([]);
     const [stats, setStats] = useState<Stats | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
-    const planillaRefs = React.useRef<{ [key: string]: HTMLDivElement | null }>({});
-
-    const handleDownloadPlanilla = useCallback(async (matchId: string, roundNumber: number) => {
-        const node = planillaRefs.current[matchId];
-        if (node) {
-            try {
-                const dataUrl = await toPng(node);
-                const link = document.createElement('a');
-                link.download = `Planilla_Fecha${roundNumber}_${tournament?.name || 'Torneo'}.png`;
-                link.href = dataUrl;
-                link.click();
-            } catch (err) {
-                console.error('oops, something went wrong!', err);
-                toast({ title: 'Error al descargar', description: 'No se pudo generar la imagen de la planilla.', variant: 'destructive' });
-            }
-        }
-    }, [tournament?.name, toast]);
-
 
     const calculateAndSaveStats = useCallback(async () => {
         if (!tournament || !tournament.teams) return;
 
         const [matchesSnapshot, matchStatsSnapshot] = await Promise.all([
-            get(ref(db, 'matches')), // Usando 'db'
-            get(ref(db, 'match_stats')) // Usando 'db'
+            get(ref(db, 'matches')),
+            get(ref(db, 'match_stats'))
         ]);
 
         const allMatches: Match[] = Object.values(matchesSnapshot.val() || {}).filter((m: any) => m.tournamentId === tournamentId);
@@ -130,7 +110,7 @@ export default function TournamentFixturePage() {
         });
 
         const allPlayerStats = Object.values(playerTotals);
-        const sortedScorers = allPlayerStats.filter(p => p.goals > 0).sort((a, b) => b.goals - a.goals || a.playerInfo.lastName.localeCompare(b.playerInfo.lastName));
+        const sortedScorers = allPlayerStats.filter(p => p.goals > 0).sort((a, b) => b.goals - a.goals || (a.playerInfo.lastName && b.playerInfo.lastName ? a.playerInfo.lastName.localeCompare(b.playerInfo.lastName) : 0));
         const sortedSanctions = allPlayerStats.filter(p => p.redCards > 0 || p.yellowCards > 0).sort((a, b) => b.redCards - a.redCards || b.yellowCards - a.yellowCards);
 
         await set(ref(db, `tournament_stats/${tournamentId}`), { 
@@ -146,14 +126,14 @@ export default function TournamentFixturePage() {
         if (!user || user.role !== 'admin') { setPageState('ACCESS_DENIED'); return; }
         if (!tournamentId) { setPageState('NOT_FOUND'); return; }
 
-        const tournamentRef = ref(db, `tournaments/${tournamentId}`); // Usando 'db'
+        const tournamentRef = ref(db, `tournaments/${tournamentId}`);
         const unsubscribeTournament = onValue(tournamentRef, async (snapshot) => {
             if (snapshot.exists()) {
                 const tournamentData = snapshot.val();
                 setTournament({ id: snapshot.key, ...tournamentData });
                 if (tournamentData.teams) {
                     const teamIds = Object.keys(tournamentData.teams);
-                    const teamsData = await Promise.all(teamIds.map(id => get(ref(db, `teams/${id}`)).then(snap => ({ id: snap.key, ...snap.val() })))); // Usando 'db'
+                    const teamsData = await Promise.all(teamIds.map(id => get(ref(db, `teams/${id}`)).then(snap => ({ id: snap.key, ...snap.val() }))));
                     setTeams(teamsData.filter(t => t.id));
                 }
                 setPageState('READY');
@@ -162,13 +142,13 @@ export default function TournamentFixturePage() {
             }
         });
 
-        const matchesRef = ref(db, 'matches'); // Usando 'db'
+        const matchesRef = ref(db, 'matches');
         const unsubscribeMatches = onValue(matchesRef, (snapshot) => {
             const allMatches = snapshot.val() || {};
             setMatches(Object.values(allMatches).filter((m: any) => m.tournamentId === tournamentId).sort((a: any, b: any) => a.round - b.round) as Match[]);
         });
 
-        const statsRef = ref(db, `tournament_stats/${tournamentId}`); // Usando 'db'
+        const statsRef = ref(db, `tournament_stats/${tournamentId}`);
         const unsubscribeStats = onValue(statsRef, (snapshot) => setStats(snapshot.val()));
 
         return () => { unsubscribeTournament(); unsubscribeMatches(); unsubscribeStats(); };
@@ -192,18 +172,31 @@ export default function TournamentFixturePage() {
                 const matchId = `match_${tournamentId}_r${match.round}_${match.homeTeamId.substring(0,4)}_${match.awayTeamId.substring(0,4)}_${Math.random().toString(36).substring(2, 7)}`;
                 updates[`/matches/${matchId}`] = { id: matchId, tournamentId, round: match.round, homeTeamId: match.homeTeamId, awayTeamId: match.awayTeamId, status: 'pending', result: { home: null, away: null } };
             });
-            await update(ref(db), updates); // Usando 'db'
+            await update(ref(db), updates);
             toast({ title: "¡Fixture Generado!" });
         } catch (error) { console.error(error); toast({ title: "Error al generar fixture", variant: "destructive" });
         } finally { setIsGenerating(false); }
     };
 
     const updateMatchData = (matchId: string, path: string, value: any) => {
-      set(ref(db, `matches/${matchId}/${path}`), value); // Usando 'db'
+      set(ref(db, `matches/${matchId}/${path}`), value);
     };
 
     const getTeamName = (teamId: string) => teams.find(t => t.id === teamId)?.name || 'Equipo...';
-    const rounds = useMemo(() => Object.entries(matches.reduce((acc, match) => ({ ...acc, [match.round]: [...(acc[match.round] || []), match] }), {} as { [round: number]: Match[] })).sort(([a], [b]) => Number(a) - Number(b)), [matches]);
+    
+    const rounds = useMemo(() => {
+        const roundsMap = matches.reduce((acc, match) => {
+            const round = match.round;
+            if (!acc[round]) {
+                acc[round] = [];
+            }
+            acc[round].push(match);
+            return acc;
+        }, {} as { [round: number]: Match[] });
+    
+        const sortedRounds = Object.entries(roundsMap).sort(([a], [b]) => Number(a) - Number(b));
+        return sortedRounds;
+    }, [matches]);
 
     if (pageState === 'LOADING') return <div className="flex h-screen items-center justify-center"><Loader2 className="h-12 w-12 animate-spin" /><p className="ml-4 text-lg">Cargando...</p></div>;
     if (pageState === 'ACCESS_DENIED') return <div className="flex flex-col h-screen items-center justify-center text-center p-4"><ShieldAlert className="h-16 w-16 text-destructive mb-4" /><h1 className="text-2xl font-bold">Acceso Denegado</h1><p className="text-muted-foreground mt-2">No tienes permiso. Serás redirigido.</p></div>;
@@ -242,7 +235,14 @@ export default function TournamentFixturePage() {
                                                                 </div>
                                                             </CardContent>
                                                             <CardContent className="flex items-center justify-between">
-                                                                <MatchStatsDialog matchId={match.id} tournamentId={tournamentId} homeTeamId={match.homeTeamId} awayTeamId={match.awayTeamId} isFinished={match.status === 'finished'} />
+                                                                <MatchStatsDialog 
+                                                                    matchId={match.id} 
+                                                                    tournamentId={tournamentId} 
+                                                                    homeTeamId={match.homeTeamId} 
+                                                                    awayTeamId={match.awayTeamId} 
+                                                                    isFinished={match.status === 'finished'} 
+                                                                    disabled={match.status === 'finished'} 
+                                                                />
                                                                 <div className="flex items-center space-x-2">
                                                                     <Label htmlFor={`finished-${match.id}`}>Finalizado</Label>
                                                                     <Switch id={`finished-${match.id}`} checked={match.status === 'finished'} onCheckedChange={(checked) => { updateMatchData(match.id, 'status', checked ? 'finished' : 'pending'); if(checked) calculateAndSaveStats(); }} />
@@ -285,7 +285,7 @@ export default function TournamentFixturePage() {
                     </TabsContent>
                     <TabsContent value="sanctions" className="mt-6">
                         <Card>
-                            <CardHeader><CardTitle>Tabla de Sanciones</CardTitle><CardDescription>Se actualiza al finalizar un partido.</CardDescription></CardHeader>
+                            <CardHeader><CardTitle>Tabla de Sanciones</CardTitle><CardDescription>Se actualiza al finalizar un partido.</CardDescription></CardHeader> {/* <-- Corregido aquí */}
                              <CardContent>
                                 {stats?.sanctions && stats.sanctions.length > 0 ? (
                                     <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead className="text-center">Amarillas</TableHead><TableHead className="text-center">Rojas</TableHead></TableRow></TableHeader><TableBody>{stats.sanctions.map((p, index) => (<TableRow key={p.playerInfo.id}><TableCell>{`${p.playerInfo.name} ${p.playerInfo.lastName}`}</TableCell><TableCell>{p.teamName}</TableCell><TableCell className="text-center font-bold">{p.yellowCards}</TableCell><TableCell className="text-center font-bold">{p.redCards}</TableCell></TableRow>))}</TableBody></Table></div>

@@ -37,6 +37,7 @@
 - **Compatibilidad:** asegurar que el código funcione en **Chrome, Safari y Firefox**.  
 - **Accesibilidad:** cumplir WCAG AA; siempre usar `alt` en imágenes, roles/labelling ARIA y `aria-live` en estados de carga.  
 - **Estructura:** código modular, claro, sin duplicaciones ni placeholders innecesarios.  
+- **Revisión Previa:** Antes de proponer o implementar un cambio, siempre debes analizar el código existente para entender la implementación actual. No propongas rehacer funcionalidades que ya existen; en su lugar, intégrate con ellas y adáptate a la estructura del proyecto.
 - **Dependencias:** después de agregarlas, indicar ejecutar `npm i`.  
 - **Documentación:** acompañar los módulos con un `README.md` siguiendo la Google Developer Style Guide.  
 - **Explicación:** siempre paso a paso y en lenguaje sencillo para que lo entienda un desarrollador júnior.  

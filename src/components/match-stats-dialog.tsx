@@ -21,9 +21,10 @@ interface MatchStatsDialogProps {
   homeTeamId: string;
   awayTeamId: string;
   isFinished: boolean;
+  disabled?: boolean; // <-- NUEVA PROPIEDAD
 }
 
-// --- SUB-COMPONENTE: Fila de un Jugador (Refinamiento final v2) ---
+// --- SUB-COMPONENTE: Fila de un Jugador ---
 const PlayerStatsRow = ({ player, stats, onStatChange, disabled }: {
     player: Player;
     stats: PlayerStats;
@@ -33,19 +34,15 @@ const PlayerStatsRow = ({ player, stats, onStatChange, disabled }: {
     const StatCounter = ({ icon: Icon, iconClassName, stat, value, onStatChange, disabled }: any) => (
         <div className="flex items-center justify-center gap-3">
             <Icon className={`h-6 w-6 ${iconClassName || 'text-muted-foreground'}`} />
-            
-            {/* MEJORA UX: El botón de restar solo aparece si !disabled y value > 0 */}
-            <div className="w-9 h-9"> {/* Contenedor para mantener el espacio */}
+            <div className="w-9 h-9"> 
               {(!disabled && value > 0) && (
                 <Button size="icon" variant="outline" className="h-9 w-9 rounded-full" onClick={() => onStatChange(stat, Math.max(0, value - 1))}>
                     <Minus className="h-5 w-5" />
                 </Button>
               )}
             </div>
-
             <span className="font-bold w-6 text-center text-xl tabular-nums">{value}</span>
-            
-            <div className="w-9 h-9"> {/* Contenedor para mantener el espacio */}
+            <div className="w-9 h-9"> 
               {!disabled && (
                 <Button size="icon" variant="outline" className="h-9 w-9 rounded-full" onClick={() => onStatChange(stat, value + 1)}>
                     <Plus className="h-5 w-5" />
@@ -61,10 +58,9 @@ const PlayerStatsRow = ({ player, stats, onStatChange, disabled }: {
             <div className="flex items-center gap-4 sm:gap-6">
                 <StatCounter icon={Volleyball} stat="goals" value={stats.goals} onStatChange={onStatChange} disabled={disabled} />
                 <StatCounter icon={Square} iconClassName="text-yellow-400 fill-current" stat="yellowCards" value={stats.yellowCards} onStatChange={onStatChange} disabled={disabled} />
-                
                 <div className="flex items-center justify-center gap-3">
                     <Square className="h-6 w-6 text-red-600 fill-current" />
-                    <div className="w-9 h-9 flex items-center justify-center"> {/* Contenedor para el checkbox */}
+                    <div className="w-9 h-9 flex items-center justify-center"> 
                       {!disabled && (
                         <Checkbox id={`redCard-${player.id}`} checked={stats.redCard} onCheckedChange={(checked) => onStatChange('redCard', !!checked)} className="w-7 h-7" />
                       )}
@@ -76,7 +72,7 @@ const PlayerStatsRow = ({ player, stats, onStatChange, disabled }: {
 };
 
 
-// --- LÓGICA DE CARGA DE DATOS (YA CORREGIDA Y ROBUSTA) ---
+// --- LÓGICA DE CARGA DE DATOS ---
 const fetchPlayersData = async (playerIds: string[]): Promise<Player[]> => {
     if (!playerIds || playerIds.length === 0) return [];
     const playerPromises = playerIds.map(id => {
@@ -96,7 +92,7 @@ const fetchPlayersData = async (playerIds: string[]): Promise<Player[]> => {
 
 
 // --- COMPONENTE PRINCIPAL ---
-export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId, isFinished }: MatchStatsDialogProps) {
+export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId, isFinished, disabled }: MatchStatsDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -175,7 +171,12 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild><Button variant="outline"><BarChart className="mr-2 h-4 w-4" /> Cargar Stats</Button></DialogTrigger>
+      <DialogTrigger asChild>
+          {/* APLICANDO LA NUEVA PROPIEDAD */}
+        <Button variant="outline" disabled={disabled}>
+            <BarChart className="mr-2 h-4 w-4" /> Cargar Stats
+        </Button>
+      </DialogTrigger>
       <DialogContent className="max-w-4xl w-[95vw] h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl">Planilla Digital del Partido</DialogTitle>
