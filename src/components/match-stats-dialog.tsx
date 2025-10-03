@@ -1,31 +1,18 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { db } from '@/lib/firebase'; // Importamos la instancia de Realtime Database
-import { ref, get, set } from 'firebase/database'; // Importamos las funciones directamente de firebase/database
+import { db } from '@/lib/firebase';
+import { ref, get, set } from 'firebase/database';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, BarChart, Shield, Sword, Plus, Minus, Edit, Save, X, ShieldAlert } from 'lucide-react';
+import { Loader2, BarChart, Shield, Plus, Minus, Edit, Save, X, ShieldAlert, Volleyball, Square } from 'lucide-react';
 
 // --- TIPOS DE DATOS ---
-// Para mayor claridad y mantenibilidad, definimos las interfaces que usará el componente.
-interface Player {
-  id: string;
-  name: string;
-  lastName: string;
-  dni: string;
-}
-
-interface PlayerStats {
-  goals: number;
-  yellowCards: number;
-  redCard: boolean;
-}
-
-// Stats del partido, organizadas por ID de jugador.
+interface Player { id: string; name: string; }
+interface PlayerStats { goals: number; yellowCards: number; redCard: boolean; }
 type MatchStats = { [playerId: string]: PlayerStats };
 
 interface MatchStatsDialogProps {
@@ -36,41 +23,75 @@ interface MatchStatsDialogProps {
   isFinished: boolean;
 }
 
-// --- SUB-COMPONENTE: Fila de un Jugador ---
-// Dividir en componentes más pequeños mejora la legibilidad y el rendimiento.
+// --- SUB-COMPONENTE: Fila de un Jugador (Refinamiento final v2) ---
 const PlayerStatsRow = ({ player, stats, onStatChange, disabled }: {
     player: Player;
     stats: PlayerStats;
     onStatChange: (stat: keyof PlayerStats, value: number | boolean) => void;
     disabled: boolean;
 }) => {
-    // Componente para los contadores, evitando duplicación de código.
-    const StatCounter = ({ icon, stat, value, onStatChange, disabled }: any) => (
-        <div className="flex items-center justify-center gap-2">
-            {icon}
-            <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => onStatChange(stat, Math.max(0, value - 1))} disabled={disabled}>
-                <Minus className="h-4 w-4" />
-            </Button>
-            <span className="font-bold w-5 text-center text-lg">{value}</span>
-            <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => onStatChange(stat, value + 1)} disabled={disabled}>
-                <Plus className="h-4 w-4" />
-            </Button>
+    const StatCounter = ({ icon: Icon, iconClassName, stat, value, onStatChange, disabled }: any) => (
+        <div className="flex items-center justify-center gap-3">
+            <Icon className={`h-6 w-6 ${iconClassName || 'text-muted-foreground'}`} />
+            
+            {/* MEJORA UX: El botón de restar solo aparece si !disabled y value > 0 */}
+            <div className="w-9 h-9"> {/* Contenedor para mantener el espacio */}
+              {(!disabled && value > 0) && (
+                <Button size="icon" variant="outline" className="h-9 w-9 rounded-full" onClick={() => onStatChange(stat, Math.max(0, value - 1))}>
+                    <Minus className="h-5 w-5" />
+                </Button>
+              )}
+            </div>
+
+            <span className="font-bold w-6 text-center text-xl tabular-nums">{value}</span>
+            
+            <div className="w-9 h-9"> {/* Contenedor para mantener el espacio */}
+              {!disabled && (
+                <Button size="icon" variant="outline" className="h-9 w-9 rounded-full" onClick={() => onStatChange(stat, value + 1)}>
+                    <Plus className="h-5 w-5" />
+                </Button>
+              )}
+            </div>
         </div>
     );
 
     return (
-        <div className="flex items-center justify-between p-2 rounded-md transition-colors hover:bg-muted/50">
-            <p className="font-medium text-sm sm:text-base">{player.name} {player.lastName}</p>
-            <div className="grid grid-cols-3 gap-2 sm:gap-4 items-center">
-                <StatCounter icon={<Sword className="h-5 w-5 text-muted-foreground" />} stat="goals" value={stats.goals} onStatChange={onStatChange} disabled={disabled} />
-                <StatCounter icon={<div className="w-4 h-5 bg-yellow-400 border border-black rounded-sm" />} stat="yellowCards" value={stats.yellowCards} onStatChange={onStatChange} disabled={disabled} />
-                <div className="flex items-center justify-center gap-2">
-                    <div className="w-4 h-5 bg-red-600 border border-black rounded-sm" />
-                    <Checkbox id={`redCard-${player.id}`} checked={stats.redCard} onCheckedChange={(checked) => onStatChange('redCard', !!checked)} className="w-6 h-6" disabled={disabled} />
+        <div className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${disabled ? 'bg-muted/50 text-muted-foreground' : 'hover:bg-muted/50'}`}>
+            <p className="font-semibold text-base sm:text-lg truncate pr-2">{player.name}</p>
+            <div className="flex items-center gap-4 sm:gap-6">
+                <StatCounter icon={Volleyball} stat="goals" value={stats.goals} onStatChange={onStatChange} disabled={disabled} />
+                <StatCounter icon={Square} iconClassName="text-yellow-400 fill-current" stat="yellowCards" value={stats.yellowCards} onStatChange={onStatChange} disabled={disabled} />
+                
+                <div className="flex items-center justify-center gap-3">
+                    <Square className="h-6 w-6 text-red-600 fill-current" />
+                    <div className="w-9 h-9 flex items-center justify-center"> {/* Contenedor para el checkbox */}
+                      {!disabled && (
+                        <Checkbox id={`redCard-${player.id}`} checked={stats.redCard} onCheckedChange={(checked) => onStatChange('redCard', !!checked)} className="w-7 h-7" />
+                      )}
+                    </div>
                 </div>
             </div>
         </div>
     );
+};
+
+
+// --- LÓGICA DE CARGA DE DATOS (YA CORREGIDA Y ROBUSTA) ---
+const fetchPlayersData = async (playerIds: string[]): Promise<Player[]> => {
+    if (!playerIds || playerIds.length === 0) return [];
+    const playerPromises = playerIds.map(id => {
+        const isDni = id.length === 8 && /^\d+$/.test(id);
+        const path = isDni ? `guestPlayers/${id}` : `users/${id}`;
+        return get(ref(db, path)).then(snapshot => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                return { id, name: data.name || 'Nombre no encontrado' };
+            }
+            return null;
+        });
+    });
+    const results = await Promise.all(playerPromises);
+    return results.filter((player): player is Player => player !== null);
 };
 
 
@@ -79,76 +100,72 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isEditing, setIsEditing] = useState(false); // Para habilitar edición en partidos finalizados
-  const [homeTeam, setHomeTeam] = useState<{ name: string; roster: Player[] }>({ name: 'Local', roster: [] });
-  const [awayTeam, setAwayTeam] = useState<{ name: string; roster: Player[] }>({ name: 'Visitante', roster: [] });
+  const [isEditing, setIsEditing] = useState(false);
+  const [homeTeam, setHomeTeam] = useState<{ name: string; players: Player[] }>({ name: 'Local', players: [] });
+  const [awayTeam, setAwayTeam] = useState<{ name: string; players: Player[] }>({ name: 'Visitante', players: [] });
   const [stats, setStats] = useState<MatchStats>({});
   const { toast } = useToast();
   
-  // Usamos useCallback para memorizar la función y evitar re-renders innecesarios.
   const fetchMatchData = useCallback(async () => {
     setIsLoading(true);
     try {
-        // Ejecutamos todas las peticiones a la base de datos en paralelo para mayor eficiencia.
-        const [homeTeamSnap, awayTeamSnap, homeRosterSnap, awayRosterSnap, statsSnap] = await Promise.all([
+        const [homeTeamSnap, awayTeamSnap, homePlayerIdsSnap, awayPlayerIdsSnap, statsSnap] = await Promise.all([
             get(ref(db, `teams/${homeTeamId}/name`)),
             get(ref(db, `teams/${awayTeamId}/name`)),
-            get(ref(db, `tournaments/${tournamentId}/teams/${homeTeamId}/roster`)),
-            get(ref(db, `tournaments/${tournamentId}/teams/${awayTeamId}/roster`)),
+            get(ref(db, `teams/${homeTeamId}/players`)),
+            get(ref(db, `teams/${awayTeamId}/players`)),
             get(ref(db, `match_stats/${matchId}`))
         ]);
 
-        setHomeTeam({ name: homeTeamSnap.val() || 'Local', roster: homeRosterSnap.exists() ? Object.values(homeRosterSnap.val()) : [] });
-        setAwayTeam({ name: awayTeamSnap.val() || 'Visitante', roster: awayRosterSnap.exists() ? Object.values(awayRosterSnap.val()) : [] });
-        
-        // Inicializamos las estadísticas para todos los jugadores, incluso si no tienen eventos.
-        const initialStats: MatchStats = {};
-        const allPlayers = [...(homeRosterSnap.val() ? Object.values(homeRosterSnap.val()) : []), ...(awayRosterSnap.val() ? Object.values(awayRosterSnap.val()) : [])] as Player[];
-        
-        allPlayers.forEach(player => {
-            initialStats[player.id] = { goals: 0, yellowCards: 0, redCard: false };
-        });
+        const homePlayerIds = homePlayerIdsSnap.exists() ? Object.keys(homePlayerIdsSnap.val()) : [];
+        const awayPlayerIds = awayPlayerIdsSnap.exists() ? Object.keys(awayPlayerIdsSnap.val()) : [];
 
-        // Fusionamos las estadísticas guardadas con las iniciales.
-        setStats(statsSnap.exists() ? { ...initialStats, ...statsSnap.val() } : initialStats);
+        const [homePlayers, awayPlayers] = await Promise.all([ fetchPlayersData(homePlayerIds), fetchPlayersData(awayPlayerIds) ]);
+
+        setHomeTeam({ name: homeTeamSnap.val() || 'Local', players: homePlayers });
+        setAwayTeam({ name: awayTeamSnap.val() || 'Visitante', players: awayPlayers });
+        
+        const initialStats: MatchStats = {};
+        const allPlayers = [...homePlayers, ...awayPlayers];
+        const savedStats = statsSnap.exists() ? statsSnap.val() : {};
+
+        allPlayers.forEach(player => {
+            if (player && player.id) {
+                const playerSavedStats = savedStats[player.id] || {};
+                initialStats[player.id] = { goals: 0, yellowCards: 0, redCard: false, ...playerSavedStats };
+            }
+        });
+        
+        setStats(initialStats);
 
     } catch (error) {
         console.error("Error al cargar datos del partido:", error);
-        toast({ title: "Error de Carga", description: "No se pudieron cargar los datos. Inténtalo de nuevo.", variant: "destructive" });
+        toast({ title: "Error de Carga", description: "No se pudieron cargar los datos.", variant: "destructive" });
         setIsOpen(false);
     } finally {
         setIsLoading(false);
     }
-  }, [matchId, tournamentId, homeTeamId, awayTeamId, toast]);
+  }, [matchId, homeTeamId, awayTeamId, toast]);
 
-  // Efecto que se ejecuta solo cuando se abre el modal.
   useEffect(() => {
     if (isOpen) {
       fetchMatchData();
-      // Si el partido está finalizado, por defecto no se puede editar.
       setIsEditing(!isFinished);
     }
   }, [isOpen, isFinished, fetchMatchData]);
 
   const handleStatChange = (playerId: string, stat: keyof PlayerStats, value: number | boolean) => {
-    setStats(prevStats => ({
-      ...prevStats,
-      [playerId]: {
-        ...prevStats[playerId],
-        [stat]: value
-      }
-    }));
+    setStats(prevStats => ({ ...prevStats, [playerId]: { ...prevStats[playerId], [stat]: value } }));
   };
 
   const handleSaveChanges = async () => {
     setIsSaving(true);
     try {
       await set(ref(db, `match_stats/${matchId}`), stats);
-      toast({ title: "¡Éxito!", description: "Las estadísticas del partido se guardaron correctamente.", className: "bg-green-500 text-white" });
+      toast({ title: "¡Éxito!", description: "Las estadísticas se guardaron correctamente.", className: "bg-green-500 text-white" });
       setIsOpen(false);
     } catch (error) {
-      console.error("Error al guardar estadísticas:", error);
-      toast({ title: "Error al Guardar", description: "No se pudieron guardar los cambios. Revisa tu conexión.", variant: "destructive" });
+      toast({ title: "Error al Guardar", description: "No se pudieron guardar los cambios.", variant: "destructive" });
     } finally {
       setIsSaving(false);
     }
@@ -158,52 +175,44 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline"><BarChart className="mr-2 h-4 w-4" /> Cargar Stats</Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-3xl w-[95vw] h-[80vh] flex flex-col">
+      <DialogTrigger asChild><Button variant="outline"><BarChart className="mr-2 h-4 w-4" /> Cargar Stats</Button></DialogTrigger>
+      <DialogContent className="max-w-4xl w-[95vw] h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Planilla Digital del Partido</DialogTitle>
-          <DialogDescription>
-            Registra los eventos (goles, tarjetas) de cada jugador. Los cambios se guardan al final.
-          </DialogDescription>
+          <DialogTitle className="text-2xl">Planilla Digital del Partido</DialogTitle>
+          <DialogDescription>Registra los eventos de cada jugador. Los cambios se guardan al presionar el botón de Guardar.</DialogDescription>
         </DialogHeader>
         
         {isLoading ? (
-          <div className="flex-grow flex items-center justify-center">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          </div>
+          <div className="flex-grow flex items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
         ) : (
           <Tabs defaultValue="home" className="flex-grow flex flex-col overflow-hidden">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="home"><Shield className="mr-2 h-4 w-4" />{homeTeam.name}</TabsTrigger>
-              <TabsTrigger value="away"><ShieldAlert className="mr-2 h-4 w-4" />{awayTeam.name}</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 h-12">
+              <TabsTrigger value="home" className="text-base"><Shield className="mr-2 h-5 w-5" />{homeTeam.name}</TabsTrigger>
+              <TabsTrigger value="away" className="text-base"><ShieldAlert className="mr-2 h-5 w-5" />{awayTeam.name}</TabsTrigger>
             </TabsList>
-            <div className="flex-grow overflow-y-auto mt-4 pr-2">
-                <TabsContent value="home">
-                    {homeTeam.roster.map(player => (
-                        <PlayerStatsRow key={player.id} player={player} stats={stats[player.id]} onStatChange={(stat, value) => handleStatChange(player.id, stat, value)} disabled={formIsDisabled} />
-                    ))}
+            <div className="flex-grow overflow-y-auto mt-4 pr-2 space-y-3">
+                <TabsContent value="home" className="space-y-2">
+                    {homeTeam.players.length > 0 ? (
+                        homeTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} disabled={formIsDisabled} /> : null)
+                    ) : (
+                        <p className="text-center text-muted-foreground pt-10">No hay jugadores en el equipo local.</p>
+                    )}
                 </TabsContent>
-                <TabsContent value="away">
-                    {awayTeam.roster.map(player => (
-                        <PlayerStatsRow key={player.id} player={player} stats={stats[player.id]} onStatChange={(stat, value) => handleStatChange(player.id, stat, value)} disabled={formIsDisabled} />
-                    ))}
+                <TabsContent value="away" className="space-y-2">
+                     {awayTeam.players.length > 0 ? (
+                        awayTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} disabled={formIsDisabled} /> : null)
+                    ) : (
+                        <p className="text-center text-muted-foreground pt-10">No hay jugadores en el equipo visitante.</p>
+                    )}
                 </TabsContent>
             </div>
           </Tabs>
         )}
         
-        <DialogFooter className="mt-4 pt-4 border-t">
-          {isFinished && !isEditing && (
-            <Button variant="outline" onClick={() => setIsEditing(true)}>
-              <Edit className="mr-2 h-4 w-4" /> Habilitar Edición
-            </Button>
-          )}
-          <DialogClose asChild>
-            <Button variant="ghost"><X className="mr-2 h-4 w-4" />Cancelar</Button>
-          </DialogClose>
-          <Button onClick={handleSaveChanges} disabled={formIsDisabled || isSaving}>
+        <DialogFooter className="mt-4 pt-4 border-t gap-2">
+          {isFinished && !isEditing && (<Button size="lg" variant="outline" onClick={() => setIsEditing(true)}><Edit className="mr-2 h-4 w-4" /> Habilitar Edición</Button>)}
+          <DialogClose asChild><Button size="lg" variant="ghost"><X className="mr-2 h-4 w-4" />Cancelar</Button></DialogClose>
+          <Button size="lg" onClick={handleSaveChanges} disabled={formIsDisabled || isSaving}>
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Guardar Cambios
           </Button>
