@@ -123,8 +123,8 @@ export default function ProfilePage() {
         {view === 'next_match' && <InfoView title="Próximo Partido" onClose={() => setView('buttons')}><p>Próximamente...</p></InfoView>}
         
         {view === 'my_team' && (
-          profileUser.team?.id ? (
-            <MyTeamModal teamId={profileUser.team.id} onClose={() => setView('buttons')} />
+          profileUser.team ? (
+            <MyTeamModal team={profileUser.team} onClose={() => setView('buttons')} />
           ) : (
             <InfoView title="Mi Equipo" onClose={() => setView('buttons')}>
               <p>Este jugador no forma parte de ningún equipo actualmente.</p>
