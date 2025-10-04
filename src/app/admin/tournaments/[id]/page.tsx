@@ -19,15 +19,17 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { ArrowLeft, Loader2, ShieldCheck, Trophy, PlusCircle, ListOrdered, XCircle, ShieldAlert } from 'lucide-react';
 
-// Tipos
+// --- TIPOS ---
 interface Tournament { id: string; name: string; teamCount: number; teams: { [key: string]: boolean }; }
-interface Team { id: string; name: string; logoUrl: string; roster?: { [playerId: string]: Player } }
-interface Player { id: string; name: string; lastName?: string; dni: string; } // lastName es opcional
+interface Team { id: string; name: string; logoUrl: string; roster?: { [playerId: string]: Player }; players?: { [playerId: string]: boolean }; }
+interface Player { id: string; name: string; lastName?: string; dni: string; }
 interface PlayerStatsInfo { goals: number; yellowCards: number; redCard: boolean; }
 interface Match { id: string; tournamentId: string; round: number; homeTeamId: string; awayTeamId: string; status: 'pending' | 'finished'; result?: { home: number | null; away: number | null }; details?: { date: string; time: string; referee: string }; }
 interface Stats { positions: any[]; scorers: any[]; sanctions: any[]; }
 type PageState = 'LOADING' | 'ACCESS_DENIED' | 'NOT_FOUND' | 'READY';
 
+
+// --- LÓGICA DE NEGOCIO ---
 const generateRoundRobinFixture = (teams: Team[]) => {
     const schedule: { round: number; homeTeamId: string; awayTeamId: string; }[] = [];
     let localTeams = [...teams];
@@ -45,6 +47,8 @@ const generateRoundRobinFixture = (teams: Team[]) => {
     return schedule;
 };
 
+
+// --- COMPONENTE PRINCIPAL ---
 export default function TournamentFixturePage() {
     const router = useRouter();
     const params = useParams();
@@ -98,7 +102,7 @@ export default function TournamentFixturePage() {
         Object.keys(allMatchStats).forEach(matchId => {
             const matchStats = allMatchStats[matchId];
             const matchInfo = allMatches.find(m => m.id === matchId);
-            if (matchStats && matchInfo) {
+            if (matchStats && matchInfo && matchInfo.tournamentId === tournamentId) {
               for (const playerId in matchStats) {
                   if (playerTotals[playerId]) {
                       playerTotals[playerId].goals += matchStats[playerId].goals || 0;
@@ -118,8 +122,43 @@ export default function TournamentFixturePage() {
             scorers: sortedScorers,
             sanctions: sortedSanctions
         });
-        toast({ title: "Estadísticas recalculadas", description: "La tabla de posiciones, goleadores y sanciones ha sido actualizada." });
-    }, [tournamentId, teams, toast]);
+    }, [tournamentId, teams]);
+
+    const updateMatchScoreFromStats = useCallback(async (match: Match) => {
+        const matchStatsSnap = await get(ref(db, `match_stats/${match.id}`));
+        if (!matchStatsSnap.exists()) return;
+
+        const homeTeam = teams.find(t => t.id === match.homeTeamId);
+        const awayTeam = teams.find(t => t.id === match.awayTeamId);
+
+        if (!homeTeam?.players || !awayTeam?.players) return;
+
+        const homePlayerIds = Object.keys(homeTeam.players);
+        const awayPlayerIds = Object.keys(awayTeam.players);
+        const stats: { [playerId: string]: PlayerStatsInfo } = matchStatsSnap.val();
+
+        let homeScore = 0;
+        let awayScore = 0;
+
+        for (const playerId in stats) {
+            const playerGoals = stats[playerId].goals || 0;
+            if (homePlayerIds.includes(playerId)) {
+                homeScore += playerGoals;
+            } else if (awayPlayerIds.includes(playerId)) {
+                awayScore += playerGoals;
+            }
+        }
+
+        await set(ref(db, `matches/${match.id}/result`), { home: homeScore, away: awayScore });
+        toast({ title: "Marcador Actualizado", description: `El resultado se ha guardado: ${homeScore} - ${awayScore}` });
+
+    }, [teams, toast]);
+
+    const handleStatsSaved = useCallback(async (match: Match) => {
+        await updateMatchScoreFromStats(match);
+        await calculateAndSaveStats();
+        toast({ title: "Estadísticas Generales Recalculadas", description: "Las tablas de posiciones, goleadores y sanciones han sido actualizadas.", className: "bg-blue-500 text-white" });
+    }, [updateMatchScoreFromStats, calculateAndSaveStats, toast]);
 
     useEffect(() => {
         if (userLoading) return;
@@ -196,7 +235,7 @@ export default function TournamentFixturePage() {
             const updates: { [key: string]: any } = {};
             fixtureSchedule.forEach(match => {
                 const matchId = `match_${tournamentId}_r${match.round}_${match.homeTeamId.substring(0,4)}_${match.awayTeamId.substring(0,4)}_${Math.random().toString(36).substring(2, 7)}`;
-                updates[`/matches/${matchId}`] = { id: matchId, tournamentId, round: match.round, homeTeamId: match.homeTeamId, awayTeamId: match.awayTeamId, status: 'pending', result: { home: null, away: null } };
+                updates[`/matches/${matchId}`] = { id: matchId, tournamentId, round: match.round, homeTeamId: match.homeTeamId, awayTeamId: match.awayTeamId, status: 'pending', result: { home: 0, away: 0 } };
             });
             await update(ref(db), updates);
             toast({ title: "¡Fixture Generado!" });
@@ -213,15 +252,12 @@ export default function TournamentFixturePage() {
     const rounds = useMemo(() => {
         const roundsMap = matches.reduce((acc, match) => {
             const round = match.round;
-            if (!acc[round]) {
-                acc[round] = [];
-            }
+            if (!acc[round]) acc[round] = [];
             acc[round].push(match);
             return acc;
         }, {} as { [round: number]: Match[] });
     
-        const sortedRounds = Object.entries(roundsMap).sort(([a], [b]) => Number(a) - Number(b));
-        return sortedRounds;
+        return Object.entries(roundsMap).sort(([a], [b]) => Number(a) - Number(b));
     }, [matches]);
 
     if (pageState === 'LOADING') return <div className="flex h-screen items-center justify-center"><Loader2 className="h-12 w-12 animate-spin" /><p className="ml-4 text-lg">Cargando...</p></div>;
@@ -237,7 +273,7 @@ export default function TournamentFixturePage() {
                     <TabsList className="grid w-full grid-cols-4"><TabsTrigger value="fixture">Fixture</TabsTrigger><TabsTrigger value="positions">Posiciones</TabsTrigger><TabsTrigger value="scorers">Goleadores</TabsTrigger><TabsTrigger value="sanctions">Sanciones</TabsTrigger></TabsList>
                     <TabsContent value="fixture" className="mt-6">
                         <Card>
-                            <CardHeader><CardTitle>Partidos del Torneo</CardTitle><CardDescription>Carga los resultados. Los cambios se guardan automáticamente.</CardDescription></CardHeader>
+                            <CardHeader><CardTitle>Partidos del Torneo</CardTitle><CardDescription>El resultado se calcula automáticamente al cargar los goles por jugador.</CardDescription></CardHeader>
                             <CardContent>
                                 {matches.length > 0 ? (
                                     <Tabs defaultValue={`round-${rounds[0]?.[0]}`} className="w-full">
@@ -250,9 +286,9 @@ export default function TournamentFixturePage() {
                                                             <CardHeader><CardTitle className="text-lg">{getTeamName(match.homeTeamId)} vs {getTeamName(match.awayTeamId)}</CardTitle></CardHeader>
                                                             <CardContent className="space-y-4">
                                                                 <div className="flex items-center justify-center gap-2">
-                                                                    <Input type="number" placeholder="-" className="w-16 h-12 text-center text-lg font-bold" defaultValue={match.result?.home ?? ''} onBlur={(e) => updateMatchData(match.id, 'result/home', e.target.value === '' ? null : Number(e.target.value))} disabled={match.status === 'finished'} />
+                                                                    <Input readOnly type="number" placeholder="-" className="w-16 h-12 text-center text-lg font-bold bg-muted/50" value={match.result?.home ?? ''} />
                                                                     <span className="text-2xl font-bold">-</span>
-                                                                    <Input type="number" placeholder="-" className="w-16 h-12 text-center text-lg font-bold" defaultValue={match.result?.away ?? ''} onBlur={(e) => updateMatchData(match.id, 'result/away', e.target.value === '' ? null : Number(e.target.value))} disabled={match.status === 'finished'} />
+                                                                    <Input readOnly type="number" placeholder="-" className="w-16 h-12 text-center text-lg font-bold bg-muted/50" value={match.result?.away ?? ''} />
                                                                 </div>
                                                                 <div className="grid grid-cols-3 gap-2 text-xs">
                                                                     <Input type="date" className="h-8" defaultValue={match.details?.date || ''} onBlur={(e) => updateMatchData(match.id, 'details/date', e.target.value)} disabled={match.status === 'finished'}/>
@@ -266,9 +302,8 @@ export default function TournamentFixturePage() {
                                                                     tournamentId={tournamentId} 
                                                                     homeTeamId={match.homeTeamId} 
                                                                     awayTeamId={match.awayTeamId} 
-                                                                    isFinished={match.status === 'finished'} 
-                                                                    disabled={match.status === 'finished'} 
-                                                                    onStatsSaved={calculateAndSaveStats}
+                                                                    isFinished={match.status === 'finished'}
+                                                                    onStatsSaved={() => handleStatsSaved(match)}
                                                                 />
                                                                 <div className="flex items-center space-x-2">
                                                                     <Label htmlFor={`finished-${match.id}`}>Finalizado</Label>
