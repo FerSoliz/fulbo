@@ -22,7 +22,7 @@ import { ArrowLeft, Loader2, ShieldCheck, Trophy, PlusCircle, ListOrdered, XCirc
 // Tipos
 interface Tournament { id: string; name: string; teamCount: number; teams: { [key: string]: boolean }; }
 interface Team { id: string; name: string; logoUrl: string; roster?: { [playerId: string]: Player } }
-interface Player { id: string; name: string; lastName: string; dni: string; }
+interface Player { id: string; name: string; lastName?: string; dni: string; } // lastName es opcional
 interface PlayerStatsInfo { goals: number; yellowCards: number; redCard: boolean; }
 interface Match { id: string; tournamentId: string; round: number; homeTeamId: string; awayTeamId: string; status: 'pending' | 'finished'; result?: { home: number | null; away: number | null }; details?: { date: string; time: string; referee: string }; }
 interface Stats { positions: any[]; scorers: any[]; sanctions: any[]; }
@@ -88,29 +88,29 @@ export default function TournamentFixturePage() {
         teams.forEach(team => {
             if (team.roster) {
                 Object.values(team.roster).forEach(player => {
-                    if(player && player.id) { // <-- Agregada verificación
+                    if(player && player.id) {
                       playerTotals[player.id] = { playerInfo: player, teamId: team.id, teamName: team.name, goals: 0, yellowCards: 0, redCards: 0 };
                     }
                 });
             }
         });
 
-        // Modificado para incluir estadísticas de partidos NO finalizados al calcular goleadores y sanciones.
-        allMatches.forEach(match => { // Usar allMatches en lugar de finishedMatches para goleadores/sanciones
-            const matchStats = allMatchStats[match.id];
-            if (matchStats) {
-                for (const playerId in matchStats) {
-                    if (playerTotals[playerId]) {
-                        playerTotals[playerId].goals += matchStats[playerId].goals || 0;
-                        playerTotals[playerId].yellowCards += matchStats[playerId].yellowCards || 0;
-                        if (matchStats[playerId].redCard) playerTotals[playerId].redCards += 1;
-                    }
-                }
+        Object.keys(allMatchStats).forEach(matchId => {
+            const matchStats = allMatchStats[matchId];
+            const matchInfo = allMatches.find(m => m.id === matchId);
+            if (matchStats && matchInfo) {
+              for (const playerId in matchStats) {
+                  if (playerTotals[playerId]) {
+                      playerTotals[playerId].goals += matchStats[playerId].goals || 0;
+                      playerTotals[playerId].yellowCards += matchStats[playerId].yellowCards || 0;
+                      if (matchStats[playerId].redCard) playerTotals[playerId].redCards += 1;
+                  }
+              }
             }
         });
 
         const allPlayerStats = Object.values(playerTotals);
-        const sortedScorers = allPlayerStats.filter(p => p.goals > 0).sort((a, b) => b.goals - a.goals || (a.playerInfo.lastName && b.playerInfo.lastName ? a.playerInfo.lastName.localeCompare(b.playerInfo.lastName) : 0));
+        const sortedScorers = allPlayerStats.filter(p => p.goals > 0).sort((a, b) => b.goals - a.goals || (a.playerInfo.name.localeCompare(b.playerInfo.name)));
         const sortedSanctions = allPlayerStats.filter(p => p.redCards > 0 || p.yellowCards > 0).sort((a, b) => b.redCards - a.redCards || b.yellowCards - a.yellowCards);
 
         await set(ref(db, `tournament_stats/${tournamentId}`), { 
@@ -131,12 +131,36 @@ export default function TournamentFixturePage() {
             if (snapshot.exists()) {
                 const tournamentData = snapshot.val();
                 setTournament({ id: snapshot.key, ...tournamentData });
+
                 if (tournamentData.teams) {
                     const teamIds = Object.keys(tournamentData.teams);
-                    const teamsPromises = teamIds.map(id => get(ref(db, `teams/${id}`)));
-                    const teamsSnapshots = await Promise.all(teamsPromises);
-                    const teamsData = teamsSnapshots.map(snap => ({ id: snap.key, ...snap.val() }));
-                    setTeams(teamsData.filter(t => t.id));
+                    const teamsPromises = teamIds.map(async (id) => {
+                        const teamSnap = await get(ref(db, `teams/${id}`));
+                        if (!teamSnap.exists()) return null;
+
+                        const teamData = teamSnap.val();
+                        let roster: { [playerId: string]: Player } = {};
+
+                        if (teamData.players) {
+                            const playerIds = Object.keys(teamData.players);
+                            const playerPromises = playerIds.map(async (playerId) => {
+                                const isDni = playerId.length === 8 && /^\d+$/.test(playerId);
+                                const playerPath = isDni ? `guestPlayers/${playerId}` : `users/${playerId}`;
+                                const playerSnap = await get(ref(db, playerPath));
+                                return playerSnap.exists() ? { id: playerId, ...playerSnap.val() } : null;
+                            });
+
+                            const players = (await Promise.all(playerPromises)).filter(p => p !== null) as Player[];
+                            roster = players.reduce((acc, player) => {
+                                if (player.id) acc[player.id] = player;
+                                return acc;
+                            }, {} as { [playerId: string]: Player });
+                        }
+                        return { id: teamSnap.key, ...teamData, roster };
+                    });
+
+                    const teamsData = (await Promise.all(teamsPromises)).filter((t): t is Team => t !== null);
+                    setTeams(teamsData);
                 }
                 setPageState('READY');
             } else {
@@ -244,7 +268,7 @@ export default function TournamentFixturePage() {
                                                                     awayTeamId={match.awayTeamId} 
                                                                     isFinished={match.status === 'finished'} 
                                                                     disabled={match.status === 'finished'} 
-                                                                    onStatsSaved={calculateAndSaveStats} // <-- PASANDO EL CALLBACK
+                                                                    onStatsSaved={calculateAndSaveStats}
                                                                 />
                                                                 <div className="flex items-center space-x-2">
                                                                     <Label htmlFor={`finished-${match.id}`}>Finalizado</Label>
@@ -278,20 +302,20 @@ export default function TournamentFixturePage() {
                     </TabsContent>
                     <TabsContent value="scorers" className="mt-6">
                         <Card>
-                            <CardHeader><CardTitle>Tabla de Goleadores</CardTitle><CardDescription>Se actualiza al finalizar un partido.</CardDescription></CardHeader>
+                            <CardHeader><CardTitle>Tabla de Goleadores</CardTitle><CardDescription>Actualizada con cada cambio guardado.</CardDescription></CardHeader>
                              <CardContent>
                                 {stats?.scorers && stats.scorers.length > 0 ? (
-                                    <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead className="w-[40px]">#</TableHead><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead className="text-right">Goles</TableHead></TableRow></TableHeader><TableBody>{stats.scorers.map((scorer, index) => (<TableRow key={scorer.playerInfo.id}><TableCell className="font-bold">{index + 1}</TableCell><TableCell>{`${scorer.playerInfo.name} ${scorer.playerInfo.lastName}`}</TableCell><TableCell>{scorer.teamName}</TableCell><TableCell className="text-right font-bold">{scorer.goals}</TableCell></TableRow>))}</TableBody></Table></div>
+                                    <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead className="w-[40px]">#</TableHead><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead className="text-right">Goles</TableHead></TableRow></TableHeader><TableBody>{stats.scorers.map((scorer, index) => (<TableRow key={scorer.playerInfo.id}><TableCell className="font-bold">{index + 1}</TableCell><TableCell>{`${scorer.playerInfo.name} ${scorer.playerInfo.lastName || ''}`.trim()}</TableCell><TableCell>{scorer.teamName}</TableCell><TableCell className="text-right font-bold">{scorer.goals}</TableCell></TableRow>))}</TableBody></Table></div>
                                 ) : <p className="text-muted-foreground text-center py-4">No hay goleadores todavía.</p>}
                             </CardContent>
                         </Card>
                     </TabsContent>
                     <TabsContent value="sanctions" className="mt-6">
                         <Card>
-                            <CardHeader><CardTitle>Tabla de Sanciones</CardTitle><CardDescription>Se actualiza al finalizar un partido.</CardDescription></CardHeader> {/* <-- Corregido aquí */}
+                            <CardHeader><CardTitle>Tabla de Sanciones</CardTitle><CardDescription>Actualizada con cada cambio guardado.</CardDescription></CardHeader>
                              <CardContent>
                                 {stats?.sanctions && stats.sanctions.length > 0 ? (
-                                    <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead className="text-center">Amarillas</TableHead><TableHead className="text-center">Rojas</TableHead></TableRow></TableHeader><TableBody>{stats.sanctions.map((p, index) => (<TableRow key={p.playerInfo.id}><TableCell>{`${p.playerInfo.name} ${p.playerInfo.lastName}`}</TableCell><TableCell>{p.teamName}</TableCell><TableCell className="text-center font-bold">{p.yellowCards}</TableCell><TableCell className="text-center font-bold">{p.redCards}</TableCell></TableRow>))}</TableBody></Table></div>
+                                    <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead className="text-center">Amarillas</TableHead><TableHead className="text-center">Rojas</TableHead></TableRow></TableHeader><TableBody>{stats.sanctions.map((p, index) => (<TableRow key={p.playerInfo.id}><TableCell>{`${p.playerInfo.name} ${p.playerInfo.lastName || ''}`.trim()}</TableCell><TableCell>{p.teamName}</TableCell><TableCell className="text-center font-bold">{p.yellowCards}</TableCell><TableCell className="text-center font-bold">{p.redCards}</TableCell></TableRow>))}</TableBody></Table></div>
                                 ) : <p className="text-muted-foreground text-center py-4">No hay jugadores sancionados.</p>}
                             </CardContent>
                         </Card>
