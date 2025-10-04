@@ -26,21 +26,46 @@ interface PostCardProps {
 }
 
 export function PostCard({ post, currentUser, allUsers, onLikeToggle, onAddComment, onDeletePost }: PostCardProps) {
-  const author = allUsers.find(u => u.id === post.authorId);
+  // Manejamos el caso de autor no encontrado de forma más robusta.
+  // Si no se encuentra el autor, creamos un objeto User por defecto para evitar errores.
+  const author = allUsers.find(u => u.id === post.authorId) || {
+    id: post.authorId,
+    name: 'Usuario Desconocido',
+    username: 'desconocido',
+    role: 'player', // Asignamos un rol por defecto para compatibilidad
+    avatar: 'https://avatar.vercel.sh/unknown.png', // Avatar por defecto
+    isVerified: false,
+    isBlocked: false,
+    location: '',
+    sudpoints: 0,
+    baseSudpoints: 0,
+    league: 'Bronce',
+    division: 4,
+    stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+    interactions: 0,
+    packsOpened: 0,
+  };
+
   const [commentText, setCommentText] = useState('');
   const [showComments, setShowComments] = useState(false);
   const [isYoutubePlaying, setIsYoutubePlaying] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 
-  if (!author) return null;
-
   const handleLike = () => {
-    if (!currentUser || currentUser.id === 'visitor') return;
+    // Si no hay currentUser o es un 'visitor', no permitimos dar like
+    if (!currentUser || currentUser.id === 'visitor') {
+        // Podrías añadir un toast aquí para informar al usuario que debe loguearse
+        return;
+    }
     onLikeToggle(post.id, post.likes);
   };
 
   const handleAddComment = () => {
-    if (!currentUser || currentUser.id === 'visitor' || !commentText.trim()) return;
+    // Si no hay currentUser o es un 'visitor', no permitimos comentar
+    if (!currentUser || currentUser.id === 'visitor' || !commentText.trim()) {
+        // Podrías añadir un toast aquí para informar al usuario que debe loguearse
+        return;
+    }
     onAddComment(post.id, commentText);
     setCommentText('');
     setShowComments(true);
@@ -48,7 +73,9 @@ export function PostCard({ post, currentUser, allUsers, onLikeToggle, onAddComme
   
   const isPinned = post.isPinned && post.pinnedUntil && new Date(post.pinnedUntil) > new Date();
   const isLiked = currentUser ? post.likes.includes(currentUser.id) : false;
+  // Solo el autor o un admin pueden eliminar un post
   const canDelete = currentUser?.id === post.authorId || currentUser?.role === 'admin';
+  // Determinamos si el usuario actual es un visitante para deshabilitar interacciones
   const isVisitor = !currentUser || currentUser.id === 'visitor';
 
   const renderMedia = () => {
@@ -193,8 +220,9 @@ export function PostCard({ post, currentUser, allUsers, onLikeToggle, onAddComme
                                     <div className="flex flex-col gap-4 py-4 max-h-[400px] overflow-y-auto">
                                         {post.likes.map(userId => {
                                             const userWhoLiked = allUsers.find(u => u.id === userId);
-                                            if (!userWhoLiked) return null;
-                                            return (<div key={userWhoLiked.id} className="flex items-center gap-4"><Link href={`/profile/${userWhoLiked.id}`}><Avatar><AvatarImage src={userWhoLiked.avatar} alt={userWhoLiked.name} /><AvatarFallback>{userWhoLiked.name.charAt(0)}</AvatarFallback></Avatar></Link><Link href={`/profile/${userWhoLiked.id}`} className="font-semibold hover:underline">{userWhoLiked.name}</Link></div>);
+                                            // También manejamos el caso de usuarios que dieron like pero no se encuentran en allUsers
+                                            const userToDisplay = userWhoLiked || { id: userId, name: 'Usuario Desconocido', avatar: 'https://avatar.vercel.sh/unknown.png' };
+                                            return (<div key={userToDisplay.id} className="flex items-center gap-4"><Link href={`/profile/${userToDisplay.id}`}><Avatar><AvatarImage src={userToDisplay.avatar} alt={userToDisplay.name} /><AvatarFallback>{userToDisplay.name.charAt(0)}</AvatarFallback></Avatar></Link><Link href={`/profile/${userToDisplay.id}`} className="font-semibold hover:underline">{userToDisplay.name}</Link></div>);
                                         })}
                                     </div>
                                 </DialogContent>
@@ -210,7 +238,9 @@ export function PostCard({ post, currentUser, allUsers, onLikeToggle, onAddComme
                 <div className="w-full space-y-4 pt-4">
                     {post.comments.map(comment => {
                         const commentAuthor = allUsers.find(u => u.id === comment.authorId);
-                        return commentAuthor ? (<div key={comment.id} className="flex items-start gap-3"><Avatar className="h-8 w-8"><AvatarImage src={commentAuthor.avatar} /><AvatarFallback>{commentAuthor.name.charAt(0)}</AvatarFallback></Avatar><div className="bg-muted p-3 rounded-lg w-full"><Link href={`/profile/${commentAuthor.id}`} className="hover:underline"><span className="font-semibold text-sm">{commentAuthor.name}</span></Link><p className="text-sm text-muted-foreground">{comment.content}</p></div></div>) : null;
+                        // Manejamos el caso de autores de comentarios no encontrados
+                        const authorToDisplay = commentAuthor || { id: comment.authorId, name: 'Usuario Desconocido', avatar: 'https://avatar.vercel.sh/unknown.png' };
+                        return (<div key={comment.id} className="flex items-start gap-3"><Avatar className="h-8 w-8"><AvatarImage src={authorToDisplay.avatar} /><AvatarFallback>{authorToDisplay.name.charAt(0)}</AvatarFallback></Avatar><div className="bg-muted p-3 rounded-lg w-full"><Link href={`/profile/${authorToDisplay.id}`} className="hover:underline"><span className="font-semibold text-sm">{authorToDisplay.name}</span></Link><p className="text-sm text-muted-foreground">{comment.content}</p></div></div>);
                     })}
                 </div>
             )}
