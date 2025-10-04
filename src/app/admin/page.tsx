@@ -34,7 +34,7 @@ const adminActions = [
   },
   {
     title: 'Administrar Torneos',
-    description: 'Edita, elimina y gestiona los torneos que ya has creado.',
+    description: 'Gestiona el fixture, los resultados y las estadísticas de los torneos creados.',
     icon: Settings,
     href: '/admin/manage-tournaments',
     color: 'bg-blue-500 hover:bg-blue-600',
@@ -47,17 +47,10 @@ const adminActions = [
     color: 'bg-orange-500 hover:bg-orange-600',
   },
   {
-    title: 'Cargar Resultados',
-    description: 'Registra los marcadores, estadísticas y eventos de cada partido.',
-    icon: Upload,
-    href: '/admin/manage-tournaments', // Link to manager to select a tournament first
-    color: 'bg-yellow-500 hover:bg-yellow-600',
-  },
-  {
     title: 'Gestionar Equipos',
     description: 'Administra las plantillas, logos y datos de los equipos inscritos.',
     icon: Users,
-    href: '/admin/manage-teams', // Corregido el enlace
+    href: '/admin/manage-teams',
     color: 'bg-purple-500 hover:bg-purple-600',
   },
 ];
