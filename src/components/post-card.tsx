@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Heart, MessageSquare, Bookmark, MoreHorizontal, Play, Pencil, Star, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
@@ -186,6 +186,11 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                 </div>
             </DialogTrigger>
             <DialogContent className="max-w-4xl h-[90vh] p-2">
+                 {/* FIX: Añadido DialogHeader con título y descripción para accesibilidad */}
+                 <DialogHeader className="sr-only"> {/* sr-only es para ocultarlo visualmente pero mantenerlo para lectores de pantalla */}
+                    <DialogTitle>Galería de imágenes</DialogTitle>
+                    <DialogDescription>Navega por las imágenes de la publicación usando las flechas de navegación.</DialogDescription>
+                 </DialogHeader>
                  <Carousel className="w-full h-full">
                     <CarouselContent className="h-full">
                         {imageMedia.map((item, index) => (<CarouselItem key={item.url || index} className="flex items-center justify-center h-full"><Image src={item.url} alt={`Post media ${index + 1}`} width={1920} height={1080} className="max-h-full w-auto object-contain" /></CarouselItem>))}
@@ -217,7 +222,11 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                             <Dialog>
                                 <DialogTrigger asChild><span className="text-sm font-medium text-muted-foreground cursor-pointer hover:underline">{Object.keys(post.likes).length} {Object.keys(post.likes).length === 1 ? 'Me gusta' : 'Me gusta'}</span></DialogTrigger>
                                 <DialogContent className="sm:max-w-[425px]">
-                                    <DialogHeader><DialogTitle>Le gusta a</DialogTitle></DialogHeader>
+                                    {/* FIX: Añadido DialogDescription para accesibilidad */}
+                                    <DialogHeader>
+                                        <DialogTitle>Le gusta a</DialogTitle>
+                                        <DialogDescription>Esta es la lista de usuarios a los que les gusta esta publicación.</DialogDescription>
+                                    </DialogHeader>
                                     <div className="flex flex-col gap-4 py-4 max-h-[400px] overflow-y-auto">
                                         {Object.entries(post.likes).map(([userId, likeUser]) => (
                                             <div key={userId} className="flex items-center gap-4"><Link href={`/profile/${userId}`}><Avatar><AvatarImage src={likeUser.avatar} alt={likeUser.name} /><AvatarFallback>{likeUser.name.charAt(0)}</AvatarFallback></Avatar></Link><Link href={`/profile/${userId}`} className="font-semibold hover:underline">{likeUser.name}</Link></div>
