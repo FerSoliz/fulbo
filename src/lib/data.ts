@@ -50,10 +50,13 @@ export interface PlayerDetails {
   email: string;
 }
 
-// REFACTOR: Adaptado para Realtime Database
+// REFACTOR: Adaptado para Realtime Database con información desnormalizada del autor
 export interface Comment {
   id: string; 
   authorId: string;
+  authorName: string; // <-- NUEVA PROPIEDAD: Nombre del autor del comentario desnormalizado
+  authorAvatar: string; // <-- NUEVA PROPIEDAD: Avatar del autor del comentario desnormalizado
+  authorUsername: string; // <-- NUEVA PROPIEDAD: Username del autor del comentario desnormalizado
   content: string;
   createdAt: string;
 }
@@ -62,12 +65,15 @@ export interface Comment {
 export interface Post {
   id: string; // El ID será la clave generada por push()
   authorId: string; // UID del creador
+  authorName: string; // Nombre del autor desnormalizado
+  authorAvatar: string; // Avatar del autor desnormalizado
+  authorUsername: string; // Username del autor desnormalizado
   content: string;
   media?: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string; }[];
   url?: string; // Campo opcional para enlaces externos
   // Es más eficiente en RTDB usar un objeto para likes/favoritos
-  likes?: Record<string, boolean>; // { userId1: true, userId2: true }
-  comments?: Record<string, Comment>; // { commentId1: {...}, commentId2: {...} }
+  likes?: Record<string, { name: string; avatar: string; username: string; }>; // <-- CAMBIO: Ahora guarda un objeto con info del usuario
+  comments?: Record<string, Comment>; // Usa la interfaz Comment actualizada
   createdAt: string; // ISO String. RTDB también puede usar ServerValue.TIMESTAMP
   isPinned?: boolean;
   pinnedUntil?: string | null; 

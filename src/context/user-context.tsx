@@ -3,13 +3,10 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
-import { initialNotifications } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase'; 
-import { ref, onValue, get, set, update, increment } from 'firebase/database';
+import { ref, onValue, get, set, update, increment, Unsubscribe } from 'firebase/database';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-
-const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
 
 const defaultVisitor: User = {
     id: 'visitor',
@@ -62,84 +59,71 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { toast } = useToast();
 
+  // Hook para manejar el estado de autenticación del usuario
   useEffect(() => {
-    const usersRef = ref(db, 'users');
-    const unsubscribe = onValue(usersRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const usersList: User[] = Object.keys(data).map(key => ({ ...data[key], id: key }));
-        setAllUsers(usersList);
-      } else {
-        setAllUsers([]);
-      }
-    }, (error) => {
-      console.error("Error al cargar todos los usuarios de RTDB: ", error);
-    });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
         const userRef = ref(db, `users/${firebaseUser.uid}`);
         const snapshot = await get(userRef);
-        let foundUser: User | null = null;
-
         if (snapshot.exists()) {
-          foundUser = { ...snapshot.val(), id: firebaseUser.uid };
+          setUser({ ...snapshot.val(), id: firebaseUser.uid });
         } else {
-          // Si el usuario existe en Auth pero no en la DB, lo creamos (poco común)
-          foundUser = {
-              id: firebaseUser.uid,
+          // Caso raro: usuario en Auth pero no en DB. Se crea.
+          const newUserEntry: Omit<User, 'id'> = {
               name: firebaseUser.displayName || 'Nuevo Usuario',
               username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now()}`,
               email: firebaseUser.email!,
               avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
-              role: 'player', // Rol por defecto
+              role: 'player',
               isVerified: firebaseUser.emailVerified,
-              isBlocked: false,
-              location: 'Desconocida',
-              sudpoints: 0,
-              baseSudpoints: 0,
-              league: 'Bronce',
-              division: 4,
-              dni: null,
-              profileBackground: null,
-              sudonepassLevel: null,
-              sudonepassExp: null,
-              transferStatus: null,
+              isBlocked: false, location: '', sudpoints: 0, baseSudpoints: 0, league: 'Bronce', division: 4,
               stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-              interactions: 0,
-              packsOpened: 0,
+              interactions: 0, packsOpened: 0,
           };
-          await set(userRef, foundUser);
+          await set(userRef, newUserEntry);
+          setUser({ ...newUserEntry, id: firebaseUser.uid });
         }
-
-        setUser(foundUser!);
-
-        // Lógica para notificaciones y packs
-
       } else {
         setUser(defaultVisitor);
-        setNotifications([]);
-        setAvailablePacks(0);
-        setNextPackTimestamp(null);
-        setCountdown('');
+        setAllUsers([]); // Limpia la lista de usuarios si no hay sesión.
       }
       setLoading(false);
     });
-
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, []);
+
+  // Hook para cargar la lista de todos los usuarios. Depende del estado del 'user'.
+  useEffect(() => {
+    // Si el usuario no está autenticado (es visitante), no hacer nada.
+    if (!user || user.id === 'visitor') {
+      setAllUsers([]); // Asegura que la lista esté vacía y termina.
+      return;
+    }
+
+    // Si hay un usuario autenticado, escucha los cambios en la lista de usuarios.
+    const usersRef = ref(db, 'users');
+    const unsubscribeUsers: Unsubscribe = onValue(usersRef, (snapshot) => {
+      const data = snapshot.val();
+      const usersList: User[] = data ? Object.keys(data).map(key => ({ ...data[key], id: key })) : [];
+      setAllUsers(usersList);
+    }, (error) => {
+      console.error("Error al cargar todos los usuarios de RTDB: ", error);
+      // Este error ya no debería ocurrir para visitantes.
+      toast({ title: "Error de red", description: "No se pudo obtener la lista de usuarios.", variant: "destructive"});
+    });
+
+    // Limpia la suscripción cuando el componente se desmonta o el usuario cambia.
+    return () => unsubscribeUsers();
+  }, [user, toast]); // Se ejecuta cuando el 'user' cambia.
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     setLoading(true);
     try {
         await signInWithEmailAndPassword(auth, email, pass);
+        router.push('/');
         return true;
     } catch(error: any) {
-        console.error(error);
         toast({ title: "Error de inicio de sesión", description: "El correo electrónico o la contraseña son incorrectos.", variant: "destructive" });
         setLoading(false);
         return false;
@@ -150,38 +134,22 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
         const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-        const newUser: User = {
-            id: userCredential.user.uid,
-            name: name,
-            username: username,
-            email: email,
-            dni: dni,
+        const newUser: Omit<User, 'id'> = {
+            name, username, email, dni, profileBackground,
             avatar: `https://avatar.vercel.sh/${username}.png`,
-            role: 'player', // Rol por defecto al registrarse
-            isVerified: false,
-            isBlocked: false,
-            location: 'Desconocida',
-            sudpoints: 0,
-            baseSudpoints: 0,
-            league: 'Bronce',
-            division: 4,
+            role: 'player',
+            isVerified: false, isBlocked: false, location: '', sudpoints: 0, baseSudpoints: 0, league: 'Bronce', division: 4,
             stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-            interactions: 0,
-            packsOpened: 0,
-            profileBackground: profileBackground,
+            interactions: 0, packsOpened: 0,
         };
-        await set(ref(db, 'users/' + newUser.id), newUser);
+        await set(ref(db, 'users/' + userCredential.user.uid), newUser);
         toast({ title: "¡Cuenta Creada!", description: "Tu cuenta ha sido creada exitosamente." });
         router.push('/');
         return true;
     } catch (error: any) {
-        console.error(error);
         let errorMessage = "Ocurrió un error al registrar la cuenta.";
-        if (error.code === 'auth/email-already-in-use') {
-            errorMessage = "Este correo electrónico ya está en uso.";
-        } else if (error.code === 'auth/weak-password') {
-            errorMessage = "La contraseña debe tener al menos 6 caracteres.";
-        }
+        if (error.code === 'auth/email-already-in-use') errorMessage = "Este correo electrónico ya está en uso.";
+        if (error.code === 'auth/weak-password') errorMessage = "La contraseña debe tener al menos 6 caracteres.";
         toast({ title: "Error de registro", description: errorMessage, variant: "destructive" });
         return false;
     } finally {
@@ -190,64 +158,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    setLoading(true);
     await signOut(auth);
+    setUser(defaultVisitor);
+    setAllUsers([]);
     router.push('/login');
-    setLoading(false);
   };
 
   const trackInteraction = useCallback(async () => {
     if (!user || user.id === 'visitor') return;
     const userRef = ref(db, `users/${user.id}`);
-    try {
-      await update(userRef, { interactions: increment(1) });
-      setUser(currentUser => 
-        currentUser && currentUser.id !== 'visitor' 
-        ? { ...currentUser, interactions: (currentUser.interactions || 0) + 1 } 
-        : currentUser
-      );
-    } catch (error) {
-      console.error("Error al registrar la interacción: ", error);
-    }
+    await update(userRef, { interactions: increment(1) });
   }, [user]);
 
   const trackPackOpening = useCallback(async () => {
     if (!user || user.id === 'visitor') return;
     const userRef = ref(db, `users/${user.id}`);
-    try {
-      await update(userRef, { packsOpened: increment(1) });
-      setUser(currentUser => 
-        currentUser && currentUser.id !== 'visitor'
-        ? { ...currentUser, packsOpened: (currentUser.packsOpened || 0) + 1 }
-        : currentUser
-      );
-    } catch (error) {
-      console.error("Error al registrar la apertura de sobre: ", error);
-    }
+    await update(userRef, { packsOpened: increment(1) });
   }, [user]);
 
-  const contextValue: UserContextType = {
-      user,
-      allUsers,
-      setUser,
-      setAllUsers,
-      loading,
-      login,
-      register,
-      logout,
-      notifications,
-      setNotifications,
-      availablePacks,
-      setAvailablePacks,
-      nextPackTimestamp,
-      setNextPackTimestamp,
-      countdown,
-      trackInteraction,
-      trackPackOpening,
-  };
-
   return (
-    <UserContext.Provider value={contextValue}>
+    <UserContext.Provider value={{ user, allUsers, setUser, setAllUsers, loading, login, register, logout, notifications, setNotifications, availablePacks, setAvailablePacks, nextPackTimestamp, setNextPackTimestamp, countdown, trackInteraction, trackPackOpening }}>
       {children}
     </UserContext.Provider>
   );

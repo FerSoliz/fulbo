@@ -2,7 +2,7 @@
   "rules": {
     "users": {
       ".indexOn": ["dni"],
-      ".read": true,
+      ".read": "auth != null", // Solo usuarios autenticados pueden leer la colección 'users'
       "$userId": {
         ".write": "auth != null && (auth.uid === $userId || root.child('users').child(auth.uid).child('role').val() === 'admin')",
         "username": { ".validate": "newData.isString() && newData.val().length > 0" },
@@ -10,11 +10,15 @@
       }
     },
     "posts": {
-      ".read": true,
+      ".read": true, // Cualquiera (autenticado o no) puede leer la colección 'posts'
       "$postId": {
         ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid) || (data.exists() && data.child('authorId').val() === auth.uid) || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        ".validate": "newData.hasChildren(['authorId', 'content', 'createdAt'])",
+        // Validamos que los nuevos campos desnormalizados existan y sean strings
+        ".validate": "newData.hasChildren(['authorId', 'authorName', 'authorAvatar', 'authorUsername', 'content', 'createdAt'])",
         "authorId": { ".validate": "newData.isString()" },
+        "authorName": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "authorAvatar": { ".validate": "newData.isString() && newData.val().length > 0" },
+        "authorUsername": { ".validate": "newData.isString() && newData.val().length > 0" },
         "content": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500" },
         "createdAt": { ".validate": "newData.isString()" },
         "likes": {
@@ -67,7 +71,7 @@
       ".read": true,
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
     },
-    ".read": false,
+    ".read": "auth != null", // Regla global: por defecto, solo usuarios autenticados pueden leer
     ".write": false
   }
 }
