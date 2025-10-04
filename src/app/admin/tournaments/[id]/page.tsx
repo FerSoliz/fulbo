@@ -19,10 +19,9 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { ArrowLeft, Loader2, ShieldCheck, Trophy, PlusCircle, ListOrdered, XCircle, ShieldAlert } from 'lucide-react';
 
-
 // Tipos
-interface Tournament { id: string; name: string; teamCount: number; teams: { [key: string]: { roster: { [playerId: string]: Player } } }; }
-interface Team { id: string; name: string; logoUrl: string; }
+interface Tournament { id: string; name: string; teamCount: number; teams: { [key: string]: boolean }; }
+interface Team { id: string; name: string; logoUrl: string; roster?: { [playerId: string]: Player } }
 interface Player { id: string; name: string; lastName: string; dni: string; }
 interface PlayerStatsInfo { goals: number; yellowCards: number; redCard: boolean; }
 interface Match { id: string; tournamentId: string; round: number; homeTeamId: string; awayTeamId: string; status: 'pending' | 'finished'; result?: { home: number | null; away: number | null }; details?: { date: string; time: string; referee: string }; }
@@ -61,7 +60,7 @@ export default function TournamentFixturePage() {
     const [isGenerating, setIsGenerating] = useState(false);
 
     const calculateAndSaveStats = useCallback(async () => {
-        if (!tournament || !tournament.teams) return;
+        if (!teams || teams.length === 0) return;
 
         const [matchesSnapshot, matchStatsSnapshot] = await Promise.all([
             get(ref(db, 'matches')),
@@ -84,19 +83,20 @@ export default function TournamentFixturePage() {
         });
         Object.values(teamStats).forEach(team => { team.dg = team.gf - team.gc; });
         const sortedPositions = Object.values(teamStats).sort((a, b) => b.points - a.points || b.dg - a.dg || b.gf - a.gf);
-
+        
         const playerTotals: { [playerId: string]: { playerInfo: Player, teamId: string, teamName: string, goals: number, yellowCards: number, redCards: number } } = {};
-        for (const teamId in tournament.teams) {
-            const team = teams.find(t => t.id === teamId);
-            if (tournament.teams[teamId].roster && team) {
-                for (const playerId in tournament.teams[teamId].roster) {
-                    const player = tournament.teams[teamId].roster[playerId];
-                    playerTotals[playerId] = { playerInfo: player, teamId: teamId, teamName: team.name, goals: 0, yellowCards: 0, redCards: 0 };
-                }
+        teams.forEach(team => {
+            if (team.roster) {
+                Object.values(team.roster).forEach(player => {
+                    if(player && player.id) { // <-- Agregada verificación
+                      playerTotals[player.id] = { playerInfo: player, teamId: team.id, teamName: team.name, goals: 0, yellowCards: 0, redCards: 0 };
+                    }
+                });
             }
-        }
+        });
 
-        finishedMatches.forEach(match => {
+        // Modificado para incluir estadísticas de partidos NO finalizados al calcular goleadores y sanciones.
+        allMatches.forEach(match => { // Usar allMatches en lugar de finishedMatches para goleadores/sanciones
             const matchStats = allMatchStats[match.id];
             if (matchStats) {
                 for (const playerId in matchStats) {
@@ -119,7 +119,7 @@ export default function TournamentFixturePage() {
             sanctions: sortedSanctions
         });
         toast({ title: "Estadísticas recalculadas", description: "La tabla de posiciones, goleadores y sanciones ha sido actualizada." });
-    }, [tournamentId, teams, tournament, toast]);
+    }, [tournamentId, teams, toast]);
 
     useEffect(() => {
         if (userLoading) return;
@@ -133,7 +133,9 @@ export default function TournamentFixturePage() {
                 setTournament({ id: snapshot.key, ...tournamentData });
                 if (tournamentData.teams) {
                     const teamIds = Object.keys(tournamentData.teams);
-                    const teamsData = await Promise.all(teamIds.map(id => get(ref(db, `teams/${id}`)).then(snap => ({ id: snap.key, ...snap.val() }))));
+                    const teamsPromises = teamIds.map(id => get(ref(db, `teams/${id}`)));
+                    const teamsSnapshots = await Promise.all(teamsPromises);
+                    const teamsData = teamsSnapshots.map(snap => ({ id: snap.key, ...snap.val() }));
                     setTeams(teamsData.filter(t => t.id));
                 }
                 setPageState('READY');
@@ -242,6 +244,7 @@ export default function TournamentFixturePage() {
                                                                     awayTeamId={match.awayTeamId} 
                                                                     isFinished={match.status === 'finished'} 
                                                                     disabled={match.status === 'finished'} 
+                                                                    onStatsSaved={calculateAndSaveStats} // <-- PASANDO EL CALLBACK
                                                                 />
                                                                 <div className="flex items-center space-x-2">
                                                                     <Label htmlFor={`finished-${match.id}`}>Finalizado</Label>

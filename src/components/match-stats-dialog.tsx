@@ -21,7 +21,8 @@ interface MatchStatsDialogProps {
   homeTeamId: string;
   awayTeamId: string;
   isFinished: boolean;
-  disabled?: boolean; // <-- NUEVA PROPIEDAD
+  disabled?: boolean;
+  onStatsSaved?: () => void; // <-- NUEVO PROP
 }
 
 // --- SUB-COMPONENTE: Fila de un Jugador ---
@@ -92,7 +93,7 @@ const fetchPlayersData = async (playerIds: string[]): Promise<Player[]> => {
 
 
 // --- COMPONENTE PRINCIPAL ---
-export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId, isFinished, disabled }: MatchStatsDialogProps) {
+export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId, isFinished, disabled, onStatsSaved }: MatchStatsDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -160,6 +161,9 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
       await set(ref(db, `match_stats/${matchId}`), stats);
       toast({ title: "¡Éxito!", description: "Las estadísticas se guardaron correctamente.", className: "bg-green-500 text-white" });
       setIsOpen(false);
+      if (onStatsSaved) { // <-- LLAMADA AL NUEVO PROP
+        onStatsSaved();
+      }
     } catch (error) {
       toast({ title: "Error al Guardar", description: "No se pudieron guardar los cambios.", variant: "destructive" });
     } finally {

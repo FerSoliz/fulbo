@@ -31,19 +31,22 @@ import { es } from "date-fns/locale";
 import { cn } from '@/lib/utils';
 import { Slider } from '@/components/ui/slider';
 
+// MODIFICACIÓN: Añadidos nuevos formatos de torneo
 type TournamentType = 'Liga' | 'Copa';
-type TournamentFormat = '5v5' | '7v7' | '11v11';
+type TournamentFormat = '5v5' | '6v6' | '7v7' | '8v8' | '11v11';
 
 export default function CreateCompetitionPage() {
   const router = useRouter();
   const { user } = useUser();
   const { toast } = useToast();
   const [competitionName, setCompetitionName] = useState('');
+  const [venue, setVenue] = useState('');
   const [competitionType, setCompetitionType] = useState<TournamentType>('Liga');
   const [competitionFormat, setCompetitionFormat] = useState<TournamentFormat>('7v7');
   const [startDate, setStartDate] = useState<Date>();
-  const [teamCount, setTeamCount] = useState(8);
-  const [teamNames, setTeamNames] = useState<string[]>(Array(8).fill(''));
+  // MODIFICACIÓN: La cantidad inicial de equipos ahora es 4
+  const [teamCount, setTeamCount] = useState(4);
+  const [teamNames, setTeamNames] = useState<string[]>(Array(4).fill(''));
   const [isLoading, setIsLoading] = useState(false);
 
   if (user && user.role !== 'admin') {
@@ -69,6 +72,10 @@ export default function CreateCompetitionPage() {
   const handleSaveCompetition = async () => {
     if (!competitionName.trim()) {
         toast({ title: "Error de validación", description: "El nombre de la competencia es obligatorio.", variant: "destructive" });
+        return;
+    }
+    if (!venue.trim()) { 
+        toast({ title: "Error de validación", description: "La sede de la competencia es obligatoria.", variant: "destructive" });
         return;
     }
     if (!startDate) {
@@ -112,6 +119,7 @@ export default function CreateCompetitionPage() {
       const newTournamentData = {
         id: tournamentId,
         name: competitionName,
+        venue: venue, 
         type: competitionType,
         format: competitionFormat,
         teamCount: teamCount,
@@ -162,9 +170,15 @@ export default function CreateCompetitionPage() {
             <CardDescription>Completa los detalles para configurar tu nuevo torneo y sus equipos.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-8 pt-6">
-            <div className="space-y-2">
-              <Label htmlFor="competition-name" className="text-lg font-semibold">Nombre de la Competencia</Label>
-              <Input id="competition-name" value={competitionName} onChange={(e) => setCompetitionName(e.target.value)} placeholder="Ej: Copa SudOne - Apertura 2024" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="competition-name" className="text-base font-semibold">Nombre de la Competencia</Label>
+                <Input id="competition-name" value={competitionName} onChange={(e) => setCompetitionName(e.target.value)} placeholder="Ej: Copa SudOne - Apertura 2024" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="venue" className="text-base font-semibold">Sede</Label>
+                <Input id="venue" value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Ej: La Bombonera" />
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -183,8 +197,11 @@ export default function CreateCompetitionPage() {
                    <Select value={competitionFormat} onValueChange={(value: string) => setCompetitionFormat(value as TournamentFormat)}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
+                            {/* MODIFICACIÓN: Añadidos nuevos formatos */}
                             <SelectItem value="5v5">Fútbol 5</SelectItem>
+                            <SelectItem value="6v6">Fútbol 6</SelectItem>
                             <SelectItem value="7v7">Fútbol 7</SelectItem>
+                            <SelectItem value="8v8">Fútbol 8</SelectItem>
                             <SelectItem value="11v11">Fútbol 11</SelectItem>
                         </SelectContent>
                     </Select>

@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -49,6 +48,16 @@ export interface PlayerDetails {
   address: string;
   email: string;
 }
+
+export interface Tournament {
+  id: string;
+  name: string;
+  category: string;
+  startDate: string;
+  endDate: string;
+  venue: string;
+}
+
 
 // REFACTOR: Adaptado para Realtime Database con información desnormalizada del autor
 export interface Comment {
