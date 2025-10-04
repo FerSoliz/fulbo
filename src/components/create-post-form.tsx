@@ -159,6 +159,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
                   height={720}
                   className="w-full h-auto rounded-lg object-cover bg-muted"
                   onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               />
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-lg">
                   <Play className="h-16 w-16 text-white" />
@@ -180,7 +181,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
               <div className="flex space-x-2 p-1">
                   {imagePreviews.map((url, index) => (
                       <div key={index} className="relative h-24 w-24 flex-shrink-0">
-                          <Image src={url} alt={`Preview ${index}`} fill className="object-cover rounded-md" />
+                          <Image src={url} alt={`Preview ${index}`} fill className="object-cover rounded-md" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
                           {!isUploading && <Button
                               variant="destructive"
                               size="icon"
@@ -229,8 +230,8 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
                   <FormControl>
                     <input
                       id="file-upload"
-                      type="file"
-                      ref={fileInputRef}
+                      type="file" 
+                      ref={fileInputRef} 
                       className="hidden"
                       accept="image/*"
                       multiple

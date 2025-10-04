@@ -120,6 +120,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                   fill 
                   className="object-cover transition-opacity duration-300 group-hover:opacity-80"
                   onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Video+No+Disponible'; }}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                   <Play className="h-16 w-16 text-white transform transition-transform duration-300 group-hover:scale-110" />
@@ -156,7 +157,14 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
         return (
             <Link href={twitchUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}>
                 <div className="relative cursor-pointer group aspect-video bg-muted overflow-hidden">
-                    <Image src={videoItem.url} alt="Miniatura del stream de Twitch" fill className="object-contain" onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}/>
+                    <Image 
+                      src={videoItem.url} 
+                      alt="Miniatura del stream de Twitch" 
+                      fill 
+                      className="object-contain"
+                      onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" /></div>
                 </div>
             </Link>
@@ -179,7 +187,13 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                  <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer`}>
                     {imageMedia.slice(0, 4).map((item, index) => (
                         <div key={item.url || index} className={cn("relative bg-muted", imageCount === 3 && index === 0 && "row-span-2", imageCount === 1 ? "aspect-video" : "aspect-square")}>
-                            <Image src={item.url} alt={`Post media ${index + 1}`} fill className="object-contain" />
+                            <Image 
+                              src={item.url} 
+                              alt={`Post media ${index + 1}`} 
+                              fill 
+                              className="object-contain"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            />
                             {index === 3 && imageCount > 4 && (<div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-3xl font-bold">+{imageCount - 4}</div>)}
                         </div>
                     ))}

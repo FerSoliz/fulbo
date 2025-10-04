@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel"
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { MoreVertical, Edit, Trash2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -64,6 +64,11 @@ export function ProductCard({ product, isAdmin, onDelete, onEdit }: ProductCardP
                         </div>
                     </DialogTrigger>
                     <DialogContent className="max-w-3xl">
+                        {/* FIX: Añadido DialogHeader con título y descripción para accesibilidad */}
+                        <DialogHeader className="sr-only">
+                            <DialogTitle>Galería de imágenes del producto</DialogTitle>
+                            <DialogDescription>Navega por las imágenes del producto.</DialogDescription>
+                        </DialogHeader>
                          <Carousel className="w-full">
                             <CarouselContent>
                                 {product.images.map((img, index) => (
