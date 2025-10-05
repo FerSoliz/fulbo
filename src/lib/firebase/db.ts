@@ -1,6 +1,6 @@
 // src/lib/firebase/db.ts
 import { get, ref, query, orderByChild, equalTo, push, update, remove, set, serverTimestamp } from 'firebase/database';
-import { db } from '@/lib/firebase';
+import { db } from '@/lib/firebase.ts';
 import type { FoundPlayer } from '@/components/search/PlayerSearch';
 import type { RosterPlayer } from '@/components/team/RosterManager';
 

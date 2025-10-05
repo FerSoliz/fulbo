@@ -200,8 +200,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                 </div>
             </DialogTrigger>
             <DialogContent className="max-w-4xl h-[90vh] p-2">
-                 {/* FIX: Añadido DialogHeader con título y descripción para accesibilidad */}
-                 <DialogHeader className="sr-only"> {/* sr-only es para ocultarlo visualmente pero mantenerlo para lectores de pantalla */}
+                 <DialogHeader className="sr-only">
                     <DialogTitle>Galería de imágenes</DialogTitle>
                     <DialogDescription>Navega por las imágenes de la publicación usando las flechas de navegación.</DialogDescription>
                  </DialogHeader>
@@ -236,7 +235,6 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                             <Dialog>
                                 <DialogTrigger asChild><span className="text-sm font-medium text-muted-foreground cursor-pointer hover:underline">{Object.keys(post.likes).length} {Object.keys(post.likes).length === 1 ? 'Me gusta' : 'Me gusta'}</span></DialogTrigger>
                                 <DialogContent className="sm:max-w-[425px]">
-                                    {/* FIX: Añadido DialogDescription para accesibilidad */}
                                     <DialogHeader>
                                         <DialogTitle>Le gusta a</DialogTitle>
                                         <DialogDescription>Esta es la lista de usuarios a los que les gusta esta publicación.</DialogDescription>
