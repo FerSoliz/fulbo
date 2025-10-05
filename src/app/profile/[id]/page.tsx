@@ -145,7 +145,12 @@ export default function ProfilePage() {
 
         {view === 'ranking_preview' && <RankingPreview profileUserId={profileUser.id} onClose={() => setView('buttons')} />}
 
-        {view === 'favorite_tournaments' && <FavoriteTournamentsView onClose={() => setView('buttons')} />}
+        {view === 'favorite_tournaments' && (
+          <FavoriteTournamentsView 
+            tournamentIds={profileUser.favoriteTournaments || []} 
+            onClose={() => setView('buttons')}
+          />
+        )}
       </AnimatePresence>
     </>
   );

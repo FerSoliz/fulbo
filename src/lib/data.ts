@@ -1,3 +1,6 @@
+
+import { initialTournaments } from './tournaments-data';
+
 export interface User {
   id: string;
   name: string;
@@ -35,6 +38,7 @@ export interface User {
   };
   interactions?: number;
   packsOpened?: number;
+  favoriteTournaments?: string[];
 }
 
 export interface PlayerDetails {
@@ -175,6 +179,7 @@ export const initialUsers: User[] = [
     team: { name: 'Puerto F.C.', crestUrl: 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png' },
     interactions: 0,
     packsOpened: 0,
+    favoriteTournaments: ['clausura-2024'], // <-- TORNEO FAVORITO AÑADIDO
   },
   {
     id: 'captain-user', // ID actualizado
@@ -199,6 +204,7 @@ export const initialUsers: User[] = [
     team: { name: 'SUDONE FC', crestUrl: 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png' },
     interactions: 0,
     packsOpened: 0,
+    favoriteTournaments: [],
   },
 ];
 
