@@ -158,7 +158,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
             <Link href={twitchUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}>
                 <div className="relative cursor-pointer group aspect-video bg-muted overflow-hidden">
                     <Image 
-                      src={videoItem.url} 
+                      src={video.url} 
                       alt="Miniatura del stream de Twitch" 
                       fill 
                       className="object-contain"
@@ -238,19 +238,24 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
         
         {renderHeader()}
         
-        <CardContent className="p-0">
+        <CardContent className="p-0 relative">
             {post.content && <p className="px-6 pb-4 text-sm whitespace-pre-wrap">{post.content}</p>}
             {renderMedia()}
-        </CardContent>
 
-        <CardFooter className="flex-col items-start">
-             <div className="flex justify-between w-full pb-2 border-b">
+            {/* Nuevo div para las acciones, posicionado encima de la imagen */}
+            <div className="absolute inset-x-0 bottom-0 z-10 flex justify-between items-center p-4 bg-gradient-to-t from-black/70 to-transparent text-white">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center">
-                        <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor}><Heart className={cn("h-5 w-5", isLiked && 'text-red-500 fill-current')} /></Button>
+                        <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor}>
+                            <Heart className={cn("h-5 w-5 text-white", isLiked && 'text-red-500 fill-current')} />
+                        </Button>
                         {post.likes && Object.keys(post.likes).length > 0 ? (
                             <Dialog>
-                                <DialogTrigger asChild><span className="text-sm font-medium text-muted-foreground cursor-pointer hover:underline">{Object.keys(post.likes).length} {Object.keys(post.likes).length === 1 ? 'Me gusta' : 'Me gusta'}</span></DialogTrigger>
+                                <DialogTrigger asChild>
+                                    <span className="text-sm font-medium cursor-pointer hover:underline">
+                                        {Object.keys(post.likes).length} {Object.keys(post.likes).length === 1 ? 'Me gusta' : 'Me gusta'}
+                                    </span>
+                                </DialogTrigger>
                                 <DialogContent className="sm:max-w-[425px]">
                                     <DialogHeader>
                                         <DialogTitle>Le gusta a</DialogTitle>
@@ -258,18 +263,30 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                                     </DialogHeader>
                                     <div className="flex flex-col gap-4 py-4 max-h-[400px] overflow-y-auto">
                                         {Object.entries(post.likes).map(([userId, likeUser]) => (
-                                            <div key={userId} className="flex items-center gap-4"><Link href={`/profile/${userId}`}><Avatar><AvatarImage src={likeUser.avatar} alt={likeUser.name} /><AvatarFallback>{likeUser.name.charAt(0)}</AvatarFallback></Avatar></Link><Link href={`/profile/${userId}`} className="font-semibold hover:underline">{likeUser.name}</Link></div>
+                                            <div key={userId} className="flex items-center gap-4">
+                                                <Link href={`/profile/${userId}`}>
+                                                    <Avatar><AvatarImage src={likeUser.avatar} alt={likeUser.name} /><AvatarFallback>{likeUser.name.charAt(0)}</AvatarFallback></Avatar>
+                                                </Link>
+                                                <Link href={`/profile/${userId}`} className="font-semibold hover:underline">{likeUser.name}</Link>
+                                            </div>
                                         ))}
                                     </div>
                                 </DialogContent>
                             </Dialog>
-                        ) : <span className="text-sm font-medium text-muted-foreground">0 Me gusta</span>}
+                        ) : <span className="text-sm font-medium">0 Me gusta</span>}
                     </div>
-                    <Button variant="ghost" size="sm" onClick={() => setShowComments(!showComments)}><MessageSquare className="h-5 w-5" /><span className="ml-2 text-sm">{post.comments ? Object.keys(post.comments).length : 0}</span></Button>
+                    <Button variant="ghost" size="sm" onClick={() => setShowComments(!showComments)} className="text-white hover:bg-white/20">
+                        <MessageSquare className="h-5 w-5" />
+                        <span className="ml-2 text-sm">{post.comments ? Object.keys(post.comments).length : 0}</span>
+                    </Button>
                 </div>
-                <Button variant="ghost" size="sm" disabled={isVisitor}><Bookmark className="h-5 w-5" /></Button>
+                <Button variant="ghost" size="sm" disabled={isVisitor} className="text-white hover:bg-white/20">
+                    <Bookmark className="h-5 w-5" />
+                </Button>
             </div>
+        </CardContent>
 
+        <CardFooter className="flex-col items-start pt-4 border-t"> 
             {showComments && (
                 <div className="w-full space-y-4 pt-4">
                     {post.comments && Object.entries(post.comments).map(([commentId, comment]) => (
