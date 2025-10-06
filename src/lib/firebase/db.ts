@@ -278,7 +278,8 @@ export const searchTeams = async (searchText: string, excludedTeamIds: string[] 
 export const assignTeamToTournament = async (teamId: string, tournamentId: string): Promise<boolean> => {
     try {
         const updates: { [key: string]: any } = {};
-        updates[`/teams/${teamId}/tournamentId`] = tournamentId;
+        // --- BUGFIX: Usar la nueva estructura `tournaments` en lugar de `tournamentId` ---
+        updates[`/teams/${teamId}/tournaments/${tournamentId}`] = true;
         updates[`/tournaments/${tournamentId}/teams/${teamId}`] = true;
         updates[`/tournaments/${tournamentId}/teamCount`] = increment(1);
         await update(ref(db), updates);

@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { ref, onValue, update, push, serverTimestamp, remove } from 'firebase/database';
+import { ref, onValue, update, push, serverTimestamp, increment } from 'firebase/database';
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -123,11 +123,13 @@ export default function ManageTeamsPage() {
     if (!tournament) return;
     try {
         const updates: { [key: string]: any } = {};
-        updates[`/teams/${teamId}/tournamentId`] = null;
+        // --- BUGFIX: Usar la nueva estructura de `tournaments` ---
+        updates[`/teams/${teamId}/tournaments/${tournamentId}`] = null;
         updates[`/tournaments/${tournamentId}/teams/${teamId}`] = null;
-        updates[`/tournaments/${tournamentId}/teamCount`] = (tournament.teamCount || 1) - 1;
+        updates[`/tournaments/${tournamentId}/teamCount`] = increment(-1);
+
         await update(ref(db), updates);
-        // Manually filter out the team from the local state to avoid waiting for useEffect
+
         setTeams(prevTeams => prevTeams.filter(t => t.id !== teamId));
         toast({ title: "Equipo Desvinculado", description: `"${teamName}" fue eliminado del torneo.`});
     } catch (error) {
@@ -148,14 +150,22 @@ export default function ManageTeamsPage() {
         const newTeamId = newTeamRef.key;
         if (!newTeamId) throw new Error("No se pudo generar ID para el equipo");
 
-        const newTeamData = { id: newTeamId, name: newTeamName, logoUrl: `https://avatar.vercel.sh/${encodeURIComponent(newTeamName)}.png`, tournamentId: tournamentId, createdAt: serverTimestamp() };
+        // --- BUGFIX: Usar la nueva estructura `tournaments` en lugar de `tournamentId` ---
+        const newTeamData = { 
+          id: newTeamId, 
+          name: newTeamName.trim(), 
+          logoUrl: `https://avatar.vercel.sh/${encodeURIComponent(newTeamName.trim())}.png`, 
+          tournaments: { [tournamentId]: true }, // Estructura correcta
+          createdAt: serverTimestamp()
+        };
+
         updates[`/teams/${newTeamId}`] = newTeamData;
         updates[`/tournaments/${tournamentId}/teams/${newTeamId}`] = true;
-        updates[`/tournaments/${tournamentId}/teamCount`] = (tournament.teamCount || 0) + 1;
+        updates[`/tournaments/${tournamentId}/teamCount`] = increment(1);
 
         await update(ref(db), updates);
         setTeams(prev => [...prev, newTeamData].sort((a,b) => a.name.localeCompare(b.name)));
-        toast({ title: "Equipo Creado", description: `"${newTeamName}" fue creado e inscrito.`});
+        toast({ title: "Equipo Creado", description: `"${newTeamName.trim()}" fue creado e inscrito.`});
         setNewTeamName('');
     } catch (error) {
         console.error(error); toast({ title: "Error", description: "No se pudo crear el equipo.", variant: "destructive"});
@@ -172,6 +182,7 @@ export default function ManageTeamsPage() {
     }
     setIsAdding(true);
     try {
+        // La lógica compleja ya está en la función de DB (corregida en el paso anterior)
         const success = await assignTeamToTournament(team.id, tournamentId);
         if (success) {
             setTeams(prev => [...prev, {id: team.id, name: team.name, logoUrl: team.logoUrl}].sort((a,b) => a.name.localeCompare(b.name)));
