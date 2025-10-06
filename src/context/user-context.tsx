@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase'; 
-import { ref, onValue, get, set, update, increment, Unsubscribe } from 'firebase/database';
+import { ref, onValue, get, set, update, increment } from 'firebase/database';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const defaultVisitor: User = {
@@ -28,9 +28,6 @@ const defaultVisitor: User = {
 
 interface UserContextType {
   user: User | null;
-  allUsers: User[];
-  setUser: React.Dispatch<React.SetStateAction<User | null>>;
-  setAllUsers: React.Dispatch<React.SetStateAction<User[]>>;
   loading: boolean;
   login: (email: string, pass: string) => Promise<boolean>;
   register: (name: string, username: string, email: string, pass: string, dni: string, profileBackground: string) => Promise<boolean>;
@@ -50,7 +47,6 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [availablePacks, setAvailablePacks] = useState(0);
@@ -59,63 +55,43 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const { toast } = useToast();
 
-  // Hook para manejar el estado de autenticación del usuario
   useEffect(() => {
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
       if (firebaseUser) {
         const userRef = ref(db, `users/${firebaseUser.uid}`);
-        const snapshot = await get(userRef);
-        if (snapshot.exists()) {
-          setUser({ ...snapshot.val(), id: firebaseUser.uid });
-        } else {
-          // Caso raro: usuario en Auth pero no en DB. Se crea.
-          const newUserEntry: Omit<User, 'id'> = {
-              name: firebaseUser.displayName || 'Nuevo Usuario',
-              username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now()}`,
-              email: firebaseUser.email!,
-              avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
-              role: 'player',
-              isVerified: firebaseUser.emailVerified,
-              isBlocked: false, location: '', sudpoints: 0, baseSudpoints: 0, league: 'Bronce', division: 4,
-              stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
-              interactions: 0, packsOpened: 0,
-          };
-          await set(userRef, newUserEntry);
-          setUser({ ...newUserEntry, id: firebaseUser.uid });
-        }
+        
+        // Usar onValue para escuchar cambios en el perfil del usuario actual
+        const unsubscribeUser = onValue(userRef, (snapshot) => {
+          if (snapshot.exists()) {
+            setUser({ ...snapshot.val(), id: firebaseUser.uid });
+          } else {
+            // Esto solo se ejecutará una vez si el usuario no existe en la DB
+            const newUserEntry: Omit<User, 'id'> = {
+                name: firebaseUser.displayName || 'Nuevo Usuario',
+                username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now()}`,
+                email: firebaseUser.email!,
+                avatar: firebaseUser.photoURL || `https://avatar.vercel.sh/${firebaseUser.email}.png`,
+                role: 'player',
+                isVerified: firebaseUser.emailVerified,
+                isBlocked: false, location: '', sudpoints: 0, baseSudpoints: 0, league: 'Bronce', division: 4,
+                stats: { partidosJugados: 0, victorias: 0, empates: 0, derrotas: 0, goles: 0, asistencias: 0, amarillas: 0, rojas: 0, mvps: 0 },
+                interactions: 0, packsOpened: 0,
+            };
+            set(userRef, newUserEntry);
+            setUser({ ...newUserEntry, id: firebaseUser.uid });
+          }
+          setLoading(false);
+        });
+        
+        return () => unsubscribeUser();
       } else {
         setUser(defaultVisitor);
-        setAllUsers([]); // Limpia la lista de usuarios si no hay sesión.
+        setLoading(false);
       }
-      setLoading(false);
     });
     return () => unsubscribeAuth();
   }, []);
-
-  // Hook para cargar la lista de todos los usuarios. Depende del estado del 'user'.
-  useEffect(() => {
-    // Si el usuario no está autenticado (es visitante), no hacer nada.
-    if (!user || user.id === 'visitor') {
-      setAllUsers([]); // Asegura que la lista esté vacía y termina.
-      return;
-    }
-
-    // Si hay un usuario autenticado, escucha los cambios en la lista de usuarios.
-    const usersRef = ref(db, 'users');
-    const unsubscribeUsers: Unsubscribe = onValue(usersRef, (snapshot) => {
-      const data = snapshot.val();
-      const usersList: User[] = data ? Object.keys(data).map(key => ({ ...data[key], id: key })) : [];
-      setAllUsers(usersList);
-    }, (error) => {
-      console.error("Error al cargar todos los usuarios de RTDB: ", error);
-      // Este error ya no debería ocurrir para visitantes.
-      toast({ title: "Error de red", description: "No se pudo obtener la lista de usuarios.", variant: "destructive"});
-    });
-
-    // Limpia la suscripción cuando el componente se desmonta o el usuario cambia.
-    return () => unsubscribeUsers();
-  }, [user, toast]); // Se ejecuta cuando el 'user' cambia.
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     setLoading(true);
@@ -160,7 +136,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await signOut(auth);
     setUser(defaultVisitor);
-    setAllUsers([]);
     router.push('/login');
   };
 
@@ -177,7 +152,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   return (
-    <UserContext.Provider value={{ user, allUsers, setUser, setAllUsers, loading, login, register, logout, notifications, setNotifications, availablePacks, setAvailablePacks, nextPackTimestamp, setNextPackTimestamp, countdown, trackInteraction, trackPackOpening }}>
+    <UserContext.Provider value={{ user, loading, login, register, logout, notifications, setNotifications, availablePacks, setAvailablePacks, nextPackTimestamp, setNextPackTimestamp, countdown, trackInteraction, trackPackOpening }}>
       {children}
     </UserContext.Provider>
   );

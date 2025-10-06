@@ -27,7 +27,7 @@ const staticPages: SearchResult[] = [
 
 export function GlobalSearch() {
   const router = useRouter();
-  const { allUsers } = useUser();
+  const { user } = useUser(); // Solo necesitamos el usuario actual para la lógica
   const [open, setOpen] = useState(false);
   const [allData, setAllData] = useState<SearchResult[]>([]);
   const [searchValue, setSearchValue] = useState('');
@@ -36,30 +36,37 @@ export function GlobalSearch() {
 
 
   useEffect(() => {
-    // Load all searchable data
-    const userResults: SearchResult[] = allUsers.map(user => ({
-      type: 'USUARIO',
-      id: user.id,
-      name: user.name,
-      avatar: user.avatar,
-      path: `/profile/${user.id}`,
-    }));
+    // Función para cargar todos los datos de búsqueda
+    const loadAllData = async () => {
+      // Ya no obtenemos allUsers del contexto para evitar errores de renderizado.
+      // En una implementación más robusta, esto vendría de una API o una carga controlada.
+      const usersFromLocalStorage = JSON.parse(localStorage.getItem('allUsers') || '[]');
+      const userResults: SearchResult[] = (usersFromLocalStorage || []).map((u: any) => ({
+        type: 'USUARIO',
+        id: u.id,
+        name: u.name,
+        avatar: u.avatar,
+        path: `/profile/${u.id}`,
+      }));
 
-    const storedTournaments = JSON.parse(localStorage.getItem('tournaments') || '[]');
-    const tournamentResults: SearchResult[] = storedTournaments.map((t: any) => ({
-        type: 'TORNEO',
-        id: t.id,
-        name: t.name,
-        path: `/leagues`,
-    }));
+      const storedTournaments = JSON.parse(localStorage.getItem('tournaments') || '[]');
+      const tournamentResults: SearchResult[] = (storedTournaments || []).map((t: any) => ({
+          type: 'TORNEO',
+          id: t.id,
+          name: t.name,
+          path: `/leagues`,
+      }));
 
-    setAllData([...userResults, ...tournamentResults, ...staticPages]);
+      setAllData([...userResults, ...tournamentResults, ...staticPages]);
+    }
+
+    loadAllData();
     
-    // Load search history from localStorage
+    // Cargar historial de búsqueda de localStorage
     const savedHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
     setHistory(savedHistory);
 
-  }, [allUsers]);
+  }, []); // El array de dependencias vacío asegura que esto se ejecute solo una vez
 
    useEffect(() => {
     if (searchValue.length >= 3) {
@@ -92,7 +99,7 @@ export function GlobalSearch() {
   };
   
   const removeFromHistory = (e: React.MouseEvent, id: string) => {
-      e.stopPropagation(); // Prevent item selection
+      e.stopPropagation(); // Evitar la selección del item
       const newHistory = history.filter(h => h.id !== id);
       setHistory(newHistory);
       localStorage.setItem('searchHistory', JSON.stringify(newHistory));
