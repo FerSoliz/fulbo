@@ -126,6 +126,12 @@
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Visualización del Historial de Partidos del Equipo:**
+  - **Fecha:** 2024-05-24
+  - **Descripción:** Se ha implementado la funcionalidad completa para que los usuarios puedan ver el historial de partidos del equipo de cualquier jugador desde su perfil.
+  - **Lógica de Datos Robusta:** Se implementó una función en `lib/firebase/db.ts` que busca eficientemente todos los partidos de un equipo, utilizando un índice de base de datos para optimizar el rendimiento.
+  - **Componente de Vista Inteligente:** El componente `MatchHistoryView.tsx` ahora obtiene los datos de los partidos y, de forma asíncrona, enriquece esta información obteniendo los nombres de los equipos y torneos antes de renderizar la vista, evitando errores y asegurando que la UI muestre información completa.
+  - **Depuración Integral:** Se llevó a cabo un proceso completo de depuración que corrigió errores de lógica, de renderizado en el cliente, de acceso a datos y de sintaxis de JSX.
 - **Reproductor de Video Mejorado y Creación de Posts Optimizada:**
   - **Fecha:** 2024-05-24
   - **Descripción:** Se ha refinado la experiencia de video en el feed social para hacerla más fluida y profesional.
