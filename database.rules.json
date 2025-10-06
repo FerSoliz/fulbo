@@ -1,47 +1,60 @@
 {
   "rules": {
+    // --- REGLA GLOBAL: Nadie puede leer o escribir por defecto ---
+    ".read": false,
+    ".write": false,
+
     "users": {
       ".indexOn": ["dni"],
-      ".read": "auth != null", // Solo usuarios autenticados pueden leer la colección 'users'
+      ".read": "auth != null", 
       "$userId": {
         ".write": "auth != null && (auth.uid === $userId || root.child('users').child(auth.uid).child('role').val() === 'admin')",
         "username": { ".validate": "newData.isString() && newData.val().length > 0" },
         "role": { ".validate": "newData.isString() && (newData.val() === 'player' || newData.val() === 'captain' || newData.val() === 'admin')" }
       }
     },
+    
     "posts": {
-      ".read": true, // Cualquiera (autenticado o no) puede leer la colección 'posts'
+      ".read": true,
       "$postId": {
-        ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid) || (data.exists() && data.child('authorId').val() === auth.uid) || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        // Validamos que los nuevos campos desnormalizados existan y sean strings
-        ".validate": "newData.hasChildren(['authorId', 'authorName', 'authorAvatar', 'authorUsername', 'content', 'createdAt'])",
+        // --- REGLA DE ESCRITURA ---
+        ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'captain')) || (data.exists() && (data.child('authorId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')))",
+
+        // --- VALIDACIÓN COMPLETA ---
+        ".validate": "newData.hasChildren(['authorId', 'authorName', 'authorAvatar', 'authorUsername', 'createdAt']) && newData.child('authorId').isString() && newData.child('authorName').isString() && newData.child('authorAvatar').isString() && newData.child('authorUsername').isString() && newData.child('createdAt').isString() && (newData.hasChild('content') && newData.child('content').isString() && newData.child('content').val().length > 0 || newData.hasChild('media'))",
+        
         "authorId": { ".validate": "newData.isString()" },
-        "authorName": { ".validate": "newData.isString() && newData.val().length > 0" },
-        "authorAvatar": { ".validate": "newData.isString() && newData.val().length > 0" },
-        "authorUsername": { ".validate": "newData.isString() && newData.val().length > 0" },
-        "content": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 500" },
+        "authorName": { ".validate": "newData.isString()" },
+        "authorAvatar": { ".validate": "newData.isString()" },
+        "authorUsername": { ".validate": "newData.isString()" },
+        "content": { ".validate": "newData.isString() && newData.val().length <= 500" },
         "createdAt": { ".validate": "newData.isString()" },
+        "url": { ".validate": "newData.isString() || newData.val() === null" },
+        "isPinned": { ".validate": "newData.isBoolean() || newData.val() === null" },
+        "pinnedUntil": { ".validate": "newData.isString() || newData.val() === null" },
+
         "likes": {
           "$uid": {
             ".write": "auth != null && auth.uid === $uid",
-            ".validate": "newData.isBoolean() || newData.val() === null"
+            ".validate": "newData.hasChildren(['name', 'avatar', 'username']) && newData.child('name').isString() && newData.child('avatar').isString() && newData.child('username').isString() || newData.val() === null"
           }
         },
+
         "comments": {
           "$commentId": {
-            ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid) || (data.exists() && data.child('authorId').val() === auth.uid) || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-            ".validate": "newData.hasChildren(['authorId', 'content', 'createdAt'])",
-            "authorId": { ".validate": "newData.isString()" },
-            "content": { ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 200" }
+            ".write": "auth != null && ((newData.hasChild('authorId') && newData.child('authorId').val() === auth.uid) || (data.exists() && data.child('authorId').val() === auth.uid) || root.child('users').child(auth.uid).child('role').val() === 'admin' )",
+            ".validate": "newData.hasChildren(['authorId', 'authorName', 'authorAvatar', 'authorUsername', 'content', 'createdAt']) && newData.child('authorId').isString() && newData.child('authorName').isString() && newData.child('authorAvatar').isString() && newData.child('authorUsername').isString() && newData.child('content').isString() && newData.child('content').val().length > 0 && newData.child('content').val().length <= 200 && newData.child('createdAt').isString()"
           }
         },
-        "media": { ".validate": "newData.hasChildren() || newData.val() === null" },
-        "url": { ".validate": "newData.isString() || newData.val() == null" },
-        "isPinned": { ".validate": "newData.isBoolean() || newData.val() == null" },
-        "pinnedUntil": { ".validate": "newData.isString() || newData.val() == null" },
+        
+        // --- CORRECCIÓN FINAL ---
+        // Se cambió .isObject() por .hasChildren(), que es la validación correcta.
+        "media": { ".validate": "newData.hasChildren()" },
         "$other": { ".validate": false }
       }
     },
+
+    // --- OTRAS REGLAS (Mantenidas como estaban) ---
     "guestPlayers": {
       ".read": "auth != null",
       ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'captain')"
@@ -70,8 +83,6 @@
     "tournament_stats": {
       ".read": true,
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
-    },
-    ".read": "auth != null", // Regla global: por defecto, solo usuarios autenticados pueden leer
-    ".write": false
+    }
   }
 }

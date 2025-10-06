@@ -33,6 +33,7 @@
 ---
 
 ## 3. Directrices de programación
+- **Directriz Suprema: Experiencia optimizada para móviles (mobile-first).** Toda funcionalidad debe ser diseñada y probada primariamente para interacción táctil y en pantallas pequeñas.
 - **Lenguaje:** usar **TypeScript** en todos los módulos.  
 - **Compatibilidad:** asegurar que el código funcione en **Chrome, Safari y Firefox**.  
 - **Accesibilidad:** cumplir WCAG AA; siempre usar `alt` en imágenes, roles/labelling ARIA y `aria-live` en estados de carga.  
@@ -113,7 +114,6 @@
 - Estados visibles (`loading`, `empty`, `error`) con `aria-busy` y `aria-live`.  
 - Formularios accesibles, con validación clara y mensajes entendibles.  
 - Navegación limpia; botones coherentes (“Inscribirme”, “Ver fixture”, “Reglamento”, “Contactar”).  
-- Experiencia optimizada para móviles (mobile-first).  
 
 ---
 
