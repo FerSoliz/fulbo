@@ -6,7 +6,6 @@ import { ref, onValue, update, set, get } from 'firebase/database';
 import { db } from '@/lib/firebase'; 
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
-// --- ¡NUEVO! Importamos nuestra función de cálculo de estadísticas globales ---
 import { updatePlayerGlobalStats } from '@/lib/firebase/stats'; 
 
 import Link from 'next/link';
@@ -21,7 +20,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { ArrowLeft, Loader2, ShieldCheck, Trophy, PlusCircle, ListOrdered, XCircle, ShieldAlert } from 'lucide-react';
 
-// --- TIPOS (se incluye el nuevo campo opcional statsProcessed) ---
+// --- TIPOS ---
 interface Tournament { id: string; name: string; teamCount: number; teams: { [key: string]: boolean }; }
 interface Team { id: string; name: string; logoUrl: string; roster?: { [playerId: string]: Player }; players?: { [playerId: string]: boolean }; }
 interface Player { id: string; name: string; lastName?: string; dni: string; }
@@ -158,29 +157,37 @@ export default function TournamentFixturePage() {
 
     }, [teams, toast]);
 
-    // --- ¡AQUÍ ESTÁ LA MAGIA! ---
+    // --- FUNCIÓN handleStatsSaved CON DIAGNÓSTICOS MEJORADOS ---
     const handleStatsSaved = useCallback(async (match: Match) => {
-        if (!tournament) return;
+        toast({ title: "[Debug] 1/4 - Iniciando proceso de guardado..." });
 
-        // 1. Actualizar el marcador del partido a partir de los goles individuales
+        if (!tournament) {
+            toast({ title: "[Debug] Error Crítico", description: "No se encontró la información del torneo.", variant: "destructive"});
+            return;
+        }
+
+        // Imprimimos el objeto del partido en la consola para inspeccionarlo
+        console.log("[Debug] Objeto del partido recibido:", match);
+
+        // 1. Actualizar el marcador del partido
         await updateMatchScoreFromStats(match);
         
-        // 2. Calcular y guardar las estadísticas A NIVEL DE TORNEO (posiciones, goleadores)
+        // 2. Calcular estadísticas a nivel de torneo
         await calculateAndSaveStats();
-        toast({ title: "Estadísticas de Torneo Actualizadas", description: "Las tablas de posiciones, goleadores y sanciones han sido recalculadas.", className: "bg-blue-500 text-white" });
+        toast({ title: "[Debug] 2/4 - Estadísticas de torneo actualizadas." });
 
-        // 3. ¡NUEVO! Calcular y guardar las estadísticas GLOBALES para cada jugador
-        // Se comprueba que el partido no haya sido procesado antes para evitar duplicados.
+        // 3. Calcular estadísticas globales para cada jugador
         if (!match.statsProcessed) {
+            toast({ title: "[Debug] 3/4 - El partido no ha sido procesado antes. Actualizando perfiles de jugador..." });
             try {
                 await updatePlayerGlobalStats(match.id, tournament.id, tournament.name);
-                toast({ title: "¡Perfiles de Jugador Actualizados!", description: "Las estadísticas globales de los jugadores involucrados han sido actualizadas.", className: "bg-green-500 text-white" });
+                toast({ title: "¡ÉXITO! 4/4 - Perfiles de Jugador Actualizados", description: "Las estadísticas globales de los jugadores han sido guardadas correctamente.", className: "bg-green-500 text-white" });
             } catch (error) {
-                console.error("Error al actualizar las estadísticas globales de los jugadores:", error);
-                toast({ title: "Error Crítico", description: "No se pudieron actualizar los perfiles globales de los jugadores.", variant: "destructive" });
+                console.error("[Debug] Error Crítico al actualizar las estadísticas globales:", error);
+                toast({ title: "¡FALLO! 4/4 - Error al Guardar Perfiles", description: `Hubo un problema al guardar los datos globales. Revisa la consola para más detalles. Error: ${(error as Error).message}` , variant: "destructive", duration: 10000 });
             }
         } else {
-             console.log(`El partido ${match.id} ya ha sido procesado para estadísticas globales. Omitiendo.`);
+            toast({ title: "[Debug] 3/4 - Omitido", description: "Este partido ya tiene la marca 'statsProcessed'. No se volverán a calcular las estadísticas globales para evitar duplicados.", variant: "default", duration: 8000 });
         }
     }, [updateMatchScoreFromStats, calculateAndSaveStats, tournament, toast]);
 
