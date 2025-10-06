@@ -186,14 +186,31 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
             <DialogTrigger asChild>
                  <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer`}>
                     {imageMedia.slice(0, 4).map((item, index) => (
-                        <div key={item.url || index} className={cn("relative bg-muted", imageCount === 3 && index === 0 && "row-span-2", imageCount === 1 ? "aspect-video" : "aspect-square")}>
-                            <Image 
-                              src={item.url} 
-                              alt={`Post media ${index + 1}`} 
-                              fill 
-                              className="object-contain"
-                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                            />
+                        <div key={item.url || index}
+                             className={cn(
+                                "relative bg-muted w-full",
+                                imageCount === 3 && index === 0 && "row-span-2",
+                                imageCount > 1 && "aspect-square" // Aplicar aspect-square solo para múltiples imágenes
+                             )}
+                        >
+                            {imageCount === 1 ? (
+                                <Image
+                                  src={item.url}
+                                  alt={`Post media ${index + 1}`}
+                                  width={1000} // Valor arbitrario, se controlará con el CSS
+                                  height={1000} // Valor arbitrario, se controlará con el CSS
+                                  className="w-full h-auto object-contain" // w-full, h-auto y object-contain para una sola imagen
+                                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                />
+                            ) : (
+                                <Image
+                                  src={item.url}
+                                  alt={`Post media ${index + 1}`}
+                                  fill
+                                  className="object-contain" // object-contain para múltiples imágenes en cuadrícula
+                                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                />
+                            )}
                             {index === 3 && imageCount > 4 && (<div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-3xl font-bold">+{imageCount - 4}</div>)}
                         </div>
                     ))}
@@ -206,7 +223,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                  </DialogHeader>
                  <Carousel className="w-full h-full">
                     <CarouselContent className="h-full">
-                        {imageMedia.map((item, index) => (<CarouselItem key={item.url || index} className="flex items-center justify-center h-full"><Image src={item.url} alt={`Post media ${index + 1}`} width={1920} height={1080} className="max-h-full w-auto object-contain" /></CarouselItem>))}
+                        {imageMedia.map((item, index) => (<CarouselItem key={item.url || index} className="flex items-center justify-center h-full"><Image src={item.url} alt={`Post media ${index + 1}`} width={1920} height={1080} className="w-full h-auto object-contain" /></CarouselItem>))}
                     </CarouselContent>
                     <CarouselPrevious /><CarouselNext />
                 </Carousel>
