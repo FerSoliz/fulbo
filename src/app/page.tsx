@@ -57,7 +57,7 @@ export default function HomePage() {
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, []);
 
   const handleAddPost = async (postData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments' | 'authorName' | 'authorAvatar' | 'authorUsername'>) => {
     if (!currentUser || currentUser.id === 'visitor' || currentUser.role === 'player') return;
