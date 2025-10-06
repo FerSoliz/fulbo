@@ -381,3 +381,51 @@ export const getMatchHistoryForTeam = async (teamId: string): Promise<Match[]> =
     return []; // Devolvemos un array vacío en caso de un error inesperado.
   }
 };
+
+/**
+ * Encuentra el próximo partido programado para un equipo, previendo datos incompletos.
+ * @param teamId El ID del equipo.
+ * @returns Una promesa que se resuelve con el próximo partido (Match) o null si no hay ninguno.
+ */
+export const getNextMatchForTeam = async (teamId: string): Promise<Match | null> => {
+  console.log(`[DB Service] Buscando próximo partido para teamId: ${teamId}`);
+  try {
+    // 1. Reutilizamos la lógica robusta para obtener TODOS los partidos del equipo.
+    const allMatches = await getMatchHistoryForTeam(teamId);
+
+    // 2. Filtramos en el cliente solo los partidos que están pendientes.
+    const pendingMatches = allMatches.filter(match => match.status === 'pending');
+
+    if (pendingMatches.length === 0) {
+      console.log(`[DB Service] No se encontraron partidos con estado 'pending' para el equipo ${teamId}.`);
+      return null;
+    }
+
+    // 3. Ordenamiento inteligente: los partidos con fecha tienen prioridad.
+    pendingMatches.sort((a, b) => {
+      const aHasDate = !!a.details?.date;
+      const bHasDate = !!b.details?.date;
+
+      if (aHasDate && !bHasDate) return -1; // a (con fecha) va antes que b (sin fecha).
+      if (!aHasDate && bHasDate) return 1;  // b (con fecha) va antes que a (sin fecha).
+
+      // Si ambos tienen fecha, se ordena por la más próxima.
+      if (aHasDate && bHasDate) {
+        return new Date(a.details!.date).getTime() - new Date(b.details!.date).getTime();
+      }
+
+      // Si ninguno tiene fecha, su orden relativo no importa.
+      return 0;
+    });
+
+    // 4. El próximo partido es el primero en la lista ordenada.
+    const nextMatch = pendingMatches[0];
+    console.log(`[DB Service] Próximo partido encontrado para ${teamId}: ${nextMatch.id}. ¿Tiene fecha?: ${!!nextMatch.details?.date}`);
+    
+    return nextMatch;
+
+  } catch (error) {
+    console.error(`[DB Service] Error crítico al obtener el próximo partido para ${teamId}:`, error);
+    return null;
+  }
+};

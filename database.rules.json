@@ -13,7 +13,10 @@
     "matches": {
       ".indexOn": [
         "teamAId",
-        "teamBId"
+        "teamBId",
+        "tournamentId",
+        "homeTeamId",
+        "awayTeamId"
       ],
       ".read": "auth != null",
       "$matchId": {
@@ -79,6 +82,7 @@
       }
     },
     "teams": {
+      ".indexOn": "name",
       ".read": true,
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
       "$teamId": {

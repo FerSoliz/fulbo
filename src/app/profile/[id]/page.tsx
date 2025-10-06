@@ -21,6 +21,7 @@ import { TournamentsView } from '@/components/profile/TournamentsView';
 import { MyTeamModal } from '@/components/profile/MyTeamModal';
 import { PlayerStatsView } from '@/components/profile/PlayerStatsView';
 import { MatchHistoryView } from '@/components/profile/MatchHistoryView';
+import { NextMatchView } from '@/components/profile/NextMatchView';
 
 export default function ProfilePage() {
   const params = useParams();
@@ -118,9 +119,8 @@ export default function ProfilePage() {
         {view === 'ranking_preview' && <RankingPreview profileUserId={userId} onClose={() => setView('buttons')} />}
         {view === 'my_team' && <MyTeamModal profileUser={profileUser} onClose={() => setView('buttons')} />}
         {view === 'stats' && <PlayerStatsView profileUser={profileUser} onClose={() => setView('buttons')} />}
-        
-        {/* ¡ACTUALIZADO! Pasamos el objeto profileUser completo */}
         {view === 'history' && <MatchHistoryView profileUser={profileUser} onClose={() => setView('buttons')} />}
+        {view === 'next_match' && <NextMatchView profileUser={profileUser} onClose={() => setView('buttons')} />}
       </AnimatePresence>
 
     </div>
