@@ -1,69 +1,82 @@
-
 {
   "rules": {
-    // Regla global: Nadie puede leer o escribir por defecto.
     ".read": false,
     ".write": false,
-
-    "users": {
-      ".indexOn": ["dni"],
-      ".read": "auth != null",
-      "$userId": {
-        ".write": "auth != null && (auth.uid === $userId || root.child('users').child(auth.uid).child('role').val() === 'admin')",
-        "username": { ".validate": "newData.isString() && newData.val().length > 0" },
-        "role": { ".validate": "newData.isString() && (newData.val() === 'player' || newData.val() === 'captain' || newData.val() === 'admin')" }
-      }
-    },
-    
-    // --- ¡NUEVA SECCIÓN! ---
-    // Reglas para las estadísticas globales de los jugadores.
-    "playerStats": {
-      "$userId": {
-        // Un usuario puede leer sus propias estadísticas. También un admin puede leerlas (heredado por la regla de escritura).
-        ".read": "auth != null && auth.uid === $userId",
-        // Solo un administrador puede escribir/actualizar las estadísticas de un jugador.
-        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
-      }
-    },
-
-    "posts": {
-      ".read": true,
-      "$postId": {
-        ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'captain')) || (data.exists() && (data.child('authorId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')))",
-        ".validate": "newData.hasChildren(['authorId', 'authorName', 'authorAvatar', 'authorUsername', 'createdAt']) && newData.child('authorId').isString() && newData.child('authorName').isString() && newData.child('authorAvatar').isString() && newData.child('authorUsername').isString() && newData.child('createdAt').isString() && (newData.hasChild('content') && newData.child('content').isString() && newData.child('content').val().length > 0 || newData.hasChild('media'))",
-        "authorId": { ".validate": "newData.isString()" },
-        "authorName": { ".validate": "newData.isString()" },
-        "authorAvatar": { ".validate": "newData.isString()" },
-        "authorUsername": { ".validate": "newData.isString()" },
-        "content": { ".validate": "newData.isString() && newData.val().length <= 500" },
-        "createdAt": { ".validate": "newData.isString()" },
-        "url": { ".validate": "newData.isString() || newData.val() === null" },
-        "isPinned": { ".validate": "newData.isBoolean() || newData.val() === null" },
-        "pinnedUntil": { ".validate": "newData.isString() || newData.val() === null" },
-        "likes": {
-          "$uid": {
-            ".write": "auth != null && auth.uid === $uid",
-            ".validate": "newData.hasChildren(['name', 'avatar', 'username']) && newData.child('name').isString() && newData.child('avatar').isString() && newData.child('username').isString() || newData.val() === null"
-          }
-        },
-        "comments": {
-          "$commentId": {
-            ".write": "auth != null && ((newData.hasChild('authorId') && newData.child('authorId').val() === auth.uid) || (data.exists() && data.child('authorId').val() === auth.uid) || root.child('users').child(auth.uid).child('role').val() === 'admin' )",
-            ".validate": "newData.hasChildren(['authorId', 'authorName', 'authorAvatar', 'authorUsername', 'content', 'createdAt']) && newData.child('authorId').isString() && newData.child('authorName').isString() && newData.child('authorAvatar').isString() && newData.child('authorUsername').isString() && newData.child('content').isString() && newData.child('content').val().length > 0 && newData.child('content').val().length <= 200 && newData.child('createdAt').isString()"
-          }
-        },
-        "media": { ".validate": "newData.hasChildren()" },
-        "$other": { ".validate": false }
-      }
-    },
-
     "guestPlayers": {
       ".read": "auth != null",
       ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'captain')"
     },
-    "tournaments": {
-      ".read": true,
+    "match_stats": {
+      ".read": "auth != null",
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+    "matches": {
+      ".indexOn": [
+        "teamAId",
+        "teamBId"
+      ],
+      ".read": "auth != null",
+      "$matchId": {
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+      }
+    },
+    "playerStats": {
+      "$userId": {
+        ".read": "auth != null && (auth.uid === $userId || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+      }
+    },
+    "posts": {
+      ".read": true,
+      "$postId": {
+        ".validate": "newData.hasChildren(['authorId', 'authorName', 'authorAvatar', 'authorUsername', 'createdAt']) && newData.child('authorId').isString() && newData.child('authorName').isString() && newData.child('authorAvatar').isString() && newData.child('authorUsername').isString() && newData.child('createdAt').isString() && (newData.hasChild('content') && newData.child('content').isString() && newData.child('content').val().length > 0 || newData.hasChild('media'))",
+        ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'captain')) || (data.exists() && (data.child('authorId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')))",
+        "authorAvatar": {
+          ".validate": "newData.isString()"
+        },
+        "authorId": {
+          ".validate": "newData.isString()"
+        },
+        "authorName": {
+          ".validate": "newData.isString()"
+        },
+        "authorUsername": {
+          ".validate": "newData.isString()"
+        },
+        "comments": {
+          "$commentId": {
+            ".validate": "newData.hasChildren(['authorId', 'authorName', 'authorAvatar', 'authorUsername', 'content', 'createdAt']) && newData.child('authorId').isString() && newData.child('authorName').isString() && newData.child('authorAvatar').isString() && newData.child('authorUsername').isString() && newData.child('content').isString() && newData.child('content').val().length > 0 && newData.child('content').val().length <= 200 && newData.child('createdAt').isString()",
+            ".write": "auth != null && ((newData.hasChild('authorId') && newData.child('authorId').val() === auth.uid) || (data.exists() && data.child('authorId').val() === auth.uid) || root.child('users').child(auth.uid).child('role').val() === 'admin' )"
+          }
+        },
+        "content": {
+          ".validate": "newData.isString() && newData.val().length <= 500"
+        },
+        "createdAt": {
+          ".validate": "newData.isString()"
+        },
+        "isPinned": {
+          ".validate": "newData.isBoolean() || newData.val() === null"
+        },
+        "likes": {
+          "$uid": {
+            ".validate": "newData.hasChildren(['name', 'avatar', 'username']) && newData.child('name').isString() && newData.child('avatar').isString() && newData.child('username').isString() || newData.val() === null",
+            ".write": "auth != null && auth.uid === $uid"
+          }
+        },
+        "media": {
+          ".validate": "newData.hasChildren()"
+        },
+        "pinnedUntil": {
+          ".validate": "newData.isString() || newData.val() === null"
+        },
+        "url": {
+          ".validate": "newData.isString() || newData.val() === null"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
     },
     "teams": {
       ".read": true,
@@ -74,23 +87,28 @@
         }
       }
     },
-    
-    // --- REGLA MODIFICADA ---
-    // Se hace más granular para permitir que el admin modifique campos específicos.
-    "matches": {
-      ".read": "auth != null",
-      "$matchId": {
-          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
-      }
-    },
-
-    "match_stats": {
-      ".read": "auth != null",
-      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
-    },
     "tournament_stats": {
       ".read": true,
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+    "tournaments": {
+      ".read": true,
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
+    "users": {
+      ".indexOn": [
+        "dni"
+      ],
+      ".read": "auth != null",
+      "$userId": {
+        ".write": "auth != null && (auth.uid === $userId || root.child('users').child(auth.uid).child('role').val() === 'admin')",
+        "role": {
+          ".validate": "newData.isString() && (newData.val() === 'player' || newData.val() === 'captain' || newData.val() === 'admin')"
+        },
+        "username": {
+          ".validate": "newData.isString() && newData.val().length > 0"
+        }
+      }
     }
   }
 }

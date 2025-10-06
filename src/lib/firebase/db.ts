@@ -1,7 +1,7 @@
 
 import { ref, get, set, update, onValue, off, query, orderByChild, equalTo, remove, push, serverTimestamp, increment } from 'firebase/database';
 import { db } from '../firebase';
-import { UserProfile, Post, RosterPlayer, FoundPlayer, TeamDetails } from '../types'; 
+import { UserProfile, Post, RosterPlayer, FoundPlayer, TeamDetails, Match } from '../types'; 
 
 // --- TIPOS ---
 
@@ -234,8 +234,6 @@ export const removePlayerFromTeam = async (playerId: string, teamId: string, isG
   }
 };
 
-// El resto de las funciones permanece sin cambios... 
-
 export const getAllTeams = async (): Promise<TeamSummary[]> => {
     try {
         const teamsRef = ref(db, 'teams');
@@ -320,4 +318,66 @@ export const getPosts = async (): Promise<Post[]> => {
             .sort((a, b) => b.createdAt - a.createdAt);
     }
     return [];
+};
+
+
+// --- IMPLEMENTACIÓN PROFESIONAL Y CORRECTA PARA HISTORIAL DE PARTIDOS ---
+
+/**
+ * Obtiene el historial de partidos completo para un equipo específico.
+ * Sigue la lógica de la aplicación: Equipo -> Torneos en los que participa -> Partidos de esos torneos.
+ * @param teamId El ID del equipo.
+ * @returns Una promesa que se resuelve con un array de todos los partidos del equipo.
+ */
+export const getMatchHistoryForTeam = async (teamId: string): Promise<Match[]> => {
+  console.log(`[DB Service] Iniciando búsqueda de historial para teamId: ${teamId}`);
+  
+  try {
+    // 1. Obtener la lista de IDs de torneos en los que el equipo está inscrito.
+    const teamTournamentsRef = ref(db, `teams/${teamId}/tournaments`);
+    const teamTournamentsSnap = await get(teamTournamentsRef);
+
+    if (!teamTournamentsSnap.exists()) {
+      console.log(`[DB Service] El equipo ${teamId} no está inscrito en ningún torneo.`);
+      return []; // Si no juega torneos, no tiene partidos.
+    }
+
+    const tournamentIds = Object.keys(teamTournamentsSnap.val());
+    if (tournamentIds.length === 0) {
+      console.log(`[DB Service] La lista de torneos para el equipo ${teamId} está vacía.`);
+      return [];
+    }
+    console.log(`[DB Service] Equipo ${teamId} participa en los torneos:`, tournamentIds);
+
+    // 2. Para cada torneo, buscar todos sus partidos y luego filtrar.
+    const matchesPromises = tournamentIds.map(async (tournamentId) => {
+      const matchesRef = ref(db, 'matches');
+      // Buscamos todos los partidos que pertenecen a este torneo.
+      const q = query(matchesRef, orderByChild('tournamentId'), equalTo(tournamentId));
+      const snapshot = await get(q);
+
+      if (snapshot.exists()) {
+        const matchesInTournament = snapshot.val();
+        // ¡CORRECCIÓN FINAL! Usamos los nombres de campo correctos de tus datos.
+        const teamMatches = Object.values(matchesInTournament)
+          .map((matchData: any) => ({ id: matchData.id, ...matchData }))
+          .filter(match => match.homeTeamId === teamId || match.awayTeamId === teamId);
+        
+        return teamMatches;
+      } 
+      return []; // No se encontraron partidos para este torneo.
+    });
+
+    // 3. Ejecutar todas las promesas y aplanar el resultado.
+    const matchesPerTournament = await Promise.all(matchesPromises);
+    const allMatches = matchesPerTournament.flat(); // Aplanamos el array de arrays.
+
+    console.log(`[DB Service] Se encontraron un total de ${allMatches.length} partidos para el equipo ${teamId} en todos sus torneos.`);
+
+    return allMatches;
+
+  } catch (error) {
+    console.error(`[DB Service] Error crítico al obtener el historial de partidos para ${teamId}:`, error);
+    return []; // Devolvemos un array vacío en caso de un error inesperado.
+  }
 };

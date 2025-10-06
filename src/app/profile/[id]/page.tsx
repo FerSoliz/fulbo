@@ -20,10 +20,11 @@ import { RankingPreview } from '@/components/profile/RankingPreview';
 import { TournamentsView } from '@/components/profile/TournamentsView';
 import { MyTeamModal } from '@/components/profile/MyTeamModal';
 import { PlayerStatsView } from '@/components/profile/PlayerStatsView';
+import { MatchHistoryView } from '@/components/profile/MatchHistoryView';
 
 export default function ProfilePage() {
   const params = useParams();
-  const userId = params.id as string; // Este userId viene de la URL y debería ser siempre válido aquí
+  const userId = params.id as string; 
   const { toast } = useToast();
   const { user: currentUser, refreshUser } = useUser();
   const { uploadFile } = useUpload();
@@ -105,23 +106,21 @@ export default function ProfilePage() {
         onTransferClick={() => toast({ title: 'Próximamente', description: 'El mercado de fichajes se abrirá pronto.' })}
       />
 
-      {/* Si la vista es 'buttons', muestra la botonera */}
       {view === 'buttons' && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
           <ProfileActions setView={setView} />
         </motion.div>
       )}
 
-      {/* AnimatePresence maneja las transiciones de entrada y salida de los componentes */}
       <AnimatePresence mode="wait">
         {view === 'favorite_tournaments' && <TournamentsView profileUser={profileUser} onClose={() => setView('buttons')} />}
         {view === 'sudone_pass' && <SudonePassView onClose={() => setView('buttons')} />}
-        {/* ¡IMPORTANTE! Pasamos userId directamente aquí */}
         {view === 'ranking_preview' && <RankingPreview profileUserId={userId} onClose={() => setView('buttons')} />}
         {view === 'my_team' && <MyTeamModal profileUser={profileUser} onClose={() => setView('buttons')} />}
-        
         {view === 'stats' && <PlayerStatsView profileUser={profileUser} onClose={() => setView('buttons')} />}
-
+        
+        {/* ¡ACTUALIZADO! Pasamos el objeto profileUser completo */}
+        {view === 'history' && <MatchHistoryView profileUser={profileUser} onClose={() => setView('buttons')} />}
       </AnimatePresence>
 
     </div>

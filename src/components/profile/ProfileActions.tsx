@@ -4,21 +4,17 @@
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 
-// El tipo de vista no cambia, sigue siendo nuestra guía
 export type ProfileView = 'buttons' | 'history' | 'stats' | 'next_match' | 'sudone_pass' | 'ranking_preview' | 'favorite_tournaments' | 'my_team';
 
 interface ProfileActionsProps {
   setView: (view: ProfileView) => void;
 }
 
-// 1. Centralizamos la información de los botones en un array de objetos.
-// Cada objeto tiene todo lo necesario para renderizar un botón.
 const profileButtons = [
   {
     view: 'history' as ProfileView,
     label: 'Ver historial de partidos',
     alt: 'Historial',
-    // Usamos rutas locales, asumiendo que las imágenes estarán en `public/assets/profile/`
     src: '/assets/profile/historial.png',
   },
   {
@@ -63,8 +59,6 @@ export const ProfileActions = ({ setView }: ProfileActionsProps) => {
   return (
     <Card>
       <CardContent className="p-4 grid grid-cols-4 gap-4">
-        {/* 2. Mapeamos el array para generar los botones dinámicamente. */}
-        {/* Ahora el código es mucho más corto, limpio y fácil de mantener. */}
         {profileButtons.map((button) => (
           <button
             key={button.view}
@@ -72,7 +66,14 @@ export const ProfileActions = ({ setView }: ProfileActionsProps) => {
             onClick={() => setView(button.view)}
             aria-label={button.label}
           >
-            <Image src={button.src} alt={button.alt} width={150} height={50} />
+            {/* ¡CORREGIDO! Se añade el estilo para mantener la proporción */}
+            <Image 
+              src={button.src} 
+              alt={button.alt} 
+              width={150} 
+              height={50} 
+              style={{ height: 'auto' }} 
+            />
           </button>
         ))}
       </CardContent>

@@ -44,7 +44,8 @@ export const BackgroundChangerDialog = ({ user, onSave, children }: BackgroundCh
               className="relative aspect-video cursor-pointer group rounded-lg overflow-hidden"
               onClick={() => handleSelect(bg)}
             >
-              <Image src={bg} alt="Fondo" layout="fill" objectFit="cover" />
+              {/* ¡CORREGIDO! Se usa la prop 'fill' y 'className' para el object-fit */}
+              <Image src={bg} alt="Fondo" fill className="object-cover" />
               {user.profileBackground === bg && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                   <CheckCircle2 className="w-8 h-8 text-white" />

@@ -86,7 +86,8 @@ export const ProfileHeader = ({
   return (
     <Card>
       <div className="relative w-full aspect-[4/1]">
-        {profileBackground && <Image src={profileBackground} alt="Fondo de perfil" layout='fill' className="object-cover rounded-t-lg" priority />}
+        {/* ¡CORREGIDO! Se usa la prop 'fill' en lugar de 'layout' */}
+        {profileBackground && <Image src={profileBackground} alt="Fondo de perfil" fill className="object-cover rounded-t-lg" priority />}
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
         <div className="absolute top-2 right-2 z-10 flex gap-2 items-center">
           {currentCrest && <div className="w-10 h-10"><Image src={currentCrest} alt="Escudo del equipo" width={40} height={40} /></div>}
