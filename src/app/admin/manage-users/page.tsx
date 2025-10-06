@@ -38,7 +38,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
   ArrowLeft,
@@ -57,31 +56,43 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
-// --- CORRECCIÓN DE IMPORTACIONES ---
 import { db } from '@/lib/firebase';
-import { ref, update, remove } from 'firebase/database';
+import { ref, onValue, update, remove } from 'firebase/database';
 
 export default function ManageUsersPage() {
-  const { user: currentUser, loading: userLoading, allUsers, setAllUsers } = useUser();
+  const { user: currentUser } = useUser();
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!userLoading) {
-        setLoading(false);
-    }
-  }, [userLoading]);
+    setLoading(true);
+    const usersRef = ref(db, 'users');
+    const unsubscribe = onValue(usersRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const usersList: User[] = Object.keys(data).map(key => ({ id: key, ...data[key] }));
+        setUsers(usersList);
+      } else {
+        setUsers([]);
+      }
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching users: ", error);
+      toast({ title: "Error de Carga", description: "No se pudo obtener la lista de usuarios.", variant: "destructive" });
+      setLoading(false);
+    });
+
+    // Limpiar la suscripción al desmontar el componente
+    return () => unsubscribe();
+  }, [toast]);
 
   const saveUserUpdate = async (updatedUser: Partial<User> & { id: string }) => {
     try {
-        // Usamos `db` en lugar de `rtdb`
         const userRef = ref(db, `users/${updatedUser.id}`);
         await update(userRef, updatedUser);
-
-        setAllUsers((prev) =>
-          prev.map((u) => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u))
-        );
+        // El listener onValue actualizará el estado automáticamente, no es necesario un `setUsers` manual.
     } catch (error) {
         console.error("Error actualizando usuario en RTDB: ", error);
         toast({ title: "Error", description: "No se pudo actualizar el usuario.", variant: "destructive" });
@@ -89,7 +100,7 @@ export default function ManageUsersPage() {
   };
 
   const handleToggleBlock = (userId: string) => {
-    const userToUpdate = allUsers.find((u) => u.id === userId);
+    const userToUpdate = users.find((u) => u.id === userId);
     if (!userToUpdate) return;
     const updatedUser = { id: userId, isBlocked: !userToUpdate.isBlocked };
     saveUserUpdate(updatedUser);
@@ -99,7 +110,7 @@ export default function ManageUsersPage() {
   };
 
   const handleChangeRole = (userId: string, newRole: 'player' | 'captain' | 'admin') => {
-    const userToUpdate = allUsers.find((u) => u.id === userId);
+    const userToUpdate = users.find((u) => u.id === userId);
     if (!userToUpdate) return;
     const updatedUser = { id: userId, role: newRole };
     saveUserUpdate(updatedUser);
@@ -111,11 +122,9 @@ export default function ManageUsersPage() {
 
   const handleDeleteUser = async (userId: string) => {
     try {
-      // Usamos `db` en lugar de `rtdb`
       const userRef = ref(db, `users/${userId}`);
       await remove(userRef);
-      
-      setAllUsers((prev) => prev.filter((u) => u.id !== userId));
+      // El listener onValue actualizará el estado automáticamente.
       toast({
         title: 'Usuario Eliminado',
         description: 'El usuario ha sido eliminado permanentemente.',
@@ -127,12 +136,13 @@ export default function ManageUsersPage() {
     }
   };
   
-  const filteredUsers = allUsers.filter(user => 
+  // Se usa el estado local `users` que está garantizado que es un array
+  const filteredUsers = (users || []).filter(user => 
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  if (loading || userLoading) {
+  if (loading) {
     return <div className="p-8 text-center">Cargando usuarios...</div>;
   }
 
@@ -282,7 +292,7 @@ export default function ManageUsersPage() {
                 </TableBody>
               </Table>
             </div>
-            {filteredUsers.length === 0 && (
+            {filteredUsers.length === 0 && !loading && (
                  <div className="text-center p-8 text-muted-foreground">
                     <p>No se encontraron usuarios con ese criterio de búsqueda.</p>
                 </div>
