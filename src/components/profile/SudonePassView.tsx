@@ -32,7 +32,11 @@ const itemVariants = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 
 export const SudonePassView = ({ currentLevel, currentSudpoints, passProgress, claimedPassRewards, handleClaimReward, onClose }: SudonePassViewProps) => {
   
   const isUnlocked = (level: number) => level <= currentLevel;
-  const isClaimed = (level: number) => claimedPassRewards.includes(level);
+  // --- INICIO DE LA CORRECCIÓN ---
+  // Se añade una guarda para asegurar que claimedPassRewards es un array.
+  // Si es undefined, se trata como un array vacío [].
+  const isClaimed = (level: number) => (claimedPassRewards || []).includes(level);
+  // --- FIN DE LA CORRECCIÓN ---
 
   return (
     <motion.div
@@ -99,7 +103,7 @@ export const SudonePassView = ({ currentLevel, currentSudpoints, passProgress, c
                                     </div>
                                     
                                     <Button size="sm" disabled={!unlocked || claimed} variant={claimed ? "ghost" : "default"} onClick={() => handleClaimReward(level)} className="w-32">
-                                        {claimed ? <><CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />Reclamado</> : unlocked ? "Reclamar" : <><Lock className="mr-2 h-4 w-4"/>Bloqueado</>}
+                                        {claimed ? <><CheckCircle2 className="mr-2 h-4 w-4 text-green-500" />Reclamado</> : unlocked ? "Reclamar" : <><Lock className="mr-2 h-4 w-4" />Bloqueado</>}
                                     </Button>
                                 </motion.div>
                             );

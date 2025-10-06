@@ -35,12 +35,14 @@ const profileButtons = [
     alt: 'Mi Equipo',
     src: '/assets/profile/mi-equipo.png',
   },
+  /* --- INICIO: OCULTAR BOTÓN SUDONE PASS ---
   {
     view: 'sudone_pass' as ProfileView,
     label: 'Ver SUDONE PASS',
     alt: 'SUDONE PASS',
     src: '/assets/profile/sudone-pass.png',
   },
+  --- FIN: OCULTAR BOTÓN SUDONE PASS --- */
   {
     view: 'ranking_preview' as ProfileView,
     label: 'Ver ranking de jugadores',
