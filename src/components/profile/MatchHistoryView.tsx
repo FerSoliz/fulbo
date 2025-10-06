@@ -9,7 +9,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getMatchHistoryForTeam } from '@/lib/firebase/db';
 import { ref, get } from 'firebase/database';
 import { db } from '@/lib/firebase';
-import { UserProfile, Match, Tournament, Team } from '@/lib/types'; // 1. Importar el tipo Team
+import { UserProfile, Match, Tournament, Team } from '@/lib/types';
 import { Loader2, X, History, Trophy, UserX } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -25,7 +25,6 @@ export const MatchHistoryView = ({ profileUser, onClose }: MatchHistoryViewProps
   const [loading, setLoading] = useState(true);
   const [userMatches, setUserMatches] = useState<Match[]>([]);
   const [tournaments, setTournaments] = useState<Record<string, Tournament>>({});
-  // 2. Crear un estado para mapear IDs de equipos a sus datos
   const [teamsMap, setTeamsMap] = useState<Record<string, Team>>({});
   const [activeTab, setActiveTab] = useState<string>('all');
   const { toast } = useToast();
@@ -42,15 +41,13 @@ export const MatchHistoryView = ({ profileUser, onClose }: MatchHistoryViewProps
       setLoading(true);
       try {
         const matches = await getMatchHistoryForTeam(teamId);
-        matches.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        matches.sort((a, b) => new Date(b.details?.date).getTime() - new Date(a.details?.date).getTime());
         setUserMatches(matches);
 
         if (matches.length > 0) {
-          // 3. Enriquecer los datos: obtener la info de torneos y equipos
           const tournamentIds = [...new Set(matches.map(m => m.tournamentId))];
           const teamIds = [...new Set(matches.flatMap(m => [m.homeTeamId, m.awayTeamId]))];
 
-          // Obtener datos de torneos
           const tournamentPromises = tournamentIds.map(id => get(ref(db, `tournaments/${id}`)));
           const tournamentSnapshots = await Promise.all(tournamentPromises);
           const tournamentsData: Record<string, Tournament> = {};
@@ -61,7 +58,6 @@ export const MatchHistoryView = ({ profileUser, onClose }: MatchHistoryViewProps
           });
           setTournaments(tournamentsData);
 
-          // Obtener datos de equipos
           const teamPromises = teamIds.map(id => get(ref(db, `teams/${id}`)));
           const teamSnapshots = await Promise.all(teamPromises);
           const teamsData: Record<string, Team> = {};
@@ -114,7 +110,7 @@ export const MatchHistoryView = ({ profileUser, onClose }: MatchHistoryViewProps
           <p className="font-semibold text-lg">Sin Partidos</p>
           <p>Este equipo aún no ha disputado ningún partido.</p>
         </div>
-      )
+      );
     }
 
     return (
@@ -143,17 +139,15 @@ export const MatchHistoryView = ({ profileUser, onClose }: MatchHistoryViewProps
                     filteredMatches.map(match => (
                       <div key={match.id} className="bg-accent p-3 rounded-lg shadow-sm flex items-center justify-between">
                         <div>
-                          {/* 4. LEER EL NOMBRE DEL EQUIPO DESDE EL MAPA, NO DEL OBJETO MATCH */}
                           <p className="font-semibold text-lg">
                             {teamsMap[match.homeTeamId]?.name || 'Equipo Local'} vs {teamsMap[match.awayTeamId]?.name || 'Equipo Visitante'}
                           </p>
                           <p className="text-sm text-muted-foreground">
-                            {tournaments[match.tournamentId]?.name || 'Torneo'} - {new Date(match.date).toLocaleDateString()}
+                            {tournaments[match.tournamentId]?.name || 'Torneo'} - {match.details?.date ? new Date(match.details.date).toLocaleDateString() : 'Fecha no disponible'}
                           </p>
                         </div>
                         <div className="text-right">
-                           {/* 5. CORREGIR TAMBIÉN LOS NOMBRES DE LAS PROPIEDADES DEL MARCADOR */}
-                          <p className="font-bold text-xl">{match.result?.homeScore ?? '-'} - {match.result?.awayScore ?? '-'}</p>
+                          <p className="font-bold text-xl">{match.result?.home ?? '-'} - {match.result?.away ?? '-'}</p>
                         </div>
                       </div>
                     ))
