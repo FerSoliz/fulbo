@@ -6,6 +6,8 @@ import { ref, onValue, update, set, get } from 'firebase/database';
 import { db } from '@/lib/firebase'; 
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
+// --- ¡NUEVO! Importamos nuestra función de cálculo de estadísticas globales ---
+import { updatePlayerGlobalStats } from '@/lib/firebase/stats'; 
 
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -19,17 +21,17 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { ArrowLeft, Loader2, ShieldCheck, Trophy, PlusCircle, ListOrdered, XCircle, ShieldAlert } from 'lucide-react';
 
-// --- TIPOS ---
+// --- TIPOS (se incluye el nuevo campo opcional statsProcessed) ---
 interface Tournament { id: string; name: string; teamCount: number; teams: { [key: string]: boolean }; }
 interface Team { id: string; name: string; logoUrl: string; roster?: { [playerId: string]: Player }; players?: { [playerId: string]: boolean }; }
 interface Player { id: string; name: string; lastName?: string; dni: string; }
 interface PlayerStatsInfo { goals: number; yellowCards: number; redCard: boolean; }
-interface Match { id: string; tournamentId: string; round: number; homeTeamId: string; awayTeamId: string; status: 'pending' | 'finished'; result?: { home: number | null; away: number | null }; details?: { date: string; time: string; referee: string }; }
+interface Match { id: string; tournamentId: string; round: number; homeTeamId: string; awayTeamId: string; status: 'pending' | 'finished'; result?: { home: number | null; away: number | null }; details?: { date: string; time: string; referee: string }; statsProcessed?: boolean; }
 interface Stats { positions: any[]; scorers: any[]; sanctions: any[]; }
 type PageState = 'LOADING' | 'ACCESS_DENIED' | 'NOT_FOUND' | 'READY';
 
 
-// --- LÓGICA DE NEGOCIO ---
+// --- LÓGICA DE NEGOCIO (sin cambios aquí) ---
 const generateRoundRobinFixture = (teams: Team[]) => {
     const schedule: { round: number; homeTeamId: string; awayTeamId: string; }[] = [];
     let localTeams = [...teams];
@@ -64,6 +66,7 @@ export default function TournamentFixturePage() {
     const [isGenerating, setIsGenerating] = useState(false);
 
     const calculateAndSaveStats = useCallback(async () => {
+        // ... (esta función no cambia)
         if (!teams || teams.length === 0) return;
 
         const [matchesSnapshot, matchStatsSnapshot] = await Promise.all([
@@ -86,7 +89,7 @@ export default function TournamentFixturePage() {
             else { if(home) { home.drawn++; home.points += 1; } if(away) { away.drawn++; away.points += 1; } }
         });
         Object.values(teamStats).forEach(team => { team.dg = team.gf - team.gc; });
-        const sortedPositions = Object.values(teamStats).sort((a, b) => b.points - a.points || b.dg - a.dg || b.gf - a.gf);
+        const sortedPositions = Object.values(teamStats).sort((a, b) => b.points - a.dg || b.gf - a.gf);
         
         const playerTotals: { [playerId: string]: { playerInfo: Player, teamId: string, teamName: string, goals: number, yellowCards: number, redCards: number } } = {};
         teams.forEach(team => {
@@ -115,7 +118,7 @@ export default function TournamentFixturePage() {
 
         const allPlayerStats = Object.values(playerTotals);
         const sortedScorers = allPlayerStats.filter(p => p.goals > 0).sort((a, b) => b.goals - a.goals || (a.playerInfo.name.localeCompare(b.playerInfo.name)));
-        const sortedSanctions = allPlayerStats.filter(p => p.redCards > 0 || p.yellowCards > 0).sort((a, b) => b.redCards - a.redCards || b.yellowCards - a.yellowCards);
+        const sortedSanctions = allPlayerStats.filter(p => p.redCards > 0 || p.yellowCards > 0).sort((a, b) => b.redCards - a.yellowCards);
 
         await set(ref(db, `tournament_stats/${tournamentId}`), { 
             positions: sortedPositions,
@@ -125,6 +128,7 @@ export default function TournamentFixturePage() {
     }, [tournamentId, teams]);
 
     const updateMatchScoreFromStats = useCallback(async (match: Match) => {
+        // ... (esta función no cambia)
         const matchStatsSnap = await get(ref(db, `match_stats/${match.id}`));
         if (!matchStatsSnap.exists()) return;
 
@@ -154,11 +158,31 @@ export default function TournamentFixturePage() {
 
     }, [teams, toast]);
 
+    // --- ¡AQUÍ ESTÁ LA MAGIA! ---
     const handleStatsSaved = useCallback(async (match: Match) => {
+        if (!tournament) return;
+
+        // 1. Actualizar el marcador del partido a partir de los goles individuales
         await updateMatchScoreFromStats(match);
+        
+        // 2. Calcular y guardar las estadísticas A NIVEL DE TORNEO (posiciones, goleadores)
         await calculateAndSaveStats();
-        toast({ title: "Estadísticas Generales Recalculadas", description: "Las tablas de posiciones, goleadores y sanciones han sido actualizadas.", className: "bg-blue-500 text-white" });
-    }, [updateMatchScoreFromStats, calculateAndSaveStats, toast]);
+        toast({ title: "Estadísticas de Torneo Actualizadas", description: "Las tablas de posiciones, goleadores y sanciones han sido recalculadas.", className: "bg-blue-500 text-white" });
+
+        // 3. ¡NUEVO! Calcular y guardar las estadísticas GLOBALES para cada jugador
+        // Se comprueba que el partido no haya sido procesado antes para evitar duplicados.
+        if (!match.statsProcessed) {
+            try {
+                await updatePlayerGlobalStats(match.id, tournament.id, tournament.name);
+                toast({ title: "¡Perfiles de Jugador Actualizados!", description: "Las estadísticas globales de los jugadores involucrados han sido actualizadas.", className: "bg-green-500 text-white" });
+            } catch (error) {
+                console.error("Error al actualizar las estadísticas globales de los jugadores:", error);
+                toast({ title: "Error Crítico", description: "No se pudieron actualizar los perfiles globales de los jugadores.", variant: "destructive" });
+            }
+        } else {
+             console.log(`El partido ${match.id} ya ha sido procesado para estadísticas globales. Omitiendo.`);
+        }
+    }, [updateMatchScoreFromStats, calculateAndSaveStats, tournament, toast]);
 
     useEffect(() => {
         if (userLoading) return;
@@ -228,6 +252,7 @@ export default function TournamentFixturePage() {
     }, [pageState, router]);
     
     const handleGenerateFixture = async () => {
+        // ... (esta función no cambia)
         if (teams.length < 2) { toast({ title: "No hay suficientes equipos", variant: "destructive" }); return; }
         setIsGenerating(true);
         try {

@@ -11,12 +11,15 @@ import { UserProfile } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
+// --- Componentes de la Vista de Perfil ---
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileActions, ProfileView } from '@/components/profile/ProfileActions';
 import { SudonePassView } from '@/components/profile/SudonePassView';
 import { RankingPreview } from '@/components/profile/RankingPreview';
 import { TournamentsView } from '@/components/profile/TournamentsView';
 import { MyTeamModal } from '@/components/profile/MyTeamModal';
+// --- ¡NUEVO! Importamos el componente de estadísticas ---
+import { PlayerStatsView } from '@/components/profile/PlayerStatsView';
 
 export default function ProfilePage() {
   const params = useParams();
@@ -27,9 +30,11 @@ export default function ProfilePage() {
 
   const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  // Ahora la vista por defecto es 'buttons'. El tipo ProfileView se importa desde ProfileActions
   const [view, setView] = useState<ProfileView>('buttons');
 
-  const fetchProfileUser = useCallback(() => {
+  // ... (el resto de los hooks y funciones como fetchProfileUser, handleProfileUpdate, etc., no cambian)
+    const fetchProfileUser = useCallback(() => {
     if (!userId) return () => {};
     setLoading(true);
     const userRef = ref(db, `users/${userId}`);
@@ -83,6 +88,7 @@ export default function ProfilePage() {
     }
   };
 
+
   if (loading) {
     return <div className="flex items-center justify-center h-screen" role="status" aria-live="polite"><Loader2 className="h-12 w-12 animate-spin text-primary" /><span className="sr-only">Cargando perfil...</span></div>;
   }
@@ -101,19 +107,24 @@ export default function ProfilePage() {
         onTransferClick={() => toast({ title: 'Próximamente', description: 'El mercado de fichajes se abrirá pronto.' })}
       />
 
+      {/* Si la vista es 'buttons', muestra la botonera */}
       {view === 'buttons' && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
           <ProfileActions setView={setView} />
         </motion.div>
       )}
 
-      <AnimatePresence>
+      {/* AnimatePresence maneja las transiciones de entrada y salida de los componentes */}
+      <AnimatePresence mode="wait">
         {view === 'favorite_tournaments' && <TournamentsView profileUser={profileUser} onClose={() => setView('buttons')} />}
         {view === 'sudone_pass' && <SudonePassView onClose={() => setView('buttons')} />}
         {view === 'ranking_preview' && <RankingPreview onClose={() => setView('buttons')} profileUser={profileUser} />}
-        {/* AHORA LA LÓGICA ES MÁS SIMPLE: si la vista es 'my_team', renderiza el modal. */}
-        {/* Le pasamos el usuario completo para que el modal decida qué mostrar. */}
         {view === 'my_team' && <MyTeamModal profileUser={profileUser} onClose={() => setView('buttons')} />}
+        
+        {/* --- ¡NUEVO! Aquí está la magia --- */}
+        {/* Si la vista es 'stats', renderiza nuestro nuevo componente de estadísticas */}
+        {view === 'stats' && <PlayerStatsView profileUser={profileUser} onClose={() => setView('buttons')} />}
+
       </AnimatePresence>
 
     </div>
