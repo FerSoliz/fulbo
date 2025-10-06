@@ -3,14 +3,15 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { RosterManager } from "@/components/team/RosterManager";
-import { getTeamDetails, TeamDetails as Team } from '@/lib/firebase/db';
-import AnimatedTeamLogo from '@/components/AnimatedTeamLogo'; // Importa el componente actualizado
+import { getTeamDetails } from '@/lib/firebase/db';
+import { TeamDetails } from '@/lib/types'; // <-- IMPORT CORREGIDO
+import AnimatedTeamLogo from '@/components/AnimatedTeamLogo';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ManageTeamPage() {
   const params = useParams();
   const teamId = Array.isArray(params.teamId) ? params.teamId[0] : params.teamId;
-  const [team, setTeam] = useState<Team | null>(null);
+  const [team, setTeam] = useState<TeamDetails | null>(null); // <-- TIPO CORREGIDO
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,6 +20,7 @@ export default function ManageTeamPage() {
       if (teamId) {
         try {
           setLoading(true);
+          // Ahora esta función existe y es llamada correctamente
           const teamData = await getTeamDetails(teamId);
           if (teamData) {
             setTeam(teamData);

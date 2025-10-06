@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Alert, AlertDescription } from '@/components/ui/alert'; // NUEVO: Importar componentes de alerta
-import { Loader2, UserX, AlertTriangle } from 'lucide-react'; // NUEVO: Importar ícono de alerta
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, UserX, AlertTriangle } from 'lucide-react';
 import { PlayerSearch, FoundPlayer } from '@/components/search/PlayerSearch';
 import { AddGuestPlayerForm } from '@/components/team/AddGuestPlayerForm';
 import { Button } from '@/components/ui/button';
@@ -66,12 +66,12 @@ export function RosterManager({ teamId }: RosterManagerProps) {
     setFoundPlayer(null);
   };
 
-  // NUEVO: Lógica unificada para añadir cualquier tipo de jugador encontrado.
   const handleAddPlayer = async (player: FoundPlayer) => {
     setIsSubmitting(true);
     let success = false;
     try {
       if (player.isGuest) {
+        // Para invitados, usamos su DNI como ID, que ya está en player.id
         const result = await addGuestPlayerToTeam(player.name, player.dni, teamId);
         success = !!result;
       } else {
@@ -188,7 +188,7 @@ export function RosterManager({ teamId }: RosterManagerProps) {
                         Confirma que es la persona correcta antes de añadirla a tu equipo.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4"> {/* NUEVO: Añadido space-y-4 para separar la alerta */}
+                <CardContent className="space-y-4">
                     <div className="flex items-center space-x-4">
                         <Avatar className="h-16 w-16">
                             <AvatarImage src={foundPlayer.avatar} alt={`Avatar de ${foundPlayer.name}`} />
@@ -196,12 +196,17 @@ export function RosterManager({ teamId }: RosterManagerProps) {
                         </Avatar>
                         <div className="space-y-1">
                             <p className="text-xl font-bold">{foundPlayer.name}</p>
-                            <p className="text-sm text-muted-foreground">@{foundPlayer.username}</p>
+                            {/* LÓGICA CORREGIDA: Formateo condicional del nombre de usuario */}
+                            <p className="text-sm text-muted-foreground">
+                              @
+                              {foundPlayer.isGuest
+                                ? `invitado-${foundPlayer.name.split(' ')[0].toLowerCase()}`
+                                : foundPlayer.username}
+                            </p>
                             <p className="text-sm text-muted-foreground">DNI: {foundPlayer.dni}</p>
                         </div>
                     </div>
                     
-                    {/* NUEVO: Bloque de alerta condicional */}
                     {foundPlayer.team && foundPlayer.team.id !== teamId && (
                       <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
@@ -215,7 +220,6 @@ export function RosterManager({ teamId }: RosterManagerProps) {
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2">
                     <Button variant="ghost" onClick={resetRightPanel} disabled={isSubmitting}>Cancelar</Button>
-                    {/* NUEVO: El botón ahora llama al manejador unificado */}
                     <Button onClick={() => handleAddPlayer(foundPlayer)} disabled={isSubmitting}>
                         {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Añadir al Equipo'}
                     </Button>

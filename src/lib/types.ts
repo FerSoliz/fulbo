@@ -37,7 +37,7 @@ export interface UserProfile {
     };
     interactions: number;
     packsOpened: number;
-    favoriteTournaments?: string[]; // <--- NUEVO CAMPO AÑADIDO
+    favoriteTournaments?: string[]; 
 }
 
 export interface Team {
@@ -46,6 +46,15 @@ export interface Team {
     crestUrl: string;
     captainId: string;
     players: string[];
+}
+
+// --- NUEVA INTERFAZ PARA DETALLES DE EQUIPO ---
+export interface TeamDetails {
+    id: string;
+    name: string;
+    logoUrl: string;
+    captainId: string;
+    // Podríamos añadir más campos como `tournamentId`, etc. en el futuro
 }
 
 export interface Post {
@@ -70,5 +79,26 @@ export interface Post {
   createdAt: number;
   isPinned?: boolean;
   pinnedUntil?: number;
+}
+
+export interface RosterPlayer {
+  id: string;
+  name: string;
+  dni: string;
+  isGuest: boolean;
+}
+
+export interface FoundPlayer {
+  id: string;
+  name: string;
+  dni: string;
+  username: string;
+  avatar?: string;
+  isGuest?: boolean;
+  team?: {
+    id: string;
+    name: string;
+    crestUrl?: string | null;
+  } | null;
 }
 ''
