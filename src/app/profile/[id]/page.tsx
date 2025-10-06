@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -18,23 +19,20 @@ import { SudonePassView } from '@/components/profile/SudonePassView';
 import { RankingPreview } from '@/components/profile/RankingPreview';
 import { TournamentsView } from '@/components/profile/TournamentsView';
 import { MyTeamModal } from '@/components/profile/MyTeamModal';
-// --- ¡NUEVO! Importamos el componente de estadísticas ---
 import { PlayerStatsView } from '@/components/profile/PlayerStatsView';
 
 export default function ProfilePage() {
   const params = useParams();
-  const userId = params.id as string;
+  const userId = params.id as string; // Este userId viene de la URL y debería ser siempre válido aquí
   const { toast } = useToast();
   const { user: currentUser, refreshUser } = useUser();
   const { uploadFile } = useUpload();
 
   const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  // Ahora la vista por defecto es 'buttons'. El tipo ProfileView se importa desde ProfileActions
   const [view, setView] = useState<ProfileView>('buttons');
 
-  // ... (el resto de los hooks y funciones como fetchProfileUser, handleProfileUpdate, etc., no cambian)
-    const fetchProfileUser = useCallback(() => {
+  const fetchProfileUser = useCallback(() => {
     if (!userId) return () => {};
     setLoading(true);
     const userRef = ref(db, `users/${userId}`);
@@ -118,11 +116,10 @@ export default function ProfilePage() {
       <AnimatePresence mode="wait">
         {view === 'favorite_tournaments' && <TournamentsView profileUser={profileUser} onClose={() => setView('buttons')} />}
         {view === 'sudone_pass' && <SudonePassView onClose={() => setView('buttons')} />}
-        {view === 'ranking_preview' && <RankingPreview onClose={() => setView('buttons')} profileUser={profileUser} />}
+        {/* ¡IMPORTANTE! Pasamos userId directamente aquí */}
+        {view === 'ranking_preview' && <RankingPreview profileUserId={userId} onClose={() => setView('buttons')} />}
         {view === 'my_team' && <MyTeamModal profileUser={profileUser} onClose={() => setView('buttons')} />}
         
-        {/* --- ¡NUEVO! Aquí está la magia --- */}
-        {/* Si la vista es 'stats', renderiza nuestro nuevo componente de estadísticas */}
         {view === 'stats' && <PlayerStatsView profileUser={profileUser} onClose={() => setView('buttons')} />}
 
       </AnimatePresence>
