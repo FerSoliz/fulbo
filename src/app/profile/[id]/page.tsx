@@ -18,8 +18,6 @@ import { RankingPreview } from '@/components/profile/RankingPreview';
 import { TournamentsView } from '@/components/profile/TournamentsView';
 import { MyTeamModal } from '@/components/profile/MyTeamModal';
 
-// Los componentes de diálogo ya no se importan aquí, ProfileHeader los maneja.
-
 export default function ProfilePage() {
   const params = useParams();
   const userId = params.id as string;
@@ -113,7 +111,9 @@ export default function ProfilePage() {
         {view === 'favorite_tournaments' && <TournamentsView profileUser={profileUser} onClose={() => setView('buttons')} />}
         {view === 'sudone_pass' && <SudonePassView onClose={() => setView('buttons')} />}
         {view === 'ranking_preview' && <RankingPreview onClose={() => setView('buttons')} profileUser={profileUser} />}
-        {view === 'my_team' && profileUser.team && <MyTeamModal team={profileUser.team} onClose={() => setView('buttons')} />}
+        {/* AHORA LA LÓGICA ES MÁS SIMPLE: si la vista es 'my_team', renderiza el modal. */}
+        {/* Le pasamos el usuario completo para que el modal decida qué mostrar. */}
+        {view === 'my_team' && <MyTeamModal profileUser={profileUser} onClose={() => setView('buttons')} />}
       </AnimatePresence>
 
     </div>
