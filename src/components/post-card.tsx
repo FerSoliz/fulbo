@@ -52,198 +52,173 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
   const canDelete = currentUser?.id === post.authorId || currentUser?.role === 'admin';
   const isVisitor = !currentUser || currentUser.id === 'visitor';
 
-  const renderHeader = () => {
-    if (!post.authorName) {
-      return (
-        <CardHeader className="flex flex-row items-center gap-4">
-          <Skeleton className="h-10 w-10 rounded-full" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-3 w-24" />
-          </div>
-        </CardHeader>
-      );
-    }
-
-    return (
-      <CardHeader className="flex flex-row items-center gap-4">
-        <Link href={`/profile/${post.authorId}`}>
-          <Avatar>
-            <AvatarImage src={authorAvatar} alt={authorName} />
-            <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
-          </Avatar>
-        </Link>
-        <div className="flex-1">
-          <Link href={`/profile/${post.authorId}`} className="hover:underline">
-            <p className="font-semibold text-sm">{authorName}</p>
-          </Link>
-          <p className="text-xs text-muted-foreground">
-            {post.location || ''} · {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: es })}
-          </p>
-        </div>
-        {canDelete && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem onClick={() => onDeletePost(post.id)} className="text-destructive">Eliminar</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </CardHeader>
-    );
-  };
-
-  const renderMedia = () => {
-    const { media } = post;
-    if (!media || media.length === 0) return null;
-
-    const videoItem = media.find(item => item.type === 'video');
-    if (videoItem) {
-      const isTwitch = videoItem.videoType === 'twitch' && videoItem.videoId;
-      const isYoutube = videoItem.videoType === 'youtube' && videoItem.videoId;
-      
-      const twitchUrl = `https://www.twitch.tv/${videoItem.videoId}`;
-      const youtubeUrl = `https://www.youtube.com/embed/${videoItem.videoId}?autoplay=1&modestbranding=1&rel=0`;
-
-      if (isYoutube) {
-        return (
-          <div className="relative aspect-video bg-black overflow-hidden">
-            {!isYoutubePlaying && (
-              <div 
-                className="absolute inset-0 cursor-pointer group"
-                onClick={() => setIsYoutubePlaying(true)}
-                role="button"
-                aria-label="Reproducir video de YouTube"
-              >
-                <Image 
-                  src={videoItem.url} 
-                  alt="Miniatura del video de YouTube" 
-                  fill 
-                  className="object-cover transition-opacity duration-300 group-hover:opacity-80"
-                  onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Video+No+Disponible'; }}
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                />
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <Play className="h-16 w-16 text-white transform transition-transform duration-300 group-hover:scale-110" />
-                </div>
-              </div>
-            )}
-            
-            {isYoutubePlaying && (
-              <>
-                {!isPlayerReady && (
-                   <div className="absolute inset-0 flex items-center justify-center" aria-live="polite" aria-busy="true">
-                     <Loader2 className="h-12 w-12 text-white animate-spin" />
-                   </div>
-                )}
-                <iframe
-                  src={youtubeUrl}
-                  title="YouTube video player"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  className={cn(
-                    "w-full h-full transition-opacity duration-500",
-                    isPlayerReady ? "opacity-100" : "opacity-0"
-                  )}
-                  onLoad={() => setIsPlayerReady(true)}
-                ></iframe>
-              </>
-            )}
-          </div>
-        );
-      }
-
-      if (isTwitch) {
-        return (
-            <Link href={twitchUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}>
-                <div className="relative cursor-pointer group aspect-video bg-muted overflow-hidden">
-                    <Image 
-                      src={videoItem.url} 
-                      alt="Miniatura del stream de Twitch" 
-                      fill 
-                      className="object-contain"
-                      onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" /></div>
-                </div>
-            </Link>
-        );
-      }
-    }
-
-    const imageMedia = media.filter(item => item.type === 'image');
-    if (imageMedia.length === 0) return null;
-
-    const imageCount = imageMedia.length;
-
-    const gridClasses = {
-      1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-2 grid-rows-2', 4: 'grid-cols-2 grid-rows-2',
-    };
-
-    return (
-        <Dialog>
-            <DialogTrigger asChild>
-                 <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer`}>
-                    {imageMedia.slice(0, 4).map((item, index) => (
-                        <div key={item.url || index}
-                             className={cn(
-                                "relative bg-muted w-full",
-                                imageCount === 3 && index === 0 && "row-span-2",
-                                imageCount > 1 && "aspect-square" // Aplicar aspect-square solo para múltiples imágenes
-                             )}
-                        >
-                            {imageCount === 1 ? (
-                                <Image
-                                  src={item.url}
-                                  alt={`Post media ${index + 1}`}
-                                  width={1000} // Valor arbitrario, se controlará con el CSS
-                                  height={1000} // Valor arbitrario, se controlará con el CSS
-                                  className="w-full h-auto object-contain" // w-full, h-auto y object-contain para una sola imagen
-                                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                />
-                            ) : (
-                                <Image
-                                  src={item.url}
-                                  alt={`Post media ${index + 1}`}
-                                  fill
-                                  className="object-contain" // object-contain para múltiples imágenes en cuadrícula
-                                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                />
-                            )}
-                            {index === 3 && imageCount > 4 && (<div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-3xl font-bold">+{imageCount - 4}</div>)}
-                        </div>
-                    ))}
-                </div>
-            </DialogTrigger>
-            <DialogContent className="max-w-4xl h-[90vh] p-2">
-                 <DialogHeader className="sr-only">
-                    <DialogTitle>Galería de imágenes</DialogTitle>
-                    <DialogDescription>Navega por las imágenes de la publicación usando las flechas de navegación.</DialogDescription>
-                 </DialogHeader>
-                 <Carousel className="w-full h-full">
-                    <CarouselContent className="h-full">
-                        {imageMedia.map((item, index) => (<CarouselItem key={item.url || index} className="flex items-center justify-center h-full"><Image src={item.url} alt={`Post media ${index + 1}`} width={1920} height={1080} className="w-full h-auto object-contain" /></CarouselItem>))}
-                    </CarouselContent>
-                    <CarouselPrevious /><CarouselNext />
-                </Carousel>
-            </DialogContent>
-        </Dialog>
-    );
+  const { media } = post;
+  const videoItem = media?.find(item => item.type === 'video');
+  const imageMedia = media?.filter(item => item.type === 'image') || [];
+  const isTwitch = videoItem?.videoType === 'twitch' && videoItem?.videoId;
+  const isYoutube = videoItem?.videoType === 'youtube' && videoItem?.videoId;
+  const twitchUrl = `https://www.twitch.tv/${videoItem?.videoId}`;
+  const youtubeUrl = `https://www.youtube.com/embed/${videoItem?.videoId}?autoplay=1&modestbranding=1&rel=0`;
+  const imageCount = imageMedia.length;
+  const gridClasses = {
+    1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-2 grid-rows-2', 4: 'grid-cols-2 grid-rows-2',
   };
 
   return (
     <Card className="relative overflow-hidden">
         {isPinned && <div className="absolute top-3 right-3 z-10 text-accent"><Star className="h-5 w-5 fill-current"/></div>}
         
-        {renderHeader()}
+        {!post.authorName ? (
+            <CardHeader className="flex flex-row items-center gap-4">
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </CardHeader>
+        ) : (
+            <CardHeader className="flex flex-row items-center gap-4">
+              <Link href={`/profile/${post.authorId}`}>
+                <Avatar>
+                  <AvatarImage src={authorAvatar} alt={authorName} />
+                  <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
+                </Avatar>
+              </Link>
+              <div className="flex-1">
+                <Link href={`/profile/${post.authorId}`} className="hover:underline">
+                  <p className="font-semibold text-sm">{authorName}</p>
+                </Link>
+                <p className="text-xs text-muted-foreground">
+                  {post.location || ''} · {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: es })}
+                </p>
+              </div>
+              {canDelete && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => onDeletePost(post.id)} className="text-destructive">Eliminar</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </CardHeader>
+        )}
         
         <CardContent className="p-0 relative">
             {post.content && <p className="px-6 pb-4 text-sm whitespace-pre-wrap">{post.content}</p>}
-            {renderMedia()}
+            
+            {media && media.length > 0 && (
+              <>
+                {isYoutube ? (
+                  <div className="relative aspect-video bg-black overflow-hidden">
+                    {!isYoutubePlaying && (
+                      <div 
+                        className="absolute inset-0 cursor-pointer group"
+                        onClick={() => setIsYoutubePlaying(true)}
+                        role="button"
+                        aria-label="Reproducir video de YouTube"
+                      >
+                        <Image 
+                          src={videoItem.url} 
+                          alt="Miniatura del video de YouTube" 
+                          fill 
+                          className="object-cover transition-opacity duration-300 group-hover:opacity-80"
+                          onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Video+No+Disponible'; }}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <Play className="h-16 w-16 text-white transform transition-transform duration-300 group-hover:scale-110" />
+                        </div>
+                      </div>
+                    )}
+                    
+                    {isYoutubePlaying && (
+                      <>
+                        {!isPlayerReady && (
+                           <div className="absolute inset-0 flex items-center justify-center" aria-live="polite" aria-busy="true">
+                             <Loader2 className="h-12 w-12 text-white animate-spin" />
+                           </div>
+                        )}
+                        <iframe
+                          src={youtubeUrl}
+                          title="YouTube video player"
+                          frameBorder="0"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className={cn(
+                            "w-full h-full transition-opacity duration-500",
+                            isPlayerReady ? "opacity-100" : "opacity-0"
+                          )}
+                          onLoad={() => setIsPlayerReady(true)}
+                        ></iframe>
+                      </>
+                    )}
+                  </div>
+                ) : isTwitch ? (
+                  <Link href={twitchUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}>
+                      <div className="relative cursor-pointer group aspect-video bg-muted overflow-hidden">
+                          <Image 
+                            src={videoItem.url} 
+                            alt="Miniatura del stream de Twitch" 
+                            fill 
+                            className="object-contain"
+                            onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" /></div>
+                      </div>
+                  </Link>
+                ) : imageMedia.length > 0 && (
+                  <Dialog>
+                      <DialogTrigger asChild>
+                           <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer`}>
+                              {imageMedia.slice(0, 4).map((item, index) => (
+                                  <div key={item.url || index}
+                                       className={cn(
+                                          "relative bg-muted w-full",
+                                          imageCount === 3 && index === 0 && "row-span-2",
+                                          imageCount > 1 && "aspect-square" // Aplicar aspect-square solo para múltiples imágenes
+                                       )}
+                                  >
+                                      {imageCount === 1 ? (
+                                          <Image
+                                            src={item.url}
+                                            alt={`Post media ${index + 1}`}
+                                            width={1000} // Valor arbitrario, se controlará con el CSS
+                                            height={1000} // Valor arbitrario, se controlará con el CSS
+                                            className="w-full h-auto object-contain" // w-full, h-auto y object-contain para una sola imagen
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                          />
+                                      ) : (
+                                          <Image
+                                            src={item.url}
+                                            alt={`Post media ${index + 1}`}
+                                            fill
+                                            className="object-contain" // object-contain para múltiples imágenes en cuadrícula
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                          />
+                                      )}
+                                      {index === 3 && imageCount > 4 && (<div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-3xl font-bold">+{imageCount - 4}</div>)}
+                                  </div>
+                              ))}
+                          </div>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl h-[90vh] p-2">
+                           <DialogHeader className="sr-only">
+                              <DialogTitle>Galería de imágenes</DialogTitle>
+                              <DialogDescription>Navega por las imágenes de la publicación usando las flechas de navegación.</DialogDescription>
+                           </DialogHeader>
+                           <Carousel className="w-full h-full">
+                              <CarouselContent className="h-full">
+                                  {imageMedia.map((item, index) => (<CarouselItem key={item.url || index} className="flex items-center justify-center h-full"><Image src={item.url} alt={`Post media ${index + 1}`} width={1920} height={1080} className="w-full h-auto object-contain" /></CarouselItem>))}
+                              </CarouselContent>
+                              <CarouselPrevious /><CarouselNext />
+                          </Carousel>
+                      </DialogContent>
+                  </Dialog>
+                )}
+              </>
+            )}
 
-            {/* Nuevo div para las acciones, posicionado encima de la imagen */}
             <div className="absolute inset-x-0 bottom-0 z-10 flex justify-between items-center p-4 bg-gradient-to-t from-black/70 to-transparent text-white">
                 <div className="flex items-center gap-4">
                     <div className="flex items-center">
