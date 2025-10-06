@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Card,
@@ -12,13 +12,17 @@ import {
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   ArrowLeft,
   Save,
   Loader2,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Trash2,
+  PlusCircle
 } from 'lucide-react';
 import Link from 'next/link';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { db } from '@/lib/firebase';
@@ -29,9 +33,10 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from '@/lib/utils';
+import { TeamSearch } from '@/components/search/TeamSearch';
+import { TeamSummary } from '@/lib/firebase/db';
 import { Slider } from '@/components/ui/slider';
 
-// MODIFICACIÓN: Añadidos nuevos formatos de torneo
 type TournamentType = 'Liga' | 'Copa';
 type TournamentFormat = '5v5' | '6v6' | '7v7' | '8v8' | '11v11';
 
@@ -39,54 +44,72 @@ export default function CreateCompetitionPage() {
   const router = useRouter();
   const { user } = useUser();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Detalles del Torneo
   const [competitionName, setCompetitionName] = useState('');
   const [venue, setVenue] = useState('');
   const [competitionType, setCompetitionType] = useState<TournamentType>('Liga');
   const [competitionFormat, setCompetitionFormat] = useState<TournamentFormat>('7v7');
   const [startDate, setStartDate] = useState<Date>();
-  // MODIFICACIÓN: La cantidad inicial de equipos ahora es 4
-  const [teamCount, setTeamCount] = useState(4);
-  const [teamNames, setTeamNames] = useState<string[]>(Array(4).fill(''));
-  const [isLoading, setIsLoading] = useState(false);
+  const [tournamentSize, setTournamentSize] = useState(8); // NUEVO: Estado para la capacidad del torneo
+
+  // Gestión de Equipos
+  const [selectedTeams, setSelectedTeams] = useState<TeamSummary[]>([]);
+  const [newTeamNames, setNewTeamNames] = useState<string[]>(['']);
 
   if (user && user.role !== 'admin') {
       router.push('/');
   }
 
-  const handleTeamCountChange = (value: number) => {
-    const newCount = Math.max(2, Math.min(32, value));
-    setTeamCount(newCount);
-    const newTeamNames = Array(newCount).fill('');
-    teamNames.slice(0, newCount).forEach((name, i) => {
-      newTeamNames[i] = name;
-    });
-    setTeamNames(newTeamNames);
+  const handleTeamSelected = (team: TeamSummary) => {
+    if (selectedTeams.length + newTeamNames.filter(Boolean).length >= tournamentSize) {
+        toast({ title: "Límite alcanzado", description: "No puedes añadir más equipos que la capacidad del torneo.", variant: "destructive"});
+        return;
+    }
+    if (!selectedTeams.some(t => t.id === team.id)) {
+      setSelectedTeams(prev => [...prev, team]);
+    }
   };
 
-  const handleTeamNameChange = (index: number, name: string) => {
-    const newTeamNames = [...teamNames];
-    newTeamNames[index] = name;
-    setTeamNames(newTeamNames);
+  const handleRemoveSelectedTeam = (teamId: string) => {
+    setSelectedTeams(prev => prev.filter(t => t.id !== teamId));
+  };
+  
+  const excludedTeamIds = useMemo(() => selectedTeams.map(t => t.id), [selectedTeams]);
+
+  const handleNewTeamNameChange = (index: number, name: string) => {
+    const updatedNames = [...newTeamNames];
+    updatedNames[index] = name;
+    setNewTeamNames(updatedNames);
+  };
+
+  const addMoreNewTeam = () => {
+    if (selectedTeams.length + newTeamNames.filter(Boolean).length >= tournamentSize) {
+        toast({ title: "Límite alcanzado", description: "No puedes añadir más equipos que la capacidad del torneo.", variant: "destructive"});
+        return;
+    }
+    setNewTeamNames(prev => [...prev, '']);
+  }
+
+  const removeNewTeam = (index: number) => {
+    if (newTeamNames.length > 1) {
+        setNewTeamNames(prev => prev.filter((_, i) => i !== index));
+    }
   };
 
   const handleSaveCompetition = async () => {
-    if (!competitionName.trim()) {
-        toast({ title: "Error de validación", description: "El nombre de la competencia es obligatorio.", variant: "destructive" });
-        return;
-    }
-    if (!venue.trim()) { 
-        toast({ title: "Error de validación", description: "La sede de la competencia es obligatoria.", variant: "destructive" });
-        return;
-    }
-    if (!startDate) {
-        toast({ title: "Error de validación", description: "Debes seleccionar una fecha de inicio para el torneo.", variant: "destructive" });
-        return;
+    if (!competitionName.trim() || !venue.trim() || !startDate) {
+      toast({ title: "Error de validación", description: "Nombre, sede y fecha de inicio son obligatorios.", variant: "destructive" });
+      return;
     }
 
-    const validTeams = teamNames.map(name => name.trim()).filter(name => name !== '');
-    if (validTeams.length !== teamCount) {
-        toast({ title: "Error de validación", description: `Se esperan ${teamCount} nombres de equipos, pero solo ${validTeams.length} son válidos.`, variant: "destructive" });
-        return;
+    const validNewTeams = newTeamNames.map(name => name.trim()).filter(Boolean);
+    const totalTeams = selectedTeams.length + validNewTeams.length;
+
+    if (totalTeams > tournamentSize) {
+      toast({ title: "Límite de equipos excedido", description: `Has añadido ${totalTeams} equipos, pero la capacidad del torneo es de ${tournamentSize}.`, variant: "destructive" });
+      return;
     }
 
     setIsLoading(true);
@@ -95,24 +118,20 @@ export default function CreateCompetitionPage() {
       const updates: { [key: string]: any } = {};
       const newTournamentRef = push(ref(db, 'tournaments'));
       const tournamentId = newTournamentRef.key;
-
       if (!tournamentId) throw new Error("No se pudo generar el ID para el torneo");
 
       const teamsForTournament: { [key: string]: boolean } = {};
 
-      validTeams.forEach(teamName => {
+      selectedTeams.forEach(team => {
+        updates[`/teams/${team.id}/tournamentId`] = tournamentId;
+        teamsForTournament[team.id] = true;
+      });
+
+      validNewTeams.forEach(teamName => {
           const newTeamRef = push(ref(db, `teams`));
           const teamId = newTeamRef.key;
           if (!teamId) return;
-
-          updates[`/teams/${teamId}`] = {
-              id: teamId,
-              name: teamName,
-              logoUrl: `https://avatar.vercel.sh/${encodeURIComponent(teamName)}.png`,
-              tournamentId: tournamentId,
-              createdAt: serverTimestamp(),
-          };
-
+          updates[`/teams/${teamId}`] = { id: teamId, name: teamName, logoUrl: `https://avatar.vercel.sh/${encodeURIComponent(teamName)}.png`, tournamentId: tournamentId, createdAt: serverTimestamp() };
           teamsForTournament[teamId] = true;
       });
 
@@ -122,7 +141,8 @@ export default function CreateCompetitionPage() {
         venue: venue, 
         type: competitionType,
         format: competitionFormat,
-        teamCount: teamCount,
+        size: tournamentSize, // GUARDAMOS LA CAPACIDAD MÁXIMA
+        teamCount: totalTeams, // GUARDAMOS LOS INSCRITOS INICIALMENTE
         status: 'upcoming',
         startDate: startDate.toISOString(),
         createdAt: serverTimestamp(),
@@ -133,23 +153,18 @@ export default function CreateCompetitionPage() {
 
       await update(ref(db), updates);
 
-      toast({
-        title: "¡Competencia Creada!",
-        description: "El nuevo torneo y sus equipos se han guardado con éxito.",
-      });
-      router.push('/admin/manage-tournaments');
+      toast({ title: "¡Competencia Creada!", description: "El nuevo torneo y sus equipos se han guardado con éxito." });
+      router.push(`/admin/tournaments/${tournamentId}/teams`);
 
     } catch (error) {
         console.error("Error guardando la competencia en RTDB: ", error);
-        toast({
-          title: "Error en la base de datos",
-          description: `Hubo un problema al crear la competencia: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-          variant: "destructive"
-        });
+        toast({ title: "Error en la base de datos", description: `Hubo un problema al crear la competencia.`, variant: "destructive"});
     } finally {
         setIsLoading(false);
     }
   };
+
+  const currentTeamCount = selectedTeams.length + newTeamNames.filter(Boolean).length;
 
   if (!user || user.role !== 'admin') {
     return <div className="p-8 text-center">Acceso denegado. Redirigiendo...</div>;
@@ -159,18 +174,16 @@ export default function CreateCompetitionPage() {
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
         <Link href="/admin/manage-tournaments">
-          <Button variant="outline" className="mb-6">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Volver a Administrar Torneos
-          </Button>
+          <Button variant="outline" className="mb-6"><ArrowLeft className="mr-2 h-4 w-4" />Volver a Administrar Torneos</Button>
         </Link>
         <Card>
           <CardHeader>
             <CardTitle className="text-2xl">Crear Nueva Competencia</CardTitle>
-            <CardDescription>Completa los detalles para configurar tu nuevo torneo y sus equipos.</CardDescription>
+            <CardDescription>Completa los detalles para configurar tu nuevo torneo.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-8 pt-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* ... Campos de detalles del torneo  */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label htmlFor="competition-name" className="text-base font-semibold">Nombre de la Competencia</Label>
                 <Input id="competition-name" value={competitionName} onChange={(e) => setCompetitionName(e.target.value)} placeholder="Ej: Copa SudOne - Apertura 2024" />
@@ -180,83 +193,45 @@ export default function CreateCompetitionPage() {
                 <Input id="venue" value={venue} onChange={(e) => setVenue(e.target.value)} placeholder="Ej: La Bombonera" />
               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="space-y-3">
-                  <Label className="text-base font-semibold">Tipo</Label>
-                  <Select value={competitionType} onValueChange={(value: string) => setCompetitionType(value as TournamentType)}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Liga">Liga</SelectItem>
-                            <SelectItem value="Copa">Copa</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-3">
-                  <Label className="text-base font-semibold">Formato</Label>
-                   <Select value={competitionFormat} onValueChange={(value: string) => setCompetitionFormat(value as TournamentFormat)}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            {/* MODIFICACIÓN: Añadidos nuevos formatos */}
-                            <SelectItem value="5v5">Fútbol 5</SelectItem>
-                            <SelectItem value="6v6">Fútbol 6</SelectItem>
-                            <SelectItem value="7v7">Fútbol 7</SelectItem>
-                            <SelectItem value="8v8">Fútbol 8</SelectItem>
-                            <SelectItem value="11v11">Fútbol 11</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-3">
-                    <Label className="text-base font-semibold">Fecha de Inicio</Label>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                        <Button
-                            variant={"outline"}
-                            className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !startDate && "text-muted-foreground"
-                            )}
-                        >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {startDate ? format(startDate, "PPP", { locale: es }) : <span>Elige una fecha</span>}
-                        </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                        <Calendar
-                            mode="single"
-                            selected={startDate}
-                            onSelect={setStartDate}
-                            initialFocus
-                        />
-                        </PopoverContent>
-                    </Popover>
-                </div>
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="space-y-3"><Label className="text-base font-semibold">Tipo</Label><Select value={competitionType} onValueChange={(value: string) => setCompetitionType(value as TournamentType)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="Liga">Liga</SelectItem><SelectItem value="Copa">Copa</SelectItem></SelectContent></Select></div>
+                <div className="space-y-3"><Label className="text-base font-semibold">Formato</Label><Select value={competitionFormat} onValueChange={(value: string) => setCompetitionFormat(value as TournamentFormat)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="5v5">Fútbol 5</SelectItem><SelectItem value="6v6">Fútbol 6</SelectItem><SelectItem value="7v7">Fútbol 7</SelectItem><SelectItem value="8v8">Fútbol 8</SelectItem><SelectItem value="11v11">Fútbol 11</SelectItem></SelectContent></Select></div>
+                <div className="space-y-3"><Label className="text-base font-semibold">Fecha de Inicio</Label><Popover><PopoverTrigger asChild><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!startDate && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{startDate ? format(startDate, "PPP", { locale: es }) : <span>Elige una fecha</span>}</Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={setStartDate} initialFocus/></PopoverContent></Popover></div>
             </div>
 
-            <div className="space-y-4">
-              <Label htmlFor="team-count" className="text-lg font-semibold">Cantidad de Equipos: {teamCount}</Label>
-              <div className="flex items-center gap-4">
-                <Slider id="team-count" min={2} max={32} step={2} value={[teamCount]} onValueChange={(value) => handleTeamCountChange(value[0])} />
-                <span className="font-bold text-lg w-12 text-center">{teamCount}</span>
-              </div>
-            </div>
-
-            {teamCount > 0 && (
-              <div className="space-y-4">
-                <Label className="text-lg font-semibold">Nombres de los Equipos</Label>
-                 <p className="text-sm text-muted-foreground">Introduce el nombre de cada equipo participante.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {teamNames.map((name, index) => (
-                    <Input key={index} value={name} onChange={(e) => handleTeamNameChange(index, e.target.value)} placeholder={`Equipo ${index + 1}`} />
-                  ))}
+            {/* SECCIÓN DE EQUIPOS REESTRUCTURADA CON SLIDER Y PESTAÑAS */}
+            <div className="pt-6 border-t">
+                <div className="space-y-4">
+                    <Label htmlFor="tournament-size" className="text-lg font-semibold">Capacidad del Torneo: {tournamentSize} equipos</Label>
+                    <div className="flex items-center gap-4">
+                        <Slider id="tournament-size" min={2} max={32} step={2} value={[tournamentSize]} onValueChange={(v) => setTournamentSize(v[0])} disabled={isLoading} />
+                        <span className="font-bold text-lg w-12 text-center">{tournamentSize}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Define el número máximo de equipos. Actualmente has añadido {currentTeamCount} de {tournamentSize}.</p>
                 </div>
-              </div>
-            )}
+
+                <div className="mt-6">
+                    <Tabs defaultValue="existing">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="existing">Añadir Existentes ({selectedTeams.length})</TabsTrigger>
+                            <TabsTrigger value="new">Crear Nuevos ({newTeamNames.filter(Boolean).length})</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="existing" className="pt-4">
+                            <TeamSearch onTeamSelected={handleTeamSelected} excludedTeamIds={excludedTeamIds} disabled={isLoading || currentTeamCount >= tournamentSize} />
+                            <div className="mt-4 space-y-2"> {selectedTeams.map(team => (<div key={team.id} className="flex items-center justify-between p-2 bg-secondary/50 rounded-lg"><div className="flex items-center gap-3"><Avatar className="h-8 w-8 border"><AvatarImage src={team.logoUrl} alt={team.name} /><AvatarFallback>{team.name.charAt(0)}</AvatarFallback></Avatar><p className="font-medium">{team.name}</p></div><Button variant="ghost" size="icon" onClick={() => handleRemoveSelectedTeam(team.id)} disabled={isLoading}><Trash2 className="h-4 w-4 text-destructive"/><span className="sr-only">Quitar</span></Button></div>))} {selectedTeams.length === 0 && <p className="text-center text-sm text-muted-foreground pt-4">Usa el buscador para añadir equipos.</p>}</div>
+                        </TabsContent>
+                        <TabsContent value="new" className="pt-4 space-y-3">
+                            {newTeamNames.map((name, index) => (<div key={index} className="flex items-center gap-2"><Input value={name} onChange={(e) => handleNewTeamNameChange(index, e.target.value)} placeholder={`Nombre nuevo equipo ${index + 1}`} disabled={isLoading || currentTeamCount >= tournamentSize && name === ''} /><Button variant="ghost" size="icon" onClick={() => removeNewTeam(index)} disabled={isLoading || newTeamNames.length <= 1}><Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive"/></Button></div>))}
+                            <Button variant="outline" size="sm" onClick={addMoreNewTeam} disabled={isLoading || currentTeamCount >= tournamentSize}><PlusCircle className="mr-2 h-4 w-4" />Añadir otro</Button>
+                        </TabsContent>
+                    </Tabs>
+                </div>
+            </div>
             
             <div className="flex justify-end pt-6 border-t">
               <Button onClick={handleSaveCompetition} disabled={isLoading} size="lg">
                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                {isLoading ? 'Creando Torneo...' : 'Crear Torneo y Equipos'}
+                {isLoading ? 'Creando Torneo...' : `Crear Torneo (${currentTeamCount}/${tournamentSize} equipos)`}
               </Button>
             </div>
           </CardContent>

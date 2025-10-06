@@ -39,6 +39,7 @@
 - **Accesibilidad:** cumplir WCAG AA; siempre usar `alt` en imágenes, roles/labelling ARIA y `aria-live` en estados de carga.  
 - **Estructura:** código modular, claro, sin duplicaciones ni placeholders innecesarios.  
 - **Revisión Previa:** Antes de proponer o implementar un cambio, siempre debes analizar el código existente para entender la implementación actual. No propongas rehacer funcionalidades que ya existen; en su lugar, intégrate con ellas y adáptate a la estructura del proyecto.
+- **Regla de Oro sobre Datos:** Antes de cualquier modificación, se debe analizar la estructura de datos existente. Se debe mantener siempre la forma en que los datos se leen y se guardan. Si se propone un cambio en la estructura de la base de datos, debe ser anunciado explícitamente, justificado y requerir la aprobación del usuario antes de proceder.
 - **Dependencias:** después de agregarlas, indicar ejecutar `npm i`.  
 - **Documentación:** acompañar los módulos con un `README.md` siguiendo la Google Developer Style Guide.  
 - **Explicación:** siempre paso a paso y en lenguaje sencillo para que lo entienda un desarrollador júnior.  
