@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react';
 import { CreatePostForm } from '@/components/create-post-form';
 import { PostCard } from '@/components/post-card';
-import { Post, Comment } from '@/lib/data';
+import { Post } from '@/lib/data'; // Se mantiene para el tipado del estado
 import { useUser } from '@/context/user-context';
 import { db } from '@/lib/firebase';
-import { ref, onValue, push, set, remove, get } from 'firebase/database';
+import { ref, onValue, remove } from 'firebase/database'; // Se simplifican los imports
 import { useToast } from '@/hooks/use-toast';
 import { PostCardSkeleton } from '@/components/post-card-skeleton';
+// Se importan las nuevas funciones de db.ts
+import { createPost, togglePostLike, addCommentToPost } from '@/lib/firebase/db';
 
 type LoadingState = {
   status: 'idle' | 'loading' | 'success' | 'error';
@@ -31,15 +33,7 @@ export default function HomePage() {
 
         if (data) {
           Object.keys(data).forEach(key => {
-            const postData = data[key];
-            // Lógica simplificada: confiamos en los datos de Firebase.
-            // PostCard se encargará de los fallbacks.
-            postsList.push({
-              id: key,
-              ...postData,
-              likes: postData.likes || {}, // Aseguramos que sea un objeto
-              comments: postData.comments || {}, // Aseguramos que sea un objeto
-            });
+            postsList.push({ id: key, ...data[key] });
           });
         }
 
@@ -63,86 +57,68 @@ export default function HomePage() {
     });
 
     return () => unsubscribe();
-  }, [toast]); // Eliminamos allUsers de las dependencias.
+  }, [toast]);
 
   const handleAddPost = async (postData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments' | 'authorName' | 'authorAvatar' | 'authorUsername'>) => {
-     if (!currentUser || currentUser.id === 'visitor' || currentUser.role === 'player') return;
+    if (!currentUser || currentUser.id === 'visitor' || currentUser.role === 'player') return;
 
-    const postToSave = {
-      ...postData,
-      authorId: currentUser.id,
-      authorName: currentUser.name,
-      authorAvatar: currentUser.avatar,
-      authorUsername: currentUser.username,
-      createdAt: new Date().toISOString(),
-      likes: {}, 
-      comments: {},
+    const author = {
+      id: currentUser.id,
+      name: currentUser.name,
+      avatar: currentUser.avatar,
+      username: currentUser.username,
     };
 
     try {
-      await push(ref(db, 'posts'), postToSave);
+      await createPost({ ...postData, author });
       toast({ title: "Publicación creada", description: "Tu publicación ha sido añadida al feed." });
     } catch (error: any) {
-      console.error("Error al añadir publicación en RTDB: ", error);
+      console.error("Error al añadir publicación: ", error);
       toast({ title: "Error de publicación", description: `No se pudo crear la publicación: ${error.message}.`, variant: "destructive" });
     }
   };
 
   const handleLikeToggle = async (postId: string) => {
     if (!currentUser || currentUser.id === 'visitor') {
-        toast({ title: "Inicia sesión", description: "Debes iniciar sesión para reaccionar.", variant: "destructive"});
-        return;
+      toast({ title: "Inicia sesión", description: "Debes iniciar sesión para reaccionar.", variant: "destructive" });
+      return;
     }
-    const userId = currentUser.id;
-    const postLikeRef = ref(db, `posts/${postId}/likes/${userId}`);
+    
+    const user = {
+      id: currentUser.id,
+      name: currentUser.name,
+      avatar: currentUser.avatar,
+      username: currentUser.username,
+    };
 
     try {
-        // Obtenemos el estado actual del like directamente de Firebase
-        const snapshot = await get(postLikeRef);
-        const isCurrentlyLiked = snapshot.exists(); // true si el like existe, false si no
-
-        if (isCurrentlyLiked) {
-            await remove(postLikeRef);
-            toast({ title: "Reacción eliminada", description: "Ya no te gusta esta publicación." }); // Feedback
-        } else {
-            await set(postLikeRef, {
-                name: currentUser.name,
-                avatar: currentUser.avatar,
-                username: currentUser.username,
-            });
-            toast({ title: "¡Me gusta!", description: "Has reaccionado a la publicación." }); // Feedback
-        }
-    } catch(error: any) {
-        console.error("Error al actualizar like en RTDB: ", error);
-        toast({ title: "Error de red", description: `No se pudo guardar tu reacción: ${error.message}.`, variant: "destructive" });
+      await togglePostLike(postId, user);
+    } catch (error: any) {
+      console.error("Error al actualizar like: ", error);
+      toast({ title: "Error de red", description: `No se pudo guardar tu reacción: ${error.message}.`, variant: "destructive" });
     }
   };
 
   const handleAddComment = async (postId: string, commentText: string) => {
     if (!currentUser || currentUser.id === 'visitor') {
-        toast({ title: "Inicia sesión", description: "Debes iniciar sesión para comentar.", variant: "destructive"});
-        return;
+      toast({ title: "Inicia sesión", description: "Debes iniciar sesión para comentar.", variant: "destructive" });
+      return;
     }
     if (!commentText.trim()) return;
 
-    const commentsRef = ref(db, `posts/${postId}/comments`);
-    const newCommentRef = push(commentsRef);
-
-    const newComment: Omit<Comment, 'id'> = {
-        authorId: currentUser.id,
-        authorName: currentUser.name,
-        authorAvatar: currentUser.avatar,
-        authorUsername: currentUser.username,
-        content: commentText,
-        createdAt: new Date().toISOString(),
+    const author = {
+      id: currentUser.id,
+      name: currentUser.name,
+      avatar: currentUser.avatar,
+      username: currentUser.username,
     };
 
     try {
-        await set(newCommentRef, newComment);
-        toast({ title: "Comentario publicado" });
-    } catch(error: any) {
-        console.error("Error al añadir comentario en RTDB: ", error);
-        toast({ title: "Error al comentar", description: `No se pudo publicar tu comentario: ${error.message}.`, variant: "destructive" });
+      await addCommentToPost(postId, commentText, author);
+      toast({ title: "Comentario publicado" });
+    } catch (error: any) {
+      console.error("Error al añadir comentario: ", error);
+      toast({ title: "Error al comentar", description: `No se pudo publicar tu comentario: ${error.message}.`, variant: "destructive" });
     }
   };
 

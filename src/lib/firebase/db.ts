@@ -430,3 +430,83 @@ export const getNextMatchForTeam = async (teamId: string): Promise<Match | null>
     return null;
   }
 };
+
+// --- FUNCIONES PARA POSTS (PUBLICACIONES) ---
+
+// Interfaz para los datos del usuario que necesitamos, para mayor claridad
+interface UserData {
+  id: string;
+  name: string;
+  avatar: string;
+  username: string;
+}
+
+// Interfaz para los datos de un nuevo post
+interface NewPostData {
+  content?: string;
+  media?: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string }[];
+  location?: string;
+  author: UserData; // Usamos la interfaz limpia
+}
+
+/**
+ * Crea una nueva publicación en la base de datos.
+ */
+export const createPost = async (postData: NewPostData): Promise<void> => {
+  const { content, media, location, author } = postData;
+
+  const postToSave = {
+    authorId: author.id,
+    authorName: author.name,
+    authorAvatar: author.avatar,
+    authorUsername: author.username,
+    createdAt: new Date().toISOString(),
+    content: content || '',
+    ...(media && { media }),
+    ...(location && { location }),
+    likes: {},
+    comments: {},
+  };
+
+  await push(ref(db, 'posts'), postToSave);
+};
+
+/**
+ * Alterna el "Me gusta" de un usuario en una publicación.
+ */
+export const togglePostLike = async (postId: string, user: UserData): Promise<void> => {
+  const postLikeRef = ref(db, `posts/${postId}/likes/${user.id}`);
+  const snapshot = await get(postLikeRef);
+
+  if (snapshot.exists()) {
+    await remove(postLikeRef);
+  } else {
+    // Creamos el objeto plano a guardar
+    const likeData = {
+      name: user.name,
+      avatar: user.avatar,
+      username: user.username,
+    };
+    await set(postLikeRef, likeData);
+  }
+};
+
+/**
+ * Añade un comentario a una publicación.
+ */
+export const addCommentToPost = async (postId: string, commentText: string, author: UserData): Promise<void> => {
+  const commentsRef = ref(db, `posts/${postId}/comments`);
+  const newCommentRef = push(commentsRef);
+
+  // Creamos el objeto plano a guardar
+  const commentData = {
+    authorId: author.id,
+    authorName: author.name,
+    authorAvatar: author.avatar,
+    authorUsername: author.username,
+    content: commentText,
+    createdAt: new Date().toISOString(),
+  };
+
+  await set(newCommentRef, commentData);
+};
