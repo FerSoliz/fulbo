@@ -321,7 +321,7 @@ export async function getAllTeams(): Promise<TeamSummary[]> {
 }
 
 /**
- * Asigna un equipo ya existente a un torneo.
+ * Asigna un equipo ya existente a un torneo, soportando múltiples torneos.
  * @param teamId El ID del equipo a asignar.
  * @param tournamentId El ID del torneo al que se va a unir.
  * @returns Una promesa que resuelve a true si la asignación fue exitosa, false en caso contrario.
@@ -346,8 +346,8 @@ export async function assignTeamToTournament(teamId: string, tournamentId: strin
         updates[`/tournaments/${tournamentId}/teams/${teamId}`] = true;
         // 2. Incrementa el contador de equipos del torneo.
         updates[`/tournaments/${tournamentId}/teamCount`] = currentTeamCount + 1;
-        // 3. Actualiza el perfil del equipo para indicar a qué torneo pertenece.
-        updates[`/teams/${teamId}/tournamentId`] = tournamentId;
+        // 3. REFACTOR: Añade el torneo a la lista de torneos del equipo.
+        updates[`/teams/${teamId}/tournaments/${tournamentId}`] = true;
 
         // Ejecutamos todas las actualizaciones a la vez.
         await update(ref(db), updates);
