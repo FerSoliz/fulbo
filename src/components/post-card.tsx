@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 interface PostCardProps {
   post: Post;
   currentUser: User | null;
-  onLikeToggle: (postId: string, currentLikesMap: Record<string, { name: string; avatar: string; username: string; }>) => void;
+  onLikeToggle: (postId: string) => void;
   onAddComment: (postId: string, commentText: string) => void;
   onDeletePost: (postId: string) => void;
 }
@@ -34,9 +34,11 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
   const authorName = post.authorName || 'Usuario Desconocido';
   const authorAvatar = post.authorAvatar || 'https://avatar.vercel.sh/unknown.png';
 
+  const isLiked = currentUser && post.likes ? !!post.likes[currentUser.id] : false;
+
   const handleLike = () => {
     if (!currentUser || currentUser.id === 'visitor') return;
-    onLikeToggle(post.id, post.likes || {});
+    onLikeToggle(post.id);
   };
 
   const handleAddComment = () => {
@@ -47,7 +49,6 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
   };
   
   const isPinned = post.isPinned && post.pinnedUntil && new Date(post.pinnedUntil) > new Date();
-  const isLiked = currentUser && post.likes ? !!post.likes[currentUser.id] : false;
   const canDelete = currentUser?.id === post.authorId || currentUser?.role === 'admin';
   const isVisitor = !currentUser || currentUser.id === 'visitor';
 
@@ -158,7 +159,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
             <Link href={twitchUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}>
                 <div className="relative cursor-pointer group aspect-video bg-muted overflow-hidden">
                     <Image 
-                      src={video.url} 
+                      src={videoItem.url} 
                       alt="Miniatura del stream de Twitch" 
                       fill 
                       className="object-contain"

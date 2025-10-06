@@ -6,7 +6,7 @@ import { PostCard } from '@/components/post-card';
 import { Post, Comment } from '@/lib/data';
 import { useUser } from '@/context/user-context';
 import { db } from '@/lib/firebase';
-import { ref, onValue, push, set, remove } from 'firebase/database';
+import { ref, onValue, push, set, remove, get } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 import { PostCardSkeleton } from '@/components/post-card-skeleton';
 
@@ -88,23 +88,29 @@ export default function HomePage() {
     }
   };
 
-  const handleLikeToggle = async (postId: string, currentLikesMap: Record<string, { name: string; avatar: string; username: string; }>) => {
+  const handleLikeToggle = async (postId: string) => {
     if (!currentUser || currentUser.id === 'visitor') {
         toast({ title: "Inicia sesión", description: "Debes iniciar sesión para reaccionar.", variant: "destructive"});
         return;
     }
     const userId = currentUser.id;
-    const postLikesRef = ref(db, `posts/${postId}/likes/${userId}`);
+    const postLikeRef = ref(db, `posts/${postId}/likes/${userId}`);
 
     try {
-        if (currentLikesMap && currentLikesMap[userId]) {
-            await remove(postLikesRef);
+        // Obtenemos el estado actual del like directamente de Firebase
+        const snapshot = await get(postLikeRef);
+        const isCurrentlyLiked = snapshot.exists(); // true si el like existe, false si no
+
+        if (isCurrentlyLiked) {
+            await remove(postLikeRef);
+            toast({ title: "Reacción eliminada", description: "Ya no te gusta esta publicación." }); // Feedback
         } else {
-            await set(postLikesRef, {
+            await set(postLikeRef, {
                 name: currentUser.name,
                 avatar: currentUser.avatar,
                 username: currentUser.username,
             });
+            toast({ title: "¡Me gusta!", description: "Has reaccionado a la publicación." }); // Feedback
         }
     } catch(error: any) {
         console.error("Error al actualizar like en RTDB: ", error);
