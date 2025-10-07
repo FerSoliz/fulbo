@@ -49,7 +49,6 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
   const contentValue = form.watch('content');
   const filesValue = form.watch('files');
   
-  // Declaración de hasVideo movida aquí, ANTES de ser usada en useEffect
   const hasVideo = !!youtubeVideoId || !!twitchChannelName;
 
   useEffect(() => {
@@ -102,7 +101,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
       content: data.content || '',
       media: media,
       url: externalUrl,
-      isPinned: data.isPinned,
+      isPinned: currentUser.role === 'admin' && data.isPinned, // Asegurarse que solo el admin puede fijar
     });
 
     form.reset();
@@ -253,26 +252,28 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             />
             
             <div className="flex items-center gap-2">
-              <FormField
-                control={form.control}
-                name="isPinned"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormControl>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => field.onChange(!field.value)}
-                        disabled={isUploading}
-                        aria-label={field.value ? "Desfijar publicación" : "Fijar publicación"}
-                      >
-                        <Star className={cn("h-5 w-5 text-muted-foreground", field.value && "fill-accent text-accent")} />
-                      </Button>
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
+              {currentUser.role === 'admin' && (
+                <FormField
+                  control={form.control}
+                  name="isPinned"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => field.onChange(!field.value)}
+                          disabled={isUploading}
+                          aria-label={field.value ? "Desfijar publicación" : "Fijar publicación"}
+                        >
+                          <Star className={cn("h-5 w-5 text-muted-foreground", field.value && "fill-accent text-accent")} />
+                        </Button>
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              )}
               
               <Button type="submit" disabled={!hasContent || isUploading}>
                 {isUploading ? `Publicando... ${Math.round(progress)}%` : 'Publicar'}

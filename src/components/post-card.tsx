@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Heart, MessageSquare, Bookmark, MoreHorizontal, Play, Pencil, Star, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -66,7 +67,20 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
 
   return (
     <Card className="relative overflow-hidden">
-        {isPinned && <div className="absolute top-3 right-3 z-10 text-accent"><Star className="h-5 w-5 fill-current"/></div>}
+        {isPinned && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="absolute top-3 right-3 z-10 text-accent cursor-pointer">
+                  <Star className="h-5 w-5 fill-current"/>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Publicación Fijada</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         
         {!post.authorName ? (
             <CardHeader className="flex flex-row items-center gap-4">
