@@ -2,7 +2,10 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { rtdb, ref, onValue, get } from '@/lib/firebase';
+// CORRECCIÓN: Se importa `db` desde la configuración local.
+import { db } from '@/lib/firebase'; 
+// CORRECIÓN: Se importan las funciones del SDK desde `firebase/database`.
+import { ref, onValue, get } from 'firebase/database';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,14 +39,15 @@ export default function PublicTournamentPage() {
             return;
         }
 
-        const tournamentRef = ref(rtdb, `tournaments/${tournamentId}`);
+        // CORRECCIÓN: Se usa `db` en lugar de `rtdb`.
+        const tournamentRef = ref(db, `tournaments/${tournamentId}`);
         const unsubscribeTournament = onValue(tournamentRef, async (snapshot) => {
             if (snapshot.exists()) {
                 const tournamentData = snapshot.val();
                 setTournament({ id: snapshot.key, ...tournamentData });
 
                 const teamIds = tournamentData.teams ? Object.keys(tournamentData.teams) : [];
-                const teamsPromises = teamIds.map(id => get(ref(rtdb, `teams/${id}`)).then(snap => ({ id: snap.key, ...snap.val() })));
+                const teamsPromises = teamIds.map(id => get(ref(db, `teams/${id}`)).then(snap => ({ id: snap.key, ...snap.val() })));
                 const teamsData = await Promise.all(teamsPromises);
                 setTeams(teamsData.filter(Boolean));
                 
@@ -53,14 +57,14 @@ export default function PublicTournamentPage() {
             }
         });
 
-        const matchesRef = ref(rtdb, 'matches');
+        const matchesRef = ref(db, 'matches');
         const unsubscribeMatches = onValue(matchesRef, (snapshot) => {
             const allMatches = snapshot.val() || {};
             const tournamentMatches = Object.values(allMatches).filter((m: any) => m.tournamentId === tournamentId) as Match[];
             setMatches(tournamentMatches.sort((a, b) => a.round - b.round));
         });
 
-        const statsRef = ref(rtdb, `tournament_stats/${tournamentId}`);
+        const statsRef = ref(db, `tournament_stats/${tournamentId}`);
         const unsubscribeStats = onValue(statsRef, (snapshot) => {
             setStats(snapshot.val());
         });
