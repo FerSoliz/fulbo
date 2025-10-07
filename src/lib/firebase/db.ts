@@ -255,7 +255,7 @@ export const searchTeams = async (searchText: string, excludedTeamIds: string[] 
     if (!searchText || searchText.trim() === '') return [];
     try {
         const teamsRef = ref(db, 'teams');
-        const q = query(teamsRef, orderByChild('name')));
+        const q = query(teamsRef, orderByChild('name'));
         const snapshot = await get(q);
         if (!snapshot.exists()) return [];
         const results: TeamSummary[] = [];
@@ -414,7 +414,6 @@ interface UserData {
   username: string;
 }
 
-// MEJORA: La interfaz ahora incluye todas las propiedades que vienen del formulario.
 interface NewPostData {
   content?: string;
   media?: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string }[];
@@ -429,7 +428,6 @@ interface NewPostData {
 export const createPost = async (postData: NewPostData): Promise<void> => {
   const { content, media, url, isPinned, author } = postData;
 
-  // MEJORA: Usamos el serverTimestamp() de Firebase para una fecha consistente.
   const postToSave: any = {
     authorId: author.id,
     authorName: author.name,
@@ -443,10 +441,8 @@ export const createPost = async (postData: NewPostData): Promise<void> => {
     comments: {},
   };
 
-  // CORRECCIÓN: Añadimos la lógica para manejar los posts fijados.
   if (isPinned) {
     postToSave.isPinned = true;
-    // Fijamos el post por 24 horas usando el timestamp del servidor.
     postToSave.pinnedUntil = { '.sv': { 'timestamp': serverTimestamp() }, 'offset': 24 * 60 * 60 * 1000 };
   }
 
@@ -468,7 +464,7 @@ export const togglePostLike = async (postId: string, user: UserData): Promise<vo
       avatar: user.avatar,
       username: user.username,
     };
-    await set(postLikeRef, likeData);
+    await set(postLikeeRef, likeData);
   }
 };
 
@@ -485,7 +481,6 @@ export const addCommentToPost = async (postId: string, commentText: string, auth
     authorAvatar: author.avatar,
     authorUsername: author.username,
     content: commentText,
-    // MEJORA: Usamos el serverTimestamp() de Firebase para una fecha consistente.
     createdAt: serverTimestamp(),
   };
 

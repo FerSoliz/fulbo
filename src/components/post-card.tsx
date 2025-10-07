@@ -190,16 +190,16 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                                        className={cn(
                                           "relative bg-muted w-full",
                                           imageCount === 3 && index === 0 && "row-span-2",
-                                          imageCount > 1 && "aspect-square" // Aplicar aspect-square solo para múltiples imágenes
+                                          imageCount > 1 && "aspect-square"
                                        )}
                                   >
                                       {imageCount === 1 ? (
                                           <Image
                                             src={item.url}
                                             alt={`Post media ${index + 1}`}
-                                            width={1000} // Valor arbitrario, se controlará con el CSS
-                                            height={1000} // Valor arbitrario, se controlará con el CSS
-                                            className="w-full h-auto object-contain" // w-full, h-auto y object-contain para una sola imagen
+                                            width={1000}
+                                            height={1000}
+                                            className="w-full h-auto object-contain"
                                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                           />
                                       ) : (
@@ -207,7 +207,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                                             src={item.url}
                                             alt={`Post media ${index + 1}`}
                                             fill
-                                            className="object-contain" // object-contain para múltiples imágenes en cuadrícula
+                                            className="object-contain"
                                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                                           />
                                       )}
@@ -217,9 +217,9 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                           </div>
                       </DialogTrigger>
                       <DialogContent className="max-w-4xl h-[90vh] p-2">
-                           <DialogHeader className="sr-only">
-                              <DialogTitle>Galería de imágenes</DialogTitle>
-                              <DialogDescription>Navega por las imágenes de la publicación usando las flechas de navegación.</DialogDescription>
+                           <DialogHeader>
+                              <DialogTitle className="sr-only">Galería de imágenes</DialogTitle>
+                              <DialogDescription className="sr-only">Navega por las imágenes de la publicación usando las flechas de navegación.</DialogDescription>
                            </DialogHeader>
                            <Carousel className="w-full h-full">
                               <CarouselContent className="h-full">
