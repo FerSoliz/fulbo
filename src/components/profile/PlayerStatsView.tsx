@@ -1,37 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trophy, Star, Shield, Target, Loader2, Info } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserProfile } from '@/lib/types';
-import { ref, onValue, off } from 'firebase/database';
-import { db } from '@/lib/firebase';
+import { usePlayerStats, PlayerStats } from '@/hooks/usePlayerStats'; // ¡Importamos nuestro nuevo hook!
 
-// --- Interfaces de Tipos para Estadísticas ---
-interface StatDetails {
-  matchesPlayed: number;
-  goals: number;
-  assists: number;
-  mvp: number;
-}
-
-interface TournamentStat extends StatDetails {
-  tournamentName: string;
-}
-
-interface PlayerStats {
-  totals: StatDetails;
-  byTournament?: { [key: string]: TournamentStat };
-}
-
+// --- PROPS de la Vista ---
 interface PlayerStatsViewProps {
   onClose: () => void;
   profileUser: UserProfile;
 }
 
+// --- Componente Presentacional para un item de estadística ---
 const StatItem = ({ icon, value, label }: { icon: React.ReactNode, value: number, label: string }) => (
   <div className="flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg text-center">
     <div className="text-primary">{icon}</div>
@@ -40,28 +23,15 @@ const StatItem = ({ icon, value, label }: { icon: React.ReactNode, value: number
   </div>
 );
 
+/**
+ * Una vista que muestra las estadísticas de un jugador (totales y por torneo).
+ * La lógica de obtención de datos ha sido completamente abstraída en el hook `usePlayerStats`.
+ * Este componente es ahora puramente "presentacional".
+ */
 export const PlayerStatsView = ({ onClose, profileUser }: PlayerStatsViewProps) => {
-  const [stats, setStats] = useState<PlayerStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!profileUser.id) return;
-
-    setLoading(true);
-    const statsRef = ref(db, `playerStats/${profileUser.id}`);
-
-    const unsubscribe = onValue(statsRef, (snapshot) => {
-      if (snapshot.exists()) {
-        setStats(snapshot.val());
-      } else {
-        setStats(null); // No se encontraron estadísticas para este usuario.
-      }
-      setLoading(false);
-    });
-
-    // Limpiamos el listener cuando el componente se desmonta.
-    return () => off(statsRef, 'value', unsubscribe);
-  }, [profileUser.id]);
+  // --- MEJORA: Lógica de datos abstraída en el hook ---
+  // Toda la complejidad de `onValue`, `off`, `loading`, etc., está ahora dentro de `usePlayerStats`.
+  const { stats, loading } = usePlayerStats(profileUser.id);
 
   const renderContent = () => {
     if (loading) {
@@ -78,6 +48,7 @@ export const PlayerStatsView = ({ onClose, profileUser }: PlayerStatsViewProps) 
       );
     }
 
+    // La lógica de renderizado de los TABS permanece igual, ¡porque ya era excelente!
     return (
       <Tabs defaultValue="totals">
         <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4">

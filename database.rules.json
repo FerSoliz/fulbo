@@ -101,7 +101,8 @@
     },
     "users": {
       ".indexOn": [
-        "dni"
+        "dni",
+        "sudpoints"
       ],
       ".read": "auth != null",
       "$userId": {

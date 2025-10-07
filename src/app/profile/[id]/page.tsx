@@ -1,12 +1,12 @@
-
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
-import { ref, update, onValue, off } from 'firebase/database';
+import { useUserProfile } from '@/hooks/useUserProfile'; // ¡Importamos nuestro nuevo hook!
+import { ref, update } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import { UserProfile } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
@@ -23,45 +23,32 @@ import { PlayerStatsView } from '@/components/profile/PlayerStatsView';
 import { MatchHistoryView } from '@/components/profile/MatchHistoryView';
 import { NextMatchView } from '@/components/profile/NextMatchView';
 
+// --- MEJORA: Mapeo de Componentes para las Vistas ---
+// Este objeto asocia cada string de `ProfileView` con el componente que debe renderizar.
+// Es una solución mucho más limpia y escalable que múltiples condicionales `&&`.
+const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
+  buttons: () => null, // El estado inicial no renderiza nada aquí.
+  sudone_pass: SudonePassView,
+  ranking_preview: RankingPreview,
+  my_team: MyTeamModal,
+  stats: PlayerStatsView,
+  history: MatchHistoryView,
+  next_match: NextMatchView,
+  favorite_tournaments: TournamentsView,
+};
+
 export default function ProfilePage() {
   const params = useParams();
-  const userId = params.id as string; 
+  const userId = params.id as string;
   const { toast } = useToast();
   const { user: currentUser, refreshUser } = useUser();
   const { uploadFile } = useUpload();
-
-  const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [view, setView] = useState<ProfileView>('buttons');
 
-  const fetchProfileUser = useCallback(() => {
-    if (!userId) return () => {};
-    setLoading(true);
-    const userRef = ref(db, `users/${userId}`);
-    const onData = (snapshot: any) => {
-      if (snapshot.exists()) {
-        setProfileUser({ id: snapshot.key, ...snapshot.val() });
-      } else {
-        setProfileUser(null);
-        toast({ title: "Error", description: "Usuario no encontrado.", variant: "destructive" });
-      }
-      setLoading(false);
-    };
-    const onError = (error: any) => {
-      console.error("Firebase DB Error:", error);
-      toast({ title: "Error de Red", variant: "destructive" });
-      setLoading(false);
-    };
-
-    onValue(userRef, onData, onError);
-
-    return () => off(userRef, 'value', onData);
-  }, [userId, toast]);
-
-  useEffect(() => {
-    const unsubscribe = fetchProfileUser();
-    return () => unsubscribe();
-  }, [fetchProfileUser]);
+  // --- MEJORA: Lógica de datos abstraída en el hook ---
+  // Toda la complejidad de `onValue`, `off`, `loading`, etc., está ahora dentro de `useUserProfile`.
+  // El componente de la página solo consume los datos. ¡Mucho más limpio!
+  const { profileUser, loading } = useUserProfile(userId);
 
   const handleProfileUpdate = async (data: Partial<UserProfile>) => {
     if (!profileUser) return;
@@ -69,6 +56,7 @@ export default function ProfilePage() {
     try {
       await update(userRef, data);
       toast({ title: 'Éxito', description: 'Perfil actualizado correctamente.' });
+      // Si el usuario actualiza su propio perfil, refrescamos el contexto.
       if (currentUser && currentUser.id === profileUser.id) {
         await refreshUser();
       }
@@ -88,6 +76,9 @@ export default function ProfilePage() {
     }
   };
 
+  // --- MEJORA: Renderización dinámica de la vista activa ---
+  // Seleccionamos el componente correcto del mapeo.
+  const ActiveView = viewComponents[view] || null;
 
   if (loading) {
     return <div className="flex items-center justify-center h-screen" role="status" aria-live="polite"><Loader2 className="h-12 w-12 animate-spin text-primary" /><span className="sr-only">Cargando perfil...</span></div>;
@@ -96,6 +87,13 @@ export default function ProfilePage() {
   if (!profileUser) {
     return <div className="p-8 text-center" aria-live="polite">Usuario no encontrado.</div>;
   }
+  
+  // Las props que necesitará el componente de vista activa.
+  const viewProps = {
+      profileUser: profileUser,
+      profileUserId: userId, // Algunos componentes solo necesitan el ID
+      onClose: () => setView('buttons'),
+  };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
@@ -107,22 +105,15 @@ export default function ProfilePage() {
         onTransferClick={() => toast({ title: 'Próximamente', description: 'El mercado de fichajes se abrirá pronto.' })}
       />
 
-      {view === 'buttons' && (
+      {view === 'buttons' ? (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
           <ProfileActions setView={setView} />
         </motion.div>
+      ) : (
+        <AnimatePresence mode="wait">
+          {ActiveView && <ActiveView {...viewProps} />}
+        </AnimatePresence>
       )}
-
-      <AnimatePresence mode="wait">
-        {view === 'favorite_tournaments' && <TournamentsView profileUser={profileUser} onClose={() => setView('buttons')} />}
-        {view === 'sudone_pass' && <SudonePassView onClose={() => setView('buttons')} />}
-        {view === 'ranking_preview' && <RankingPreview profileUserId={userId} onClose={() => setView('buttons')} />}
-        {view === 'my_team' && <MyTeamModal profileUser={profileUser} onClose={() => setView('buttons')} />}
-        {view === 'stats' && <PlayerStatsView profileUser={profileUser} onClose={() => setView('buttons')} />}
-        {view === 'history' && <MatchHistoryView profileUser={profileUser} onClose={() => setView('buttons')} />}
-        {view === 'next_match' && <NextMatchView profileUser={profileUser} onClose={() => setView('buttons')} />}
-      </AnimatePresence>
-
     </div>
   );
 }
