@@ -97,7 +97,7 @@ export const findUserByDni = async (dni: string): Promise<FoundPlayer | null> =>
             id: guestSnapshot.key!,
             name: guestData.name,
             dni: guestData.dni,
-            username: 'invitado', // LÓGICA CORREGIDA: Devolvemos un placeholder simple.
+            username: 'invitado', 
             isGuest: true,
             team: guestData.team || null,
         };
@@ -255,7 +255,7 @@ export const searchTeams = async (searchText: string, excludedTeamIds: string[] 
     if (!searchText || searchText.trim() === '') return [];
     try {
         const teamsRef = ref(db, 'teams');
-        const q = query(teamsRef, orderByChild('name'));
+        const q = query(teamsRef, orderByChild('name')));
         const snapshot = await get(q);
         if (!snapshot.exists()) return [];
         const results: TeamSummary[] = [];
@@ -278,7 +278,6 @@ export const searchTeams = async (searchText: string, excludedTeamIds: string[] 
 export const assignTeamToTournament = async (teamId: string, tournamentId: string): Promise<boolean> => {
     try {
         const updates: { [key: string]: any } = {};
-        // --- BUGFIX: Usar la nueva estructura `tournaments` en lugar de `tournamentId` ---
         updates[`/teams/${teamId}/tournaments/${tournamentId}`] = true;
         updates[`/tournaments/${tournamentId}/teams/${teamId}`] = true;
         updates[`/tournaments/${tournamentId}/teamCount`] = increment(1);
@@ -321,26 +320,16 @@ export const getPosts = async (): Promise<Post[]> => {
     return [];
 };
 
-
-// --- IMPLEMENTACIÓN PROFESIONAL Y CORRECTA PARA HISTORIAL DE PARTIDOS ---
-
-/**
- * Obtiene el historial de partidos completo para un equipo específico.
- * Sigue la lógica de la aplicación: Equipo -> Torneos en los que participa -> Partidos de esos torneos.
- * @param teamId El ID del equipo.
- * @returns Una promesa que se resuelve con un array de todos los partidos del equipo.
- */
 export const getMatchHistoryForTeam = async (teamId: string): Promise<Match[]> => {
   console.log(`[DB Service] Iniciando búsqueda de historial para teamId: ${teamId}`);
   
   try {
-    // 1. Obtener la lista de IDs de torneos en los que el equipo está inscrito.
     const teamTournamentsRef = ref(db, `teams/${teamId}/tournaments`);
     const teamTournamentsSnap = await get(teamTournamentsRef);
 
     if (!teamTournamentsSnap.exists()) {
       console.log(`[DB Service] El equipo ${teamId} no está inscrito en ningún torneo.`);
-      return []; // Si no juega torneos, no tiene partidos.
+      return [];
     }
 
     const tournamentIds = Object.keys(teamTournamentsSnap.val());
@@ -350,28 +339,24 @@ export const getMatchHistoryForTeam = async (teamId: string): Promise<Match[]> =
     }
     console.log(`[DB Service] Equipo ${teamId} participa en los torneos:`, tournamentIds);
 
-    // 2. Para cada torneo, buscar todos sus partidos y luego filtrar.
     const matchesPromises = tournamentIds.map(async (tournamentId) => {
       const matchesRef = ref(db, 'matches');
-      // Buscamos todos los partidos que pertenecen a este torneo.
       const q = query(matchesRef, orderByChild('tournamentId'), equalTo(tournamentId));
       const snapshot = await get(q);
 
       if (snapshot.exists()) {
         const matchesInTournament = snapshot.val();
-        // ¡CORRECCIÓN FINAL! Usamos los nombres de campo correctos de tus datos.
         const teamMatches = Object.values(matchesInTournament)
           .map((matchData: any) => ({ id: matchData.id, ...matchData }))
           .filter(match => match.homeTeamId === teamId || match.awayTeamId === teamId);
         
         return teamMatches;
       } 
-      return []; // No se encontraron partidos para este torneo.
+      return [];
     });
 
-    // 3. Ejecutar todas las promesas y aplanar el resultado.
     const matchesPerTournament = await Promise.all(matchesPromises);
-    const allMatches = matchesPerTournament.flat(); // Aplanamos el array de arrays.
+    const allMatches = matchesPerTournament.flat();
 
     console.log(`[DB Service] Se encontraron un total de ${allMatches.length} partidos para el equipo ${teamId} en todos sus torneos.`);
 
@@ -379,22 +364,15 @@ export const getMatchHistoryForTeam = async (teamId: string): Promise<Match[]> =
 
   } catch (error) {
     console.error(`[DB Service] Error crítico al obtener el historial de partidos para ${teamId}:`, error);
-    return []; // Devolvemos un array vacío en caso de un error inesperado.
+    return [];
   }
 };
 
-/**
- * Encuentra el próximo partido programado para un equipo, previendo datos incompletos.
- * @param teamId El ID del equipo.
- * @returns Una promesa que se resuelve con el próximo partido (Match) o null si no hay ninguno.
- */
 export const getNextMatchForTeam = async (teamId: string): Promise<Match | null> => {
   console.log(`[DB Service] Buscando próximo partido para teamId: ${teamId}`);
   try {
-    // 1. Reutilizamos la lógica robusta para obtener TODOS los partidos del equipo.
     const allMatches = await getMatchHistoryForTeam(teamId);
 
-    // 2. Filtramos en el cliente solo los partidos que están pendientes.
     const pendingMatches = allMatches.filter(match => match.status === 'pending');
 
     if (pendingMatches.length === 0) {
@@ -402,24 +380,20 @@ export const getNextMatchForTeam = async (teamId: string): Promise<Match | null>
       return null;
     }
 
-    // 3. Ordenamiento inteligente: los partidos con fecha tienen prioridad.
     pendingMatches.sort((a, b) => {
       const aHasDate = !!a.details?.date;
       const bHasDate = !!b.details?.date;
 
-      if (aHasDate && !bHasDate) return -1; // a (con fecha) va antes que b (sin fecha).
-      if (!aHasDate && bHasDate) return 1;  // b (con fecha) va antes que a (sin fecha).
+      if (aHasDate && !bHasDate) return -1;
+      if (!aHasDate && bHasDate) return 1;
 
-      // Si ambos tienen fecha, se ordena por la más próxima.
       if (aHasDate && bHasDate) {
         return new Date(a.details!.date).getTime() - new Date(b.details!.date).getTime();
       }
 
-      // Si ninguno tiene fecha, su orden relativo no importa.
       return 0;
     });
 
-    // 4. El próximo partido es el primero en la lista ordenada.
     const nextMatch = pendingMatches[0];
     console.log(`[DB Service] Próximo partido encontrado para ${teamId}: ${nextMatch.id}. ¿Tiene fecha?: ${!!nextMatch.details?.date}`);
     
@@ -433,7 +407,6 @@ export const getNextMatchForTeam = async (teamId: string): Promise<Match | null>
 
 // --- FUNCIONES PARA POSTS (PUBLICACIONES) ---
 
-// Interfaz para los datos del usuario que necesitamos, para mayor claridad
 interface UserData {
   id: string;
   name: string;
@@ -441,32 +414,41 @@ interface UserData {
   username: string;
 }
 
-// Interfaz para los datos de un nuevo post
+// MEJORA: La interfaz ahora incluye todas las propiedades que vienen del formulario.
 interface NewPostData {
   content?: string;
   media?: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string }[];
-  location?: string;
-  author: UserData; // Usamos la interfaz limpia
+  url?: string | null;
+  isPinned?: boolean;
+  author: UserData;
 }
 
 /**
- * Crea una nueva publicación en la base de datos.
+ * Crea una nueva publicación en la base de datos, ahora con lógica para fijar y server timestamp.
  */
 export const createPost = async (postData: NewPostData): Promise<void> => {
-  const { content, media, location, author } = postData;
+  const { content, media, url, isPinned, author } = postData;
 
-  const postToSave = {
+  // MEJORA: Usamos el serverTimestamp() de Firebase para una fecha consistente.
+  const postToSave: any = {
     authorId: author.id,
     authorName: author.name,
     authorAvatar: author.avatar,
     authorUsername: author.username,
-    createdAt: new Date().toISOString(),
+    createdAt: serverTimestamp(),
     content: content || '',
     ...(media && { media }),
-    ...(location && { location }),
+    ...(url && { url }),
     likes: {},
     comments: {},
   };
+
+  // CORRECCIÓN: Añadimos la lógica para manejar los posts fijados.
+  if (isPinned) {
+    postToSave.isPinned = true;
+    // Fijamos el post por 24 horas usando el timestamp del servidor.
+    postToSave.pinnedUntil = { '.sv': { 'timestamp': serverTimestamp() }, 'offset': 24 * 60 * 60 * 1000 };
+  }
 
   await push(ref(db, 'posts'), postToSave);
 };
@@ -481,7 +463,6 @@ export const togglePostLike = async (postId: string, user: UserData): Promise<vo
   if (snapshot.exists()) {
     await remove(postLikeRef);
   } else {
-    // Creamos el objeto plano a guardar
     const likeData = {
       name: user.name,
       avatar: user.avatar,
@@ -492,20 +473,20 @@ export const togglePostLike = async (postId: string, user: UserData): Promise<vo
 };
 
 /**
- * Añade un comentario a una publicación.
+ * Añade un comentario a una publicación, ahora usando server timestamp.
  */
 export const addCommentToPost = async (postId: string, commentText: string, author: UserData): Promise<void> => {
   const commentsRef = ref(db, `posts/${postId}/comments`);
   const newCommentRef = push(commentsRef);
 
-  // Creamos el objeto plano a guardar
   const commentData = {
     authorId: author.id,
     authorName: author.name,
     authorAvatar: author.avatar,
     authorUsername: author.username,
     content: commentText,
-    createdAt: new Date().toISOString(),
+    // MEJORA: Usamos el serverTimestamp() de Firebase para una fecha consistente.
+    createdAt: serverTimestamp(),
   };
 
   await set(newCommentRef, commentData);
