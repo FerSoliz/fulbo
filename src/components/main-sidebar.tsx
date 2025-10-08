@@ -40,7 +40,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
-    { href: '/leagues', icon: Trophy, label: 'LIGAS EN CURSO' },
+    { href: '/tournaments', icon: Trophy, label: 'LIGAS EN CURSO' },
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
     { href: '/store', icon: Store, label: 'TIENDA' },
     { href: '/collectibles', icon: Swords, label: 'TGC SUDONE' },
@@ -233,7 +233,11 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
       }
       
       const isPanelAdmin = item.label === 'PANEL DE ADMIN';
-      const isActive = pathname === finalHref || (finalHref !== '/' && pathname.startsWith(finalHref) && finalHref.length > 1);
+      
+      // Lógica de activación mejorada
+      const isActive = finalHref === '/' 
+        ? pathname === '/'
+        : (pathname === finalHref || pathname.startsWith(`${finalHref}/`));
 
       const isCollectibles = item.label === 'TGC SUDONE';
 

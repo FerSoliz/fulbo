@@ -1,4 +1,3 @@
-'''
 export interface UserProfile {
     id: string;
     name: string;
@@ -48,13 +47,11 @@ export interface Team {
     players: string[];
 }
 
-// --- NUEVA INTERFAZ PARA DETALLES DE EQUIPO ---
 export interface TeamDetails {
     id: string;
     name: string;
     logoUrl: string;
     captainId: string;
-    // Podríamos añadir más campos como `tournamentId`, etc. en el futuro
 }
 
 export interface Post {
@@ -101,4 +98,42 @@ export interface FoundPlayer {
     crestUrl?: string | null;
   } | null;
 }
-''
+
+// Tipos relacionados a Torneos
+
+export interface Standing {
+    rank: number;
+    team: string;
+    crestUrl: string;
+    played: number;
+    won: number;
+    drawn: number;
+    lost: number;
+    points: number;
+}
+
+export interface Scorer {
+    rank: number;
+    player: string;
+    team: string;
+    goals: number;
+}
+
+export interface Sanction {
+    player: string;
+    team: string;
+    yellow: number;
+    red: number;
+}
+
+export interface FullTournament {
+    id: string;
+    name: string;
+    category: string;
+    startDate: string;
+    endDate: string;
+    venue: string;
+    standings: Standing[];
+    scorers: Scorer[];
+    sanctions: Sanction[];
+}

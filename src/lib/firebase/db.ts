@@ -1,7 +1,6 @@
-
 import { ref, get, set, update, onValue, off, query, orderByChild, equalTo, remove, push, serverTimestamp, increment } from 'firebase/database';
 import { db } from '../firebase';
-import { UserProfile, Post, RosterPlayer, FoundPlayer, TeamDetails, Match } from '../types'; 
+import { UserProfile, Post, RosterPlayer, FoundPlayer, TeamDetails, Match, FullTournament, TournamentStats, Standing, Scorer, Sanction } from '../types'; 
 
 // --- TIPOS ---
 
@@ -11,6 +10,7 @@ export interface TeamSummary {
   logoUrl: string;
 }
 
+// Mantenemos este tipo por si se usa en el admin
 export interface TeamStats {
   teamId: string;
   teamName: string;
@@ -32,12 +32,6 @@ export interface PlayerStats {
   goals: number;
   yellowCards: number;
   redCards: number;
-}
-
-export interface TournamentStats {
-  positions: TeamStats[];
-  scorers: PlayerStats[];
-  sanctions: PlayerStats[];
 }
 
 // --- FUNCIONES DE DATOS ESPECÍFICAS ---
@@ -250,6 +244,111 @@ export const getAllTeams = async (): Promise<TeamSummary[]> => {
         return [];
     }
 };
+
+export const getAllTournaments = async (): Promise<FullTournament[]> => {
+  try {
+    const tournamentsRef = ref(db, 'tournaments');
+    const snapshot = await get(tournamentsRef);
+
+    if (!snapshot.exists()) {
+      console.log("[DB Service] No se encontraron torneos.");
+      return [];
+    }
+
+    const tournamentsList: FullTournament[] = [];
+    snapshot.forEach(childSnapshot => {
+      tournamentsList.push({ id: childSnapshot.key!, ...childSnapshot.val() });
+    });
+
+    return tournamentsList;
+  } catch (error) {
+    console.error("[DB Service] Error crítico al obtener todos los torneos:", error);
+    return [];
+  }
+};
+
+export const getTournamentDetails = async (tournamentId: string): Promise<FullTournament | null> => {
+  console.log(`[DB Service] Obteniendo detalles enriquecidos para el torneo: ${tournamentId}`);
+  try {
+    // Paso 1 y 2: Obtener datos básicos del torneo y sus estadísticas crudas en paralelo
+    const tournamentRef = ref(db, `tournaments/${tournamentId}`);
+    const statsRef = ref(db, `tournament_stats/${tournamentId}`);
+
+    const [tournamentSnapshot, statsSnapshot] = await Promise.all([
+      get(tournamentRef),
+      get(statsRef),
+    ]);
+
+    if (!tournamentSnapshot.exists()) {
+      console.warn(`[DB Service] No se encontró el torneo con ID: ${tournamentId}`);
+      return null;
+    }
+
+    const tournamentData = tournamentSnapshot.val();
+    const statsData: TournamentStats | null = statsSnapshot.exists() ? statsSnapshot.val() : null;
+    const teamIds = tournamentData.teams ? Object.keys(tournamentData.teams) : [];
+
+    // Paso 3: Obtener detalles de todos los equipos del torneo para crear un mapa de búsqueda
+    const teamsPromises = teamIds.map(id => get(ref(db, `teams/${id}`)));
+    const teamsSnapshots = await Promise.all(teamsPromises);
+    const teamsMap = teamsSnapshots.reduce((acc, snap) => {
+      if (snap.exists()) {
+        const team = snap.val();
+        acc[snap.key!] = { name: team.name, logoUrl: team.logoUrl };
+      }
+      return acc;
+    }, {} as { [id: string]: { name: string, logoUrl: string } });
+
+    console.log("[DB Service] Mapa de equipos construido:", teamsMap);
+
+    // Paso 4: Procesar y enriquecer los datos de estadísticas
+    const standings: Standing[] = statsData?.positions?.map((pos, index) => ({
+      rank: index + 1,
+      team: teamsMap[pos.teamId]?.name || pos.teamName || 'Equipo Desconocido',
+      played: pos.played,
+      won: pos.won,
+      drawn: pos.drawn,
+      lost: pos.lost,
+      points: pos.points,
+      crestUrl: teamsMap[pos.teamId]?.logoUrl || ''
+    })) || [];
+
+    const scorers: Scorer[] = statsData?.scorers?.map((scorer, index) => ({
+      rank: index + 1,
+      player: `${scorer.playerInfo.name} ${scorer.playerInfo.lastName || ''}`.trim(),
+      team: teamsMap[scorer.teamId]?.name || scorer.teamName || 'Equipo Desconocido',
+      goals: scorer.goals,
+    })) || [];
+    
+    const sanctions: Sanction[] = statsData?.sanctions?.map(sanc => ({
+      player: `${sanc.playerInfo.name} ${sanc.playerInfo.lastName || ''}`.trim(),
+      team: teamsMap[sanc.teamId]?.name || sanc.teamName || 'Equipo Desconocido',
+      yellowCards: sanc.yellowCards,
+      redCards: sanc.redCards,
+    })) || [];
+
+    // Paso 5: Ensamblar el objeto final
+    const fullTournamentData: FullTournament = {
+      id: tournamentSnapshot.key!,
+      name: tournamentData.name,
+      category: tournamentData.category,
+      startDate: tournamentData.startDate,
+      endDate: tournamentData.endDate,
+      venue: tournamentData.venue,
+      standings,
+      scorers,
+      sanctions,
+    };
+
+    console.log(`[DB Service] Datos combinados y enriquecidos para ${tournamentId}:`, fullTournamentData);
+    return fullTournamentData;
+
+  } catch (error) {
+    console.error(`[DB Service] Error crítico al obtener los detalles del torneo ${tournamentId}:`, error);
+    return null;
+  }
+};
+
 
 export const searchTeams = async (searchText: string, excludedTeamIds: string[] = []): Promise<TeamSummary[]> => {
     if (!searchText || searchText.trim() === '') return [];
