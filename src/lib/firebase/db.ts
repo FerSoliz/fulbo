@@ -464,7 +464,7 @@ export const togglePostLike = async (postId: string, user: UserData): Promise<vo
       avatar: user.avatar,
       username: user.username,
     };
-    await set(postLikeeRef, likeData);
+    await set(postLikeRef, likeData);
   }
 };
 

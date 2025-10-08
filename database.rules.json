@@ -48,7 +48,7 @@
         },
         "comments": {
           "$commentId": {
-            ".validate": "newData.hasChildren(['authorId', 'authorName', 'authorAvatar', 'authorUsername', 'content', 'createdAt']) && newData.child('authorId').isString() && newData.child('authorName').isString() && newData.child('authorAvatar').isString() && newData.child('authorUsername').isString() && newData.child('content').isString() && newData.child('content').val().length > 0 && newData.child('content').val().length <= 200 && newData.child('createdAt').isString()",
+            ".validate": "newData.hasChildren(['authorId', 'authorName', 'authorAvatar', 'authorUsername', 'content', 'createdAt']) && newData.child('authorId').isString() && newData.child('authorName').isString() && newData.child('authorAvatar').isString() && newData.child('authorUsername').isString() && newData.child('content').isString() && newData.child('content').val().length > 0 && newData.child('content').val().length <= 200 && (newData.child('createdAt').isNumber() || newData.child('createdAt').hasChild('.sv'))",
             ".write": "auth != null && ((newData.hasChild('authorId') && newData.child('authorId').val() === auth.uid) || (data.exists() && data.child('authorId').val() === auth.uid) || root.child('users').child(auth.uid).child('role').val() === 'admin' )"
           }
         },
@@ -56,7 +56,7 @@
           ".validate": "newData.isString() && newData.val().length <= 500"
         },
         "createdAt": {
-          ".validate": "newData.isString()"
+          ".validate": "(newData.isNumber() || newData.hasChild('.sv'))"
         },
         "isPinned": {
           ".validate": "newData.isBoolean() || newData.val() === null"

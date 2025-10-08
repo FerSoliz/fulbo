@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react';
 import { CreatePostForm } from '@/components/create-post-form';
 import { PostCard } from '@/components/post-card';
-import { Post } from '@/lib/types'; // Importación directa desde types.ts
+import { Post } from '@/lib/types';
 import { useUser } from '@/context/user-context';
 import { db } from '@/lib/firebase';
-import { ref, onValue, remove } from 'firebase/database';
+import { ref, onValue, remove, query, orderByChild } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 import { PostCardSkeleton } from '@/components/post-card-skeleton';
 import { createPost, togglePostLike, addCommentToPost } from '@/lib/firebase/db';
@@ -23,32 +23,20 @@ export default function HomePage() {
 
   useEffect(() => {
     setLoadingState({ status: 'loading', data: [] });
-    const postsRef = ref(db, 'posts');
+    const postsQuery = query(ref(db, 'posts'), orderByChild('createdAt'));
 
-    const unsubscribe = onValue(postsRef, (snapshot) => {
+    const unsubscribe = onValue(postsQuery, (snapshot) => {
       try {
-        const data = snapshot.val();
         const postsList: Post[] = [];
+        snapshot.forEach(childSnapshot => {
+          postsList.push({ id: childSnapshot.key!, ...childSnapshot.val() });
+        });
 
-        if (data) {
-          Object.keys(data).forEach(key => {
-            // Asegurarnos de que el post tiene un createdAt antes de añadirlo
-            if (data[key].createdAt) {
-                postsList.push({ id: key, ...data[key] });
-            }
-          });
-        }
-        
-        // MEJORA: Usamos un timestamp numérico para la comparación.
+        const sortedPosts = postsList.reverse();
+
         const now_ts = new Date().getTime();
-        
-        // MEJORA: La comparación ahora es numérica, más eficiente.
-        const pinned = postsList.filter(p => p.isPinned && p.pinnedUntil && p.pinnedUntil > now_ts);
-        const unpinned = postsList.filter(p => !pinned.includes(p));
-
-        // MEJORA: El ordenamiento es directo sobre los timestamps, mucho más limpio.
-        pinned.sort((a, b) => b.createdAt - a.createdAt);
-        unpinned.sort((a, b) => b.createdAt - a.createdAt);
+        const pinned = sortedPosts.filter(p => p.isPinned && p.pinnedUntil && p.pinnedUntil > now_ts);
+        const unpinned = sortedPosts.filter(p => !p.isPinned || !p.pinnedUntil || p.pinnedUntil <= now_ts);
 
         setLoadingState({ status: 'success', data: [...pinned, ...unpinned] });
       } catch (error) {
@@ -76,7 +64,6 @@ export default function HomePage() {
     };
 
     try {
-      // El `postData` del formulario ahora se pasa directamente a `createPost`.
       await createPost({ ...postData, author });
       toast({ title: "Publicación creada", description: "Tu publicación ha sido añadida al feed." });
     } catch (error: any) {
