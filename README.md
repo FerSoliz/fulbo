@@ -130,6 +130,9 @@ Esta sección sirve como un registro vivo del estado de las funcionalidades del 
 - **Historial de Partidos del Perfil de Usuario:**
   - **Fecha:** 2024-05-25
   - **Descripción:** Se ha añadido una nueva sección "Historial" en la botonera del perfil de usuario. Al hacer clic, se abre un modal que muestra todos los partidos jugados por el equipo del usuario. Los partidos se pueden filtrar por torneo a través de un sistema de pestañas. La consulta a Firebase se ha optimizado para ser altamente eficiente, consultando solo los partidos relevantes en lugar de toda la colección. Se incluye un estado para jugadores "libres" (sin equipo).
+- **Depuración Integral del Feed Social y Corrección de Reglas de Seguridad:**
+  - **Fecha:** 2024-05-25
+  - **Descripción:** Se ha llevado a cabo una sesión completa de depuración que ha restaurado la funcionalidad principal del feed social. Se resolvió un error crítico de `PERMISSION_DENIED` que impedía crear posts, comentarios y dar "Me gusta". La causa raíz fue identificada y corregida, actualizando las reglas de seguridad de Firebase para validar correctamente el uso de `serverTimestamp()` y los datos enviados por la app. Adicionalmente, se corrigió un bug silencioso de `ReferenceError` en la función de "Me gusta" y se implementó una lógica de ordenamiento robusta en el feed para asegurar que los posts nuevos siempre aparezcan en la parte superior, mejorando la experiencia de usuario.
 
 ### Tareas a Futuro
 - **Soporte para más plataformas de video:**
