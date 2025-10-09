@@ -148,3 +148,45 @@ Esta sección sirve como un registro vivo del estado de las funcionalidades del 
 - La IA responsable de interactuar con este proyecto tiene la **obligación** de mantener actualizada la sección `## 11. Roadmap del Proyecto`.
 - Cuando una tarea de la lista `Tareas a Futuro` se complete, debe ser movida a la lista `Funcionalidades Implementadas`, detallando qué se hizo y la fecha de finalización.
 - Cuando se identifiquen nuevas necesidades o tareas, deben ser añadidas a la lista `Tareas a Futuro`, detallando su descripción y prioridad.
+
+---
+## 13. Sistema de Ranking — Sudone
+🔹 **Asignación de Puntos (SP)**
+
+Cada jugador recibe SudPoints (SP) según su rendimiento en los partidos:
+
+| Acción | Puntos |
+| :--- | :--- |
+| Ganar un partido | +32 SP |
+| Empatar un partido | +20 SP |
+| Perder un partido | −20 SP |
+| Hacer entre 1 y 5 goles | +10 SP |
+| Hacer entre 6 y 10 goles | +20 SP |
+| Tarjeta amarilla | −12 SP |
+| Tarjeta roja | −30 SP |
+| Acumulación de 5 amarillas | −30 SP |
+| MVP del partido | +15 SP |
+| Ganar una competencia | +200 SP |
+
+⚠️ El bono de goles no es acumulable; solo se toma uno de los dos rangos.
+
+🥇 **Divisiones**
+
+| Rango de SP | División |
+| :--- | :--- |
+| 0 – 99 | Bronce IV |
+| 100 – 199 | Bronce III |
+| 200 – 299 | Bronce II |
+| 300 – 399 | Bronce I |
+| 400 – 499 | Plata |
+| 500 – 599 | Oro |
+| 600 – 699 | Crack |
+| 700 + | Leyenda Mundial 🏅 |
+
+En “Leyenda Mundial” solo se muestra el total acumulado de SP.
+
+Para ascender de una división a otra, el jugador debe alcanzar 100 SP.
+
+Las divisiones inferiores se basan en rangos de SP configurables.
+
+📊 **Ejemplo:** Un jugador con 202 SP se encuentra en la división Bronce II.
