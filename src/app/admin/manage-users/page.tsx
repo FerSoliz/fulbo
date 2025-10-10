@@ -139,8 +139,8 @@ export default function ManageUsersPage() {
   
   // Se usa el estado local `users` que está garantizado que es un array
   const filteredUsers = (users || []).filter(user => 
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase()))
+    (user.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (user.email || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -193,7 +193,7 @@ export default function ManageUsersPage() {
                         <div className="flex items-center gap-3">
                           <Avatar>
                             <AvatarImage src={user.avatar} alt={user.name} />
-                            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                            <AvatarFallback>{(user.name || '').charAt(0)}</AvatarFallback>
                           </Avatar>
                           <span className="font-medium">{user.name}</span>
                         </div>

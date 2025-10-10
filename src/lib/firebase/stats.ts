@@ -1,7 +1,7 @@
 
-import { ref, get, update, remove } from 'firebase/database';
+import { ref, get, update } from 'firebase/database';
 import { db } from '@/lib/firebase';
-import { Match, PlayerStatsInfo, Team, User } from '@/lib/types';
+import { Match, PlayerStatsInfo, Team, User, GuestPlayer } from '@/lib/types';
 
 // --- CONSTANTES DE PUNTUACIÓN (REGLAMENTO DE SUDONE) ---
 const SP_POINTS = {
@@ -17,7 +17,7 @@ const SP_POINTS = {
 };
 
 // --- FUNCIÓN 1: CALCULAR ESTADÍSTICAS DEL TORNEO (TABLAS) ---
-// Esta función se mantiene igual, ya que maneja las tablas de posiciones, goleadores, etc.
+// (Sin cambios en esta función)
 export async function calculateTournamentStats(tournamentId: string, teams: Team[]) {
     const matchesRef = ref(db, 'matches');
     const matchesSnap = await get(matchesRef);
@@ -57,8 +57,8 @@ export async function calculateTournamentStats(tournamentId: string, teams: Team
 
 }
 
-// --- FUNCIÓN 2: ACTUALIZAR SUDPOINTS GLOBALES DE JUGADORES (MOTOR DE RANKING) ---
-export async function updatePlayerGlobalStats(matchId: string, tournamentId: string, tournamentName: string) {
+// --- FUNCIÓN 2: ACTUALIZAR SUDPOINTS GLOBALES (MOTOR DE RANKING MEJORADO) ---
+export async function updatePlayerGlobalStats(matchId: string) {
     const matchSnap = await get(ref(db, `matches/${matchId}`));
     const matchStatsSnap = await get(ref(db, `match_stats/${matchId}`));
     
@@ -75,7 +75,7 @@ export async function updatePlayerGlobalStats(matchId: string, tournamentId: str
     const awayResult = match.result?.away ?? 0;
 
     const playerIds = Object.keys(matchStats);
-    const updates: { [key: string]: any } = {}; // Objeto para la actualización atómica
+    const updates: { [key: string]: any } = {};
 
     for (const playerId of playerIds) {
         const stats = matchStats[playerId];
@@ -84,16 +84,11 @@ export async function updatePlayerGlobalStats(matchId: string, tournamentId: str
 
         let result: 'win' | 'draw' | 'loss';
         if (playerTeamId === match.homeTeamId) {
-            if (homeResult > awayResult) result = 'win';
-            else if (homeResult < awayResult) result = 'loss';
-            else result = 'draw';
+            result = homeResult > awayResult ? 'win' : homeResult < awayResult ? 'loss' : 'draw';
         } else {
-            if (awayResult > homeResult) result = 'win';
-            else if (awayResult < homeResult) result = 'loss';
-            else result = 'draw';
+            result = awayResult > homeResult ? 'win' : awayResult < homeResult ? 'loss' : 'draw';
         }
 
-        // 1. Calcular SudPoints para ESTE partido
         let pointsChange = 0;
         if (result === 'win') pointsChange += SP_POINTS.WIN;
         if (result === 'draw') pointsChange += SP_POINTS.DRAW;
@@ -104,74 +99,101 @@ export async function updatePlayerGlobalStats(matchId: string, tournamentId: str
         if (stats.redCard) pointsChange += SP_POINTS.RED_CARD;
         if (stats.mvp) pointsChange += SP_POINTS.MVP;
 
-        // 2. Preparar la actualización del perfil de usuario
-        const userRef = ref(db, `users/${playerId}`);
-        const userSnap = await get(userRef);
-        const currentUser = userSnap.val() as User;
-        const currentPoints = currentUser?.sudpoints || 0;
-        const newTotalPoints = currentPoints + pointsChange;
+        const playerInfo = await getPlayerProfileInfo(playerId);
+        if (!playerInfo) continue; // Jugador no encontrado en /users ni en /guestPlayers
 
-        updates[`/users/${playerId}/sudpoints`] = newTotalPoints;
-        updates[`/match_stats/${matchId}/${playerId}/sudPointsChange`] = pointsChange; // Guardamos el delta para la reversión
+        const newTotalPoints = playerInfo.currentPoints + pointsChange;
+
+        updates[`${playerInfo.path}/sudpoints`] = newTotalPoints;
+        updates[`/match_stats/${matchId}/${playerId}/sudPointsChange`] = pointsChange;
     }
 
-    // 3. Marcar el partido como procesado
     updates[`/matches/${matchId}/statsProcessed`] = true;
-
-    // 4. Ejecutar todas las actualizaciones de forma atómica
     await update(ref(db), updates);
 }
 
-// --- FUNCIÓN 3: REVERTIR SUDPOINTS DE UN PARTIDO (EL "DESHACER") ---
-export async function revertMatchStats(matchId: string, tournamentId: string) {
+// --- FUNCIÓN 3: REVERTIR SUDPOINTS (MOTOR DE REVERSIÓN MEJORADO) ---
+export async function revertMatchStats(matchId: string) {
     const matchStatsSnap = await get(ref(db, `match_stats/${matchId}`));
-    if (!matchStatsSnap.exists()) return; // No hay stats, no hay nada que revertir.
+    if (!matchStatsSnap.exists()) return;
     
     const matchStats: { [playerId: string]: PlayerStatsInfo } = matchStatsSnap.val();
     const playerIds = Object.keys(matchStats);
-    const updates: { [key: string]: any } = {}; // Objeto para la actualización atómica
+    const updates: { [key: string]: any } = {};
 
     for (const playerId of playerIds) {
-        const playerMatchStats = matchStats[playerId];
-        const sudPointsChange = playerMatchStats.sudPointsChange;
-
-        // Si por alguna razón no se guardó el cambio de puntos, no podemos revertir
+        const sudPointsChange = matchStats[playerId]?.sudPointsChange;
         if (typeof sudPointsChange !== 'number') continue;
 
-        const userRef = ref(db, `users/${playerId}`);
-        const userSnap = await get(userRef);
-        if (!userSnap.exists()) continue;
+        const playerInfo = await getPlayerProfileInfo(playerId);
+        if (!playerInfo) continue; // Jugador no encontrado
 
-        const currentUser = userSnap.val() as User;
-        const currentPoints = currentUser.sudpoints || 0;
-        const revertedPoints = currentPoints - sudPointsChange; // Revertimos la operación
+        const revertedPoints = playerInfo.currentPoints - sudPointsChange;
 
-        updates[`/users/${playerId}/sudpoints`] = revertedPoints;
-        // Eliminamos el registro para no poder revertir dos veces
-        updates[`/match_stats/${matchId}/${playerId}/sudPointsChange`] = null; 
+        updates[`${playerInfo.path}/sudpoints`] = revertedPoints;
+        updates[`/match_stats/${matchId}/${playerId}/sudPointsChange`] = null;
     }
     
-    // También marcamos el partido para que pueda ser procesado de nuevo
     updates[`/matches/${matchId}/statsProcessed`] = false;
-
-    // Ejecutar todas las actualizaciones de forma atómica
     await update(ref(db), updates);
 }
 
 
-// --- HELPERS --- 
+// --- HELPERS (AYUDANTES) ---
+
+// NUEVO HELPER "DETECTIVE"
+type PlayerProfileInfo = {
+    path: string;
+    currentPoints: number;
+};
+
+const getPlayerProfileInfo = async (playerId: string): Promise<PlayerProfileInfo | null> => {
+    // 1. Buscar en usuarios registrados
+    const userRef = ref(db, `users/${playerId}`);
+    const userSnap = await get(userRef);
+    if (userSnap.exists()) {
+        const userData = userSnap.val() as User;
+        return {
+            path: `/users/${playerId}`,
+            currentPoints: userData.sudpoints || 0
+        };
+    }
+
+    // 2. Si no, buscar en jugadores invitados
+    const guestPlayerRef = ref(db, `guestPlayers/${playerId}`);
+    const guestPlayerSnap = await get(guestPlayerRef);
+    if (guestPlayerSnap.exists()) {
+        const guestPlayerData = guestPlayerSnap.val() as GuestPlayer;
+        return {
+            path: `/guestPlayers/${playerId}`,
+            currentPoints: guestPlayerData.sudpoints || 0
+        };
+    }
+
+    // 3. Jugador no encontrado en ninguna colección
+    console.warn(`Perfil de jugador no encontrado para ID: ${playerId}. Se buscó en /users y /guestPlayers.`);
+    return null;
+};
+
 
 const getPlayerTeamId = async (playerId: string, teamIds: string[]): Promise<string | null> => {
     for (const teamId of teamIds) {
         const playerInTeamSnap = await get(ref(db, `teams/${teamId}/players/${playerId}`));
         if (playerInTeamSnap.exists()) return teamId;
     }
-    // Fallback: Check user profile if not in team roster (e.g. guest player)
+    // Fallback por si no está en la lista del equipo (ej. error de carga inicial)
     const userSnap = await get(ref(db, `users/${playerId}`));
     if(userSnap.exists()){
         const userData = userSnap.val() as User;
         if(userData.team && teamIds.includes(userData.team.id)){
             return userData.team.id;
+        }
+    }
+    const guestSnap = await get(ref(db, `guestPlayers/${playerId}`));
+    if(guestSnap.exists()){
+        const guestData = guestSnap.val() as GuestPlayer;
+        if(guestData.teamId && teamIds.includes(guestData.teamId)){
+            return guestData.teamId;
         }
     }
     return null;
