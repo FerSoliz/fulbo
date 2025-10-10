@@ -26,12 +26,31 @@ export function CartWidget() {
   const { cart, itemCount, cartTotal, updateQuantity, removeFromCart, clearCart } = useCart();
 
   const handleCheckout = () => {
-    let message = '¡Hola SudOne! 👋 Quiero hacer el siguiente pedido:\n\n';
-    cart.forEach(item => {
-      message += `*${item.name}* (x${item.quantity}) - ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(item.price * item.quantity)}\n`;
-    });
-    message += `\n*Total del Pedido: ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(cartTotal)}*\n\n`;
-    message += '¡Espero la confirmación para coordinar el pago y envío! Gracias. 🙌';
+    const header = '*🎉 ¡Nuevo Pedido desde SudOne Store! 🎉*';
+    const separator = '-----------------------------------';
+
+    const itemsSummary = cart.map(item => {
+      const itemTotal = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(item.price * item.quantity);
+      return `*✅ ${item.name}*\n   - _Cantidad:_ ${item.quantity}\n   - _Subtotal:_ ${itemTotal}`;
+    }).join('\n\n');
+
+    const totalString = `*💰 TOTAL DEL PEDIDO: ${new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(cartTotal)}*`;
+
+    const footer = '_Este es un pedido automático. Por favor, aguarda a que un representante te contacte para confirmar stock y coordinar el pago/envío._\n\n_¡Gracias por tu compra! 🙌_';
+
+    const message = [
+      header,
+      separator,
+      '*🛒 RESUMEN DE COMPRA:*',
+      '',
+      itemsSummary,
+      '',
+      separator,
+      totalString,
+      separator,
+      '',
+      footer
+    ].join('\n');
 
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
