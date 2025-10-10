@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ref, onValue, update, set, get } from 'firebase/database';
+import { ref, onValue, update, set, get, remove } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
@@ -18,7 +18,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
-import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil } from 'lucide-react';
+import { AddMatchDialog } from '@/components/add-match-dialog';
+import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2 } from 'lucide-react';
 
 // --- TIPOS (actualizados para reflejar la nueva estructura de stats.ts)
 import { Tournament, Team, Match, Stats, PageState, PlayerStatsInfo } from '@/lib/types';
@@ -56,6 +57,7 @@ export default function TournamentFixturePage() {
     const [matches, setMatches] = useState<Match[]>([]);
     const [stats, setStats] = useState<Stats | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isAddMatchDialogOpen, setIsAddMatchDialogOpen] = useState(false);
 
     const updateMatchData = (matchId: string, path: string, value: any) => {
         set(ref(db, `matches/${matchId}/${path}`), value);
@@ -133,6 +135,16 @@ export default function TournamentFixturePage() {
         }
     }, [tournament, teams, toast]);
 
+    const handleDeleteMatch = async (matchId: string) => {
+        try {
+            await remove(ref(db, `matches/${matchId}`));
+            toast({ title: "Partido Eliminado", description: "El partido ha sido eliminado del fixture." });
+        } catch (error) {
+            console.error("Error deleting match:", error);
+            toast({ title: "Error", description: "No se pudo eliminar el partido.", variant: "destructive" });
+        }
+    };
+
 
     useEffect(() => {
         if (userLoading) return;
@@ -182,7 +194,7 @@ export default function TournamentFixturePage() {
             const updates: { [key: string]: any } = {};
             fixtureSchedule.forEach(match => {
                 const matchId = `match_${tournamentId}_r${match.round}_${match.homeTeamId.substring(0,4)}_${match.awayTeamId.substring(0,4)}_${Math.random().toString(36).substring(2, 7)}`;
-                updates[`/matches/${matchId}`] = { id: matchId, tournamentId, round: match.round, homeTeamId: match.homeTeamId, awayTeamId: away.id, status: 'pending', result: { home: null, away: null } };
+                updates[`/matches/${matchId}`] = { id: matchId, tournamentId, round: match.round, homeTeamId: match.homeTeamId, awayTeamId: match.awayTeamId, status: 'pending', result: { home: null, away: null } };
             });
             await update(ref(db), updates);
             toast({ title: "¡Fixture Generado!" });
@@ -214,7 +226,13 @@ export default function TournamentFixturePage() {
                     <TabsList className="grid w-full grid-cols-4"><TabsTrigger value="fixture">Fixture</TabsTrigger><TabsTrigger value="positions">Posiciones</TabsTrigger><TabsTrigger value="scorers">Goleadores</TabsTrigger><TabsTrigger value="sanctions">Sanciones</TabsTrigger></TabsList>
                     <TabsContent value="fixture" className="mt-6">
                         <Card>
-                            <CardHeader><CardTitle>Partidos del Torneo</CardTitle><CardDescription>Carga o corrige las estadísticas de un partido. El sistema recalculará todo automáticamente.</CardDescription></CardHeader>
+                            <CardHeader className="flex flex-row items-center justify-between">
+                                <div>
+                                    <CardTitle>Partidos del Torneo</CardTitle>
+                                    <CardDescription>Carga o corrige las estadísticas de un partido. El sistema recalculará todo automáticamente.</CardDescription>
+                                </div>
+                                <Button onClick={() => setIsAddMatchDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Añadir Partido</Button>
+                            </CardHeader>
                             <CardContent>
                                 {matches.length > 0 ? (
                                     <Tabs defaultValue={`round-${rounds[0]?.[0]}`} className="w-full">
@@ -246,10 +264,27 @@ export default function TournamentFixturePage() {
                                                                     isFinished={match.status === 'finished'}
                                                                     onStatsSaved={() => handleStatsSaved(match)}
                                                                 />
-                                                                <div className="flex items-center space-x-2">
-                                                                    <Label htmlFor={`finished-${match.id}`} className={match.status === 'finished' ? 'text-green-400' : ''}>Finalizado</Label>
-                                                                    <Switch id={`finished-${match.id}`} checked={match.status === 'finished'} disabled />
-                                                                </div>
+                                                                
+                                                                {match.status === 'pending' && typeof match.statsProcessed === 'undefined' && (
+                                                                    <AlertDialog>
+                                                                        <AlertDialogTrigger asChild>
+                                                                            <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Eliminar</Button>
+                                                                        </AlertDialogTrigger>
+                                                                        <AlertDialogContent>
+                                                                            <AlertDialogHeader>
+                                                                                <AlertDialogTitle>¿Eliminar este partido?</AlertDialogTitle>
+                                                                                <AlertDialogDescription>
+                                                                                    Esta acción eliminará permanentemente el partido del fixture. No se puede deshacer.
+                                                                                </AlertDialogDescription>
+                                                                            </AlertDialogHeader>
+                                                                            <AlertDialogFooter>
+                                                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                                                <AlertDialogAction onClick={() => handleDeleteMatch(match.id)} className="bg-destructive hover:bg-destructive/80">Sí, Eliminar</AlertDialogAction>
+                                                                            </AlertDialogFooter>
+                                                                        </AlertDialogContent>
+                                                                    </AlertDialog>
+                                                                )}
+
                                                                 {match.status === 'finished' && (
                                                                      <AlertDialog>
                                                                         <AlertDialogTrigger asChild>
@@ -289,6 +324,12 @@ export default function TournamentFixturePage() {
                     <TabsContent value="scorers" className="mt-6"><Card><CardHeader><CardTitle>Goleadores</CardTitle></CardHeader><CardContent>{stats?.scorers && stats.scorers.length > 0 ? <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead>Goles</TableHead></TableRow></TableHeader><TableBody>{stats.scorers.map((s, i) => <TableRow key={s.playerInfo.id}><TableCell>{i+1}</TableCell><TableCell>{s.playerInfo.name}</TableCell><TableCell>{s.teamName}</TableCell><TableCell>{s.goals}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
                     <TabsContent value="sanctions" className="mt-6"><Card><CardHeader><CardTitle>Sanciones</CardTitle></CardHeader><CardContent>{stats?.sanctions && stats.sanctions.length > 0 ? <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead>Amarillas</TableHead><TableHead>Rojas</TableHead></TableRow></TableHeader><TableBody>{stats.sanctions.map(p => <TableRow key={p.playerInfo.id}><TableCell>{p.playerInfo.name}</TableCell><TableCell>{p.teamName}</TableCell><TableCell>{p.yellowCards}</TableCell><TableCell>{p.redCards}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
                 </Tabs>
+                 <AddMatchDialog
+                    tournamentId={tournamentId}
+                    teams={teams}
+                    open={isAddMatchDialogOpen}
+                    onOpenChange={setIsAddMatchDialogOpen}
+                />
             </div>
         </div>
     );
