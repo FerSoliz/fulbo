@@ -10,7 +10,6 @@ export interface TeamSummary {
   logoUrl: string;
 }
 
-// Mantenemos este tipo por si se usa en el admin
 export interface TeamStats {
   teamId: string;
   teamName: string;
@@ -270,7 +269,6 @@ export const getAllTournaments = async (): Promise<FullTournament[]> => {
 export const getTournamentDetails = async (tournamentId: string): Promise<FullTournament | null> => {
   console.log(`[DB Service] Obteniendo detalles enriquecidos para el torneo: ${tournamentId}`);
   try {
-    // Paso 1 y 2: Obtener datos básicos del torneo y sus estadísticas crudas en paralelo
     const tournamentRef = ref(db, `tournaments/${tournamentId}`);
     const statsRef = ref(db, `tournament_stats/${tournamentId}`);
 
@@ -288,7 +286,6 @@ export const getTournamentDetails = async (tournamentId: string): Promise<FullTo
     const statsData: TournamentStats | null = statsSnapshot.exists() ? statsSnapshot.val() : null;
     const teamIds = tournamentData.teams ? Object.keys(tournamentData.teams) : [];
 
-    // Paso 3: Obtener detalles de todos los equipos del torneo para crear un mapa de búsqueda
     const teamsPromises = teamIds.map(id => get(ref(db, `teams/${id}`)));
     const teamsSnapshots = await Promise.all(teamsPromises);
     const teamsMap = teamsSnapshots.reduce((acc, snap) => {
@@ -301,7 +298,6 @@ export const getTournamentDetails = async (tournamentId: string): Promise<FullTo
 
     console.log("[DB Service] Mapa de equipos construido:", teamsMap);
 
-    // Paso 4: Procesar y enriquecer los datos de estadísticas
     const standings: Standing[] = statsData?.positions?.map((pos, index) => ({
       rank: index + 1,
       team: teamsMap[pos.teamId]?.name || pos.teamName || 'Equipo Desconocido',
@@ -327,7 +323,6 @@ export const getTournamentDetails = async (tournamentId: string): Promise<FullTo
       redCards: sanc.redCards,
     })) || [];
 
-    // Paso 5: Ensamblar el objeto final
     const fullTournamentData: FullTournament = {
       id: tournamentSnapshot.key!,
       name: tournamentData.name,
@@ -419,9 +414,14 @@ export const getPosts = async (): Promise<Post[]> => {
     return [];
 };
 
+/**
+ * CORREGIDO: Busca todos los partidos de un equipo a través de todos los torneos en los que participa.
+ * Esta función es robusta y garantiza que el ID de cada partido se preserve correctamente.
+ * @param teamId El ID del equipo para el cual se busca el historial.
+ * @returns Una promesa que se resuelve a un array de todos los partidos del equipo.
+ */
 export const getMatchHistoryForTeam = async (teamId: string): Promise<Match[]> => {
   console.log(`[DB Service] Iniciando búsqueda de historial para teamId: ${teamId}`);
-  
   try {
     const teamTournamentsRef = ref(db, `teams/${teamId}/tournaments`);
     const teamTournamentsSnap = await get(teamTournamentsRef);
@@ -432,10 +432,7 @@ export const getMatchHistoryForTeam = async (teamId: string): Promise<Match[]> =
     }
 
     const tournamentIds = Object.keys(teamTournamentsSnap.val());
-    if (tournamentIds.length === 0) {
-      console.log(`[DB Service] La lista de torneos para el equipo ${teamId} está vacía.`);
-      return [];
-    }
+    if (tournamentIds.length === 0) return [];
     console.log(`[DB Service] Equipo ${teamId} participa en los torneos:`, tournamentIds);
 
     const matchesPromises = tournamentIds.map(async (tournamentId) => {
@@ -444,21 +441,23 @@ export const getMatchHistoryForTeam = async (teamId: string): Promise<Match[]> =
       const snapshot = await get(q);
 
       if (snapshot.exists()) {
-        const matchesInTournament = snapshot.val();
-        const teamMatches = Object.values(matchesInTournament)
-          .map((matchData: any) => ({ id: matchData.id, ...matchData }))
+        const matchesData = snapshot.val();
+        const teamMatches = Object.keys(matchesData)
+          .map(matchId => {
+            const matchData = matchesData[matchId];
+            return { ...matchData, id: matchId };
+          })
           .filter(match => match.homeTeamId === teamId || match.awayTeamId === teamId);
         
         return teamMatches;
-      } 
+      }
       return [];
     });
 
     const matchesPerTournament = await Promise.all(matchesPromises);
     const allMatches = matchesPerTournament.flat();
 
-    console.log(`[DB Service] Se encontraron un total de ${allMatches.length} partidos para el equipo ${teamId} en todos sus torneos.`);
-
+    console.log(`[DB Service] Se encontraron un total de ${allMatches.length} partidos para el equipo ${teamId}.`);
     return allMatches;
 
   } catch (error) {
@@ -467,40 +466,37 @@ export const getMatchHistoryForTeam = async (teamId: string): Promise<Match[]> =
   }
 };
 
-export const getNextMatchForTeam = async (teamId: string): Promise<Match | null> => {
-  console.log(`[DB Service] Buscando próximo partido para teamId: ${teamId}`);
+/**
+ * REFACTORIZADO: Busca todos los partidos pendientes de un equipo.
+ * @param teamId El ID del equipo.
+ * @returns Una promesa que se resuelve a un array de todos los partidos con estado 'pending', ordenados por fecha.
+ */
+export const getUpcomingMatchesForTeam = async (teamId: string): Promise<Match[]> => {
+  console.log(`[DB Service] Buscando TODOS los partidos pendientes para teamId: ${teamId}`);
   try {
     const allMatches = await getMatchHistoryForTeam(teamId);
-
     const pendingMatches = allMatches.filter(match => match.status === 'pending');
 
     if (pendingMatches.length === 0) {
-      console.log(`[DB Service] No se encontraron partidos con estado 'pending' para el equipo ${teamId}.`);
-      return null;
+      console.log(`[DB Service] No se encontraron partidos pendientes para el equipo ${teamId}.`);
+      return []; // Devuelve un array vacío si no hay partidos
     }
 
+    // Ordena los partidos por fecha, de más cercano a más lejano
     pendingMatches.sort((a, b) => {
-      const aHasDate = !!a.details?.date;
-      const bHasDate = !!b.details?.date;
-
-      if (aHasDate && !bHasDate) return -1;
-      if (!aHasDate && bHasDate) return 1;
-
-      if (aHasDate && bHasDate) {
-        return new Date(a.details!.date).getTime() - new Date(b.details!.date).getTime();
-      }
-
-      return 0;
+      const aDate = a.details?.date ? new Date(a.details.date).getTime() : 0;
+      const bDate = b.details?.date ? new Date(b.details.date).getTime() : 0;
+      if (aDate && !bDate) return -1;
+      if (!aDate && bDate) return 1;
+      return aDate - bDate;
     });
 
-    const nextMatch = pendingMatches[0];
-    console.log(`[DB Service] Próximo partido encontrado para ${teamId}: ${nextMatch.id}. ¿Tiene fecha?: ${!!nextMatch.details?.date}`);
-    
-    return nextMatch;
+    console.log(`[DB Service] Se encontraron ${pendingMatches.length} partidos pendientes.`);
+    return pendingMatches; // Devuelve el array completo
 
   } catch (error) {
-    console.error(`[DB Service] Error crítico al obtener el próximo partido para ${teamId}:`, error);
-    return null;
+    console.error(`[DB Service] Error crítico al obtener los próximos partidos para ${teamId}:`, error);
+    return []; // Devuelve un array vacío en caso de error
   }
 };
 
@@ -521,9 +517,6 @@ interface NewPostData {
   author: UserData;
 }
 
-/**
- * Crea una nueva publicación en la base de datos, ahora con lógica para fijar y server timestamp.
- */
 export const createPost = async (postData: NewPostData): Promise<void> => {
   const { content, media, url, isPinned, author } = postData;
 
@@ -548,9 +541,6 @@ export const createPost = async (postData: NewPostData): Promise<void> => {
   await push(ref(db, 'posts'), postToSave);
 };
 
-/**
- * Alterna el "Me gusta" de un usuario en una publicación.
- */
 export const togglePostLike = async (postId: string, user: UserData): Promise<void> => {
   const postLikeRef = ref(db, `posts/${postId}/likes/${user.id}`);
   const snapshot = await get(postLikeRef);
@@ -567,9 +557,6 @@ export const togglePostLike = async (postId: string, user: UserData): Promise<vo
   }
 };
 
-/**
- * Añade un comentario a una publicación, ahora usando server timestamp.
- */
 export const addCommentToPost = async (postId: string, commentText: string, author: UserData): Promise<void> => {
   const commentsRef = ref(db, `posts/${postId}/comments`);
   const newCommentRef = push(commentsRef);
@@ -584,4 +571,34 @@ export const addCommentToPost = async (postId: string, commentText: string, auth
   };
 
   await set(newCommentRef, commentData);
+};
+
+export const findTeamByPlayer = async (userId: string): Promise<any | null> => {
+  if (!userId) return null;
+
+  try {
+    const teamsRef = ref(db, 'teams');
+    const teamsSnapshot = await get(teamsRef);
+
+    if (!teamsSnapshot.exists()) {
+      return null;
+    }
+
+    let foundTeam = null;
+    const teamsData = teamsSnapshot.val();
+    
+    for (const teamId of Object.keys(teamsData)) {
+      const team = teamsData[teamId];
+      if (team.players && team.players[userId]) {
+        foundTeam = { id: teamId, ...team };
+        break; 
+      }
+    }
+
+    return foundTeam;
+
+  } catch (error) {
+    console.error(`Error al buscar el equipo para el jugador ${userId}:`, error);
+    return null;
+  }
 };

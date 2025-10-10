@@ -61,7 +61,7 @@
 
 ### 4.1. Estructura de Datos Detallada (Realtime Database)
 
-Esta sección describe la arquitectura de datos NoSQL de la Realtime Database. La estructura está "desnormalizada" intencionalmente para optimizar la velocidad de lectura, siguiendo las mejores prácticas de Firebase.
+Esta sección describe la arquitectura de datos NoSQL de la Realtime Database. La estructura está \"desnormalizada\" intencionalmente para optimizar la velocidad de lectura, siguiendo las mejores prácticas de Firebase.
 
 - **`/users/{userId}`**
   - **Propósito:** Almacena el perfil público y los metadatos de cada usuario registrado.
@@ -70,7 +70,7 @@ Esta sección describe la arquitectura de datos NoSQL de la Realtime Database. L
     - `team`: Un objeto `{ id, name, crestUrl }` que contiene una copia desnormalizada del equipo actual del jugador. Facilita la muestra de información del equipo sin necesidad de una consulta adicional (`JOIN`).
 
 - **`/guestPlayers/{dni}`**
-  - **Propósito:** Almacena perfiles simplificados para jugadores "invitados" que no están registrados en la plataforma pero participan en partidos.
+  - **Propósito:** Almacena perfiles simplificados para jugadores \"invitados\" que no están registrados en la plataforma pero participan en partidos.
   - **Estructura:** `{ name, dni, team }`
   - **Clave:** Se usa el DNI como clave única para identificar y reutilizar jugadores invitados.
 
@@ -103,7 +103,7 @@ Esta sección describe la arquitectura de datos NoSQL de la Realtime Database. L
   - **Fuente de Datos:** Se alimenta de `/match_stats`.
 
 - **`/match_stats/{matchId}`**
-  - **Propósito:** Almacena las estadísticas **crudas** de un partido específico, por jugador. Es una colección temporal o de "staging".
+  - **Propósito:** Almacena las estadísticas **crudas** de un partido específico, por jugador. Es una colección temporal o de \"staging\".
   - **Estructura:** `{ [playerId]: { goals, assists, mvp }, ... }`
   - **Flujo de Datos:** Un admin carga estos datos. Luego, la función `updatePlayerGlobalStats` los lee, los procesa, los agrega a `/playerStats` y marca el partido en `/matches` como procesado.
 
@@ -116,7 +116,7 @@ Esta sección describe la arquitectura de datos NoSQL de la Realtime Database. L
   - **Propósito:** Almacena las publicaciones del feed social.
   - **Estructura:** `{ authorId, authorName, ..., content, media, likes, comments, createdAt }`
   - **Relaciones:**
-    - `likes/{userId}`: Un mapa para registrar qué usuarios dieron "me gusta", permitiendo un chequeo rápido.
+    - `likes/{userId}`: Un mapa para registrar qué usuarios dieron \"me gusta\", permitiendo un chequeo rápido.
     - `comments/{commentId}`: Una sub-colección para los comentarios del post.
 
 ---
@@ -197,6 +197,9 @@ Esta sección sirve como un registro vivo del estado de las funcionalidades del 
   - **Enlaces a Twitch:** Los enlaces a canales o clips de Twitch siguen mostrándose como una miniatura interactiva que redirige a la plataforma de Twitch en una nueva pestaña.
 
 ### Tareas a Futuro
+- **Soporte para múltiples equipos por jugador:**
+  - **Descripción:** Actualmente, la arquitectura de datos (específicamente el campo `team` en el nodo `/users/{userId}`) solo permite que un jugador pertenezca a un único equipo a la vez. Se debe diseñar e implementar una refactorización de la estructura de datos para permitir que un jugador pueda estar inscrito en múltiples equipos de diferentes torneos de forma simultánea. Esto impactará en la lógica de inscripción, perfiles de usuario y el modal "Mi Equipo".
+  - **Prioridad:** Media-Alta.
 - **Soporte para más plataformas de video:**
   - **Descripción:** Extender la lógica del formulario de creación de posts y del `PostCard` para dar soporte a otras plataformas de video relevantes como Vimeo o DailyMotion.
   - **Prioridad:** Baja.
@@ -264,7 +267,7 @@ Los hooks personalizados son el pilar de la lógica de presentación y obtenció
 
 - **`use-toast.ts`**
   - **Propósito:** Provee un sistema de notificaciones (toasts) global para toda la aplicación.
-  - **Uso:** `const { toast } = useToast(); toast({ title: "Éxito", description: "Operación completada." });`
+  - **Uso:** `const { toast } = useToast(); toast({ title: \"Éxito\", description: \"Operación completada.\" });`
   - **Directriz:** Centralizar todos los mensajes de feedback al usuario (éxito, error, advertencia) a través de este hook para mantener una UX consistente.
 
 - **`use-upload.ts`**
@@ -273,7 +276,7 @@ Los hooks personalizados son el pilar de la lógica de presentación y obtenció
   - **Directriz:** **Siempre** utilizar este hook para cualquier subida de archivos. Provee funciones para subida única y múltiple. Expone los estados `isUploading` y `progress`, que **deben** usarse para dar feedback visual al usuario (ej. `aria-busy`).
 
 - **`useUserProfile.ts`**
-  - **Propósito:** Obtiene y se suscribe a los cambios de un perfil de usuario desde Realtime Database **en tiempo real**.
+  - **Propósito:** Obtiene y se suscribe a los cambios de un perfil de usuario desde Realtime Database **en tiempo real**.\
   - **Uso:** `const { profileUser, loading } = useUserProfile(userId);`
   - **Directriz:** Usar este hook para cualquier vista que muestre información de un usuario. Gestiona automáticamente la actualización de la UI si los datos del usuario cambian en la base de datos. Implementa una limpieza de `listeners` crucial para el rendimiento.
 
@@ -283,9 +286,9 @@ Los hooks personalizados son el pilar de la lógica de presentación y obtenció
   - **Directriz:** A diferencia de `useUserProfile`, este hook realiza una obtención de datos **única** (`get`), optimizada para datos que no cambian frecuentemente. Utiliza `Promise.all` para obtener los perfiles de los miembros en paralelo, una práctica de alto rendimiento que debe mantenerse.
 
 - **`useMatchHistory.ts`**
-  - **Propósito:** Implementa la lógica de "enriquecimiento de datos" para obtener el historial de partidos de un equipo.
+  - **Propósito:** Implementa la lógica de \"enriquecimiento de datos\" para obtener el historial de partidos de un equipo.
   - **Uso:** `const { matches, loading } = useMatchHistory(teamId);`
-  - **Directriz:** Este hook es un ejemplo de **optimización avanzada**. Obtiene los partidos y luego, de forma paralela y sin duplicados, obtiene los datos de los torneos y equipos rivales para entregar un objeto `EnrichedMatch` completo y listo para renderizar. Este patrón de "enriquecimiento" debe ser el modelo a seguir para vistas de datos complejas.
+  - **Directriz:** Este hook es un ejemplo de **optimización avanzada**. Obtiene los partidos y luego, de forma paralela y sin duplicados, obtiene los datos de los torneos y equipos rivales para entregar un objeto `EnrichedMatch` completo y listo para renderizar. Este patrón de \"enriquecimiento\" debe ser el modelo a seguir para vistas de datos complejas.
 
 - **`usePlayerStats.ts`**
   - **Propósito:** Obtiene y se suscribe a las estadísticas de un jugador **en tiempo real**.
@@ -299,13 +302,13 @@ Los hooks personalizados son el pilar de la lógica de presentación y obtenció
 
 ### 14.2. Servicios de Firebase (`/src/lib/firebase`)
 
-Esta carpeta es el corazón de la interacción con el backend. Abstrae toda la lógica de la base de datos, proveyendo un "API de cliente" para el resto de la aplicación.
+Esta carpeta es el corazón de la interacción con el backend. Abstrae toda la lógica de la base de datos, proveyendo un \"API de cliente\" para el resto de la aplicación.
 
 - **`db.ts` (Capa de Acceso a Datos)**
   - **Propósito:** Centraliza **todas** las funciones para leer y escribir en la Realtime Database. Es la **única fuente de verdad** para la interacción con la base de datos.
   - **Directriz Suprema:** Ningún hook o componente debe llamar a las funciones de Firebase (`ref`, `get`, `update`) directamente. **Siempre** deben pasar a través de las funciones exportadas por `db.ts`.
   - **Prácticas de Calidad Implementadas:**
-    - **Atomicidad:** Funciones como `addRegisteredPlayerToTeam` utilizan actualizaciones "batch" (`update`) para garantizar la consistencia de los datos. Este patrón es **obligatorio** para operaciones que modifican múltiples nodos.
+    - **Atomicidad:** Funciones como `addRegisteredPlayerToTeam` utilizan actualizaciones \"batch\" (`update`) para garantizar la consistencia de los datos. Este patrón es **obligatorio** para operaciones que modifican múltiples nodos.
     - **Consultas Indexadas:** Funciones como `findUserByDni` o `getMatchHistoryForTeam` utilizan `query` para optimizar el rendimiento.
     - **Lógica de Negocio Compleja:** Contiene funciones cruciales como `getTournamentDetails` y `getMatchHistoryForTeam` que realizan enriquecimiento de datos del lado del servidor de la lógica.
 

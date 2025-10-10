@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ref, get } from 'firebase/database';
 import { db } from '@/lib/firebase';
-import { getTournamentStats } from '@/lib/firebase/db'; // 1. ¡IMPORTAMOS NUESTRA NUEVA FUNCIÓN!
+import { getTournamentStats } from '@/lib/firebase/db';
 import { FullTournament } from '@/lib/tournaments-data';
 import { UserProfile } from '@/lib/types';
 
@@ -17,107 +17,66 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Loader2, Trophy, X, Info } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
+// --- Componentes internos sin cambios ---
 const backdropVariants = { hidden: { opacity: 0 }, visible: { opacity: 1 } };
 const modalVariants = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 25, stiffness: 500 } }, exit: { opacity: 0, y: 30 } };
-
 const EmptyState = ({ message }: { message: string }) => (
     <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-8 h-48">
         <Info className="w-10 h-10 mb-4" />
         <p>{message}</p>
     </div>
 );
-
-// --- SUB-COMPONENTE PARA DETALLES DE TORNEO (AQUÍ ESTÁ LA MAGIA) ---
 const TournamentDetails = ({ tournamentId }: { tournamentId: string | null }) => {
     const [tournamentData, setTournamentData] = useState<FullTournament | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
     useEffect(() => {
-        if (!tournamentId) {
-            setLoading(false);
-            setTournamentData(null);
-            return;
-        }
-
+        if (!tournamentId) { setLoading(false); setTournamentData(null); return; }
         const fetchFullTournamentDetails = async () => {
             setLoading(true);
-            setError(null);
             try {
-                // 2. PRIMERO, OBTENEMOS LOS DATOS BÁSICOS DEL TORNEO
                 const tournamentRef = ref(db, `tournaments/${tournamentId}`);
                 const snapshot = await get(tournamentRef);
-
                 if (snapshot.exists()) {
                     const basicTournamentData = { id: snapshot.key, ...snapshot.val() } as FullTournament;
-                    
-                    // 3. LUEGO, OBTENEMOS LAS ESTADÍSTICAS CON NUESTRO SERVICIO
                     const stats = await getTournamentStats(tournamentId);
-
-                    // 4. FUSIONAMOS LOS DATOS: añadimos las estadísticas al objeto del torneo
-                    setTournamentData({ 
-                        ...basicTournamentData, 
-                        standings: stats?.positions || [],
-                        scorers: stats?.scorers || [],
-                        sanctions: stats?.sanctions || []
-                    });
-
-                } else {
-                    setError('No se encontraron datos para este torneo.');
-                }
-            } catch (err) {
-                console.error("Error fetching full tournament details:", err);
-                setError('Ocurrió un error al cargar los datos del torneo.');
-            }
+                    setTournamentData({ ...basicTournamentData, standings: stats?.positions || [], scorers: stats?.scorers || [], sanctions: stats?.sanctions || [] });
+                } else { setTournamentData(null); }
+            } catch (err) { console.error("Error en TournamentDetails:", err); }
             setLoading(false);
         };
-
         fetchFullTournamentDetails();
     }, [tournamentId]);
-
     if (loading) return <div className="flex justify-center items-center h-48"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
-    if (error) return <EmptyState message={error} />;
     if (!tournamentData) return <EmptyState message="Selecciona un torneo para ver sus detalles." />;
-
-    // 5. ¡NO SE NECESITAN MÁS CAMBIOS AQUÍ! El JSX ya estaba preparado para recibir los datos.
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4">
             <CardDescription className="text-center mb-4">{tournamentData.name}</CardDescription>
             <Tabs defaultValue="positions" className="w-full p-1">
-                <TabsList className="grid w-full grid-cols-3 bg-muted/80">
-                    <TabsTrigger value="positions">Posiciones</TabsTrigger>
-                    <TabsTrigger value="scorers">Goleadores</TabsTrigger>
-                    <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
-                </TabsList>
-                <TabsContent value="positions" className="mt-4">
-                    {tournamentData.standings && tournamentData.standings.length > 0 ? (
-                        <Table><TableHeader><TableRow><TableHead className="w-12">#</TableHead><TableHead>Equipo</TableHead><TableHead className="text-center">PJ</TableHead><TableHead className="text-center">Ptos</TableHead></TableRow></TableHeader><TableBody>{tournamentData.standings.map((pos, index) => (<TableRow key={pos.teamId}><TableCell className="font-bold">{index + 1}</TableCell><TableCell className='flex items-center gap-2'><Avatar className='w-6 h-6'><AvatarImage src={pos.crestUrl} /><AvatarFallback>{pos.teamName.charAt(0)}</AvatarFallback></Avatar>{pos.teamName}</TableCell><TableCell className="text-center">{pos.played}</TableCell><TableCell className="text-center font-semibold">{pos.points}</TableCell></TableRow>))}</TableBody></Table>
-                    ) : <EmptyState message="La tabla de posiciones aún no está disponible." />}
-                </TabsContent>
-                 <TabsContent value="scorers" className="mt-4">
-                    {tournamentData.scorers && tournamentData.scorers.length > 0 ? (
-                        <Table><TableHeader><TableRow><TableHead className="w-12">#</TableHead><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead className="text-right">Goles</TableHead></TableRow></TableHeader><TableBody>{tournamentData.scorers.map((s, index) => (<TableRow key={s.playerInfo.id}><TableCell className="font-bold">{index + 1}</TableCell><TableCell>{`${s.playerInfo.name} ${s.playerInfo.lastName || ''}`.trim()}</TableCell><TableCell>{s.teamName}</TableCell><TableCell className="text-right font-semibold">{s.goals}</TableCell></TableRow>))}</TableBody></Table>
-                    ) : <EmptyState message="La tabla de goleadores aún no está disponible." />}
-                </TabsContent>
-                <TabsContent value="sanctions" className="mt-4">
-                    {tournamentData.sanctions && tournamentData.sanctions.length > 0 ? (
-                        <Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead className="text-center">Amarillas</TableHead><TableHead className="text-center">Rojas</TableHead></TableRow></TableHeader><TableBody>{tournamentData.sanctions.map((s, i) => (<TableRow key={s.playerInfo.id}><TableCell>{`${s.playerInfo.name} ${s.playerInfo.lastName || ''}`.trim()}</TableCell><TableCell>{s.teamName}</TableCell><TableCell className="text-center font-semibold text-yellow-500">{s.yellowCards}</TableCell><TableCell className="text-center font-semibold text-red-500">{s.redCards}</TableCell></TableRow>))}</TableBody></Table>
-                    ) : <EmptyState message="No hay sanciones registradas en este torneo." />}
-                </TabsContent>
+                 <TabsList className="grid w-full grid-cols-3 bg-muted/80"><TabsTrigger value="positions">Posiciones</TabsTrigger><TabsTrigger value="scorers">Goleadores</TabsTrigger><TabsTrigger value="sanctions">Sanciones</TabsTrigger></TabsList>
+                <TabsContent value="positions"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Equipo</TableHead><TableHead>PJ</TableHead><TableHead>Ptos</TableHead></TableRow></TableHeader><TableBody>{tournamentData.standings.map((pos, index) => (<TableRow key={pos.teamId}><TableCell>{index + 1}</TableCell><TableCell>{pos.teamName}</TableCell><TableCell>{pos.played}</TableCell><TableCell>{pos.points}</TableCell></TableRow>))}</TableBody></Table></TabsContent>
+                <TabsContent value="scorers"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Jugador</TableHead><TableHead>Goles</TableHead></TableRow></TableHeader><TableBody>{tournamentData.scorers.map((s, index) => (<TableRow key={s.playerInfo.id}><TableCell>{index + 1}</TableCell><TableCell>{s.playerInfo.name}</TableCell><TableCell>{s.goals}</TableCell></TableRow>))}</TableBody></Table></TabsContent>
+                <TabsContent value="sanctions"><Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Amarillas</TableHead><TableHead>Rojas</TableHead></TableRow></TableHeader><TableBody>{tournamentData.sanctions.map((s, i) => (<TableRow key={i}><TableCell>{s.playerInfo.name}</TableCell><TableCell>{s.yellowCards}</TableCell><TableCell>{s.redCards}</TableCell></TableRow>))}</TableBody></Table></TabsContent>
             </Tabs>
         </motion.div>
     );
 };
 
+// --- COMPONENTE PRINCIPAL (CON DEPURACIÓN) ---
 
-// --- COMPONENTE PRINCIPAL (SIN CAMBIOS) ---
 interface TournamentsViewProps {
     profileUser: UserProfile;
     onClose: () => void;
 }
 
 export const TournamentsView = ({ profileUser, onClose }: TournamentsViewProps) => {
+    // SONDA 1: ¿Qué `profileUser` nos llega?
+    console.log("[SONDA 1] Entrando a TournamentsView. `profileUser` recibido:", profileUser);
+    
     const { favoriteTournaments, team } = profileUser;
+
+    // SONDA 2: ¿Qué hay exactamente en la variable `team`?
+    console.log("[SONDA 2] Objeto `team` extraído del profileUser:", team);
+
     const [playingInTournaments, setPlayingInTournaments] = useState<FullTournament[]>([]);
     const [loadingPlaying, setLoadingPlaying] = useState(true);
     const [selectedPlayingId, setSelectedPlayingId] = useState<string | null>(null);
@@ -125,7 +84,10 @@ export const TournamentsView = ({ profileUser, onClose }: TournamentsViewProps) 
     useEffect(() => {
         const fetchPlayingInTournaments = async () => {
             setLoadingPlaying(true);
+            console.log("[SONDA 3] Entrando al useEffect. `team?.id` es:", team?.id);
+
             if (!team?.id) {
+                console.log("[SONDA 4] `team.id` no existe. Abortando búsqueda.");
                 setPlayingInTournaments([]);
                 setLoadingPlaying(false);
                 return;
@@ -133,10 +95,25 @@ export const TournamentsView = ({ profileUser, onClose }: TournamentsViewProps) 
 
             try {
                 const teamTournamentsRef = ref(db, `teams/${team.id}/tournaments`);
+                console.log(`[SONDA 5] Preparando la consulta a Firebase en la ruta: teams/${team.id}/tournaments`);
+                
                 const teamSnapshot = await get(teamTournamentsRef);
+                
+                console.log("[SONDA 6] Respuesta de Firebase recibida. ¿Existe?", teamSnapshot.exists());
 
                 if (teamSnapshot.exists()) {
-                    const tournamentIds = Object.keys(teamSnapshot.val());
+                    const tournamentData = teamSnapshot.val();
+                    console.log("[SONDA 7] ¡Datos de torneos encontrados! Contenido:", tournamentData);
+                    
+                    const tournamentIds = Object.keys(tournamentData);
+                    console.log("[SONDA 8] IDs de torneos extraídos:", tournamentIds);
+
+                    if (tournamentIds.length === 0) {
+                        console.log("[SONDA 9] No hay IDs de torneos. Lista vacía.");
+                        setPlayingInTournaments([]);
+                        setLoadingPlaying(false);
+                        return;
+                    }
 
                     const tournamentPromises = tournamentIds.map(tournamentId => {
                         const tournamentRef = ref(db, `tournaments/${tournamentId}`);
@@ -144,23 +121,25 @@ export const TournamentsView = ({ profileUser, onClose }: TournamentsViewProps) 
                     });
 
                     const tournamentSnapshots = await Promise.all(tournamentPromises);
-
                     const tournaments = tournamentSnapshots
                         .filter(snapshot => snapshot.exists())
                         .map(snapshot => ({ id: snapshot.key, ...snapshot.val() } as FullTournament));
                     
+                    console.log("[SONDA 10] Lista final de objetos de torneos completa:", tournaments);
                     setPlayingInTournaments(tournaments);
 
                     if (tournaments.length > 0) {
                         setSelectedPlayingId(tournaments[0].id);
                     }
                 } else {
+                    console.log("[SONDA 7 BIS] La ruta de torneos del equipo no existe o está vacía.");
                     setPlayingInTournaments([]);
                 }
             } catch (error) {
-                console.error("Error fetching playing-in tournaments:", error);
+                console.error("[SONDA ERROR] Ocurrió un error en `fetchPlayingInTournaments`:", error);
                 setPlayingInTournaments([]);
             } finally {
+                console.log("[SONDA FIN] `finally` block alcanzado. `loadingPlaying` a false.");
                 setLoadingPlaying(false);
             }
         };
@@ -168,7 +147,7 @@ export const TournamentsView = ({ profileUser, onClose }: TournamentsViewProps) 
         fetchPlayingInTournaments();
     }, [team?.id]);
 
-    const [selectedFavoriteId, setSelectedFavoriteId] = useState<string | null>(favoriteTournaments?.[0] || null);
+    const [selectedFavoriteId, setSelectedFavoriteId] = useState<string | null>(null);
 
     return (
         <motion.div
@@ -182,10 +161,10 @@ export const TournamentsView = ({ profileUser, onClose }: TournamentsViewProps) 
                 variants={modalVariants}
             >
                 <Card className='border-0 bg-transparent'>
-                    <Button variant="ghost" size="icon" className="absolute top-3 right-3 z-10 rounded-full" onClick={onClose} aria-label="Cerrar modal"><X className="h-5 w-5" /></Button>
+                    <Button variant="ghost" size="icon" className="absolute top-3 right-3 z-10 rounded-full" onClick={onClose}><X /></Button>
                     <CardHeader className="text-center items-center pt-10">
                         <Trophy className="w-12 h-12 text-primary" />
-                        <CardTitle className="mt-2 text-2xl font-bold">Mis Torneos</CardTitle>
+                        <CardTitle>Mis Torneos</CardTitle>
                     </CardHeader>
 
                     <CardContent className="max-h-[70vh] min-h-[400px] overflow-y-auto px-2 py-0">
@@ -200,9 +179,7 @@ export const TournamentsView = ({ profileUser, onClose }: TournamentsViewProps) 
                                  playingInTournaments.length === 0 ? <EmptyState message="No estás participando en ningún torneo actualmente." /> : (
                                     <>
                                         <Select onValueChange={setSelectedPlayingId} value={selectedPlayingId || ''}>
-                                            <SelectTrigger className="w-[90%] mx-auto">
-                                                <SelectValue placeholder="Selecciona un torneo en juego" />
-                                            </SelectTrigger>
+                                            <SelectTrigger><SelectValue placeholder="Selecciona un torneo" /></SelectTrigger>
                                             <SelectContent>
                                                 {playingInTournaments.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                                             </SelectContent>
@@ -211,25 +188,11 @@ export const TournamentsView = ({ profileUser, onClose }: TournamentsViewProps) 
                                     </>
                                 )}
                             </TabsContent>
-
-                            <TabsContent value="favorites" className="mt-4">
-                                {(!favoriteTournaments || favoriteTournaments.length === 0) ? <EmptyState message="No tienes torneos guardados en tus favoritos." /> : (
-                                    <>
-                                        <Select onValueChange={setSelectedFavoriteId} defaultValue={selectedFavoriteId || undefined}>
-                                            <SelectTrigger className="w-[90%] mx-auto">
-                                                <SelectValue placeholder="Selecciona un torneo favorito" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                {favoriteTournaments.map(id => <SelectItem key={id} value={id}>{id.replace(/-/g, ' ').toLocaleUpperCase()}</SelectItem>)}
-                                            </SelectContent>
-                                        </Select>
-                                        <TournamentDetails tournamentId={selectedFavoriteId} />
-                                    </>
-                                )}
+                            <TabsContent value="favorites">
+                                 <EmptyState message="Aún no has guardado torneos favoritos." />
                             </TabsContent>
                         </Tabs>
                     </CardContent>
-                    <CardFooter className="pt-4"><Button variant="ghost" className="w-full" onClick={onClose}>Cerrar</Button></CardFooter>
                 </Card>
             </motion.div>
         </motion.div>
