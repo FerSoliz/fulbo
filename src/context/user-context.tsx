@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/data';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase'; 
-import { ref, onValue, get, set, update, increment } from 'firebase/database';
+import { ref, onValue, get, set, update, increment, Unsubscribe } from 'firebase/database';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 
 const defaultVisitor: User = {
@@ -56,17 +56,19 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
+    let unsubscribeUser: Unsubscribe = () => {};
+
     const unsubscribeAuth = onAuthStateChanged(auth, async (firebaseUser) => {
+      unsubscribeUser();
+      
       setLoading(true);
       if (firebaseUser) {
         const userRef = ref(db, `users/${firebaseUser.uid}`);
         
-        // Usar onValue para escuchar cambios en el perfil del usuario actual
-        const unsubscribeUser = onValue(userRef, (snapshot) => {
+        unsubscribeUser = onValue(userRef, (snapshot) => {
           if (snapshot.exists()) {
             setUser({ ...snapshot.val(), id: firebaseUser.uid });
           } else {
-            // Esto solo se ejecutará una vez si el usuario no existe en la DB
             const newUserEntry: Omit<User, 'id'> = {
                 name: firebaseUser.displayName || 'Nuevo Usuario',
                 username: firebaseUser.displayName?.split(' ')[0].toLowerCase() || `user${Date.now()}`,
@@ -83,14 +85,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
           }
           setLoading(false);
         });
-        
-        return () => unsubscribeUser();
       } else {
         setUser(defaultVisitor);
         setLoading(false);
       }
     });
-    return () => unsubscribeAuth();
+
+    return () => {
+      unsubscribeAuth();
+      unsubscribeUser();
+    };
   }, []);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
@@ -136,7 +140,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await signOut(auth);
     setUser(defaultVisitor);
-    router.push('/login');
+    router.push('/');
   };
 
   const trackInteraction = useCallback(async () => {
