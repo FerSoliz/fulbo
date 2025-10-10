@@ -2,15 +2,14 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getUpcomingMatchesForTeam } from '@/lib/firebase/db';
 import { ref, get } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import { UserProfile, Match } from '@/lib/types';
-import { Loader2, X, CalendarClock, CalendarX, Trophy, Users, MapPin, ShieldQuestion } from 'lucide-react';
-import AnimatedTeamLogo from '@/components/AnimatedTeamLogo';
+import { Loader2, X, CalendarX, Trophy, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 // --- Interfaces y Tipos ---
@@ -20,7 +19,6 @@ interface NextMatchViewProps {
   onClose: () => void;
 }
 
-// El objeto de partido "enriquecido" que contendrá toda la información necesaria para renderizar
 interface EnrichedMatch extends Match {
   tournamentName: string;
   homeTeamName: string;
@@ -29,74 +27,67 @@ interface EnrichedMatch extends Match {
   awayTeamLogo: string;
 }
 
-// --- Componente de Tarjeta de Partido Individual ---
+// --- Componente de Tarjeta de Partido Individual (Diseño Compacto) ---
 
 const UpcomingMatchCard = ({ match }: { match: EnrichedMatch }) => {
-    const formattedDateTime = useMemo(() => {
-        if (!match.details?.date) return "Fecha a confirmar";
+    const { time, month, day } = useMemo(() => {
+        if (!match.details?.date) return { time: null, month: null, day: null };
         try {
             const matchDate = new Date(match.details.date);
-            if (isNaN(matchDate.getTime())) return "Fecha inválida";
-            
-            const date = matchDate.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'short' });
-            const time = matchDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
-            
-            return `${date.charAt(0).toUpperCase() + date.slice(1)} - ${time} hs`;
+            if (isNaN(matchDate.getTime())) return { time: null, month: null, day: null };
+
+            return {
+                time: matchDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
+                month: matchDate.toLocaleDateString('es-ES', { month: 'short' }).replace('.',''),
+                day: matchDate.getDate().toString(),
+            };
         } catch {
-            return "Fecha a confirmar";
+            return { time: null, month: null, day: null };
         }
     }, [match.details?.date]);
 
     return (
-        <Card className="w-full bg-card/50 shadow-md mb-6 last:mb-0">
-            <CardHeader className="text-center pt-5 pb-3">
-                <Trophy className="mx-auto h-6 w-6 text-amber-400 mb-1.5" />
-                <CardTitle className="text-lg font-semibold tracking-tight truncate">{match.tournamentName}</CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-5">
-                <div className="flex items-center justify-around my-2">
-                    <div className="flex flex-col items-center w-2/5 text-center">
-                        <AnimatedTeamLogo logoUrl={match.homeTeamLogo} name={match.homeTeamName} />
-                        <p className="mt-2 text-base font-bold truncate">{match.homeTeamName}</p>
+        <Card className="w-full bg-card/70 shadow-sm mb-3 last:mb-0 border-l-4 border-primary/70 rounded-lg overflow-hidden">
+            <div className="flex items-stretch">
+                {/* Bloque de Fecha */}
+                <div className="flex flex-col items-center justify-center bg-primary/10 px-3.5 py-2 text-center text-primary">
+                    <span className="text-xs font-semibold uppercase tracking-wider capitalize">{month || '-'}</span>
+                    <span className="text-2xl font-bold leading-tight">{day || '-'}</span>
+                    <span className="text-xs font-medium">{time ? `${time}hs` : ''}</span>
+                </div>
+
+                {/* Bloque de Información del Partido */}
+                <div className="flex-1 p-3">
+                    {/* Equipos */}
+                    <div className="flex items-center gap-2">
+                        <img src={match.homeTeamLogo || '/assets/images/default-team-logo.png'} alt={match.homeTeamName} className="h-5 w-5 rounded-full object-cover border border-border" />
+                        <span className="text-sm font-semibold text-card-foreground truncate flex-1">{match.homeTeamName}</span>
+                        <span className="text-xs font-bold text-muted-foreground/80 mx-1">vs</span>
+                        <span className="text-sm font-semibold text-card-foreground truncate flex-1 text-right">{match.awayTeamName}</span>
+                        <img src={match.awayTeamLogo || '/assets/images/default-team-logo.png'} alt={match.awayTeamName} className="h-5 w-5 rounded-full object-cover border border-border" />
                     </div>
-                    <div className="text-3xl font-extrabold text-muted-foreground/40">VS</div>
-                    <div className="flex flex-col items-center w-2/5 text-center">
-                        <AnimatedTeamLogo logoUrl={match.awayTeamLogo} name={match.awayTeamName} />
-                        <p className="mt-2 text-base font-bold truncate">{match.awayTeamName}</p>
+                    
+                    <Separator className="my-1.5 bg-border/40" />
+                    
+                    {/* Detalles */}
+                    <div className="text-xs text-muted-foreground space-y-0.5">
+                        <div className="flex items-center gap-1.5 truncate">
+                            <Trophy className="h-3 w-3 shrink-0 opacity-80" />
+                            <span className="truncate">{match.tournamentName}</span>
+                        </div>
+                        {match.details?.field && (
+                            <div className="flex items-center gap-1.5 truncate">
+                                <MapPin className="h-3 w-3 shrink-0 opacity-80" />
+                                <span className="truncate">{match.details.field}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
-                <Separator className="my-4 bg-border/40" />
-                <div className="space-y-3 text-muted-foreground text-sm">
-                   <div className="flex items-start gap-3.5">
-                        <CalendarClock className="h-5 w-5 mt-px text-primary/80 shrink-0" />
-                        <div className="flex flex-col">
-                            <span className="font-semibold text-card-foreground/90">Fecha y Hora</span>
-                            <span>{formattedDateTime}</span>
-                        </div>
-                    </div>
-                    {match.details?.field && (
-                        <div className="flex items-start gap-3.5">
-                            <MapPin className="h-5 w-5 mt-px text-primary/80 shrink-0" />
-                            <div className="flex flex-col">
-                                <span className="font-semibold text-card-foreground/90">Lugar</span>
-                                <span>{match.details.field}</span>
-                            </div>
-                        </div>
-                    )}
-                    {match.details?.round && (
-                        <div className="flex items-start gap-3.5">
-                            <Users className="h-5 w-5 mt-px text-primary/80 shrink-0" />
-                            <div className="flex flex-col">
-                                <span className="font-semibold text-card-foreground/90">Jornada</span>
-                                <span>{match.details.round}</span>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            </CardContent>
+            </div>
         </Card>
     );
 }
+
 
 // --- Componente Principal del Modal ---
 
@@ -119,28 +110,23 @@ export const NextMatchView = ({ profileUser, onClose }: NextMatchViewProps) => {
     const fetchAndEnrichMatches = async () => {
       setLoading(true);
       try {
-        // 1. Obtener todos los partidos pendientes
         const rawMatches = await getUpcomingMatchesForTeam(teamId);
         if (rawMatches.length === 0) {
           setUpcomingMatches([]);
           return; 
         }
 
-        // 2. Recolectar IDs únicos para optimizar las consultas
         const tournamentIds = [...new Set(rawMatches.map(m => m.tournamentId).filter(Boolean))];
         const teamIds = [...new Set(rawMatches.flatMap(m => [m.homeTeamId, m.awayTeamId]).filter(Boolean))];
 
-        // 3. Realizar consultas a la base de datos en paralelo
         const [tournamentsSnap, teamsSnap] = await Promise.all([
             Promise.all(tournamentIds.map(id => get(ref(db, `tournaments/${id}`)))),
             Promise.all(teamIds.map(id => get(ref(db, `teams/${id}`))))
         ]);
 
-        // 4. Crear mapas de búsqueda para un acceso rápido y eficiente
         const tournamentsMap = new Map(tournamentsSnap.map(snap => [snap.key, snap.val()]));
         const teamsMap = new Map(teamsSnap.map(snap => [snap.key, snap.val()]));
 
-        // 5. "Enriquecer" los datos de cada partido
         const enriched = rawMatches.map(match => {
             const tournament = tournamentsMap.get(match.tournamentId);
             const homeTeam = teamsMap.get(match.homeTeamId);
@@ -188,7 +174,7 @@ export const NextMatchView = ({ profileUser, onClose }: NextMatchViewProps) => {
     }
 
     return (
-        <div className="p-2 sm:p-4">
+        <div className="p-1 sm:p-2">
             <h2 className="text-2xl font-bold text-center mb-4 text-card-foreground">Próximos Partidos</h2>
             {upcomingMatches.map(match => (
                 <UpcomingMatchCard key={match.id} match={match} />

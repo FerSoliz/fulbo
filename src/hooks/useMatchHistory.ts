@@ -7,14 +7,14 @@ import { ref, get } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import { Match, Tournament, Team } from '@/lib/types';
 
-// --- TIPOS ENRIQUECIDOS ---
-// Este es el "producto final" que nuestro hook entregará: un objeto Match con toda la información necesaria para la UI.
+// --- TIPOS ENRIQUECIDOS (CORREGIDOS) ---
+// El producto final que nuestro hook entregará, ahora con los nombres de propiedad correctos.
 export interface EnrichedMatch extends Match {
   tournamentName: string;
   homeTeamName: string;
-  homeTeamCrestUrl?: string;
+  homeTeamLogo?: string; // Corregido de homeTeamCrestUrl a homeTeamLogo
   awayTeamName: string;
-  awayTeamCrestUrl?: string;
+  awayTeamLogo?: string; // Corregido de awayTeamCrestUrl a awayTeamLogo
 }
 
 interface UseMatchHistoryReturn {
@@ -41,7 +41,6 @@ export function useMatchHistory(teamId: string | undefined | null): UseMatchHist
   const { toast } = useToast();
 
   useEffect(() => {
-    // Si no hay teamId, no hay nada que buscar.
     if (!teamId) {
       setLoading(false);
       return;
@@ -52,7 +51,6 @@ export function useMatchHistory(teamId: string | undefined | null): UseMatchHist
       setError(null);
 
       try {
-        // 1. OBTENER PARTIDOS INICIALES
         const rawMatches = await getMatchHistoryForTeam(teamId);
         if (rawMatches.length === 0) {
           setMatches([]);
@@ -61,11 +59,9 @@ export function useMatchHistory(teamId: string | undefined | null): UseMatchHist
           return;
         }
 
-        // 2. EXTRAER IDs ÚNICOS para no hacer llamadas duplicadas a la DB
         const tournamentIds = [...new Set(rawMatches.map(m => m.tournamentId))];
         const teamIds = [...new Set(rawMatches.flatMap(m => [m.homeTeamId, m.awayTeamId]))];
 
-        // 3. BUSCAR DATOS DE ENRIQUECIMIENTO (Torneos y Equipos) EN PARALELO
         const tournamentPromises = tournamentIds.map(id => get(ref(db, `tournaments/${id}`)));
         const teamPromises = teamIds.map(id => get(ref(db, `teams/${id}`)));
 
@@ -74,7 +70,6 @@ export function useMatchHistory(teamId: string | undefined | null): UseMatchHist
           Promise.all(teamPromises),
         ]);
 
-        // Crear "mapas" para búsqueda rápida: ID -> Objeto
         const tournamentsMap: Record<string, Tournament> = {};
         tournamentSnapshots.forEach(snap => {
           if (snap.exists()) tournamentsMap[snap.key!] = { id: snap.key!, ...snap.val() };
@@ -85,15 +80,15 @@ export function useMatchHistory(teamId: string | undefined | null): UseMatchHist
           if (snap.exists()) teamsMap[snap.key!] = { id: snap.key!, ...snap.val() };
         });
 
-        // 4. ENRIQUECER LOS PARTIDOS
+        // 4. ENRIQUECER LOS PARTIDOS (LÓGICA CORREGIDA)
         const enriched = rawMatches
           .map((match): EnrichedMatch => ({
             ...match,
             tournamentName: tournamentsMap[match.tournamentId]?.name || 'Torneo Desconocido',
             homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
-            homeTeamCrestUrl: teamsMap[match.homeTeamId]?.crestUrl,
+            homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl, // Corregido: lee logoUrl
             awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
-            awayTeamCrestUrl: teamsMap[match.awayTeamId]?.crestUrl,
+            awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl, // Corregido: lee logoUrl
           }))
           .sort((a, b) => new Date(b.details?.date).getTime() - new Date(a.details?.date).getTime());
 
