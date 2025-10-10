@@ -177,6 +177,12 @@ Esta sección describe la arquitectura de datos NoSQL de la Realtime Database. L
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Mejora de la Visualización de Torneos y Limpieza de Rutas:**
+  - **Fecha:** 2024-05-25
+  - **Descripción:** Se realizó una refactorización integral de la visualización de torneos y se eliminó código obsoleto para mejorar la mantenibilidad del proyecto.
+  - **Centralización de Tipos:** Se definió una interfaz `FullTournament` en `src/lib/types.ts` para crear una única fuente de verdad para la estructura de datos de los torneos, incluyendo campos clave como `name`, `venue` (sede) y `status`.
+  - **Componente de Torneo Mejorado:** Se rediseñó el `TournamentCard` en la página `/tournaments` para mostrar la información esencial de manera clara y atractiva. Se mejoró la UX con estados de carga (`skeleton loaders`) y mensajes de error más informativos.
+  - **Eliminación de Código Muerto:** Se eliminó la página obsoleta y sin uso `/leagues`, que contenía un error de sintaxis y causaba fallos de compilación. Esto simplifica la estructura de rutas y limpia el proyecto.
 - **Motor de Ranking y SudPoints (SP) Integrado:**
   - **Fecha:** 2024-05-24
   - **Descripción:** Se implementó el motor de cálculo y asignación de SudPoints, el núcleo del sistema de ranking de SudOne.
