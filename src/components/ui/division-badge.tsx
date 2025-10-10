@@ -1,14 +1,14 @@
 'use client';
 
-import { leagues } from '@/lib/data';
 import { cn } from '@/lib/utils';
+import { getDivisionInfo } from '@/lib/utils'; // Importamos nuestra nueva función
 import { Shield, Gem, Crown, Star } from 'lucide-react';
 
 interface DivisionBadgeProps {
-  league: string;
-  division: number;
+  sudpoints: number;
 }
 
+// Mapeo de nombres de íconos a componentes de React
 const ICONS: { [key: string]: React.ElementType } = {
   Shield,
   Gem,
@@ -16,30 +16,30 @@ const ICONS: { [key: string]: React.ElementType } = {
   Star,
 };
 
-const romanNumerals: { [key: number]: string } = {
-    1: 'I', 2: 'II', 3: 'III', 4: 'IV'
-};
+export function DivisionBadge({ sudpoints }: DivisionBadgeProps) {
+  // Obtenemos la información de la división basada en los puntos
+  const divisionInfo = getDivisionInfo(sudpoints);
 
-export function DivisionBadge({ league, division }: DivisionBadgeProps) {
-  const leagueInfo = leagues.find(l => l.name === league);
-
-  if (!leagueInfo) {
-    return null;
+  if (!divisionInfo) {
+    return null; // No mostrar nada si no hay información
   }
 
-  const Icon = ICONS[leagueInfo.icon] || Star;
-  const romanDivision = romanNumerals[division] || division;
+  const Icon = ICONS[divisionInfo.icon] || Star;
 
   return (
     <div
       className={cn(
         'inline-flex items-center gap-2 rounded-full px-3 py-1'
       )}
-      style={{ backgroundColor: `${leagueInfo.color}20`, color: leagueInfo.color }}
+      // Usamos el color dinámico de nuestra función
+      style={{ backgroundColor: `${divisionInfo.color}20`, color: divisionInfo.color }}
     >
       <Icon className="h-4 w-4" />
-      <span className="font-bold uppercase text-sm">{leagueInfo.name}</span>
-      <span className="font-mono text-xs font-bold">{romanDivision}</span>
+      <span className="font-bold uppercase text-sm">{divisionInfo.name}</span>
+      {/* Mostramos el nivel solo si existe */}
+      {divisionInfo.level && (
+        <span className="font-mono text-xs font-bold">{divisionInfo.level}</span>
+      )}
     </div>
   );
 }
