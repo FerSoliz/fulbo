@@ -85,8 +85,8 @@ export default function CajaAdminPage() {
       {matches.length === 0 ? (
          <div className="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-muted-foreground/30 py-24 text-center">
             <PiggyBank className="h-16 w-16 text-muted-foreground/50" />
-            <p className="mt-4 font-semibold">No hay partidos pendientes de caja</p>
-            <p className="mt-2 text-sm text-muted-foreground">Todos los partidos finalizados ya han sido procesados.</p>
+            <p className="mt-4 font-semibold">No hay partidos finalizados.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Cuando un partido termine, aparecerá aquí para gestionar su caja.</p>
           </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
