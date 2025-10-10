@@ -8,10 +8,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription, DialogClose } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Heart, MessageSquare, Bookmark, MoreHorizontal, Play, Pencil, Star, Loader2 } from 'lucide-react';
+import { Heart, MessageSquare, Bookmark, MoreHorizontal, Play, Star, Loader2, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Post, User } from '@/lib/data';
@@ -123,7 +123,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
         {media && media.length > 0 && (
           <>
             {isYoutube ? (
-              <div className="relative aspect-video bg-black overflow-hidden">
+               <div className="relative aspect-video bg-black overflow-hidden">
                 {!isYoutubePlaying && (
                   <div 
                     className="absolute inset-0 cursor-pointer group"
@@ -184,7 +184,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
             ) : imageMedia.length > 0 && (
               <Dialog>
                 <DialogTrigger asChild>
-                  <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer`}>
+                   <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer`}>
                     {imageMedia.slice(0, 4).map((item, index) => (
                       <div key={item.url || index}
                           className={cn(
@@ -217,7 +217,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                   </div>
                 </DialogTrigger>
                 <DialogContent className="p-0 border-none bg-transparent shadow-none w-auto max-w-none">
-                  <Carousel className="w-full h-full">
+                  <Carousel className="relative w-full h-full">
                     <CarouselContent>
                       {imageMedia.map((item, index) => (
                         <CarouselItem key={item.url || index} className="flex items-center justify-center">
@@ -226,18 +226,18 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                             alt={`Post media ${index + 1}`}
                             width={1920}
                             height={1080}
-                            className="object-contain w-auto h-auto max-w-[90vw] max-h-[90vh] rounded-lg"
+                            className="object-contain w-auto h-auto max-w-[90vw] max-h-[90vh] max-w-screen-xl rounded-lg"
                             sizes="90vw"
                           />
                         </CarouselItem>
                       ))}
                     </CarouselContent>
-                    {imageMedia.length > 1 && (
-                      <>
-                        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white/50 hover:bg-white/80 text-black" />
-                        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/50 hover:bg-white/80 text-black" />
-                      </>
-                    )}
+                    <DialogClose className="absolute top-2 right-2 z-50 rounded-full bg-black/50 p-2 text-white/80 hover:bg-black/70 hover:text-white transition-colors">
+                      <X className="h-6 w-6" />
+                      <span className="sr-only">Cerrar</span>
+                    </DialogClose>
+                    <CarouselPrevious className="absolute left-4 top-1/2 -translate-y-1/2 z-50 h-10 w-10 rounded-full bg-black/60 p-0 text-white hover:bg-black/80 disabled:hidden" />
+                    <CarouselNext className="absolute right-4 top-1/2 -translate-y-1/2 z-50 h-10 w-10 rounded-full bg-black/60 p-0 text-white hover:bg-black/80 disabled:hidden" />
                   </Carousel>
                 </DialogContent>
               </Dialog>
