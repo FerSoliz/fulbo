@@ -13,34 +13,44 @@ export interface TeamDetails {
   captainId: string | null;
 }
 
-export interface TeamMember extends UserProfile {
+// El tipo TeamMember ahora es más flexible para acomodar datos de invitados.
+export interface TeamMember {
   id: string;
+  name: string;
+  avatar?: string; // El avatar es opcional para invitados
+  username?: string; // Username es opcional (los invitados no tienen)
+  isGuest: boolean;
 }
 
 interface UseTeamDetailsReturn {
   teamDetails: TeamDetails | null;
   members: TeamMember[];
   loading: boolean;
+  error: Error | null;
 }
 
 /**
- * Un hook para obtener los detalles completos de un equipo, incluyendo su lista de miembros.
+ * Un hook para obtener los detalles completos de un equipo, incluyendo su lista de miembros (registrados e invitados).
  * @param teamId - El ID del equipo a buscar. Si es nulo, no se realiza ninguna búsqueda.
  */
 export function useTeamDetails(teamId: string | undefined | null): UseTeamDetailsReturn {
   const [teamDetails, setTeamDetails] = useState<TeamDetails | null>(null);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     // Si no hay teamId, no hay nada que buscar.
     if (!teamId) {
       setLoading(false);
+      setTeamDetails(null);
+      setMembers([]);
       return;
     }
 
     const fetchDetails = async () => {
       setLoading(true);
+      setError(null);
       try {
         const teamRef = ref(db, `teams/${teamId}`);
         const teamSnapshot = await get(teamRef);
@@ -49,7 +59,6 @@ export function useTeamDetails(teamId: string | undefined | null): UseTeamDetail
           console.warn(`No se encontró el equipo con ID: ${teamId}`);
           setTeamDetails(null);
           setMembers([]);
-          setLoading(false);
           return;
         }
 
@@ -57,30 +66,61 @@ export function useTeamDetails(teamId: string | undefined | null): UseTeamDetail
         setTeamDetails({
           id: teamSnapshot.key,
           name: teamData.name,
-          crestUrl: teamData.logoUrl, // Asegúrate que el nombre del campo sea correcto
+          crestUrl: teamData.logoUrl,
           captainId: teamData.captainId || null,
         });
 
-        // Asumimos la estructura de datos profesional (objetos con keys)
         if (teamData.players && typeof teamData.players === 'object') {
-          const playerIds = Object.keys(teamData.players);
+          const playerEntries = Object.entries(teamData.players);
 
-          // Buscamos los perfiles de todos los jugadores en paralelo.
-          const memberPromises = playerIds.map(async (playerId) => {
-            const userRef = ref(db, `users/${playerId}`);
-            const userSnapshot = await get(userRef);
-            return userSnapshot.exists() ? { id: userSnapshot.key, ...userSnapshot.val() } : null;
+          const memberPromises = playerEntries.map(async ([playerId, playerData]) => {
+            const { isGuest } = playerData as { isGuest: boolean };
+
+            if (isGuest) {
+              // Es un jugador invitado, buscar en /guestPlayers
+              const guestRef = ref(db, `guestPlayers/${playerId}`);
+              const guestSnapshot = await get(guestRef);
+              if (guestSnapshot.exists()) {
+                const guestData = guestSnapshot.val();
+                // Adaptamos el invitado a la estructura de TeamMember
+                return {
+                  id: guestSnapshot.key,
+                  name: guestData.name,
+                  isGuest: true,
+                  // Los invitados no tienen avatar o username en la app, usamos placeholders
+                  username: `invitado-${guestData.dni}`.toLowerCase(),
+                  avatar: '/user-placeholder.png' // Placeholder genérico para invitados
+                } as TeamMember;
+              }
+            } else {
+              // Es un usuario registrado, buscar en /users
+              const userRef = ref(db, `users/${playerId}`);
+              const userSnapshot = await get(userRef);
+              if (userSnapshot.exists()) {
+                const userData = userSnapshot.val();
+                // Adaptamos el usuario a la estructura de TeamMember
+                return {
+                  id: userSnapshot.key,
+                  name: userData.name,
+                  avatar: userData.avatar,
+                  username: userData.username,
+                  isGuest: false,
+                } as TeamMember;
+              }
+            }
+            return null; // Si no se encuentra el jugador en ninguna colección
           });
 
           const memberResults = (await Promise.all(memberPromises)).filter(Boolean) as TeamMember[];
           setMembers(memberResults);
+          
         } else {
-          // Si no hay jugadores o el formato es incorrecto, devolvemos una lista vacía.
           setMembers([]);
         }
 
-      } catch (error) {
-        console.error(`Error al obtener los detalles del equipo ${teamId}:`, error);
+      } catch (err: any) {
+        console.error(`Error al obtener los detalles del equipo ${teamId}:`, err);
+        setError(err);
       } finally {
         setLoading(false);
       }
@@ -88,7 +128,7 @@ export function useTeamDetails(teamId: string | undefined | null): UseTeamDetail
 
     fetchDetails();
     
-  }, [teamId]); // El hook se re-ejecuta si el teamId cambia.
+  }, [teamId]);
 
-  return { teamDetails, members, loading };
+  return { teamDetails, members, loading, error };
 }

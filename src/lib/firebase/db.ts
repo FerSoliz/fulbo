@@ -673,7 +673,7 @@ export const getFinishedMatches = async (): Promise<EnrichedMatch[]> => {
   try {
     const matchesRef = ref(db, 'matches');
     // Consulta para traer solo los partidos con status 'finalizado'
-    const q = query(matchesRef, orderByChild('status'), equalTo('finalizado'));
+    const q = query(matchesRef, orderByChild('status'), equalTo('finished'));
     const snapshot = await get(q);
 
     if (!snapshot.exists()) {
