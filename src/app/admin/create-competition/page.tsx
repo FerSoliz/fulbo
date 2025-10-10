@@ -122,16 +122,25 @@ export default function CreateCompetitionPage() {
 
       const teamsForTournament: { [key: string]: boolean } = {};
 
+      // CORRECCIÓN: Usar la nueva estructura de datos para equipos existentes.
       selectedTeams.forEach(team => {
-        updates[`/teams/${team.id}/tournamentId`] = tournamentId;
+        updates[`/teams/${team.id}/tournaments/${tournamentId}`] = true;
         teamsForTournament[team.id] = true;
       });
 
+      // CORRECCIÓN: Usar la nueva estructura de datos para equipos nuevos.
       validNewTeams.forEach(teamName => {
           const newTeamRef = push(ref(db, `teams`));
           const teamId = newTeamRef.key;
           if (!teamId) return;
-          updates[`/teams/${teamId}`] = { id: teamId, name: teamName, logoUrl: `https://avatar.vercel.sh/${encodeURIComponent(teamName)}.png`, tournamentId: tournamentId, createdAt: serverTimestamp() };
+          const newTeamData = {
+              id: teamId,
+              name: teamName,
+              logoUrl: `https://avatar.vercel.sh/${encodeURIComponent(teamName)}.png`,
+              tournaments: { [tournamentId]: true }, // Estructura correcta
+              createdAt: serverTimestamp()
+          };
+          updates[`/teams/${teamId}`] = newTeamData;
           teamsForTournament[teamId] = true;
       });
 
