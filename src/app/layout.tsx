@@ -6,7 +6,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { MainSidebar } from "@/components/main-sidebar";
 import { PageHeader } from "@/components/page-header";
 import type { User } from "@/lib/data";
-import { UserProvider, useUser } from '@/context/user-context';
+import { UserProvider } from '@/context/user-context';
+import { CartProvider } from '@/context/cart-context';
+import { CartWidget } from '@/components/cart/cart-widget'; // Importamos el CartWidget
 import { usePathname } from 'next/navigation';
 
 export default function RootLayout({
@@ -33,7 +35,9 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased bg-background">
         <UserProvider>
+          <CartProvider>
             <LayoutContent>{children}</LayoutContent>
+          </CartProvider>
         </UserProvider>
       </body>
     </html>
@@ -46,6 +50,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     
     const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
     const isImmersivePage = pathname.startsWith('/collectibles');
+    const showCart = !isAuthPage && !isImmersivePage && !pathname.startsWith('/admin');
 
     if (isAuthPage || isImmersivePage) {
         return (
@@ -63,6 +68,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <PageHeader />
                 <main>{children}</main>
             </div>
+            {showCart && <CartWidget />} {/* Mostramos el widget condicionalmente */}
             <Toaster />
         </div>
     );
