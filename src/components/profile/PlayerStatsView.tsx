@@ -1,37 +1,42 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Trophy, Star, Shield, Target, Loader2, Info } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { UserProfile } from '@/lib/types';
-import { usePlayerStats, PlayerStats } from '@/hooks/usePlayerStats'; // ¡Importamos nuestro nuevo hook!
+import { usePlayerStats } from '@/hooks/usePlayerStats';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
-// --- PROPS de la Vista ---
 interface PlayerStatsViewProps {
   onClose: () => void;
   profileUser: UserProfile;
 }
 
-// --- Componente Presentacional para un item de estadística ---
 const StatItem = ({ icon, value, label }: { icon: React.ReactNode, value: number, label: string }) => (
-  <div className="flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg text-center">
-    <div className="text-primary">{icon}</div>
-    <p className="text-3xl font-bold mt-2">{value || 0}</p>
-    <p className="text-sm text-muted-foreground">{label}</p>
-  </div>
+    <div className="flex flex-col items-center justify-center p-4 bg-muted/50 rounded-lg text-center">
+        <div className="text-primary">{icon}</div>
+        <p className="text-3xl font-bold mt-2">{value || 0}</p>
+        <p className="text-sm text-muted-foreground">{label}</p>
+    </div>
 );
 
-/**
- * Una vista que muestra las estadísticas de un jugador (totales y por torneo).
- * La lógica de obtención de datos ha sido completamente abstraída en el hook `usePlayerStats`.
- * Este componente es ahora puramente "presentacional".
- */
+const StatsDisplay = ({ stats }: { stats: { matchesPlayed: number; goals: number; assists: number; mvp: number; } }) => (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+        <StatItem icon={<Shield className="h-8 w-8" />} value={stats.matchesPlayed} label="Partidos" />
+        <StatItem icon={<Target className="h-8 w-8" />} value={stats.goals} label="Goles" />
+        <StatItem icon={<Star className="h-8 w-8" />} value={stats.assists} label="Asistencias" />
+        <StatItem icon={<Trophy className="h-8 w-8" />} value={stats.mvp} label="MVPs" />
+    </div>
+);
+
 export const PlayerStatsView = ({ onClose, profileUser }: PlayerStatsViewProps) => {
-  // --- MEJORA: Lógica de datos abstraída en el hook ---
-  // Toda la complejidad de `onValue`, `off`, `loading`, etc., está ahora dentro de `usePlayerStats`.
   const { stats, loading } = usePlayerStats(profileUser.id);
+  const isMobile = useMediaQuery('(max-width: 640px)');
+  const [selectedView, setSelectedView] = useState('totals');
 
   const renderContent = () => {
     if (loading) {
@@ -47,39 +52,42 @@ export const PlayerStatsView = ({ onClose, profileUser }: PlayerStatsViewProps) 
         </div>
       );
     }
+    
+    const currentStats = selectedView === 'totals'
+      ? stats.totals
+      : stats.byTournament?.[selectedView];
 
-    // La lógica de renderizado de los TABS permanece igual, ¡porque ya era excelente!
     return (
-      <Tabs defaultValue="totals">
-        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
-          <TabsTrigger value="totals">Totales</TabsTrigger>
-          {stats.byTournament && Object.keys(stats.byTournament).map(tourId => (
-            <TabsTrigger key={tourId} value={tourId}>
-              {stats.byTournament![tourId].tournamentName}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-
-        <TabsContent value="totals" className="mt-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <StatItem icon={<Shield className="h-8 w-8" />} value={stats.totals.matchesPlayed} label="Partidos" />
-            <StatItem icon={<Target className="h-8 w-8" />} value={stats.totals.goals} label="Goles" />
-            <StatItem icon={<Star className="h-8 w-8" />} value={stats.totals.assists} label="Asistencias" />
-            <StatItem icon={<Trophy className="h-8 w-8" />} value={stats.totals.mvp} label="MVPs" />
-          </div>
-        </TabsContent>
-
-        {stats.byTournament && Object.entries(stats.byTournament).map(([tourId, tourStats]) => (
-           <TabsContent key={tourId} value={tourId} className="mt-4">
-             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatItem icon={<Shield className="h-8 w-8" />} value={tourStats.matchesPlayed} label="Partidos" />
-              <StatItem icon={<Target className="h-8 w-8" />} value={tourStats.goals} label="Goles" />
-              <StatItem icon={<Star className="h-8 w-8" />} value={tourStats.assists} label="Asistencias" />
-              <StatItem icon={<Trophy className="h-8 w-8" />} value={tourStats.mvp} label="MVPs" />
-             </div>
-           </TabsContent>
-        ))}
-      </Tabs>
+      <div>
+        {isMobile ? (
+            <Select onValueChange={setSelectedView} defaultValue={selectedView}>
+                <SelectTrigger className="w-full text-base h-11">
+                    <SelectValue placeholder="Seleccionar vista..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="totals">Estadísticas Totales</SelectItem>
+                    {stats.byTournament && Object.entries(stats.byTournament).map(([tourId, tourStats]) => (
+                        <SelectItem key={tourId} value={tourId}>
+                            {tourStats.tournamentName}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        ) : (
+            <Tabs value={selectedView} onValueChange={setSelectedView}>
+                <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+                    <TabsTrigger value="totals">Totales</TabsTrigger>
+                    {stats.byTournament && Object.keys(stats.byTournament).map(tourId => (
+                        <TabsTrigger key={tourId} value={tourId}>
+                            {stats.byTournament![tourId].tournamentName}
+                        </TabsTrigger>
+                    ))}
+                </TabsList>
+            </Tabs>
+        )}
+        
+        {currentStats && <StatsDisplay stats={currentStats} />}
+      </div>
     );
   };
 
@@ -93,7 +101,11 @@ export const PlayerStatsView = ({ onClose, profileUser }: PlayerStatsViewProps) 
             </Button>
             <div>
               <CardTitle>Estadísticas de {profileUser.gamertag}</CardTitle>
-              <CardDescription>Rendimiento en todas las competiciones.</CardDescription>
+              <CardDescription>
+                {selectedView === 'totals' 
+                  ? 'Rendimiento en todas las competiciones.' 
+                  : `Rendimiento en ${stats?.byTournament?.[selectedView]?.tournamentName}.`}
+              </CardDescription>
             </div>
           </div>
         </CardHeader>

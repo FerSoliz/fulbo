@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
 import { ref, get, set, update } from 'firebase/database';
+import { updatePlayerGlobalStats } from '@/lib/firebase/stats';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,6 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, BarChart, Shield, Plus, Minus, Edit, Save, X, ShieldAlert, Volleyball, Square, Trophy } from 'lucide-react';
 
-// --- TIPOS DE DATOS (MVP AÑADIDO) ---
 interface Player { id: string; name: string; }
 interface PlayerStats { goals: number; yellowCards: number; redCard: boolean; mvp: boolean; }
 type MatchStats = { [playerId: string]: PlayerStats };
@@ -25,7 +25,6 @@ interface MatchStatsDialogProps {
   onStatsSaved?: () => void;
 }
 
-// --- SUB-COMPONENTE: Fila de un Jugador (MVP AÑADIDO) ---
 const PlayerStatsRow = ({ player, stats, onStatChange, onMvpSelect, isMvp, disabled }: {
     player: Player;
     stats: PlayerStats;
@@ -77,8 +76,6 @@ const PlayerStatsRow = ({ player, stats, onStatChange, onMvpSelect, isMvp, disab
     );
 };
 
-
-// --- LÓGICA DE CARGA DE DATOS ---
 const fetchPlayersData = async (playerIds: string[]): Promise<Player[]> => {
     if (!playerIds || playerIds.length === 0) return [];
     const playerPromises = playerIds.map(id => {
@@ -96,8 +93,6 @@ const fetchPlayersData = async (playerIds: string[]): Promise<Player[]> => {
     return results.filter((player): player is Player => player !== null);
 };
 
-
-// --- COMPONENTE PRINCIPAL (LÓGICA MVP CORREGIDA) ---
 export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId, isFinished, disabled, onStatsSaved }: MatchStatsDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -166,9 +161,7 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
 
         const newStats = Object.keys(prevStats).reduce((acc, playerId) => {
             acc[playerId] = { ...prevStats[playerId] };
-            
             acc[playerId].mvp = (playerId === selectedPlayerId) && !isDeselecting;
-            
             return acc;
         }, {} as MatchStats);
 
@@ -176,60 +169,71 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
     });
   };
 
-    const handleSaveChanges = async () => {
-        setIsSaving(true);
+  const handleSaveChanges = async () => {
+    setIsSaving(true);
 
-        // --- PASO 1: Calcular el resultado del partido ---
-        let homeScore = 0;
-        let awayScore = 0;
-
-        const homePlayerIds = new Set(homeTeam.players.map(p => p.id));
-
-        for (const playerId in stats) {
-            const playerStats = stats[playerId];
-            if (playerStats.goals > 0) {
-                if (homePlayerIds.has(playerId)) {
-                    homeScore += playerStats.goals;
-                } else {
-                    awayScore += playerStats.goals;
-                }
+    let homeScore = 0;
+    let awayScore = 0;
+    const homePlayerIds = new Set(homeTeam.players.map(p => p.id));
+    for (const playerId in stats) {
+        const playerStats = stats[playerId];
+        if (playerStats.goals > 0) {
+            if (homePlayerIds.has(playerId)) {
+                homeScore += playerStats.goals;
+            } else {
+                awayScore += playerStats.goals;
             }
+        }
+    }
+    
+    const updates: { [key: string]: any } = {};
+    updates[`/match_stats/${matchId}`] = stats;
+    updates[`/matches/${matchId}/result`] = { home: homeScore, away: awayScore };
+    updates[`/matches/${matchId}/status`] = 'finished';
+
+    try {
+        await update(ref(db), updates);
+
+        toast({ 
+            title: "¡Planilla Guardada!", 
+            description: "El resultado se guardó. Actualizando estadísticas globales...",
+            className: "bg-green-500 text-white" 
+        });
+        
+        try {
+            console.log(`Disparando recálculo de estadísticas para el partido: ${matchId}`);
+            await updatePlayerGlobalStats(matchId);
+            console.log(`Recálculo de estadísticas para el partido ${matchId} completado.`);
+            toast({
+                title: "¡Estadísticas Sincronizadas!",
+                description: "El ranking y los perfiles de los jugadores han sido actualizados."
+            });
+        } catch (statsError) {
+            console.error("Error crítico al recalcular las estadísticas globales:", statsError);
+            toast({
+                title: "Error de Sincronización",
+                description: "La planilla se guardó, pero falló la actualización de las estadísticas globales.",
+                variant: "destructive"
+            });
         }
         
-        // --- PASO 2: Preparar la actualización atómica ---
-        const updates: { [key: string]: any } = {};
-
-        updates[`/match_stats/${matchId}`] = stats;
-        updates[`/matches/${matchId}/result`] = { home: homeScore, away: awayScore };
-        updates[`/matches/${matchId}/status`] = 'finished';
-
-        // --- PASO 3: Ejecutar la transacción en la base de datos ---
-        try {
-            await update(ref(db), updates);
-
-            toast({ 
-                title: "¡Planilla Guardada!", 
-                description: "El resultado y las estadísticas se actualizaron.",
-                className: "bg-green-500 text-white" 
-            });
-            
-            setIsOpen(false);
-            if (onStatsSaved) {
-                onStatsSaved();
-            }
-
-        } catch (error) {
-            console.error("Error al guardar la planilla:", error);
-            toast({ 
-                title: "Error al Guardar", 
-                description: "Ocurrió un problema. Revisa la consola para más detalles.", 
-                variant: "destructive" 
-            });
-
-        } finally {
-            setIsSaving(false);
+        setIsOpen(false);
+        if (onStatsSaved) {
+            onStatsSaved();
         }
-    };
+
+    } catch (error) {
+        console.error("Error al guardar la planilla:", error);
+        toast({ 
+            title: "Error al Guardar", 
+            description: "No se pudo guardar la planilla. Revisa la consola.", 
+            variant: "destructive" 
+        });
+
+    } finally {
+        setIsSaving(false);
+    }
+  };
 
 
   const formIsDisabled = !isEditing;
