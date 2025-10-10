@@ -67,239 +67,249 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
 
   return (
     <Card className="relative overflow-hidden">
-        {isPinned && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="absolute top-3 right-3 z-10 text-accent cursor-pointer">
-                  <Star className="h-5 w-5 fill-current"/>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Publicación Fijada</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-        
-        {!post.authorName ? (
-            <CardHeader className="flex flex-row items-center gap-4">
-              <Skeleton className="h-10 w-10 rounded-full" />
-              <div className="flex-1 space-y-2">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-24" />
+      {isPinned && (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="absolute top-3 right-3 z-10 text-accent cursor-pointer">
+                <Star className="h-5 w-5 fill-current"/>
               </div>
-            </CardHeader>
-        ) : (
-            <CardHeader className="flex flex-row items-center gap-4">
-              <Link href={`/profile/${post.authorId}`}>
-                <Avatar>
-                  <AvatarImage src={authorAvatar} alt={authorName} />
-                  <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
-                </Avatar>
-              </Link>
-              <div className="flex-1">
-                <Link href={`/profile/${post.authorId}`} className="hover:underline">
-                  <p className="font-semibold text-sm">{authorName}</p>
-                </Link>
-                <p className="text-xs text-muted-foreground">
-                  {post.location || ''} · {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: es })}
-                </p>
-              </div>
-              {canDelete && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => onDeletePost(post.id)} className="text-destructive">Eliminar</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
-            </CardHeader>
-        )}
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Publicación Fijada</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      )}
+      
+      {!post.authorName ? (
+        <CardHeader className="flex flex-row items-center gap-4">
+          <Skeleton className="h-10 w-10 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-24" />
+          </div>
+        </CardHeader>
+      ) : (
+        <CardHeader className="flex flex-row items-center gap-4">
+          <Link href={`/profile/${post.authorId}`}>
+            <Avatar>
+              <AvatarImage src={authorAvatar} alt={authorName} />
+              <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
+            </Avatar>
+          </Link>
+          <div className="flex-1">
+            <Link href={`/profile/${post.authorId}`} className="hover:underline">
+              <p className="font-semibold text-sm">{authorName}</p>
+            </Link>
+            <p className="text-xs text-muted-foreground">
+              {post.location || ''} · {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: es })}
+            </p>
+          </div>
+          {canDelete && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onClick={() => onDeletePost(post.id)} className="text-destructive">Eliminar</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </CardHeader>
+      )}
+      
+      <CardContent className="p-0">
+        {post.content && <p className="px-6 pb-4 text-sm whitespace-pre-wrap">{post.content}</p>}
         
-        <CardContent className="p-0 relative">
-            {post.content && <p className="px-6 pb-4 text-sm whitespace-pre-wrap">{post.content}</p>}
-            
-            {media && media.length > 0 && (
-              <>
-                {isYoutube ? (
-                  <div className="relative aspect-video bg-black overflow-hidden">
-                    {!isYoutubePlaying && (
-                      <div 
-                        className="absolute inset-0 cursor-pointer group"
-                        onClick={() => setIsYoutubePlaying(true)}
-                        role="button"
-                        aria-label="Reproducir video de YouTube"
-                      >
-                        <Image 
-                          src={videoItem.url} 
-                          alt="Miniatura del video de YouTube" 
-                          fill 
-                          className="object-cover transition-opacity duration-300 group-hover:opacity-80"
-                          onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Video+No+Disponible'; }}
-                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                          <Play className="h-16 w-16 text-white transform transition-transform duration-300 group-hover:scale-110" />
-                        </div>
-                      </div>
-                    )}
-                    
-                    {isYoutubePlaying && (
-                      <>
-                        {!isPlayerReady && (
-                           <div className="absolute inset-0 flex items-center justify-center" aria-live="polite" aria-busy="true">
-                             <Loader2 className="h-12 w-12 text-white animate-spin" />
-                           </div>
-                        )}
-                        <iframe
-                          src={youtubeUrl}
-                          title="YouTube video player"
-                          frameBorder="0"
-                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                          allowFullScreen
-                          className={cn(
-                            "w-full h-full transition-opacity duration-500",
-                            isPlayerReady ? "opacity-100" : "opacity-0"
-                          )}
-                          onLoad={() => setIsPlayerReady(true)}
-                        ></iframe>
-                      </>
-                    )}
+        {media && media.length > 0 && (
+          <>
+            {isYoutube ? (
+              <div className="relative aspect-video bg-black overflow-hidden">
+                {!isYoutubePlaying && (
+                  <div 
+                    className="absolute inset-0 cursor-pointer group"
+                    onClick={() => setIsYoutubePlaying(true)}
+                    role="button"
+                    aria-label="Reproducir video de YouTube"
+                  >
+                    <Image 
+                      src={videoItem.url} 
+                      alt="Miniatura del video de YouTube" 
+                      fill 
+                      className="object-cover transition-opacity duration-300 group-hover:opacity-80"
+                      onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Video+No+Disponible'; }}
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                      <Play className="h-16 w-16 text-white transform transition-transform duration-300 group-hover:scale-110" />
+                    </div>
                   </div>
-                ) : isTwitch ? (
-                  <Link href={twitchUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}>
-                      <div className="relative cursor-pointer group aspect-video bg-muted overflow-hidden">
-                          <Image 
-                            src={videoItem.url} 
-                            alt="Miniatura del stream de Twitch" 
-                            fill 
-                            className="object-contain"
-                            onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}
+                )}
+                
+                {isYoutubePlaying && (
+                  <>
+                    {!isPlayerReady && (
+                        <div className="absolute inset-0 flex items-center justify-center" aria-live="polite" aria-busy="true">
+                          <Loader2 className="h-12 w-12 text-white animate-spin" />
+                        </div>
+                    )}
+                    <iframe
+                      src={youtubeUrl}
+                      title="YouTube video player"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className={cn(
+                        "w-full h-full transition-opacity duration-500",
+                        isPlayerReady ? "opacity-100" : "opacity-0"
+                      )}
+                      onLoad={() => setIsPlayerReady(true)}
+                    ></iframe>
+                  </>
+                )}
+              </div>
+            ) : isTwitch ? (
+              <Link href={twitchUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}>
+                <div className="relative cursor-pointer group aspect-video bg-muted overflow-hidden">
+                  <Image 
+                    src={videoItem.url} 
+                    alt="Miniatura del stream de Twitch" 
+                    fill 
+                    className="object-contain"
+                    onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" /></div>
+                </div>
+              </Link>
+            ) : imageMedia.length > 0 && (
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer`}>
+                    {imageMedia.slice(0, 4).map((item, index) => (
+                      <div key={item.url || index}
+                          className={cn(
+                            "relative bg-muted w-full",
+                            imageCount === 3 && index === 0 && "row-span-2",
+                            imageCount > 1 && "aspect-square"
+                          )}
+                      >
+                        {imageCount === 1 ? (
+                          <Image
+                            src={item.url}
+                            alt={`Post media ${index + 1}`}
+                            width={1000}
+                            height={1000}
+                            className="w-full h-auto object-contain"
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           />
-                          <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" /></div>
+                        ) : (
+                          <Image
+                            src={item.url}
+                            alt={`Post media ${index + 1}`}
+                            fill
+                            className="object-contain"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                        )}
+                        {index === 3 && imageCount > 4 && (<div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-3xl font-bold">+{imageCount - 4}</div>)}
                       </div>
-                  </Link>
-                ) : imageMedia.length > 0 && (
-                  <Dialog>
-                      <DialogTrigger asChild>
-                           <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer`}>
-                              {imageMedia.slice(0, 4).map((item, index) => (
-                                  <div key={item.url || index}
-                                       className={cn(
-                                          "relative bg-muted w-full",
-                                          imageCount === 3 && index === 0 && "row-span-2",
-                                          imageCount > 1 && "aspect-square"
-                                       )}
-                                  >
-                                      {imageCount === 1 ? (
-                                          <Image
-                                            src={item.url}
-                                            alt={`Post media ${index + 1}`}
-                                            width={1000}
-                                            height={1000}
-                                            className="w-full h-auto object-contain"
-                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                          />
-                                      ) : (
-                                          <Image
-                                            src={item.url}
-                                            alt={`Post media ${index + 1}`}
-                                            fill
-                                            className="object-contain"
-                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                          />
-                                      )}
-                                      {index === 3 && imageCount > 4 && (<div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-3xl font-bold">+{imageCount - 4}</div>)}
-                                  </div>
-                              ))}
-                          </div>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-4xl h-[90vh] p-2">
-                           <DialogHeader>
-                              <DialogTitle className="sr-only">Galería de imágenes</DialogTitle>
-                              <DialogDescription className="sr-only">Navega por las imágenes de la publicación usando las flechas de navegación.</DialogDescription>
-                           </DialogHeader>
-                           <Carousel className="w-full h-full">
-                              <CarouselContent className="h-full">
-                                  {imageMedia.map((item, index) => (<CarouselItem key={item.url || index} className="flex items-center justify-center h-full"><Image src={item.url} alt={`Post media ${index + 1}`} width={1920} height={1080} className="w-full h-auto object-contain" /></CarouselItem>))}
-                              </CarouselContent>
-                              <CarouselPrevious /><CarouselNext />
-                          </Carousel>
-                      </DialogContent>
-                  </Dialog>
-                )}
-              </>
-            )}
-
-            <div className="absolute inset-x-0 bottom-0 z-10 flex justify-between items-center p-4 bg-gradient-to-t from-black/70 to-transparent text-white">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center">
-                        <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor}>
-                            <Heart className={cn("h-5 w-5 text-white", isLiked && 'text-red-500 fill-current')} />
-                        </Button>
-                        {post.likes && Object.keys(post.likes).length > 0 ? (
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <span className="text-sm font-medium cursor-pointer hover:underline">
-                                        {Object.keys(post.likes).length} {Object.keys(post.likes).length === 1 ? 'Me gusta' : 'Me gusta'}
-                                    </span>
-                                </DialogTrigger>
-                                <DialogContent className="sm:max-w-[425px]">
-                                    <DialogHeader>
-                                        <DialogTitle>Le gusta a</DialogTitle>
-                                        <DialogDescription>Esta es la lista de usuarios a los que les gusta esta publicación.</DialogDescription>
-                                    </DialogHeader>
-                                    <div className="flex flex-col gap-4 py-4 max-h-[400px] overflow-y-auto">
-                                        {Object.entries(post.likes).map(([userId, likeUser]) => (
-                                            <div key={userId} className="flex items-center gap-4">
-                                                <Link href={`/profile/${userId}`}>
-                                                    <Avatar><AvatarImage src={likeUser.avatar} alt={likeUser.name} /><AvatarFallback>{likeUser.name.charAt(0)}</AvatarFallback></Avatar>
-                                                </Link>
-                                                <Link href={`/profile/${userId}`} className="font-semibold hover:underline">{likeUser.name}</Link>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                        ) : <span className="text-sm font-medium">0 Me gusta</span>}
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setShowComments(!showComments)} className="text-white hover:bg-white/20">
-                        <MessageSquare className="h-5 w-5" />
-                        <span className="ml-2 text-sm">{post.comments ? Object.keys(post.comments).length : 0}</span>
-                    </Button>
-                </div>
-                <Button variant="ghost" size="sm" disabled={isVisitor} className="text-white hover:bg-white/20">
-                    <Bookmark className="h-5 w-5" />
-                </Button>
-            </div>
-        </CardContent>
-
-        <CardFooter className="flex-col items-start pt-4 border-t"> 
-            {showComments && (
-                <div className="w-full space-y-4 pt-4">
-                    {post.comments && Object.entries(post.comments).map(([commentId, comment]) => (
-                        <div key={commentId} className="flex items-start gap-3">
-                            <Avatar className="h-8 w-8"><AvatarImage src={comment.authorAvatar} /><AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback></Avatar>
-                            <div className="bg-muted p-3 rounded-lg w-full">
-                                <Link href={`/profile/${comment.authorId}`} className="hover:underline">
-                                    <span className="font-semibold text-sm">{comment.authorName}</span>
-                                </Link>
-                                <p className="text-sm text-muted-foreground">{comment.content}</p>
-                            </div>
-                        </div>
                     ))}
-                </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="p-0 border-none bg-transparent shadow-none w-auto max-w-none">
+                  <Carousel className="w-full h-full">
+                    <CarouselContent>
+                      {imageMedia.map((item, index) => (
+                        <CarouselItem key={item.url || index} className="flex items-center justify-center">
+                          <Image
+                            src={item.url}
+                            alt={`Post media ${index + 1}`}
+                            width={1920}
+                            height={1080}
+                            className="object-contain w-auto h-auto max-w-[90vw] max-h-[90vh] rounded-lg"
+                            sizes="90vw"
+                          />
+                        </CarouselItem>
+                      ))}
+                    </CarouselContent>
+                    {imageMedia.length > 1 && (
+                      <>
+                        <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white/50 hover:bg-white/80 text-black" />
+                        <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/50 hover:bg-white/80 text-black" />
+                      </>
+                    )}
+                  </Carousel>
+                </DialogContent>
+              </Dialog>
             )}
-            {!isVisitor && (
-                <div className="flex w-full items-center gap-2 pt-4">
-                    <Avatar className="h-8 w-8"><AvatarImage src={currentUser?.avatar} /><AvatarFallback>{currentUser?.name ? currentUser.name.charAt(0) : ''}</AvatarFallback></Avatar>
-                    <Input placeholder="Escribe un comentario..." className="h-9" value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}/>
-                    <Button size="sm" onClick={handleAddComment} disabled={!commentText.trim()}>Publicar</Button>
+          </>
+        )}
+      </CardContent>
+
+      <CardFooter className="flex-col items-start pt-4">
+        <div className="flex items-center gap-4 w-full">
+          <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor}>
+            <Heart className={cn("h-5 w-5", isLiked ? 'text-red-500 fill-current' : 'text-primary')} />
+            <span className="sr-only">Like</span>
+          </Button>
+          {post.likes && Object.keys(post.likes).length > 0 ? (
+            <Dialog>
+              <DialogTrigger asChild>
+                <span className="text-sm font-medium cursor-pointer hover:underline">
+                  {Object.keys(post.likes).length} {Object.keys(post.likes).length === 1 ? 'Me gusta' : 'Me gusta'}
+                </span>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[425px]">
+                <DialogHeader>
+                  <DialogTitle>Le gusta a</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col gap-4 py-4 max-h-[400px] overflow-y-auto">
+                  {Object.entries(post.likes).map(([userId, likeUser]) => (
+                    <div key={userId} className="flex items-center gap-4">
+                      <Link href={`/profile/${userId}`}>
+                        <Avatar><AvatarImage src={likeUser.avatar} alt={likeUser.name} /><AvatarFallback>{likeUser.name.charAt(0)}</AvatarFallback></Avatar>
+                      </Link>
+                      <Link href={`/profile/${userId}`} className="font-semibold hover:underline">{likeUser.name}</Link>
+                    </div>
+                  ))}
                 </div>
-            )}
-        </CardFooter>
+              </DialogContent>
+            </Dialog>
+          ) : <span className="text-sm font-medium text-muted-foreground">0 Me gusta</span>}
+          <Button variant="ghost" size="sm" onClick={() => setShowComments(!showComments)} className="ml-auto">
+            <MessageSquare className="h-5 w-5" />
+            <span className="ml-2 text-sm">{post.comments ? Object.keys(post.comments).length : 0}</span>
+          </Button>
+          <Button variant="ghost" size="sm" disabled={isVisitor}>
+            <Bookmark className="h-5 w-5" />
+          </Button>
+        </div>
+        {showComments && (
+          <div className="w-full space-y-4 pt-4 mt-4 border-t">
+            {post.comments && Object.entries(post.comments).map(([commentId, comment]) => (
+              <div key={commentId} className="flex items-start gap-3">
+                <Avatar className="h-8 w-8"><AvatarImage src={comment.authorAvatar} /><AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback></Avatar>
+                <div className="bg-muted p-3 rounded-lg w-full">
+                  <div className="flex items-center justify-between">
+                    <Link href={`/profile/${comment.authorId}`} className="hover:underline">
+                      <span className="font-semibold text-sm">{comment.authorName}</span>
+                    </Link>
+                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: es })}</p>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">{comment.content}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {!isVisitor && (
+          <div className="flex w-full items-center gap-2 pt-4 mt-4 border-t">
+            <Avatar className="h-8 w-8"><AvatarImage src={currentUser?.avatar} /><AvatarFallback>{currentUser?.name ? currentUser.name.charAt(0) : ''}</AvatarFallback></Avatar>
+            <Input placeholder="Escribe un comentario..." className="h-9" value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}/>
+            <Button size="sm" onClick={handleAddComment} disabled={!commentText.trim()}>Publicar</Button>
+          </div>
+        )}
+      </CardFooter>
     </Card>
   );
 }
