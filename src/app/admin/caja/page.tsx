@@ -114,41 +114,39 @@ function FinanceMatchCard({ match, onOpenDialog }: { match: EnrichedMatch, onOpe
     ? new Date(match.details.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'long', year: 'numeric' })
     : 'Fecha no disponible';
 
-  const matchTime = match.details?.time ? `${match.details.time} hs` : '';
-
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden flex flex-col">
       <CardHeader className="p-4">
-        <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-normal text-muted-foreground">{match.tournamentName}</CardTitle>
+        <div className="flex items-start justify-between gap-2">
+            <CardTitle className="text-base font-semibold leading-tight">{match.tournamentName}</CardTitle>
             {match.financesProcessed && (
-                <Badge variant="secondary" className="border-green-500/50 text-green-700">
+                <Badge variant="secondary" className="border-green-500/50 text-green-700 whitespace-nowrap">
                     <CheckCircle2 className="mr-1 h-3 w-3" />
                     Procesado
                 </Badge>
             )}
         </div>
+        <p className="text-xs text-muted-foreground pt-1">{matchDate}</p>
       </CardHeader>
-      <CardContent className="p-4 pt-0">
-        <div className="flex items-center justify-around text-center mb-4">
-          <div className="flex flex-col items-center gap-2">
-            <Image src={match.homeTeamLogo || ''} alt={match.homeTeamName} width={48} height={48} className="rounded-full" />
-            <span className="font-semibold text-sm w-24 truncate">{match.homeTeamName}</span>
+      <CardContent className="p-4 pt-0 flex-grow flex flex-col justify-center">
+        <div className="flex items-center justify-between text-center">
+          <div className="flex flex-col items-center gap-2 w-1/3">
+            <Image src={match.homeTeamLogo || '/logo-placeholder.png'} alt={match.homeTeamName} width={48} height={48} className="rounded-full aspect-square object-cover" />
+            <span className="font-semibold text-sm w-full truncate">{match.homeTeamName}</span>
           </div>
-          <div className="text-2xl font-bold">
-            {`${match.result?.homeScore ?? '?'} - ${match.result?.awayScore ?? '?'}`}
-          </div>
-          <div className="flex flex-col items-center gap-2">
-            <Image src={match.awayTeamLogo || ''} alt={match.awayTeamName} width={48} height={48} className="rounded-full" />
-            <span className="font-semibold text-sm w-24 truncate">{match.awayTeamName}</span>
+          <div className="text-xl font-bold text-muted-foreground mx-2">vs</div>
+          <div className="flex flex-col items-center gap-2 w-1/3">
+            <Image src={match.awayTeamLogo || '/logo-placeholder.png'} alt={match.awayTeamName} width={48} height={48} className="rounded-full aspect-square object-cover" />
+            <span className="font-semibold text-sm w-full truncate">{match.awayTeamName}</span>
           </div>
         </div>
-        <p className="text-center text-xs text-muted-foreground mb-4">{matchDate}{matchTime && ` - ${matchTime}`}</p>
-        <Button className="w-full" variant={match.financesProcessed ? 'secondary' : 'default'} onClick={() => onOpenDialog(match)}>
-          <Landmark className="mr-2 h-4 w-4" />
-          {match.financesProcessed ? 'Ver / Editar Caja' : 'Registrar Caja'}
-        </Button>
       </CardContent>
+      <div className="p-4 pt-0">
+        <Button className="w-full" variant={match.financesProcessed ? 'secondary' : 'default'} onClick={() => onOpenDialog(match)}>
+            <Landmark className="mr-2 h-4 w-4" />
+            {match.financesProcessed ? 'Ver / Editar Caja' : 'Registrar Caja'}
+        </Button>
+      </div>
     </Card>
   );
 }

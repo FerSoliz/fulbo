@@ -534,7 +534,7 @@ export const togglePostLike = async (postId: string, user: UserData): Promise<vo
   const snapshot = await get(postLikeRef);
 
   if (snapshot.exists()) {
-    await remove(postLikeRef);
+    await remove(postLikeeRef);
   } else {
     const likeData = {
       name: user.name,
@@ -726,8 +726,13 @@ export const getFinishedMatches = async (): Promise<EnrichedMatch[]> => {
     });
     
     console.log(`[DB Service] Se encontraron y enriquecieron ${enrichedMatches.length} partidos finalizados.`);
+    
     // Ordenar por fecha de partido descendente (más recientes primero)
-    return enrichedMatches.sort((a, b) => new Date(b.details.date).getTime() - new Date(a.details.date).getTime());
+    return enrichedMatches.sort((a, b) => {
+      const dateA = a.details?.date ? new Date(a.details.date).getTime() : 0;
+      const dateB = b.details?.date ? new Date(b.details.date).getTime() : 0;
+      return dateB - dateA;
+    });
 
   } catch (error) {
     console.error("[DB Service] Error crítico al obtener partidos finalizados:", error);
