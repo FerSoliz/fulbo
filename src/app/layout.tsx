@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/page-header";
 import type { User } from "@/lib/data";
 import { UserProvider } from '@/context/user-context';
 import { CartProvider } from '@/context/cart-context';
-import { CartWidget } from '@/components/cart/cart-widget'; // Importamos el CartWidget
+import { CartWidget } from '@/components/cart/cart-widget';
 import { usePathname } from 'next/navigation';
 
 export default function RootLayout({
@@ -50,7 +50,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     
     const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
     const isImmersivePage = pathname.startsWith('/collectibles');
-    const showCart = !isAuthPage && !isImmersivePage && !pathname.startsWith('/admin');
+    // Nueva lógica: El carrito solo se muestra si la ruta empieza con /store
+    const showCart = pathname.startsWith('/store');
 
     if (isAuthPage || isImmersivePage) {
         return (
@@ -68,7 +69,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <PageHeader />
                 <main>{children}</main>
             </div>
-            {showCart && <CartWidget />} {/* Mostramos el widget condicionalmente */}
+            {showCart && <CartWidget />} {/* El widget ahora solo se renderiza en la tienda */}
             <Toaster />
         </div>
     );
