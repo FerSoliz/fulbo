@@ -32,14 +32,10 @@ const getDivisionForSudpoints = (sp: number) => {
   return divisions[0]; // Si algo falla, se asigna la división más baja.
 };
 
-// 4. El nuevo componente, más limpio y funcional.
+// 4. El componente actualizado que siempre muestra el nombre de la división.
 export function DivisionBadge({ sudpoints, className }: DivisionBadgeProps) {
   const division = getDivisionForSudpoints(sudpoints);
   const { name, color, Icon } = division;
-
-  // Regla especial: para "Leyenda Mundial", mostramos los puntos.
-  const isLegend = name === 'Leyenda Mundial';
-  const displayText = isLegend ? `${sudpoints} SP` : name;
 
   return (
     <div
@@ -54,7 +50,7 @@ export function DivisionBadge({ sudpoints, className }: DivisionBadgeProps) {
       }}
     >
       <Icon className="h-4 w-4" />
-      <span>{displayText}</span>
+      <span>{name}</span>
     </div>
   );
 }
