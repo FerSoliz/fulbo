@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { getRankedUsers } from '@/lib/firebase/db';
+import { UserProfile } from '@/lib/types';
 import {
   Table,
   TableBody,
@@ -12,42 +14,30 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Crown } from 'lucide-react';
-import { User, leagues } from '@/lib/data';
 import { DivisionBadge } from '@/components/division-badge';
 import { cn } from '@/lib/utils';
+import { Skeleton } from '@/components/ui/skeleton';
+
+type RankedUser = UserProfile & { rank: number };
 
 export default function RankingPage() {
-  const [rankedUsers, setRankedUsers] = useState<(User & { rank: number })[]>([]);
+  const [rankedUsers, setRankedUsers] = useState<RankedUser[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Combine initial users with users from localStorage
-    const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
-    
-    const leagueOrder = leagues.map(l => l.name);
+    const fetchRanking = async () => {
+      setLoading(true);
+      const users = await getRankedUsers();
+      const usersWithRank = users.map((user, index) => ({
+        ...user,
+        rank: index + 1,
+      }));
+      setRankedUsers(usersWithRank);
+      setLoading(false);
+    };
 
-    const sortedUsers = storedUsers
-      .filter((user: User) => user.dni) // Only show users who have linked their profile
-      .sort((a: User, b: User) => {
-        const leagueIndexA = leagueOrder.indexOf(a.league);
-        const leagueIndexB = leagueOrder.indexOf(b.league);
-        if (leagueIndexA !== leagueIndexB) {
-          return leagueIndexB - leagueIndexA; // Higher league index first
-        }
-        if (a.division !== b.division) {
-          return a.division - b.division; // Lower division number first (I > II)
-        }
-        return b.sudpoints - a.sudpoints; // Higher sudpoints first
-      })
-      .map((user: User, index: number) => ({ ...user, rank: index + 1 }));
-
-    setRankedUsers(sortedUsers);
-    setLoading(false);
+    fetchRanking();
   }, []);
-
-  if (loading) {
-    return <div className="p-8 text-center">Cargando ranking...</div>;
-  }
 
   const getRankColor = (rank: number) => {
     if (rank === 1) return 'text-amber-400';
@@ -55,6 +45,22 @@ export default function RankingPage() {
     if (rank === 3) return 'text-orange-400';
     return 'text-foreground';
   };
+
+  const renderSkeletons = () => (
+    Array.from({ length: 10 }).map((_, i) => (
+      <TableRow key={`skeleton-${i}`}>
+        <TableCell className="text-center"><Skeleton className="h-6 w-6 rounded-full mx-auto" /></TableCell>
+        <TableCell>
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </TableCell>
+        <TableCell><Skeleton className="h-6 w-24" /></TableCell>
+        <TableCell className="text-right"><Skeleton className="h-6 w-16 ml-auto" /></TableCell>
+      </TableRow>
+    ))
+  );
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -72,47 +78,48 @@ export default function RankingPage() {
               <TableRow>
                 <TableHead className="w-[80px] text-center">Rank</TableHead>
                 <TableHead>Jugador</TableHead>
-                <TableHead className="hidden md:table-cell">Equipo</TableHead>
-                <TableHead>Liga</TableHead>
+                <TableHead>División</TableHead>
                 <TableHead className="text-right">Sudpoints</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {rankedUsers.length > 0 ? (
-                rankedUsers.map(user => (
-                  <TableRow key={user.id}>
-                    <TableCell className="text-center">
-                      <span className={cn('text-lg font-bold flex items-center justify-center', getRankColor(user.rank))}>
-                        {user.rank === 1 && <Crown className="w-5 h-5 mr-1" />}
-                        {user.rank}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Link href={`/profile/${user.id}`} className="flex items-center gap-3 group">
-                        <Avatar>
-                          <AvatarImage src={user.avatar} alt={user.name} />
-                          <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span className="font-medium group-hover:underline">{user.name}</span>
-                      </Link>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-muted-foreground">
-                      Equipo Ficticio FC
-                    </TableCell>
-                    <TableCell>
-                        <DivisionBadge league={user.league} division={user.division} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                        <Badge variant="outline" className="text-base">{user.sudpoints}</Badge>
+              {loading ? renderSkeletons() : (
+                rankedUsers.length > 0 ? (
+                  rankedUsers.map(user => (
+                    <TableRow key={user.id}>
+                      <TableCell className="text-center">
+                        <span className={cn('text-lg font-bold flex items-center justify-center', getRankColor(user.rank))}>
+                          {user.rank === 1 && <Crown className="w-5 h-5 mr-1" />}
+                          {user.rank}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Link href={`/profile/${user.id}`} className="flex items-center gap-3 group">
+                          <Avatar>
+                            <AvatarImage src={user.avatar} alt={user.name} />
+                            <AvatarFallback>{user.name?.charAt(0) ?? 'S'}</AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <p className="font-medium group-hover:underline">{user.name}</p>
+                            <p className="text-xs text-muted-foreground">@{user.username}</p>
+                          </div>
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <DivisionBadge sudpoints={user.sudpoints ?? 0} />
+                      </TableCell>
+                      <TableCell className="text-right">
+                          <Badge variant="outline" className="text-base font-bold">{user.sudpoints ?? 0}</Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={4} className="h-24 text-center">
+                      No hay jugadores rankeados todavía.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={5} className="h-24 text-center">
-                    No hay jugadores rankeados todavía.
-                  </TableCell>
-                </TableRow>
+                )
               )}
             </TableBody>
           </Table>

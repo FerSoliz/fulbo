@@ -602,3 +602,32 @@ export const findTeamByPlayer = async (userId: string): Promise<any | null> => {
     return null;
   }
 };
+
+/**
+ * Obtiene todos los usuarios de la base de datos y los ordena por sus SudPoints (SP)
+ * para construir el ranking de jugadores.
+ * @returns Una promesa que se resuelve a un array de perfiles de usuario ordenados por ranking.
+ */
+export const getRankedUsers = async (): Promise<UserProfile[]> => {
+  try {
+    const usersRef = ref(db, 'users');
+    const q = query(usersRef, orderByChild('sudpoints'));
+    const snapshot = await get(q);
+
+    if (!snapshot.exists()) {
+      console.log("[DB Service] No se encontraron usuarios para el ranking.");
+      return [];
+    }
+
+    const usersList: UserProfile[] = [];
+    snapshot.forEach(childSnapshot => {
+      usersList.push({ id: childSnapshot.key!, ...childSnapshot.val() });
+    });
+
+    return usersList.reverse();
+
+  } catch (error) {
+    console.error("[DB Service] Error crítico al obtener el ranking de usuarios:", error);
+    return [];
+  }
+};
