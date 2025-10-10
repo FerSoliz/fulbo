@@ -1,6 +1,6 @@
 import { ref, get, set, update, onValue, off, query, orderByChild, equalTo, remove, push, serverTimestamp, increment } from 'firebase/database';
 import { db } from '../firebase';
-import { UserProfile, Post, RosterPlayer, FoundPlayer, TeamDetails, Match, FullTournament, TournamentStats, Standing, Scorer, Sanction, Product } from '../types'; 
+import { UserProfile, Post, RosterPlayer, FoundPlayer, TeamDetails, Match, FullTournament, TournamentStats, Standing, Scorer, Sanction, Product, EnrichedMatch, MatchFinances } from '../types'; 
 
 // --- TIPOS ---
 
@@ -414,12 +414,6 @@ export const getPosts = async (): Promise<Post[]> => {
     return [];
 };
 
-/**
- * CORREGIDO: Busca todos los partidos de un equipo a través de todos los torneos en los que participa.
- * Esta función es robusta y garantiza que el ID de cada partido se preserve correctamente.
- * @param teamId El ID del equipo para el cual se busca el historial.
- * @returns Una promesa que se resuelve a un array de todos los partidos del equipo.
- */
 export const getMatchHistoryForTeam = async (teamId: string): Promise<Match[]> => {
   console.log(`[DB Service] Iniciando búsqueda de historial para teamId: ${teamId}`);
   try {
@@ -466,11 +460,6 @@ export const getMatchHistoryForTeam = async (teamId: string): Promise<Match[]> =
   }
 };
 
-/**
- * REFACTORIZADO: Busca todos los partidos pendientes de un equipo.
- * @param teamId El ID del equipo.
- * @returns Una promesa que se resuelve a un array de todos los partidos con estado 'pending', ordenados por fecha.
- */
 export const getUpcomingMatchesForTeam = async (teamId: string): Promise<Match[]> => {
   console.log(`[DB Service] Buscando TODOS los partidos pendientes para teamId: ${teamId}`);
   try {
@@ -479,10 +468,9 @@ export const getUpcomingMatchesForTeam = async (teamId: string): Promise<Match[]
 
     if (pendingMatches.length === 0) {
       console.log(`[DB Service] No se encontraron partidos pendientes para el equipo ${teamId}.`);
-      return []; // Devuelve un array vacío si no hay partidos
+      return []; 
     }
 
-    // Ordena los partidos por fecha, de más cercano a más lejano
     pendingMatches.sort((a, b) => {
       const aDate = a.details?.date ? new Date(a.details.date).getTime() : 0;
       const bDate = b.details?.date ? new Date(b.details.date).getTime() : 0;
@@ -492,11 +480,11 @@ export const getUpcomingMatchesForTeam = async (teamId: string): Promise<Match[]
     });
 
     console.log(`[DB Service] Se encontraron ${pendingMatches.length} partidos pendientes.`);
-    return pendingMatches; // Devuelve el array completo
+    return pendingMatches;
 
   } catch (error) {
     console.error(`[DB Service] Error crítico al obtener los próximos partidos para ${teamId}:`, error);
-    return []; // Devuelve un array vacío en caso de error
+    return [];
   }
 };
 
@@ -603,11 +591,6 @@ export const findTeamByPlayer = async (userId: string): Promise<any | null> => {
   }
 };
 
-/**
- * Obtiene todos los usuarios de la base de datos y los ordena por sus SudPoints (SP)
- * para construir el ranking de jugadores.
- * @returns Una promesa que se resuelve a un array de perfiles de usuario ordenados por ranking.
- */
 export const getRankedUsers = async (): Promise<UserProfile[]> => {
   try {
     const usersRef = ref(db, 'users');
@@ -634,10 +617,6 @@ export const getRankedUsers = async (): Promise<UserProfile[]> => {
 
 // --- FUNCIONES PARA LA TIENDA (SUDSTORE) ---
 
-/**
- * Obtiene todos los productos de la tienda desde la base de datos.
- * @returns Una promesa que se resuelve a un array de productos.
- */
 export const getProducts = async (): Promise<Product[]> => {
   try {
     const productsRef = ref(db, 'products');
@@ -661,11 +640,6 @@ export const getProducts = async (): Promise<Product[]> => {
   }
 };
 
-/**
- * Crea un nuevo producto en la base de datos.
- * @param productData Los datos del producto a crear (sin el ID).
- * @returns Una promesa que se resuelve con el producto completo, incluyendo su nuevo ID.
- */
 export const createProduct = async (productData: Omit<Product, 'id'>): Promise<Product> => {
   const productsRef = ref(db, 'products');
   const newProductRef = push(productsRef);
@@ -677,23 +651,133 @@ export const createProduct = async (productData: Omit<Product, 'id'>): Promise<P
   return newProduct;
 };
 
-/**
- * Actualiza un producto existente en la base de datos.
- * @param productId El ID del producto a actualizar.
- * @param updates Un objeto con los campos del producto a modificar.
- * @returns Una promesa que se resuelve cuando la actualización se completa.
- */
 export const updateProduct = async (productId: string, updates: Partial<Product>): Promise<void> => {
   const productRef = ref(db, `products/${productId}`);
   await update(productRef, updates);
 };
 
-/**
- * Elimina un producto de la base de datos.
- * @param productId El ID del producto a eliminar.
- * @returns Una promesa que se resuelve cuando la eliminación se completa.
- */
 export const deleteProduct = async (productId: string): Promise<void> => {
   const productRef = ref(db, `products/${productId}`);
   await remove(productRef);
+};
+
+// --- NUEVAS FUNCIONES PARA EL MÓDULO DE CAJA ---
+
+/**
+ * Obtiene todos los partidos con estado 'finalizado' y los enriquece con datos
+ * del torneo y los equipos para ser mostrados en la UI.
+ * @returns Una promesa que se resuelve a un array de partidos finalizados y enriquecidos.
+ */
+export const getFinishedMatches = async (): Promise<EnrichedMatch[]> => {
+  console.log("[DB Service] Obteniendo partidos finalizados para el módulo de caja...");
+  try {
+    const matchesRef = ref(db, 'matches');
+    // Consulta para traer solo los partidos con status 'finalizado'
+    const q = query(matchesRef, orderByChild('status'), equalTo('finalizado'));
+    const snapshot = await get(q);
+
+    if (!snapshot.exists()) {
+      console.log("[DB Service] No se encontraron partidos finalizados.");
+      return [];
+    }
+
+    const matchesData = snapshot.val();
+    const finishedMatches: Match[] = Object.keys(matchesData).map(key => ({
+      id: key,
+      ...matchesData[key]
+    }));
+
+    // --- Enriquecimiento de Datos ---
+    const teamIds = new Set<string>();
+    const tournamentIds = new Set<string>();
+
+    finishedMatches.forEach(match => {
+      teamIds.add(match.homeTeamId);
+      teamIds.add(match.awayTeamId);
+      tournamentIds.add(match.tournamentId);
+    });
+
+    // Obtener datos de equipos y torneos en paralelo
+    const teamsPromises = [...teamIds].map(id => get(ref(db, `teams/${id}`)));
+    const tournamentsPromises = [...tournamentIds].map(id => get(ref(db, `tournaments/${id}`)));
+
+    const [teamsSnapshots, tournamentsSnapshots] = await Promise.all([
+      Promise.all(teamsPromises),
+      Promise.all(tournamentsPromises)
+    ]);
+
+    // Crear mapas para búsqueda rápida (O(1))
+    const teamsMap = new Map(teamsSnapshots.map(snap => [snap.key, snap.val()]));
+    const tournamentsMap = new Map(tournamentsSnapshots.map(snap => [snap.key, snap.val()]));
+
+    const enrichedMatches: EnrichedMatch[] = finishedMatches.map(match => {
+      const homeTeam = teamsMap.get(match.homeTeamId);
+      const awayTeam = teamsMap.get(match.awayTeamId);
+      const tournament = tournamentsMap.get(match.tournamentId);
+
+      return {
+        ...match,
+        tournamentName: tournament?.name || 'Torneo Desconocido',
+        homeTeamName: homeTeam?.name || 'Equipo Desconocido',
+        homeTeamLogo: homeTeam?.logoUrl || '/logo-placeholder.png',
+        awayTeamName: awayTeam?.name || 'Equipo Desconocido',
+        awayTeamLogo: awayTeam?.logoUrl || '/logo-placeholder.png',
+      };
+    });
+    
+    console.log(`[DB Service] Se encontraron y enriquecieron ${enrichedMatches.length} partidos finalizados.`);
+    // Ordenar por fecha de partido descendente (más recientes primero)
+    return enrichedMatches.sort((a, b) => new Date(b.details.date).getTime() - new Date(a.details.date).getTime());
+
+  } catch (error) {
+    console.error("[DB Service] Error crítico al obtener partidos finalizados:", error);
+    return [];
+  }
+};
+
+
+/**
+ * Guarda o actualiza los datos financieros de un partido específico.
+ * Marca el partido como procesado financieramente en una operación atómica.
+ * @param matchId El ID del partido a actualizar.
+ * @param financesData Un objeto con las ganancias, gastos y notas.
+ * @returns Una promesa que se resuelve cuando la operación se completa.
+ */
+export const saveMatchFinances = async (matchId: string, financesData: Omit<MatchFinances, 'balance' | 'createdAt' | 'updatedAt'>): Promise<void> => {
+    console.log(`[DB Service] Guardando finanzas para el partido: ${matchId}`);
+    try {
+        const { earnings, expenses, notes } = financesData;
+        const balance = earnings - expenses;
+
+        const financialEntry: Omit<MatchFinances, 'createdAt'> = {
+            earnings,
+            expenses,
+            balance,
+            notes: notes || '',
+            updatedAt: serverTimestamp(),
+        };
+
+        const updates: { [key: string]: any } = {};
+        
+        const financeRef = ref(db, `match_finances/${matchId}`);
+        const existingFinanceSnap = await get(financeRef);
+
+        if (existingFinanceSnap.exists()) {
+            // Si ya existe, solo actualizamos los campos y el updatedAt
+            updates[`/match_finances/${matchId}`] = financialEntry;
+        } else {
+            // Si es nuevo, establecemos createdAt
+            updates[`/match_finances/${matchId}`] = { ...financialEntry, createdAt: serverTimestamp() };
+        }
+        
+        // Marcamos el partido como procesado en la caja
+        updates[`/matches/${matchId}/financesProcessed`] = true;
+
+        await update(ref(db), updates);
+        console.log(`[DB Service] Finanzas para el partido ${matchId} guardadas exitosamente.`);
+
+    } catch (error) {
+        console.error(`[DB Service] Error al guardar finanzas para el partido ${matchId}:`, error);
+        throw new Error('No se pudieron guardar los datos financieros del partido.');
+    }
 };

@@ -1,115 +1,145 @@
-'''
-// --- TIPOS GLOBALES DE LA APLICACIÓN ---
 
-// --- ESTADOS Y NAVEGACIÓN ---
-export type PageState = 'LOADING' | 'ACCESS_DENIED' | 'NOT_FOUND' | 'READY';
+import { Timestamp } from "firebase/database";
 
-// --- ENTIDADES PRINCIPALES ---
 export interface UserProfile {
     id: string;
     name: string;
     username: string;
     email: string;
-    avatar: string;
-    dni?: string;
-    role: 'admin' | 'captain' | 'player';
+    avatar?: string;
+    role: 'player' | 'captain' | 'admin';
     team?: {
         id: string;
         name: string;
         crestUrl: string;
     } | null;
-    profileBackground?: string;
+    sudpoints: number;
+    dni: string;
+}
+
+export interface GuestPlayer {
+    name: string;
+    dni: string;
+    team: {
+        id: string;
+        name: string;
+        crestUrl: string;
+    }
 }
 
 export interface Team {
     id: string;
     name: string;
     logoUrl: string;
-    captainId?: string;
-    players?: { [playerId: string]: boolean };
-    tournaments?: { [tournamentId: string]: boolean };
-    roster?: { [playerId: string]: RosterPlayer }; 
+    captainId: string;
+    players: { [key: string]: { isGuest: boolean } };
+    tournaments: { [key: string]: true };
 }
 
-export interface Product {
-  id: string;          // ID único del producto
-  name: string;        // Nombre (ej. "Camiseta Oficial SudOne")
-  description: string; // Descripción detallada
-  price: number;       // Precio (ej. 2500.50)
-  imageUrl: string;    // URL de la imagen del producto (alojada en Firebase Storage)
-  stock: number;       // Cantidad de unidades disponibles
-  category?: string;   // Categoría opcional (ej. "Indumentaria", "Accesorios")
-}
-
-export interface RosterPlayer {
+export interface Tournament {
     id: string;
     name: string;
-    dni?: string;
-    isGuest: boolean;
-}
-
-export interface FoundPlayer {
-  id: string;
-  name: string;
-  dni?: string;
-  username: string;
-  avatar?: string;
-  isGuest: boolean;
-  team?: {
-    id: string;
-    name: string;
-  } | null;
-}
-
-export interface TeamDetails {
-  id: string;
-  name: string;
-  logoUrl: string;
-  captainId: string;
-}
-
-export interface Post {
-  id: string;
-  authorId: string;
-  authorName: string;
-  authorAvatar: string;
-  authorUsername: string;
-  content: string;
-  media?: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string }[];
-  url?: string;
-  createdAt: number;
-  likes: { [userId: string]: { name: string; avatar: string; username: string } };
-  comments: { [commentId: string]: Comment };
-  isPinned?: boolean;
-}
-
-export interface Comment {
-    id: string;
-    authorId: string;
-    authorName: string;
-    authorAvatar: string;
-    authorUsername: string;
-    content: string;
-    createdAt: number;
+    category: string;
+    startDate: string;
+    teams: { [key: string]: true };
+    teamCount: number;
+    status: 'inscripciones-abiertas' | 'en-juego' | 'finalizado';
+    venue: string;
+    endDate?: string;
 }
 
 export interface Match {
     id: string;
     tournamentId: string;
-    round: number;
     homeTeamId: string;
     awayTeamId: string;
-    status: 'pending' | 'finished';
+    details: {
+        date: string; // ISO 8601 format
+        time: string; // HH:mm format
+        field: string;
+    };
     result?: {
-        home: number | null;
-        away: number | null;
+        homeScore: number;
+        awayScore: number;
     };
-    details?: {
-        date: string;
-        time: string;
-        referee: string;
+    status: 'pending' | 'in-progress' | 'finalizado' | 'cancelled';
+    statsProcessed: boolean;
+    financesProcessed?: boolean; // Flag para saber si ya se cargó la caja
+}
+
+// NUEVO TIPO: Partido enriquecido para mostrar en la UI
+export interface EnrichedMatch extends Match {
+  tournamentName: string;
+  homeTeamName: string;
+  homeTeamLogo?: string;
+  awayTeamName: string;
+  awayTeamLogo?: string;
+}
+
+// NUEVO TIPO: Estructura para las finanzas de un partido
+export interface MatchFinances {
+    earnings: number;
+    expenses: number;
+    balance: number;
+    notes?: string;
+    createdAt: Timestamp | number;
+    updatedAt: Timestamp | number;
+}
+
+export interface PlayerStats {
+    totals: {
+        matchesPlayed: number;
+        goals: number;
+        assists: number;
+        yellowCards: number;
+        redCards: number;
+        mvp: number;
     };
-    statsProcessed?: boolean;
+    byTournament: {
+        [tournamentId: string]: {
+            matchesPlayed: number;
+            goals: number;
+            assists: number;
+            yellowCards: number;
+            redCards: number;
+            mvp: number;
+        }
+    }
+}
+
+export interface MatchStats {
+    [playerId: string]: {
+        goals?: number;
+        assists?: number;
+        yellowCards?: number;
+        redCards?: number;
+        mvp?: boolean;
+    }
+}
+
+export interface Standing {
+    rank: number;
+    team: string;
+    played: number;
+    won: number;
+    drawn: number;
+    lost: number;
+    points: number;
+    crestUrl?: string;
+}
+
+export interface Scorer {
+    rank: number;
+    player: string;
+    team: string;
+    goals: number;
+}
+
+export interface Sanction {
+    player: string;
+    team: string;
+    yellowCards: number;
+    redCards: number;
 }
 
 export interface TournamentStats {
@@ -118,89 +148,70 @@ export interface TournamentStats {
     sanctions: any[];
 }
 
-export interface Standing {
-  rank: number;
-  team: string;
-  crestUrl?: string;
-  played: number;
-  won: number;
-  drawn: number;
-  lost: number;
-  points: number;
+
+export interface FullTournament extends Omit<Tournament, 'teams' | 'teamCount'> {
+    standings: Standing[];
+    scorers: Scorer[];
+    sanctions: Sanction[];
 }
 
-export interface Scorer {
-  rank: number;
-  player: string;
-  team: string;
-  goals: number;
+export interface Post {
+    id: string;
+    authorId: string;
+    authorName: string;
+    authorAvatar: string;
+    authorUsername: string;
+    content: string;
+    media?: { type: 'image' | 'video', url: string, videoType?: 'youtube' | 'twitch', videoId?: string }[];
+    url?: string;
+    likes: { [key: string]: { name: string, avatar: string, username: string } };
+    comments: { [key: string]: Comment };
+    createdAt: number;
+    isPinned?: boolean;
 }
 
-export interface Sanction {
-  player: string;
-  team: string;
-  yellowCards: number;
-  redCards: number;
+export interface Comment {
+    authorId: string;
+    authorName: string;
+    authorAvatar: string;
+    authorUsername: string;
+    content: string;
+    createdAt: number;
 }
 
-// --- ESTRUCTURA DE TORNEO ENRIQUECIDA ---
-export interface FullTournament {
+export interface TeamDetails {
     id: string;
     name: string;
-    venue: string; // Sede
-    status: 'Inscripciones Abiertas' | 'En curso' | 'Finalizado' | 'Próximamente';
-    
-    // Estos campos son opcionales y pueden no venir de la consulta inicial
-    category?: string;
-    startDate?: string;
-    endDate?: string;
-    
-    // Estos se llenan en la vista de detalle del torneo
-    standings?: Standing[];
-    scorers?: Scorer[];
-    sanctions?: Sanction[];
+    logoUrl: string;
+    captainId: string;
 }
 
-// --- STATS ---
-export interface PlayerStatsInfo {
-    goals: number;
-    assists: number;
-    yellowCards: number;
-    redCard: boolean;
-    mvp: boolean;
-    sudPointsChange?: number;
+export interface RosterPlayer {
+    id: string;
+    name: string;
+    dni: string;
+    isGuest: boolean;
 }
 
-export interface PlayerMatchStats {
-    matchId: string;
-    tournamentId: string;
-    tournamentName: string;
-    teamId: string;
-    opponentId: string;
-    result: 'win' | 'draw' | 'loss';
-    goals: number;
-    yellowCards: number;
-    redCard: boolean;
-    mvp: boolean;
-    sudpoints: number;
+export interface FoundPlayer {
+    id: string;
+    name: string;
+    dni: string;
+    username: string;
+    avatar?: string;
+    isGuest: boolean;
+    team?: {
+        id: string;
+        name: string;
+    } | null;
 }
 
-export interface PlayerStatTotals {
-    matchesPlayed: number;
-    wins: number;
-    draws: number;
-    losses: number;
-    goals: number;
-    yellowCards: number;
-    redCards: number;
-    mvp: number;
-    sudpoints: number;
+export interface Product {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    stock: number;
+    imageUrl: string;
+    category: string;
 }
-
-export interface PlayerStats {
-    totals: PlayerStatTotals;
-    byMatch: {
-        [matchId: string]: PlayerMatchStats;
-    };
-}
-''

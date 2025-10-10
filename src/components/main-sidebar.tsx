@@ -20,6 +20,7 @@ import {
   KeyRound,
   Loader2,
   Download,
+  Landmark, // 1. Importar el icono
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -46,7 +47,9 @@ const menuItems = [
     { href: '/collectibles', icon: Swords, label: 'TGC SUDONE' },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
     { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
+    // 2. Agrupar los enlaces de admin
     { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN' },
+    { href: '/admin/caja', icon: Landmark, label: 'CAJA' },
 ];
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -221,8 +224,13 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
 
   const renderMenuItems = (items: (typeof menuItems | typeof footerMenuItems)[]) => {
     return items.map((item) => {
-      if (item.label === 'PANEL DE ADMIN' && user?.role !== 'admin' && user?.role !== 'editor') {
-        return null; // Don't show admin panel if not admin/editor
+
+      const isAdminLink = item.href?.startsWith('/admin');
+      
+      // 3. Modificar la lógica de visualización de los enlaces de admin
+      // Si no es admin/editor Y el link es de admin, NO lo mostramos.
+      if (isAdminLink && user?.role !== 'admin' && user?.role !== 'editor') {
+        return null;
       }
 
       let finalHref = item.href;
@@ -232,9 +240,6 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
           finalHref = '/login'; // Redirect visitor to login
       }
       
-      const isPanelAdmin = item.label === 'PANEL DE ADMIN';
-      
-      // Lógica de activación mejorada
       const isActive = finalHref === '/' 
         ? pathname === '/'
         : (pathname === finalHref || pathname.startsWith(`${finalHref}/`));
@@ -243,7 +248,7 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
 
       return (
         <li key={item.href} className={cn(isCollectibles && '')}>
-          <Link href={finalHref} passHref onClick={isPanelAdmin ? handleAdminPanelClick : handleMenuClick}>
+          <Link href={finalHref} passHref onClick={isAdminLink ? handleAdminPanelClick : handleMenuClick}>
             <Button
               variant='ghost'
               className={cn(

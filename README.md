@@ -124,6 +124,10 @@
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Módulo de Caja para Gestión Financiera de Partidos:**
+  - **Fecha:** 2024-05-26
+  - **Descripción:** Se ha implementado un nuevo módulo en el panel de administración (`/admin/caja`) para llevar un control financiero de los partidos finalizados. Los administradores pueden registrar ingresos y egresos, y la interfaz muestra claramente qué partidos están pendientes de procesamiento.
+  - **Implementación Técnica:** Se crearon funciones de backend (`getFinishedMatches`, `saveMatchFinances`) para obtener y guardar datos de forma atómica. Se desarrolló un hook (`useFinishedMatches`) para conectar el frontend y se construyó la UI con componentes de `shadcn/ui`, incluyendo estados de carga, tarjetas informativas y un diálogo de edición.
 - **Reproductor de Video Mejorado y Creación de Posts Optimizada:**
   - **Fecha:** 2024-05-24
   - **Descripción:** Se ha refinado la experiencia de video en el feed social. Incluye reproducción inline de YouTube con animaciones suaves y previsualización inteligente en el formulario de creación de posts, que elimina la URL del texto después de generar la vista previa. Los enlaces de Twitch muestran una miniatura interactiva.
@@ -135,7 +139,12 @@ Esta sección sirve como un registro vivo del estado de las funcionalidades del 
   - **Descripción:** Se ha llevado a cabo una sesión completa de depuración que ha restaurado la funcionalidad principal del feed social. Se resolvió un error crítico de `PERMISSION_DENIED` que impedía crear posts, comentarios y dar "Me gusta". La causa raíz fue identificada y corregida, actualizando las reglas de seguridad de Firebase para validar correctamente el uso de `serverTimestamp()` y los datos enviados por la app. Adicionalmente, se corrigió un bug silencioso de `ReferenceError` en la función de "Me gusta" y se implementó una lógica de ordenamiento robusta en el feed para asegurar que los posts nuevos siempre aparezcan en la parte superior, mejorando la experiencia de usuario.
 
 ### Tareas a Futuro
-
+- **Soporte para múltiples equipos por jugador:**
+  - **Descripción:** Refactorizar la estructura de datos para permitir que un jugador pueda pertenecer a más de un equipo simultáneamente. Esto impactará en la inscripción a torneos y en la vista de perfil.
+  - **Prioridad:** Media-Alta.
+- **Soporte para más plataformas de video:**
+  - **Descripción:** Extender la lógica del formulario de creación de posts y del `PostCard` para dar soporte a otras plataformas de video relevantes como Vimeo o DailyMotion.
+  - **Prioridad:** Baja.
 
 ---
 ## 12. Gestión del Roadmap
