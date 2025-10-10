@@ -135,9 +135,8 @@ Esta sección sirve como un registro vivo del estado de las funcionalidades del 
   - **Descripción:** Se ha llevado a cabo una sesión completa de depuración que ha restaurado la funcionalidad principal del feed social. Se resolvió un error crítico de `PERMISSION_DENIED` que impedía crear posts, comentarios y dar "Me gusta". La causa raíz fue identificada y corregida, actualizando las reglas de seguridad de Firebase para validar correctamente el uso de `serverTimestamp()` y los datos enviados por la app. Adicionalmente, se corrigió un bug silencioso de `ReferenceError` en la función de "Me gusta" y se implementó una lógica de ordenamiento robusta en el feed para asegurar que los posts nuevos siempre aparezcan en la parte superior, mejorando la experiencia de usuario.
 
 ### Tareas a Futuro
-- **Soporte para más plataformas de video:**
-  - **Descripción:** Extender la lógica del formulario de creación de posts y del `PostCard` para dar soporte a otras plataformas de video relevantes como Vimeo o DailyMotion.
-  - **Prioridad:** Baja.
+
+
 ---
 ## 12. Gestión del Roadmap
 - La IA responsable de interactuar con este proyecto tiene la **obligación** de mantener actualizada la sección `## 11. Roadmap del Proyecto`.

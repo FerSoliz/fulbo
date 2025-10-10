@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase';
-import { ref, get, set } from 'firebase/database';
+import { ref, get, set, update } from 'firebase/database';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -160,18 +160,15 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
     setStats(prevStats => ({ ...prevStats, [playerId]: { ...prevStats[playerId], [stat]: value } }));
   };
 
-  // LÓGICA DE MVP CORREGIDA PARA RESPETAR LA INMUTABILIDAD
   const handleMvpSelect = (selectedPlayerId: string) => {
     setStats(prevStats => {
-        const isAlreadyMvp = prevStats[selectedPlayerId]?.mvp;
+        const isDeselecting = prevStats[selectedPlayerId]?.mvp;
 
-        // Crea un nuevo objeto de stats a partir del anterior
         const newStats = Object.keys(prevStats).reduce((acc, playerId) => {
-            acc[playerId] = {
-                ...prevStats[playerId],
-                // Lógica de selección: es MVP si no era MVP antes y su ID es el seleccionado.
-                mvp: !isAlreadyMvp && playerId === selectedPlayerId
-            };
+            acc[playerId] = { ...prevStats[playerId] };
+            
+            acc[playerId].mvp = (playerId === selectedPlayerId) && !isDeselecting;
+            
             return acc;
         }, {} as MatchStats);
 
@@ -179,21 +176,61 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
     });
   };
 
-  const handleSaveChanges = async () => {
-    setIsSaving(true);
-    try {
-      await set(ref(db, `match_stats/${matchId}`), stats);
-      toast({ title: "¡Éxito!", description: "Las estadísticas se guardaron correctamente.", className: "bg-green-500 text-white" });
-      setIsOpen(false);
-      if (onStatsSaved) {
-        onStatsSaved();
-      }
-    } catch (error) {
-      toast({ title: "Error al Guardar", description: "No se pudieron guardar los cambios.", variant: "destructive" });
-    } finally {
-      setIsSaving(false);
-    }
-  };
+    const handleSaveChanges = async () => {
+        setIsSaving(true);
+
+        // --- PASO 1: Calcular el resultado del partido ---
+        let homeScore = 0;
+        let awayScore = 0;
+
+        const homePlayerIds = new Set(homeTeam.players.map(p => p.id));
+
+        for (const playerId in stats) {
+            const playerStats = stats[playerId];
+            if (playerStats.goals > 0) {
+                if (homePlayerIds.has(playerId)) {
+                    homeScore += playerStats.goals;
+                } else {
+                    awayScore += playerStats.goals;
+                }
+            }
+        }
+        
+        // --- PASO 2: Preparar la actualización atómica ---
+        const updates: { [key: string]: any } = {};
+
+        updates[`/match_stats/${matchId}`] = stats;
+        updates[`/matches/${matchId}/result`] = { home: homeScore, away: awayScore };
+        updates[`/matches/${matchId}/status`] = 'finished';
+
+        // --- PASO 3: Ejecutar la transacción en la base de datos ---
+        try {
+            await update(ref(db), updates);
+
+            toast({ 
+                title: "¡Planilla Guardada!", 
+                description: "El resultado y las estadísticas se actualizaron.",
+                className: "bg-green-500 text-white" 
+            });
+            
+            setIsOpen(false);
+            if (onStatsSaved) {
+                onStatsSaved();
+            }
+
+        } catch (error) {
+            console.error("Error al guardar la planilla:", error);
+            toast({ 
+                title: "Error al Guardar", 
+                description: "Ocurrió un problema. Revisa la consola para más detalles.", 
+                variant: "destructive" 
+            });
+
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
 
   const formIsDisabled = !isEditing;
 

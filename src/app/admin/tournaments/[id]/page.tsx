@@ -72,13 +72,17 @@ export default function TournamentFixturePage() {
         if (!matchSnap.exists()) return { homeScore: 0, awayScore: 0 };
         const matchData = matchSnap.val();
 
-        const homeTeam = teams.find(t => t.id === matchData.homeTeamId);
-        const awayTeam = teams.find(t => t.id === matchData.awayTeamId);
+        // CORRECCIÓN: Obtener los jugadores directamente de la DB para evitar "stale state"
+        const homePlayersSnap = await get(ref(db, `teams/${matchData.homeTeamId}/players`));
+        const awayPlayersSnap = await get(ref(db, `teams/${matchData.awayTeamId}/players`));
 
-        if (!homeTeam?.players || !awayTeam?.players) return { homeScore: 0, awayScore: 0 };
+        if (!homePlayersSnap.exists() || !awayPlayersSnap.exists()) {
+            toast({ title: "Error de Datos", description: "No se encontraron jugadores para uno o ambos equipos.", variant: "destructive" });
+            return { homeScore: 0, awayScore: 0 };
+        }
 
-        const homePlayerIds = Object.keys(homeTeam.players);
-        const awayPlayerIds = Object.keys(awayTeam.players);
+        const homePlayerIds = Object.keys(homePlayersSnap.val());
+        const awayPlayerIds = Object.keys(awayPlayersSnap.val());
         const stats: { [playerId: string]: PlayerStatsInfo } = matchStatsSnap.val();
 
         let homeScore = 0;
@@ -86,13 +90,16 @@ export default function TournamentFixturePage() {
 
         for (const playerId in stats) {
             const playerGoals = stats[playerId].goals || 0;
-            if (homePlayerIds.includes(playerId)) homeScore += playerGoals;
-            else if (awayPlayerIds.includes(playerId)) awayScore += playerGoals;
+            if (homePlayerIds.includes(playerId)) {
+                homeScore += playerGoals;
+            } else if (awayPlayerIds.includes(playerId)) {
+                awayScore += playerGoals;
+            }
         }
 
         await update(ref(db, `matches/${matchId}/result`), { home: homeScore, away: awayScore });
         return { homeScore, awayScore };
-    }, [teams]);
+    }, [toast]); // Se elimina `teams` de las dependencias
 
     const handleStatsSaved = useCallback(async (match: Match) => {
         if (!tournament) return;
