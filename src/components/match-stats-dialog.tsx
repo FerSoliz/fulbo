@@ -8,11 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, BarChart, Shield, Plus, Minus, Edit, Save, X, ShieldAlert, Volleyball, Square } from 'lucide-react';
+import { Loader2, BarChart, Shield, Plus, Minus, Edit, Save, X, ShieldAlert, Volleyball, Square, Trophy } from 'lucide-react';
 
-// --- TIPOS DE DATOS ---
+// --- TIPOS DE DATOS (MVP AÑADIDO) ---
 interface Player { id: string; name: string; }
-interface PlayerStats { goals: number; yellowCards: number; redCard: boolean; }
+interface PlayerStats { goals: number; yellowCards: number; redCard: boolean; mvp: boolean; }
 type MatchStats = { [playerId: string]: PlayerStats };
 
 interface MatchStatsDialogProps {
@@ -22,14 +22,16 @@ interface MatchStatsDialogProps {
   awayTeamId: string;
   isFinished: boolean;
   disabled?: boolean;
-  onStatsSaved?: () => void; // <-- NUEVO PROP
+  onStatsSaved?: () => void;
 }
 
-// --- SUB-COMPONENTE: Fila de un Jugador ---
-const PlayerStatsRow = ({ player, stats, onStatChange, disabled }: {
+// --- SUB-COMPONENTE: Fila de un Jugador (MVP AÑADIDO) ---
+const PlayerStatsRow = ({ player, stats, onStatChange, onMvpSelect, isMvp, disabled }: {
     player: Player;
     stats: PlayerStats;
-    onStatChange: (stat: keyof PlayerStats, value: number | boolean) => void;
+    onStatChange: (stat: keyof Omit<PlayerStats, 'mvp'>, value: number | boolean) => void;
+    onMvpSelect: () => void;
+    isMvp: boolean;
     disabled: boolean;
 }) => {
     const StatCounter = ({ icon: Icon, iconClassName, stat, value, onStatChange, disabled }: any) => (
@@ -57,6 +59,9 @@ const PlayerStatsRow = ({ player, stats, onStatChange, disabled }: {
         <div className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${disabled ? 'bg-muted/50 text-muted-foreground' : 'hover:bg-muted/50'}`}>
             <p className="font-semibold text-base sm:text-lg truncate pr-2">{player.name}</p>
             <div className="flex items-center gap-4 sm:gap-6">
+                <Button variant="ghost" size="icon" onClick={onMvpSelect} disabled={disabled} className="w-12 h-12">
+                    <Trophy className={`h-7 w-7 transition-colors ${isMvp ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/50 hover:text-yellow-400'}`} />
+                </Button>
                 <StatCounter icon={Volleyball} stat="goals" value={stats.goals} onStatChange={onStatChange} disabled={disabled} />
                 <StatCounter icon={Square} iconClassName="text-yellow-400 fill-current" stat="yellowCards" value={stats.yellowCards} onStatChange={onStatChange} disabled={disabled} />
                 <div className="flex items-center justify-center gap-3">
@@ -92,7 +97,7 @@ const fetchPlayersData = async (playerIds: string[]): Promise<Player[]> => {
 };
 
 
-// --- COMPONENTE PRINCIPAL ---
+// --- COMPONENTE PRINCIPAL (LÓGICA MVP CORREGIDA) ---
 export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId, isFinished, disabled, onStatsSaved }: MatchStatsDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -129,7 +134,7 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
         allPlayers.forEach(player => {
             if (player && player.id) {
                 const playerSavedStats = savedStats[player.id] || {};
-                initialStats[player.id] = { goals: 0, yellowCards: 0, redCard: false, ...playerSavedStats };
+                initialStats[player.id] = { goals: 0, yellowCards: 0, redCard: false, mvp: false, ...playerSavedStats };
             }
         });
         
@@ -151,8 +156,27 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
     }
   }, [isOpen, isFinished, fetchMatchData]);
 
-  const handleStatChange = (playerId: string, stat: keyof PlayerStats, value: number | boolean) => {
+  const handleStatChange = (playerId: string, stat: keyof Omit<PlayerStats, 'mvp'>, value: number | boolean) => {
     setStats(prevStats => ({ ...prevStats, [playerId]: { ...prevStats[playerId], [stat]: value } }));
+  };
+
+  // LÓGICA DE MVP CORREGIDA PARA RESPETAR LA INMUTABILIDAD
+  const handleMvpSelect = (selectedPlayerId: string) => {
+    setStats(prevStats => {
+        const isAlreadyMvp = prevStats[selectedPlayerId]?.mvp;
+
+        // Crea un nuevo objeto de stats a partir del anterior
+        const newStats = Object.keys(prevStats).reduce((acc, playerId) => {
+            acc[playerId] = {
+                ...prevStats[playerId],
+                // Lógica de selección: es MVP si no era MVP antes y su ID es el seleccionado.
+                mvp: !isAlreadyMvp && playerId === selectedPlayerId
+            };
+            return acc;
+        }, {} as MatchStats);
+
+        return newStats;
+    });
   };
 
   const handleSaveChanges = async () => {
@@ -161,7 +185,7 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
       await set(ref(db, `match_stats/${matchId}`), stats);
       toast({ title: "¡Éxito!", description: "Las estadísticas se guardaron correctamente.", className: "bg-green-500 text-white" });
       setIsOpen(false);
-      if (onStatsSaved) { // <-- LLAMADA AL NUEVO PROP
+      if (onStatsSaved) {
         onStatsSaved();
       }
     } catch (error) {
@@ -176,7 +200,6 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-          {/* APLICANDO LA NUEVA PROPIEDAD */}
         <Button variant="outline" disabled={disabled}>
             <BarChart className="mr-2 h-4 w-4" /> Cargar Stats
         </Button>
@@ -184,7 +207,7 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
       <DialogContent className="max-w-4xl w-[95vw] h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl">Planilla Digital del Partido</DialogTitle>
-          <DialogDescription>Registra los eventos de cada jugador. Los cambios se guardan al presionar el botón de Guardar.</DialogDescription>
+          <DialogDescription>Registra los eventos de cada jugador. Elige al MVP haciendo clic en el trofeo.</DialogDescription>
         </DialogHeader>
         
         {isLoading ? (
@@ -198,14 +221,14 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
             <div className="flex-grow overflow-y-auto mt-4 pr-2 space-y-3">
                 <TabsContent value="home" className="space-y-2">
                     {homeTeam.players.length > 0 ? (
-                        homeTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} disabled={formIsDisabled} /> : null)
+                        homeTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} onMvpSelect={() => handleMvpSelect(p.id)} isMvp={stats[p.id]?.mvp} disabled={formIsDisabled} /> : null)
                     ) : (
                         <p className="text-center text-muted-foreground pt-10">No hay jugadores en el equipo local.</p>
                     )}
                 </TabsContent>
                 <TabsContent value="away" className="space-y-2">
                      {awayTeam.players.length > 0 ? (
-                        awayTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} disabled={formIsDisabled} /> : null)
+                        awayTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} onMvpSelect={() => handleMvpSelect(p.id)} isMvp={stats[p.id]?.mvp} disabled={formIsDisabled} /> : null)
                     ) : (
                         <p className="text-center text-muted-foreground pt-10">No hay jugadores en el equipo visitante.</p>
                     )}

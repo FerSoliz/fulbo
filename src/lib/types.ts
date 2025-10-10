@@ -1,139 +1,122 @@
-export interface UserProfile {
+
+// --- TIPOS GLOBALES DE LA APLICACIÓN ---
+
+// --- ESTADOS Y NAVEGACIÓN ---
+export type PageState = 'LOADING' | 'ACCESS_DENIED' | 'NOT_FOUND' | 'READY';
+
+// --- ENTIDADES PRINCIPALES ---
+export interface User {
     id: string;
     name: string;
     username: string;
     email: string;
     avatar: string;
-    location?: string;
-    isVerified: boolean;
     role: 'admin' | 'captain' | 'player';
-    isBlocked: boolean;
-    sudpoints: number;
-    baseSudpoints: number;
-    league: 'Bronce' | 'Plata' | 'Oro' | 'Diamante';
-    division: number;
-    dni: string;
-    profileBackground: string;
-    sudonepassLevel: number;
-    sudonepassExp: number;
-    claimedPassRewards?: number[];
-    transferStatus: 'libre' | 'traspaso' | 'blindado';
-    stats: {
-        partidosJugados: number;
-        victorias: number;
-        empates: number;
-        derrotas: number;
-        goles: number;
-        asistencias: number;
-        amarillas: number;
-        rojas: number;
-        mvps: number;
-    };
-    team?: {
+    team?: { // Desnormalizado para acceso rápido
         id: string;
         name: string;
         crestUrl: string;
     };
-    interactions: number;
-    packsOpened: number;
-    favoriteTournaments?: string[]; 
+    sudpoints?: number;
 }
 
 export interface Team {
     id: string;
     name: string;
-    crestUrl: string;
-    captainId: string;
-    players: string[];
-}
-
-export interface TeamDetails {
-    id: string;
-    name: string;
     logoUrl: string;
-    captainId: string;
+    captainId?: string;
+    players?: { [playerId: string]: boolean };
+    tournaments?: { [tournamentId: string]: boolean };
+    // Roster se construye al vuelo, no se almacena en la DB
+    roster?: { [playerId: string]: Player }; 
 }
 
-export interface Post {
-  id: string;
-  authorId: string;
-  content: string;
-  media?: {
-    type: 'image' | 'video';
-    url: string;
-    thumbnail?: string;
-  };
-  youtubeUrl?: string;
-  twitchUrl?: string;
-  likes: { [userId: string]: boolean };
-  comments: {
-    [commentId: string]: {
-      authorId: string;
-      content: string;
-      createdAt: number;
+export interface Player {
+    id: string;
+    name: string;
+    lastName?: string;
+    dni?: string;
+}
+
+export interface Tournament {
+    id: string;
+    name: string;
+    teamCount: number;
+    teams: { [key: string]: boolean };
+    status: 'draft' | 'open' | 'inprogress' | 'finished';
+}
+
+export interface Match {
+    id: string;
+    tournamentId: string;
+    round: number;
+    homeTeamId: string;
+    awayTeamId: string;
+    status: 'pending' | 'finished';
+    result?: {
+        home: number | null;
+        away: number | null;
     };
-  };
-  createdAt: number;
-  isPinned?: boolean;
-  pinnedUntil?: number;
+    details?: {
+        date: string;
+        time: string;
+        referee: string;
+    };
+    statsProcessed?: boolean;
 }
 
-export interface RosterPlayer {
-  id: string;
-  name: string;
-  dni: string;
-  isGuest: boolean;
-}
+// --- ESTADÍSTICAS (ESTRUCTURA NUEVA Y DETALLADA) ---
 
-export interface FoundPlayer {
-  id: string;
-  name: string;
-  dni: string;
-  username: string;
-  avatar?: string;
-  isGuest?: boolean;
-  team?: {
-    id: string;
-    name: string;
-    crestUrl?: string | null;
-  } | null;
-}
-
-// Tipos relacionados a Torneos
-
-export interface Standing {
-    rank: number;
-    team: string;
-    crestUrl: string;
-    played: number;
-    won: number;
-    drawn: number;
-    lost: number;
-    points: number;
-}
-
-export interface Scorer {
-    rank: number;
-    player: string;
-    team: string;
+// Stats crudos que se guardan en /match_stats/{matchId}
+export interface PlayerStatsInfo {
     goals: number;
+    assists: number;
+    yellowCards: number;
+    redCard: boolean;
+    mvp: boolean;
 }
 
-export interface Sanction {
-    player: string;
-    team: string;
-    yellow: number;
-    red: number;
+// Stats agregados que se guardan en /tournament_stats/{tournamentId}
+export interface Stats {
+    positions: any[];
+    scorers: any[];
+    sanctions: any[];
 }
 
-export interface FullTournament {
-    id: string;
-    name: string;
-    category: string;
-    startDate: string;
-    endDate: string;
-    venue: string;
-    standings: Standing[];
-    scorers: Scorer[];
-    sanctions: Sanction[];
+// --- NUEVA ESTRUCTURA PARA EL RANKING GLOBAL EN /playerStats/{userId} ---
+
+// Lo que se guarda para un jugador por cada partido jugado
+export interface PlayerMatchStats {
+    matchId: string;
+    tournamentId: string;
+    tournamentName: string;
+    teamId: string;
+    opponentId: string;
+    result: 'win' | 'draw' | 'loss';
+    goals: number;
+    yellowCards: number;
+    redCard: boolean;
+    mvp: boolean;
+    sudpoints: number; // Puntos ganados SÓLO en este partido
+}
+
+// Las estadísticas totales de un jugador, calculadas a partir de la suma de `byMatch`
+export interface PlayerStatTotals {
+    matchesPlayed: number;
+    wins: number;
+    draws: number;
+    losses: number;
+    goals: number;
+    yellowCards: number;
+    redCards: number;
+    mvp: number;
+    sudpoints: number; // El total de puntos para el ranking
+}
+
+// El objeto completo que se guarda en /playerStats/{userId}
+export interface PlayerStats {
+    totals: PlayerStatTotals;
+    byMatch: {
+        [matchId: string]: PlayerMatchStats;
+    };
 }
