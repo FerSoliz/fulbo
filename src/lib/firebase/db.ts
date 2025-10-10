@@ -1,6 +1,6 @@
 import { ref, get, set, update, onValue, off, query, orderByChild, equalTo, remove, push, serverTimestamp, increment } from 'firebase/database';
 import { db } from '../firebase';
-import { UserProfile, Post, RosterPlayer, FoundPlayer, TeamDetails, Match, FullTournament, TournamentStats, Standing, Scorer, Sanction } from '../types'; 
+import { UserProfile, Post, RosterPlayer, FoundPlayer, TeamDetails, Match, FullTournament, TournamentStats, Standing, Scorer, Sanction, Product } from '../types'; 
 
 // --- TIPOS ---
 
@@ -630,4 +630,70 @@ export const getRankedUsers = async (): Promise<UserProfile[]> => {
     console.error("[DB Service] Error crítico al obtener el ranking de usuarios:", error);
     return [];
   }
+};
+
+// --- FUNCIONES PARA LA TIENDA (SUDSTORE) ---
+
+/**
+ * Obtiene todos los productos de la tienda desde la base de datos.
+ * @returns Una promesa que se resuelve a un array de productos.
+ */
+export const getProducts = async (): Promise<Product[]> => {
+  try {
+    const productsRef = ref(db, 'products');
+    const snapshot = await get(productsRef);
+
+    if (!snapshot.exists()) {
+      console.log("[DB Service] No se encontraron productos en la tienda.");
+      return [];
+    }
+
+    const productsList: Product[] = [];
+    snapshot.forEach(childSnapshot => {
+      productsList.push({ id: childSnapshot.key!, ...childSnapshot.val() });
+    });
+
+    return productsList;
+
+  } catch (error) {
+    console.error("[DB Service] Error crítico al obtener los productos de la tienda:", error);
+    return [];
+  }
+};
+
+/**
+ * Crea un nuevo producto en la base de datos.
+ * @param productData Los datos del producto a crear (sin el ID).
+ * @returns Una promesa que se resuelve con el producto completo, incluyendo su nuevo ID.
+ */
+export const createProduct = async (productData: Omit<Product, 'id'>): Promise<Product> => {
+  const productsRef = ref(db, 'products');
+  const newProductRef = push(productsRef);
+  const newProduct: Product = {
+    ...productData,
+    id: newProductRef.key!,
+  };
+  await set(newProductRef, productData);
+  return newProduct;
+};
+
+/**
+ * Actualiza un producto existente en la base de datos.
+ * @param productId El ID del producto a actualizar.
+ * @param updates Un objeto con los campos del producto a modificar.
+ * @returns Una promesa que se resuelve cuando la actualización se completa.
+ */
+export const updateProduct = async (productId: string, updates: Partial<Product>): Promise<void> => {
+  const productRef = ref(db, `products/${productId}`);
+  await update(productRef, updates);
+};
+
+/**
+ * Elimina un producto de la base de datos.
+ * @param productId El ID del producto a eliminar.
+ * @returns Una promesa que se resuelve cuando la eliminación se completa.
+ */
+export const deleteProduct = async (productId: string): Promise<void> => {
+  const productRef = ref(db, `products/${productId}`);
+  await remove(productRef);
 };

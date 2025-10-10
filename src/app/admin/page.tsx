@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   ArrowRight,
   UserCog,
+  Store, // Importar el ícono de la tienda
 } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@/lib/data';
@@ -38,6 +39,13 @@ const adminActions = [
     icon: Settings,
     href: '/admin/manage-tournaments',
     color: 'bg-blue-500 hover:bg-blue-600',
+  },
+  {
+    title: 'Gestionar Tienda', // Nueva acción
+    description: 'Añade, edita o elimina productos del merchandising de la SUDSTORE.',
+    icon: Store,
+    href: '/admin/store',
+    color: 'bg-red-500 hover:bg-red-600',
   },
   {
     title: 'Administrar Usuarios',

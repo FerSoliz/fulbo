@@ -31,6 +31,16 @@ export interface Team {
     roster?: { [playerId: string]: RosterPlayer }; 
 }
 
+export interface Product {
+  id: string;          // ID único del producto
+  name: string;        // Nombre (ej. "Camiseta Oficial SudOne")
+  description: string; // Descripción detallada
+  price: number;       // Precio (ej. 2500.50)
+  imageUrl: string;    // URL de la imagen del producto (alojada en Firebase Storage)
+  stock: number;       // Cantidad de unidades disponibles
+  category?: string;   // Categoría opcional (ej. "Indumentaria", "Accesorios")
+}
+
 export interface RosterPlayer {
     id: string;
     name: string;
