@@ -104,7 +104,7 @@
         "dni",
         "sudpoints"
       ],
-      ".read": "auth != null",
+      ".read": true,
       "$userId": {
         ".write": "auth != null && (auth.uid === $userId || root.child('users').child(auth.uid).child('role').val() === 'admin')",
         "role": {
