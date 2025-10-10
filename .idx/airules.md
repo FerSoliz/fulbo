@@ -177,6 +177,12 @@ Esta sección describe la arquitectura de datos NoSQL de la Realtime Database. L
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Motor de Ranking y SudPoints (SP) Integrado:**
+  - **Fecha:** 2024-05-24
+  - **Descripción:** Se implementó el motor de cálculo y asignación de SudPoints, el núcleo del sistema de ranking de SudOne.
+  - **Lógica Atómica y Segura:** La función `updatePlayerGlobalStats` ahora calcula los SP de cada jugador tras un partido y actualiza su perfil (`/users/{uid}/sudpoints`) de forma atómica. También guarda un registro (`sudPointsChange`) en las estadísticas del partido para permitir reversiones seguras.
+  - **Función de Reversión Robusta:** La función `revertMatchStats` utiliza el registro `sudPointsChange` para revertir los puntos de forma precisa cuando un administrador necesita corregir un partido, garantizando la integridad del ranking. El sistema está diseñado para ser idempotente, evitando duplicidad de operaciones.
+  - **Refactorización de Código:** Se refactorizó el archivo `lib/firebase/stats.ts`, eliminando la lógica de recálculo compleja anterior y sustituyéndola por un sistema de transacciones (suma/resta) más simple, eficiente y directo.
 - **Visualización del Historial de Partidos del Equipo:**
   - **Fecha:** 2024-05-24
   - **Descripción:** Se ha implementado la funcionalidad completa para que los usuarios puedan ver el historial de partidos del equipo de cualquier jugador desde su perfil.

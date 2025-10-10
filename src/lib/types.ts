@@ -74,6 +74,7 @@ export interface PlayerStatsInfo {
     yellowCards: number;
     redCard: boolean;
     mvp: boolean;
+    sudPointsChange?: number; // Puntos ganados/perdidos en este partido
 }
 
 // Stats agregados que se guardan en /tournament_stats/{tournamentId}
