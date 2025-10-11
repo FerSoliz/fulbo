@@ -279,7 +279,7 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
         )}
         
         <DialogFooter className="mt-4 pt-4 border-t gap-2">
-          {isFinished && !isEditing && (<Button size="lg" variant="outline" onClick={() => setIsEditing(true)}><Edit className="mr-2 h-4 w-4" /> Habilitar Edición</Button>)}
+          
           <DialogClose asChild><Button size="lg" variant="ghost"><X className="mr-2 h-4 w-4" />Cancelar</Button></DialogClose>
           <Button size="lg" onClick={handleSaveChanges} disabled={formIsDisabled || isSaving}>
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
