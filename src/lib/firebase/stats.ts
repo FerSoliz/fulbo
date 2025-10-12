@@ -1,3 +1,4 @@
+'use client';
 import { ref, get, update, child } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import { Match, PlayerStatsInfo, Team, User, GuestPlayer, PlayerStats } from '@/lib/types';
@@ -15,7 +16,7 @@ const SP_POINTS = {
     COMPETITION_WIN: 200,
 };
 
-// --- HELPER: OBTENER NOMBRES DE JUGADORES EN LOTE (CORREGIDO) ---
+// --- HELPER: OBTENER NOMBRES DE JUGADORES EN LOTE ---
 async function getPlayerNames(playerIds: Set<string>, dbRef: any): Promise<Map<string, string>> {
     const namesMap = new Map<string, string>();
     const promises = Array.from(playerIds).map(async (id) => {
@@ -35,7 +36,7 @@ async function getPlayerNames(playerIds: Set<string>, dbRef: any): Promise<Map<s
     return namesMap;
 }
 
-// --- FUNCIÓN 1: CALCULAR ESTADÍSTICAS COMPLETAS DEL TORNEO (CORREGIDA) ---
+// --- FUNCIÓN 1: CALCULAR ESTADÍSTICAS COMPLETAS DEL TORNEO ---
 export async function calculateTournamentStats(tournamentId: string, teams: Team[]) {
     const dbRef = ref(db);
     const matchesSnap = await get(child(dbRef, 'matches'));
@@ -45,7 +46,6 @@ export async function calculateTournamentStats(tournamentId: string, teams: Team
         .filter(([, m]: [string, any]) => m.tournamentId === tournamentId && m.status === 'finished')
         .map(([id, data]) => ({ id, ...(data as Match) }));
 
-    // 1. Recopilar todos los IDs de jugadores y estadísticas de partidos
     const allPlayerIds = new Set<string>();
     const matchStatsMap = new Map<string, { [playerId: string]: PlayerStatsInfo }>();
     for (const match of finishedMatches) {
@@ -57,10 +57,8 @@ export async function calculateTournamentStats(tournamentId: string, teams: Team
         }
     }
 
-    // 2. Obtener todos los nombres de los jugadores en un solo lote
     const playerNames = await getPlayerNames(allPlayerIds, dbRef);
 
-    // 3. Procesar las estadísticas con los nombres ya cargados
     const teamStats: { [teamId: string]: any } = teams.reduce((acc, team) => ({
         ...acc,
         [team.id]: { teamId: team.id, teamName: team.name, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, gc: 0, dg: 0, points: 0 }
@@ -74,19 +72,17 @@ export async function calculateTournamentStats(tournamentId: string, teams: Team
         const home = teamStats[match.homeTeamId];
         const away = teamStats[match.awayTeamId];
 
-        // Tabla de posiciones
         if (home) { home.played++; home.gf += homeScore; home.gc += awayScore; }
         if (away) { away.played++; away.gf += awayScore; away.gc += homeScore; }
         if (homeScore > awayScore) { if (home) { home.won++; home.points += 3; } if (away) { away.lost++; } } 
         else if (awayScore > homeScore) { if (away) { away.won++; away.points += 3; } if (home) { home.lost++; } } 
         else { if (home) { home.drawn++; home.points += 1; } if (away) { away.drawn++; away.points += 1; } }
 
-        // Goleadores y Sanciones
         const matchStats = matchStatsMap.get(match.id);
         if (matchStats) {
             for (const playerId in matchStats) {
                 const stats = matchStats[playerId];
-                const playerTeam = teams.find(t => t.id === match.homeTeamId || t.id === match.awayTeamId); // Asume que el jugador está en uno de los dos equipos
+                const playerTeam = teams.find(t => t.players && t.players[playerId]);
 
                 if (stats.goals && stats.goals > 0) {
                     if (!scorersData[playerId]) {
@@ -106,7 +102,6 @@ export async function calculateTournamentStats(tournamentId: string, teams: Team
         }
     }
 
-    // 4. Ordenamiento final y actualización atómica
     Object.values(teamStats).forEach(t => { t.dg = t.gf - t.gc; });
     const sortedPositions = Object.values(teamStats).sort((a, b) => b.points - a.points || b.dg - a.dg || b.gf - a.gf);
     const sortedScorers = Object.values(scorersData).sort((a, b) => b.goals - a.goals);
@@ -118,11 +113,10 @@ export async function calculateTournamentStats(tournamentId: string, teams: Team
         [`/tournament_stats/${tournamentId}/sanctions`]: sortedSanctions,
     };
 
-    await update(dbRef, updates);
-    console.log(`Estadísticas completas del torneo ${tournamentId} actualizadas con nombres de jugadores.`);
+    await update(ref(db), updates);
 }
 
-// --- FUNCIÓN 2: MOTOR DE ESTADÍSTICAS GLOBALES DEL JUGADOR (sin cambios) ---
+// --- FUNCIÓN 2: MOTOR DE ESTADÍSTICAS GLOBALES DEL JUGADOR ---
 export async function updatePlayerGlobalStats(matchId: string) {
     const dbRef = ref(db);
     const matchSnap = await get(child(dbRef, `matches/${matchId}`));
@@ -175,7 +169,7 @@ export async function updatePlayerGlobalStats(matchId: string) {
         if (individualMatchStats.redCard) pointsChange += SP_POINTS.RED_CARD;
         if (individualMatchStats.mvp) pointsChange += SP_POINTS.MVP;
 
-        updates[`${playerInfo.path}/sudpoints`] = playerInfo.currentPoints + pointsChange;
+        updates[`${playerInfo.path}/sudpoints`] = (playerInfo.currentPoints || 0) + pointsChange;
         updates[`/match_stats/${matchId}/${playerId}/sudPointsChange`] = pointsChange;
 
         const playerStatsSnap = await get(child(dbRef, `playerStats/${playerId}`));
@@ -202,34 +196,72 @@ export async function updatePlayerGlobalStats(matchId: string) {
     await update(dbRef, updates);
 }
 
-// --- FUNCIÓN 3: REVERTIR SUDPOINTS (sin cambios) ---
+// --- FUNCIÓN 3: REVERTIR ESTADÍSTICAS GLOBALES (CORREGIDA) ---
 export async function revertMatchStats(matchId: string) {
-    const matchStatsSnap = await get(ref(db, `match_stats/${matchId}`));
-    if (!matchStatsSnap.exists()) return;
-    
+    const dbRef = ref(db);
+    const matchSnap = await get(child(dbRef, `matches/${matchId}`));
+    const matchStatsSnap = await get(child(dbRef, `match_stats/${matchId}`));
+
+    if (!matchSnap.exists() || !matchStatsSnap.exists()) {
+        console.error(`Error de reversión: No se encontraron datos para el partido ${matchId}`);
+        return;
+    }
+
+    const match: Match = matchSnap.val();
+    const tournamentId = match.tournamentId;
     const matchStats: { [playerId: string]: PlayerStatsInfo } = matchStatsSnap.val();
     const playerIds = Object.keys(matchStats);
     const updates: { [key: string]: any } = {};
 
     for (const playerId of playerIds) {
-        const sudPointsChange = matchStats[playerId]?.sudPointsChange;
-        if (typeof sudPointsChange !== 'number') continue;
+        const individualMatchStats = matchStats[playerId];
+        if (!individualMatchStats) continue;
 
-        const playerInfo = await getPlayerProfileInfo(playerId);
-        if (!playerInfo) continue; 
+        // --- Reversión de SudPoints ---
+        const sudPointsChange = individualMatchStats.sudPointsChange;
+        if (typeof sudPointsChange === 'number') {
+            const playerInfo = await getPlayerProfileInfo(playerId);
+            if (playerInfo) {
+                updates[`${playerInfo.path}/sudpoints`] = (playerInfo.currentPoints || 0) - sudPointsChange;
+            }
+        }
 
-        const revertedPoints = playerInfo.currentPoints - sudPointsChange;
+        // --- Reversión de PlayerStats (TOTALES y POR TORNEO) ---
+        const playerStatsSnap = await get(child(dbRef, `playerStats/${playerId}`));
+        if (playerStatsSnap.exists()) {
+            const currentFullStats: PlayerStats = playerStatsSnap.val();
 
-        updates[`${playerInfo.path}/sudpoints`] = revertedPoints;
+            // Revertir Totales
+            const newTotals = { ...(currentFullStats.totals || {}) };
+            newTotals.matchesPlayed = Math.max(0, (newTotals.matchesPlayed || 0) - 1);
+            newTotals.goals = Math.max(0, (newTotals.goals || 0) - (individualMatchStats.goals || 0));
+            newTotals.mvp = Math.max(0, (newTotals.mvp || 0) - (individualMatchStats.mvp ? 1 : 0));
+            updates[`/playerStats/${playerId}/totals`] = newTotals;
+
+            // Revertir Estadísticas del Torneo
+            if (currentFullStats.byTournament && currentFullStats.byTournament[tournamentId]) {
+                const currentTournamentStats = currentFullStats.byTournament[tournamentId];
+                const newTournamentStats = { ...currentTournamentStats };
+                newTournamentStats.matchesPlayed = Math.max(0, (newTournamentStats.matchesPlayed || 0) - 1);
+                newTournamentStats.goals = Math.max(0, (newTournamentStats.goals || 0) - (individualMatchStats.goals || 0));
+                newTournamentStats.mvp = Math.max(0, (newTournamentStats.mvp || 0) - (individualMatchStats.mvp ? 1 : 0));
+                updates[`/playerStats/${playerId}/byTournament/${tournamentId}`] = newTournamentStats;
+            }
+        }
+        
+        // Limpiar el registro para evitar dobles reversiones
         updates[`/match_stats/${matchId}/${playerId}/sudPointsChange`] = null;
     }
     
+    // Marcar el partido como no procesado para permitir una nueva carga
     updates[`/matches/${matchId}/statsProcessed`] = false;
-    await update(ref(db), updates);
+    
+    // Ejecutar todas las actualizaciones de forma atómica
+    await update(dbRef, updates);
+    console.log(`Reversión completada para el partido ${matchId}`);
 }
 
-
-// --- HELPERS (AYUDANTES - sin cambios) ---
+// --- HELPERS (AYUDANTES) ---
 type PlayerProfileInfo = {
     path: string;
     currentPoints: number;
