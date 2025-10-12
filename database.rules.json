@@ -7,7 +7,7 @@
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
     },
     "guestPlayers": {
-      ".read": "auth != null",
+      ".read": true,
       ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'captain')"
     },
     "match_stats": {
