@@ -745,37 +745,17 @@ export const getFinishedMatches = async (): Promise<EnrichedMatch[]> => {
  * Guarda o actualiza los datos financieros de un partido específico.
  * Marca el partido como procesado financieramente en una operación atómica.
  * @param matchId El ID del partido a actualizar.
- * @param financesData Un objeto con las ganancias, gastos y notas.
+ * @param financesData Un objeto MatchFinances completo con los datos a guardar.
  * @returns Una promesa que se resuelve cuando la operación se completa.
  */
-export const saveMatchFinances = async (matchId: string, financesData: Omit<MatchFinances, 'balance' | 'createdAt' | 'updatedAt'>): Promise<void> => {
+export const saveMatchFinances = async (matchId: string, financesData: MatchFinances): Promise<void> => {
     console.log(`[DB Service] Guardando finanzas para el partido: ${matchId}`);
     try {
-        const { earnings, expenses, notes } = financesData;
-        const balance = earnings - expenses;
-
-        const financialEntry: Omit<MatchFinances, 'createdAt'> = {
-            earnings,
-            expenses,
-            balance,
-            notes: notes || '',
-            updatedAt: serverTimestamp(),
-        };
-
         const updates: { [key: string]: any } = {};
         
-        const financeRef = ref(db, `match_finances/${matchId}`);
-        const existingFinanceSnap = await get(financeRef);
-
-        if (existingFinanceSnap.exists()) {
-            // Si ya existe, solo actualizamos los campos y el updatedAt
-            updates[`/match_finances/${matchId}`] = financialEntry;
-        } else {
-            // Si es nuevo, establecemos createdAt
-            updates[`/match_finances/${matchId}`] = { ...financialEntry, createdAt: serverTimestamp() };
-        }
-        
-        // Marcamos el partido como procesado en la caja
+        // Guardar los datos financieros completos bajo /matches/{matchId}/finances
+        updates[`/matches/${matchId}/finances`] = financesData;
+        // Marcar el partido como procesado financieramente
         updates[`/matches/${matchId}/financesProcessed`] = true;
 
         await update(ref(db), updates);

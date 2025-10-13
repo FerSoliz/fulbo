@@ -71,6 +71,7 @@ export interface Match {
     status: 'pending' | 'in-progress' | 'finalizado' | 'cancelled';
     statsProcessed: boolean;
     financesProcessed?: boolean; // Flag para saber si ya se cargó la caja
+    finances?: MatchFinances; // Objeto de finanzas, ahora opcional en el partido
 }
 
 // NUEVO TIPO: Partido enriquecido para mostrar en la UI
@@ -82,15 +83,28 @@ export interface EnrichedMatch extends Match {
   awayTeamLogo?: string;
 }
 
-// NUEVO TIPO: Estructura para las finanzas de un partido
-export interface MatchFinances {
-    earnings: number;
-    expenses: number;
-    balance: number;
-    notes?: string;
-    createdAt: Timestamp | number;
-    updatedAt: Timestamp | number;
+// ---- NUEVA ESTRUCTURA DE FINANZAS ----
+
+// 1. Interfaz para un item individual de finanzas (ingreso o egreso)
+export interface FinanceItem {
+  id: string;       // ID único para el item (ej, uuid)
+  description: string;
+  amount: number;
+  type: 'income' | 'expense'; // Tipo de movimiento
 }
+
+// 2. Interfaz principal para las finanzas de un partido, ahora más detallada
+export interface MatchFinances {
+  income: number;     // Total de ingresos (calculado)
+  expenses: number;   // Total de egresos (calculado)
+  balance: number;    // Saldo (calculado)
+  items: FinanceItem[]; // Array de items detallados
+  notes?: string;
+  closedBy: string;   // ID del admin que cerró la caja
+  closedAt: string;   // ISO Timestamp
+}
+
+// -------------------------------------
 
 export interface PlayerStatsInfo {
     goals?: number;
