@@ -17,7 +17,8 @@ import {
   ShieldAlert,
   ArrowRight,
   UserCog,
-  Store, // Importar el ícono de la tienda
+  Store,
+  Landmark, // Importar el ícono de la tienda
 } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@/lib/data';
@@ -60,6 +61,13 @@ const adminActions = [
     icon: Users,
     href: '/admin/manage-teams',
     color: 'bg-purple-500 hover:bg-purple-600',
+  },
+  {
+    title: 'Caja',
+    description: 'Gestiona los ingresos y egresos de los partidos.',
+    icon: Landmark,
+    href: '/admin/caja',
+    color: 'bg-yellow-500 hover:bg-yellow-600',
   },
 ];
 

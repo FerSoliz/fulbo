@@ -49,7 +49,6 @@ const menuItems = [
     { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
     // 2. Agrupar los enlaces de admin
     { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN' },
-    { href: '/admin/caja', icon: Landmark, label: 'CAJA' },
 ];
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
