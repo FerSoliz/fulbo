@@ -1,6 +1,6 @@
 import { ref, get, set, update, onValue, off, query, orderByChild, equalTo, remove, push, serverTimestamp, increment } from 'firebase/database';
 import { db } from '../firebase';
-import { UserProfile, Post, RosterPlayer, FoundPlayer, TeamDetails, Match, FullTournament, TournamentStats, Standing, Scorer, Sanction, Product, EnrichedMatch, MatchFinances } from '../types'; 
+import { User, Post, RosterPlayer, FoundPlayer, TeamDetails, Match, FullTournament, TournamentStats, Standing, Scorer, Sanction, Product, EnrichedMatch, MatchFinances } from '../types'; 
 
 // --- TIPOS ---
 
@@ -66,7 +66,7 @@ export const findUserByDni = async (dni: string): Promise<FoundPlayer | null> =>
     if (snapshot.exists()) {
         let foundUser: FoundPlayer | null = null;
         snapshot.forEach((childSnapshot) => {
-        const userData: UserProfile = childSnapshot.val();
+        const userData: User = childSnapshot.val();
         if (!foundUser) {
             foundUser = {
             id: childSnapshot.key!,
@@ -395,10 +395,10 @@ export const getTournamentStats = async (tournamentId: string): Promise<Tourname
   }
 };
 
-export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
+export const getUserProfile = async (userId: string): Promise<User | null> => {
     const userRef = ref(db, `users/${userId}`);
     const snapshot = await get(userRef);
-    if(snapshot.exists()) return { id: snapshot.key, ...snapshot.val() } as UserProfile;
+    if(snapshot.exists()) return { id: snapshot.key, ...snapshot.val() } as User;
     return null;
 };
 
@@ -534,7 +534,7 @@ export const togglePostLike = async (postId: string, user: UserData): Promise<vo
   const snapshot = await get(postLikeRef);
 
   if (snapshot.exists()) {
-    await remove(postLikeeRef);
+    await remove(postLikeRef);
   } else {
     const likeData = {
       name: user.name,
@@ -591,7 +591,7 @@ export const findTeamByPlayer = async (userId: string): Promise<any | null> => {
   }
 };
 
-export const getRankedUsers = async (): Promise<UserProfile[]> => {
+export const getRankedUsers = async (): Promise<User[]> => {
   try {
     const usersRef = ref(db, 'users');
     const q = query(usersRef, orderByChild('sudpoints'));
@@ -602,7 +602,7 @@ export const getRankedUsers = async (): Promise<UserProfile[]> => {
       return [];
     }
 
-    const usersList: UserProfile[] = [];
+    const usersList: User[] = [];
     snapshot.forEach(childSnapshot => {
       usersList.push({ id: childSnapshot.key!, ...childSnapshot.val() });
     });
