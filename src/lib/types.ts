@@ -1,30 +1,36 @@
 
 import { Timestamp } from "firebase/database";
 
-export interface UserProfile {
-    id: string;
-    name: string;
-    username: string;
-    email: string;
-    avatar?: string;
-    role: 'player' | 'captain' | 'admin';
-    team?: {
-        id: string;
-        name: string;
-        crestUrl: string;
-    } | null;
-    sudpoints: number;
-    dni: string;
+// Definición de la estructura para un equipo asociado a un usuario o invitado
+export interface PlayerTeamInfo {
+  id: string;
+  name: string;
+  crestUrl: string;
+}
+
+// Interfaz ÚNICA Y DEFINITIVA para un usuario registrado
+export interface User {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  dni: string;
+  role: 'player' | 'captain' | 'admin';
+  avatar?: string;
+  profileBackground?: string;
+  location?: string;
+  isVerified: boolean;
+  isBlocked: boolean;
+  sudpoints: number;
+  team?: PlayerTeamInfo | null;
+  // Añade aquí cualquier otro campo específico del usuario
 }
 
 export interface GuestPlayer {
-    name: string;
-    dni: string;
-    team: {
-        id: string;
-        name: string;
-        crestUrl: string;
-    }
+  name: string;
+  dni: string;
+  team: PlayerTeamInfo;
+  sudpoints?: number; // Hacemos que sea opcional para no romper datos antiguos
 }
 
 export interface Team {
@@ -86,6 +92,15 @@ export interface MatchFinances {
     updatedAt: Timestamp | number;
 }
 
+export interface PlayerStatsInfo {
+    goals?: number;
+    assists?: number;
+    yellowCards?: number;
+    redCard?: boolean;
+    mvp?: boolean;
+    sudPointsChange?: number;
+}
+
 export interface PlayerStats {
     totals: {
         matchesPlayed: number;
@@ -97,6 +112,7 @@ export interface PlayerStats {
     };
     byTournament: {
         [tournamentId: string]: {
+            tournamentName?: string;
             matchesPlayed: number;
             goals: number;
             assists: number;
@@ -107,15 +123,6 @@ export interface PlayerStats {
     }
 }
 
-export interface MatchStats {
-    [playerId: string]: {
-        goals?: number;
-        assists?: number;
-        yellowCards?: number;
-        redCards?: number;
-        mvp?: boolean;
-    }
-}
 
 export interface Standing {
     rank: number;

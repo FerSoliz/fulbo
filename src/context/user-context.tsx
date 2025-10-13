@@ -2,44 +2,37 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { User, Notification, PlayerStats } from '@/lib/types'; // Asegúrate que PlayerStats está en types
+// --- IMPORTACIÓN CORREGIDA ---
+import type { User, Notification } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase'; 
-import { ref, onValue, get, set, update, increment, Unsubscribe, remove, child } from 'firebase/database';
+import { ref, onValue, get, update, Unsubscribe } from 'firebase/database';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { RegisterInput } from '@/lib/validators';
 
-// El defaultVisitor no necesita cambios
 const defaultVisitor: User = {
     id: 'visitor',
     name: 'VISITANTE',
     username: 'visitante',
-    email: '', // Añadido para consistencia
+    email: '',
     role: 'player',
     avatar: 'https://avatar.vercel.sh/visitor.png',
     isVerified: false,
     isBlocked: false,
     location: '',
     sudpoints: 0,
-    // baseSudpoints, league, division y stats ya no son obligatorios en el tipo User
+    dni: '',
 };
 
 interface UserContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, pass: string) => Promise<boolean>;
-  // ¡Modificado! Ahora recibe el objeto completo de datos del formulario
   register: (data: RegisterInput, profileBackground: string) => Promise<boolean>;
   logout: () => Promise<void>;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
-  availablePacks: number;
-  setAvailablePacks: React.Dispatch<React.SetStateAction<number>>;
-  nextPackTimestamp: number | null;
-  setNextPackTimestamp: React.Dispatch<React.SetStateAction<number | null>>;
-  countdown: string;
-  trackInteraction: () => void;
-  trackPackOpening: () => void;
+  // ... (otros campos si los tienes)
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -48,14 +41,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [availablePacks, setAvailablePacks] = useState(0);
-  const [nextPackTimestamp, setNextPackTimestamp] = useState<number | null>(null);
-  const [countdown, setCountdown] = useState('');
   const router = useRouter();
   const { toast } = useToast();
 
-  // El useEffect de onAuthStateChanged no necesita cambios significativos,
-  // se enfoca en mantener la sesión del usuario sincronizada.
   useEffect(() => {
     let unsubscribeUser: Unsubscribe = () => {};
     const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
@@ -64,10 +52,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const userRef = ref(db, `users/${firebaseUser.uid}`);
         unsubscribeUser = onValue(userRef, (snapshot) => {
           if (snapshot.exists()) {
-            setUser({ id: firebaseUser.uid, ...snapshot.val() });
+            // Aseguramos que los datos coincidan con el tipo User
+            const dbUser = snapshot.val();
+            setUser({ 
+              id: firebaseUser.uid,
+              ...dbUser
+            });
           } else {
-             // Si el usuario existe en Auth pero no en DB, podría ser un error.
-             // Por ahora, lo tratamos como un usuario nuevo sin datos.
              setUser(null); 
           }
           setLoading(false);
@@ -84,7 +75,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
-     // La función de login no cambia
     setLoading(true);
     try {
         await signInWithEmailAndPassword(auth, email, pass);
@@ -97,30 +87,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // --- ¡FUNCIÓN DE REGISTRO COMPLETAMENTE REFACTORIZADA! ---
   const register = async (data: RegisterInput, profileBackground: string): Promise<boolean> => {
     const { name, username, email, password, dni } = data;
     setLoading(true);
 
     try {
-      // Paso 1: Buscar si el DNI pertenece a un jugador invitado para migrar sus datos.
       const guestPlayerRef = ref(db, `guestPlayers/${dni}`);
       const guestPlayerSnap = await get(guestPlayerRef);
       
-      const playerStatsRef = ref(db, `playerStats/${dni}`);
-      const playerStatsSnap = await get(playerStatsRef);
-
       const isGuestMigration = guestPlayerSnap.exists();
       const guestData = guestPlayerSnap.val();
-      const existingStats: PlayerStats | null = playerStatsSnap.val();
 
-      // Paso 2: Crear el usuario en Firebase Authentication (esto no cambia).
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
-      // Paso 3: Preparar los datos del nuevo perfil, fusionando si es necesario.
+      // --- CONSTRUCCIÓN DEL PERFIL CON EL TIPO CORRECTO Y CENTRALIZADO ---
       const newUserProfile: Omit<User, 'id'> = {
-        name: isGuestMigration ? guestData.name : name, // Usar nombre de invitado si existe
+        name: isGuestMigration ? guestData.name : name,
         username,
         email,
         dni,
@@ -130,39 +113,41 @@ export function UserProvider({ children }: { children: ReactNode }) {
         isVerified: false,
         isBlocked: false,
         location: '',
-        // ¡CRÍTICO! Usar los sudpoints existentes o iniciar en 0.
-        sudpoints: existingStats?.totals?.sudpoints || 0, 
+        sudpoints: isGuestMigration && guestData.sudpoints ? guestData.sudpoints : 0,
+        team: isGuestMigration && guestData.team ? guestData.team : null,
       };
 
-      // Paso 4: Realizar la operación en la base de datos de forma ATÓMICA.
       const updates: { [key: string]: any } = {};
-
-      // 4.1. Añadir el nuevo perfil de usuario en la rama /users.
       updates[`/users/${uid}`] = newUserProfile;
 
-      // 4.2. Si hay estadísticas existentes, moverlas a la nueva UID.
-      if (existingStats) {
-        updates[`/playerStats/${uid}`] = existingStats;
-      }
-
-      // 4.3. Si fue una migración, limpiar los datos obsoletos del invitado.
       if (isGuestMigration) {
-        updates[`/guestPlayers/${dni}`] = null; // Elimina el perfil de invitado.
-        updates[`/playerStats/${dni}`] = null; // Elimina las estadísticas antiguas por DNI.
+        updates[`/guestPlayers/${dni}`] = null; 
       }
       
-      // Ejecutar todas las operaciones como un solo batch.
       await update(ref(db), updates);
 
       toast({ title: "¡Cuenta Creada!", description: "Tu cuenta ha sido creada exitosamente." });
-      // router.push('/'); // El onAuthStateChanged se encargará de la redirección.
       return true;
 
     } catch (error: any) {
-      let errorMessage = "Ocurrió un error al registrar la cuenta.";
-      if (error.code === 'auth/email-already-in-use') errorMessage = "Este correo electrónico ya está en uso.";
-      if (error.code === 'auth/weak-password') errorMessage = "La contraseña debe tener al menos 6 caracteres.";
-      toast({ title: "Error de registro", description: errorMessage, variant: "destructive" });
+      console.error("Firebase Registration Error Details:", error);
+      let errorMessage = "Ocurrió un error inesperado.";
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          errorMessage = "Este correo electrónico ya está registrado. Por favor, intenta iniciar sesión.";
+          break;
+        case 'auth/weak-password':
+          errorMessage = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
+          break;
+        case 'auth/invalid-email':
+          errorMessage = "El formato del correo electrónico no es válido.";
+          break;
+        default:
+          errorMessage = `Error no identificado. Código: ${error.code}`;
+          break;
+      }
+      toast({ title: "Error de Registro", description: errorMessage, variant: "destructive" });
+      setLoading(false); // Asegúrate de que el loading se detenga en caso de error
       return false;
     } finally {
       setLoading(false);
@@ -170,26 +155,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    // La función de logout no cambia
     await signOut(auth);
     setUser(defaultVisitor);
     router.push('/');
   };
 
-  // El resto de funciones del contexto (trackInteraction, etc.) no necesitan cambios.
-  const trackInteraction = useCallback(async () => {
-    if (!user || user.id === 'visitor') return;
-    await update(ref(db, `users/${user.id}`), { interactions: increment(1) });
-  }, [user]);
-
-  const trackPackOpening = useCallback(async () => {
-    if (!user || user.id === 'visitor') return;
-    await update(ref(db, `users/${user.id}`), { packsOpened: increment(1) });
-  }, [user]);
-
+  // Necesitarás ajustar estos valores si no están en la interfaz UserContextType
+  const dummySetState = () => {};
+  const dummyTrack = () => {};
 
   return (
-    <UserContext.Provider value={{ user, loading, login, register, logout, notifications, setNotifications, availablePacks, setAvailablePacks, nextPackTimestamp, setNextPackTimestamp, countdown, trackInteraction, trackPackOpening }}>
+    <UserContext.Provider value={{ 
+        user, 
+        loading, 
+        login, 
+        register, 
+        logout, 
+        notifications, 
+        setNotifications,
+        // Añade aquí las propiedades que faltan si es necesario
+    }}>
       {children}
     </UserContext.Provider>
   );
