@@ -124,6 +124,11 @@
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Banner Principal Dinámico y Editable por Administradores:**
+  - **Fecha:** 2024-05-28
+  - **Descripción:** Se implementó un sistema para que el banner principal de la aplicación sea dinámico y gestionable. Los administradores ahora pueden cambiar el banner directamente desde la página principal.
+  - **Edición "In-Context":** En lugar de un formulario en el panel de admin, los administradores ven un botón de edición directamente sobre el banner, permitiendo una actualización visual e instantánea. La carga se gestiona con `useUpload` y la URL se almacena en `/app_config/headerBannerUrl`.
+  - **UX Mejorada:** El sistema incluye estados de carga (`skeleton`) y una imagen de respaldo para asegurar que el header siempre se visualice correctamente.
 - **Sistema de Registro y Migración de Datos Robusto:**
   - **Fecha:** 2024-05-27
   - **Descripción:** Se ha realizado una depuración y refactorización completa del flujo de registro de usuarios. Se solucionaron errores críticos que impedían la creación de cuentas y se implementó una lógica de migración de datos para los jugadores "invitados" que se registran.

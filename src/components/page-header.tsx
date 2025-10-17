@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Bell, Menu, Layers, LogOut, Search, User as UserIcon, Star, FileText, Heart, Package, Trophy, UserCheck, UserX } from 'lucide-react';
@@ -23,12 +22,12 @@ import {
 import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
 import { useRouter } from 'next/navigation';
-import { User, Notification } from '@/lib/data';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { MainSidebar } from './main-sidebar';
 import { GlobalSearch } from './global-search';
-
+import { getHeaderBannerUrl } from '@/lib/firebase/db';
+import { EditBannerButton } from './admin/EditBannerButton';
 
 const notificationIcons: { [key: string]: React.ElementType } = {
   post: FileText,
@@ -40,9 +39,25 @@ const notificationIcons: { [key: string]: React.ElementType } = {
 };
 
 export function PageHeader() {
-  const { user, loading, logout, notifications, setNotifications, availablePacks, countdown } = useUser();
+  const { user, loading, logout, notifications, setNotifications } = useUser();
   const router = useRouter();
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
+  const [bannerUrl, setBannerUrl] = React.useState<string | null>(null);
+  const [isBannerLoading, setIsBannerLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchBannerUrl = async () => {
+      try {
+        const url = await getHeaderBannerUrl();
+        setBannerUrl(url);
+      } catch (error) {
+        console.error("Error al cargar el banner:", error);
+      } finally {
+        setIsBannerLoading(false);
+      }
+    };
+    fetchBannerUrl();
+  }, []);
   
   const hasUnreadNotifications = notifications.some(n => !n.isRead);
 
@@ -58,13 +73,9 @@ export function PageHeader() {
     e.preventDefault();
     e.stopPropagation();
     console.log("Action clicked:", action);
-    // Here you would implement the logic for accepting/rejecting friends
-    // For now, we just log it
-    // toast({title: "Acción no implementada", description: "La lógica para esta acción aún no está definida."})
   }
 
   const handleOpenNotifications = () => {
-    // Mark all as read when opening
     setTimeout(() => {
         setNotifications(prevNotifications => 
             prevNotifications.map(n => ({ ...n, isRead: true }))
@@ -162,21 +173,28 @@ export function PageHeader() {
           <div className="border-t border-border/50 px-4 pt-2 pb-3 md:hidden">
              <GlobalSearch />
           </div>
-          <div className="px-4 pb-2">
-             <Link
-                 href="https://www.monsterenergy.com"
-                 target="_blank"
-                 rel="noopener noreferrer"
-                 legacyBehavior>
-                 <Image
-                     src="/banner-monster.jpg" // Ruta local
-                     alt="Monster Energy Banner"
-                     width={1200} // Dimensiones intrínsecas de la imagen
-                     height={150} // Dimensiones intrínsecas de la imagen
-                     priority
-                     className="rounded-lg" // Clases directamente en el Image
-                 />
-             </Link>
+          <div className="px-4 pb-2 relative">
+             {isBannerLoading ? (
+                <Skeleton className="w-full h-[150px] rounded-lg" />
+             ) : (
+                <>
+                  <Link
+                      href="https://www.monsterenergy.com"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      legacyBehavior>
+                      <Image
+                          src={bannerUrl || "/banner-monster.jpg"} // Usa la URL dinámica o el fallback
+                          alt="Banner Principal de Sudone"
+                          width={1200}
+                          height={150}
+                          priority
+                          className="rounded-lg object-cover"
+                      />
+                  </Link>
+                  <EditBannerButton onUploadComplete={setBannerUrl} />
+                </>
+             )}
          </div>
       </header>
   );

@@ -13,3 +13,4 @@ export * from './posts';
 export * from './products';
 export * from './cashEntries';
 export * from './stats';
+export * from './appConfig';
