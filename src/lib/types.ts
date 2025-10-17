@@ -42,6 +42,29 @@ export interface Team {
     tournaments: { [key: string]: true };
 }
 
+// NUEVA INTERFAZ: Resumen de equipo para listas y búsquedas
+export interface TeamSummary {
+  id: string;
+  name: string;
+  logoUrl: string;
+}
+
+// NUEVA INTERFAZ: Estadísticas consolidadas de un equipo
+export interface TeamStats {
+  teamId: string;
+  teamName: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  gf: number;
+  gc: number;
+  dg: number;
+  points: number;
+  crestUrl?: string;
+}
+
+
 export interface Tournament {
     id: string;
     name: string;
@@ -83,28 +106,62 @@ export interface EnrichedMatch extends Match {
   awayTeamLogo?: string;
 }
 
-// ---- NUEVA ESTRUCTURA DE FINANZAS ----
+// ---- ESTRUCTURAS PARA EL MÓDULO DE CAJA ----
 
 // 1. Interfaz para un item individual de finanzas (ingreso o egreso)
-export interface FinanceItem {
-  id: string;       // ID único para el item (ej, uuid)
-  description: string;
+export interface FinancialItem {
+  id: string; // ID único para el item (ej, uuid)
+  concept: string;
   amount: number;
-  type: 'income' | 'expense'; // Tipo de movimiento
 }
 
-// 2. Interfaz principal para las finanzas de un partido, ahora más detallada
-export interface MatchFinances {
-  income: number;     // Total de ingresos (calculado)
-  expenses: number;   // Total de egresos (calculado)
-  balance: number;    // Saldo (calculado)
-  items: FinanceItem[]; // Array de items detallados
-  notes?: string;
-  closedBy: string;   // ID del admin que cerró la caja
-  closedAt: string;   // ISO Timestamp
+// 2. Interfaz para los grupos de ingresos y egresos
+export interface FinancialGroup {
+  total: number;
+  items: FinancialItem[];
 }
+
+// 3. Interfaz principal para las finanzas de un partido o asiento manual
+export interface MatchFinances {
+  income: FinancialGroup;
+  expenses: FinancialGroup;
+  balance: number;
+  notes?: string;
+  closedBy: {
+      id: string;
+      name: string;
+  };
+  closedAt: string; // ISO Timestamp
+}
+
+// 4. Interfaz para un Asiento de Caja Manual
+export interface ManualCashEntry {
+    id: string;
+    concept: string; // Concepto principal del asiento
+    date: string; // Fecha del movimiento (ISO string)
+    finances: MatchFinances;
+    createdAt: string; // ISO Timestamp de la creación del registro
+}
+
+
+// 5. Interfaz unificada para mostrar en la lista de "Caja"
+export type CashMovement =
+  | { type: 'match'; id: string; date: string; data: EnrichedMatch }
+  | { type: 'manual'; id: string; date: string; data: ManualCashEntry };
+
 
 // -------------------------------------
+
+// RENOMBRADO: Estadísticas de un jugador en un partido específico
+export interface IndividualPlayerMatchStats {
+    playerInfo: { id: string, name: string, lastName?: string };
+    teamId: string;
+    teamName: string;
+    goals: number;
+    yellowCards: number;
+    redCards: number;
+}
+
 
 export interface PlayerStatsInfo {
     goals?: number;
@@ -235,4 +292,21 @@ export interface Product {
     stock: number;
     imageUrl: string;
     category: string;
+}
+
+// ---- TIPOS PARA EL FEED SOCIAL ----
+
+export interface UserData {
+  id: string;
+  name: string;
+  avatar: string;
+  username: string;
+}
+
+export interface NewPostData {
+  content?: string;
+  media?: { type: 'image' | 'video'; url: string; videoType?: 'youtube' | 'twitch'; videoId?: string }[];
+  url?: string | null;
+  isPinned?: boolean;
+  author: UserData;
 }

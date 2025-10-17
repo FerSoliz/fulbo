@@ -59,7 +59,7 @@ export function MainSidebar({ user }: MainSidebarProps) {
 
       return (
         <li key={item.href}>
-          <Link href={item.href} passHref>
+          <Link href={item.href} passHref legacyBehavior>
             <Button
               variant="ghost"
               className={cn(
@@ -78,40 +78,39 @@ export function MainSidebar({ user }: MainSidebarProps) {
 
   return (
     <aside className="fixed left-0 hidden h-screen w-64 flex-col border-r bg-card md:flex">
-        <div className="flex h-16 items-center justify-center border-b p-2">
-          <Link href="/">
-            <Image
-              src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
-              alt="SUDONE Logo"
-              width={140}
-              height={40}
-              priority
-            />
+      <div className="flex h-16 items-center justify-center border-b p-2">
+        <Link href="/" legacyBehavior>
+          <Image
+            src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
+            alt="SUDONE Logo"
+            width={140}
+            height={40}
+            priority
+          />
+        </Link>
+      </div>
+      <div className="flex items-center gap-2 p-2">
+          <Link href="/profile" legacyBehavior>
+              <AnimatedAvatar>
+                  <Avatar className="w-12 h-12">
+                      <AvatarImage src={user.avatarUrl} alt="User avatar" />
+                      <AvatarFallback>U</AvatarFallback>
+                  </Avatar>
+              </AnimatedAvatar>
           </Link>
-        </div>
-        <div className="flex items-center gap-2 p-2">
-            <Link href="/profile">
-                <AnimatedAvatar>
-                    <Avatar className="w-12 h-12">
-                        <AvatarImage src={user.avatarUrl} alt="User avatar" />
-                        <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                </AnimatedAvatar>
-            </Link>
-            <div className="flex flex-col">
-                <span className="font-semibold">Carlos Estevez</span>
-                <span className="text-sm text-muted-foreground">@charlie</span>
-            </div>
-        </div>
-
-        <nav className="flex flex-1 flex-col">
-            <ul className="flex flex-col gap-1 p-2">
-                {renderMenuItems(menuItems)}
-            </ul>
-            <ul className="mt-auto flex flex-col gap-1 border-t p-2">
-                {renderMenuItems(footerMenuItems)}
-            </ul>
-        </nav>
+          <div className="flex flex-col">
+              <span className="font-semibold">Carlos Estevez</span>
+              <span className="text-sm text-muted-foreground">@charlie</span>
+          </div>
+      </div>
+      <nav className="flex flex-1 flex-col">
+          <ul className="flex flex-col gap-1 p-2">
+              {renderMenuItems(menuItems)}
+          </ul>
+          <ul className="mt-auto flex flex-col gap-1 border-t p-2">
+              {renderMenuItems(footerMenuItems)}
+          </ul>
+      </nav>
     </aside>
   );
 }

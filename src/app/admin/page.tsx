@@ -99,7 +99,7 @@ export default function AdminPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {adminActions.map((action) => {
             return (
-                <Card key={action.title} className="flex flex-col">
+              <Card key={action.title} className="flex flex-col">
                 <CardHeader className="flex-row items-center gap-4">
                     <div className={`p-3 rounded-lg ${action.color}`}>
                     <action.icon className="w-6 h-6 text-white" />
@@ -111,15 +111,15 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent className="flex-grow"></CardContent>
                 <CardContent>
-                    <Link href={action.href}>
+                    <Link href={action.href} legacyBehavior>
                     <Button className={`w-full ${action.color}`}>
                         Ir a {action.title}
                         <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                     </Link>
                 </CardContent>
-                </Card>
-            )
+              </Card>
+            );
           })}
         </div>
       </div>

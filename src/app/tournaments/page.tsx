@@ -8,7 +8,10 @@ import { Trophy, MapPin, ShieldCheck } from 'lucide-react';
 
 
 const TournamentCard = ({ tournament }: { tournament: FullTournament }) => (
-  <Link href={`/tournaments/${tournament.id}`} className="block bg-card border rounded-lg shadow hover:bg-muted/50 transition-colors duration-200">
+  <Link
+    href={`/tournaments/${tournament.id}`}
+    className="block bg-card border rounded-lg shadow hover:bg-muted/50 transition-colors duration-200"
+    >
     <div className="p-5">
       <div className="flex items-start gap-4">
         <Trophy className="h-8 w-8 text-amber-400 mt-1" />

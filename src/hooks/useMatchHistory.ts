@@ -2,19 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getMatchHistoryForTeam } from '@/lib/firebase/db';
-import { ref, get } from 'firebase/database';
-import { db } from '@/lib/firebase';
+import { getMatchHistoryForTeam, getMultipleTeams, getMultipleTournaments } from '@/lib/firebase/db';
 import { Match, Tournament, Team } from '@/lib/types';
 
-// --- TIPOS ENRIQUECIDOS (CORREGIDOS) ---
-// El producto final que nuestro hook entregará, ahora con los nombres de propiedad correctos.
 export interface EnrichedMatch extends Match {
   tournamentName: string;
   homeTeamName: string;
-  homeTeamLogo?: string; // Corregido de homeTeamCrestUrl a homeTeamLogo
+  homeTeamLogo?: string;
   awayTeamName: string;
-  awayTeamLogo?: string; // Corregido de awayTeamCrestUrl a awayTeamLogo
+  awayTeamLogo?: string;
 }
 
 interface UseMatchHistoryReturn {
@@ -24,15 +20,6 @@ interface UseMatchHistoryReturn {
   error: Error | null;
 }
 
-/**
- * Hook experto para obtener el historial de partidos de un equipo.
- * Abstrae la lógica compleja de:
- * 1. Obtener los partidos de un equipo.
- * 2. Obtener los IDs únicos de torneos y equipos involucrados.
- * 3. "Enriquecer" cada partido con los nombres/datos de esos torneos y equipos.
- * @param teamId El ID del equipo para el cual buscar el historial.
- * @returns Un objeto con los partidos enriquecidos, una lista de torneos, y los estados de carga y error.
- */
 export function useMatchHistory(teamId: string | undefined | null): UseMatchHistoryReturn {
   const [loading, setLoading] = useState(true);
   const [matches, setMatches] = useState<EnrichedMatch[]>([]);
@@ -62,33 +49,19 @@ export function useMatchHistory(teamId: string | undefined | null): UseMatchHist
         const tournamentIds = [...new Set(rawMatches.map(m => m.tournamentId))];
         const teamIds = [...new Set(rawMatches.flatMap(m => [m.homeTeamId, m.awayTeamId]))];
 
-        const tournamentPromises = tournamentIds.map(id => get(ref(db, `tournaments/${id}`)));
-        const teamPromises = teamIds.map(id => get(ref(db, `teams/${id}`)));
-
-        const [tournamentSnapshots, teamSnapshots] = await Promise.all([
-          Promise.all(tournamentPromises),
-          Promise.all(teamPromises),
+        const [tournamentsMap, teamsMap] = await Promise.all([
+          getMultipleTournaments(tournamentIds),
+          getMultipleTeams(teamIds),
         ]);
 
-        const tournamentsMap: Record<string, Tournament> = {};
-        tournamentSnapshots.forEach(snap => {
-          if (snap.exists()) tournamentsMap[snap.key!] = { id: snap.key!, ...snap.val() };
-        });
-
-        const teamsMap: Record<string, Team> = {};
-        teamSnapshots.forEach(snap => {
-          if (snap.exists()) teamsMap[snap.key!] = { id: snap.key!, ...snap.val() };
-        });
-
-        // 4. ENRIQUECER LOS PARTIDOS (LÓGICA CORREGIDA)
         const enriched = rawMatches
           .map((match): EnrichedMatch => ({
             ...match,
             tournamentName: tournamentsMap[match.tournamentId]?.name || 'Torneo Desconocido',
             homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
-            homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl, // Corregido: lee logoUrl
+            homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl,
             awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
-            awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl, // Corregido: lee logoUrl
+            awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl,
           }))
           .sort((a, b) => new Date(b.details?.date).getTime() - new Date(a.details?.date).getTime());
 

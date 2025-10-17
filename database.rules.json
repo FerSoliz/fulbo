@@ -30,6 +30,11 @@
         ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
       }
     },
+    "manual_cash_entries": {
+      ".indexOn": "date",
+      ".read": "auth != null",
+      ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
+    },
     "playerStats": {
       "$userId": {
         ".read": "auth != null && (auth.uid === $userId || root.child('users').child(auth.uid).child('role').val() === 'admin')",

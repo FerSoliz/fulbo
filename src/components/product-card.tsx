@@ -27,16 +27,17 @@ export function ProductCard({ product }: ProductCardProps) {
 
     return (
         <Card className="flex flex-col overflow-hidden transform transition-all duration-300 hover:shadow-lg group">
-            <Link href={productDetailUrl} legacyBehavior>
-                <a className="aspect-square w-full overflow-hidden block">
-                    <Image
-                        src={imageUrl}
-                        alt={product.name}
-                        width={300}
-                        height={300}
-                        className="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
-                    />
-                </a>
+            <Link
+                href={productDetailUrl}
+                className="aspect-square w-full overflow-hidden block"
+                legacyBehavior>
+                <Image
+                    src={imageUrl}
+                    alt={product.name}
+                    width={300}
+                    height={300}
+                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out group-hover:scale-105"
+                />
             </Link>
             <div className="p-3 flex flex-col flex-grow">
                 <CardTitle className="text-sm font-semibold leading-tight mb-1 line-clamp-2 h-10">{product.name}</CardTitle>

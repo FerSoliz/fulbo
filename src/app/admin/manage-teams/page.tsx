@@ -115,7 +115,7 @@ export default function ManageTeamsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuItem asChild>
-                            <Link href={`/admin/teams/${team.id}`}>
+                            <Link href={`/admin/teams/${team.id}`} legacyBehavior>
                               <Users className="mr-2 h-4 w-4" />
                               Gestionar Plantilla
                             </Link>

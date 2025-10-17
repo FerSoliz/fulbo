@@ -182,7 +182,7 @@ export default function CreateCompetitionPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
-        <Link href="/admin/manage-tournaments">
+        <Link href="/admin/manage-tournaments" legacyBehavior>
           <Button variant="outline" className="mb-6"><ArrowLeft className="mr-2 h-4 w-4" />Volver a Administrar Torneos</Button>
         </Link>
         <Card>

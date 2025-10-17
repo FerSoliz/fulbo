@@ -117,7 +117,7 @@ export default function RegisterPage() {
     <div className="w-full min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md space-y-6">
         <div className="flex justify-center">
-            <Link href="/">
+            <Link href="/" legacyBehavior>
                 <Image
                 src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
                 alt="SUDONE Logo"

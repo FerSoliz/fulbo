@@ -203,79 +203,79 @@ export default function ManageTeamsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-        <div className="max-w-3xl mx-auto">
-            <Link href="/admin/manage-tournaments"><Button variant="outline" className="mb-6"><ArrowLeft className="mr-2 h-4 w-4" />Volver a Torneos</Button></Link>
-            <Card className="overflow-hidden">
-                <CardHeader>
-                    <CardTitle className="text-2xl">Gestionar Equipos</CardTitle>
-                    <CardDescription>Torneo: <span className="font-semibold text-primary">{tournament?.name}</span></CardDescription>
-                    {tournament?.size != null && (
-                        <div className="flex items-center text-sm text-muted-foreground pt-2 gap-2">
-                            <Users className="h-4 w-4" />
-                            <span className="font-bold text-base">{teams.length}</span> / <span className="font-bold text-base">{tournament.size}</span>
-                            <span>equipos inscritos. {isFull && <span className='font-semibold text-destructive'>(Torneo Lleno)</span>}</span>
-                        </div>
-                    )}
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-3">
-                        {teams.map(team => (
-                            <div key={team.id} className="flex items-center gap-3 p-2 border rounded-lg hover:bg-muted/50 transition-colors">
-                                <Avatar className="h-10 w-10 border"><AvatarImage src={team.logoUrl} alt={team.name} /><AvatarFallback>{team.name.charAt(0)}</AvatarFallback></Avatar>
-                                {editingTeamName.id === team.id ? (
-                                    <Input value={editingTeamName.name} onChange={(e) => setEditingTeamName({ ...editingTeamName, name: e.target.value })} onBlur={() => handleUpdateTeamName(team.id)} onKeyDown={(e) => e.key === 'Enter' && handleUpdateTeamName(team.id)} autoFocus className="flex-grow bg-background"/>
-                                ) : (
-                                    <p className="flex-grow font-medium cursor-pointer" onClick={() => setEditingTeamName({ id: team.id, name: team.name })}>{team.name}</p>
-                                )}
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>¿Desvincular a "{team.name}"?</AlertDialogTitle>
-                                            <AlertDialogDescription>Esta acción quitará al equipo de este torneo, pero NO lo eliminará del sistema. Podrá ser inscrito en otros torneos.</AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                            <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => handleDeleteTeam(team.id, team.name)}>Sí, desvincular</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </div>
-                        ))}
-                        {!loading && teams.length === 0 && <p className="text-center text-muted-foreground py-6">Este torneo aún no tiene equipos.</p>}
-                    </div>
-                    
-                    <div className="mt-8 pt-6 border-t">
-                        <h3 className="text-lg font-semibold mb-4">Añadir Equipos al Torneo</h3>
-                        {isFull ? (
-                            <div className="text-center p-4 bg-muted/70 rounded-lg">
-                                <p className="font-semibold text-destructive">Este torneo ha alcanzado su capacidad máxima.</p>
-                            </div>
-                        ) : (
-                            <Tabs defaultValue="existing">
-                                <TabsList className="grid w-full grid-cols-2">
-                                    <TabsTrigger value="existing">Añadir Existente</TabsTrigger>
-                                    <TabsTrigger value="new">Crear Nuevo</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="existing" className="pt-4">
-                                    <TeamSearch onTeamSelected={handleAssignTeam} excludedTeamIds={excludedTeamIds} disabled={isAdding} />
-                                </TabsContent>
-                                <TabsContent value="new" className="pt-4">
-                                    <div className="flex items-center gap-3">
-                                        <Input placeholder="Nombre del nuevo equipo" value={newTeamName} onChange={e => setNewTeamName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCreateTeam()} disabled={isAdding} />
-                                        <Button onClick={handleCreateTeam} disabled={isAdding || !newTeamName.trim()}>
-                                            {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
-                                            Crear e Inscribir
-                                        </Button>
-                                    </div>
-                                </TabsContent>
-                            </Tabs>
-                        )}
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-    </div>
-  )
+      <div className="p-4 sm:p-6 lg:p-8">
+          <div className="max-w-3xl mx-auto">
+              <Link href="/admin/manage-tournaments" legacyBehavior><Button variant="outline" className="mb-6"><ArrowLeft className="mr-2 h-4 w-4" />Volver a Torneos</Button></Link>
+              <Card className="overflow-hidden">
+                  <CardHeader>
+                      <CardTitle className="text-2xl">Gestionar Equipos</CardTitle>
+                      <CardDescription>Torneo: <span className="font-semibold text-primary">{tournament?.name}</span></CardDescription>
+                      {tournament?.size != null && (
+                          <div className="flex items-center text-sm text-muted-foreground pt-2 gap-2">
+                              <Users className="h-4 w-4" />
+                              <span className="font-bold text-base">{teams.length}</span> / <span className="font-bold text-base">{tournament.size}</span>
+                              <span>equipos inscritos. {isFull && <span className='font-semibold text-destructive'>(Torneo Lleno)</span>}</span>
+                          </div>
+                      )}
+                  </CardHeader>
+                  <CardContent>
+                      <div className="space-y-3">
+                          {teams.map(team => (
+                              <div key={team.id} className="flex items-center gap-3 p-2 border rounded-lg hover:bg-muted/50 transition-colors">
+                                  <Avatar className="h-10 w-10 border"><AvatarImage src={team.logoUrl} alt={team.name} /><AvatarFallback>{team.name.charAt(0)}</AvatarFallback></Avatar>
+                                  {editingTeamName.id === team.id ? (
+                                      <Input value={editingTeamName.name} onChange={(e) => setEditingTeamName({ ...editingTeamName, name: e.target.value })} onBlur={() => handleUpdateTeamName(team.id)} onKeyDown={(e) => e.key === 'Enter' && handleUpdateTeamName(team.id)} autoFocus className="flex-grow bg-background"/>
+                                  ) : (
+                                      <p className="flex-grow font-medium cursor-pointer" onClick={() => setEditingTeamName({ id: team.id, name: team.name })}>{team.name}</p>
+                                  )}
+                                  <AlertDialog>
+                                      <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                      <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                              <AlertDialogTitle>¿Desvincular a "{team.name}"?</AlertDialogTitle>
+                                              <AlertDialogDescription>Esta acción quitará al equipo de este torneo, pero NO lo eliminará del sistema. Podrá ser inscrito en otros torneos.</AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                              <AlertDialogAction className="bg-destructive hover:bg-destructive/90" onClick={() => handleDeleteTeam(team.id, team.name)}>Sí, desvincular</AlertDialogAction>
+                                          </AlertDialogFooter>
+                                      </AlertDialogContent>
+                                  </AlertDialog>
+                              </div>
+                          ))}
+                          {!loading && teams.length === 0 && <p className="text-center text-muted-foreground py-6">Este torneo aún no tiene equipos.</p>}
+                      </div>
+                      
+                      <div className="mt-8 pt-6 border-t">
+                          <h3 className="text-lg font-semibold mb-4">Añadir Equipos al Torneo</h3>
+                          {isFull ? (
+                              <div className="text-center p-4 bg-muted/70 rounded-lg">
+                                  <p className="font-semibold text-destructive">Este torneo ha alcanzado su capacidad máxima.</p>
+                              </div>
+                          ) : (
+                              <Tabs defaultValue="existing">
+                                  <TabsList className="grid w-full grid-cols-2">
+                                      <TabsTrigger value="existing">Añadir Existente</TabsTrigger>
+                                      <TabsTrigger value="new">Crear Nuevo</TabsTrigger>
+                                  </TabsList>
+                                  <TabsContent value="existing" className="pt-4">
+                                      <TeamSearch onTeamSelected={handleAssignTeam} excludedTeamIds={excludedTeamIds} disabled={isAdding} />
+                                  </TabsContent>
+                                  <TabsContent value="new" className="pt-4">
+                                      <div className="flex items-center gap-3">
+                                          <Input placeholder="Nombre del nuevo equipo" value={newTeamName} onChange={e => setNewTeamName(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleCreateTeam()} disabled={isAdding} />
+                                          <Button onClick={handleCreateTeam} disabled={isAdding || !newTeamName.trim()}>
+                                              {isAdding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                                              Crear e Inscribir
+                                          </Button>
+                                      </div>
+                                  </TabsContent>
+                              </Tabs>
+                          )}
+                      </div>
+                  </CardContent>
+              </Card>
+          </div>
+      </div>
+  );
 }

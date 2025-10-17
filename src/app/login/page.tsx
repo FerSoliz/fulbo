@@ -31,53 +31,53 @@ export default function LoginPage() {
   };
 
   return (
-      <div className="w-full min-h-screen flex items-center justify-center p-4 bg-background">
-        <div className="w-full max-w-md space-y-6">
-          <div className="flex justify-center">
-              <Link href="/" className="relative w-[200px] h-[60px]">
-                  <Image
-                    src="/sudone-titulo.png"
-                    alt="SUDONE Logo"
-                    fill
-                    priority
-                    sizes="200px" // <-- ¡SOLUCIÓN AÑADIDA!
-                    style={{ objectFit: 'contain' }}
-                  />
-              </Link>
-          </div>
-          <Card>
-            <form onSubmit={handleLogin}>
-              <CardHeader className="text-center">
-                <CardTitle className="text-2xl">Inicia Sesión</CardTitle>
-                <CardDescription>Bienvenido de nuevo a SUDONE</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Correo Electrónico</Label>
-                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Contraseña</Label>
-                  <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                </div>
-              </CardContent>
-              <CardFooter className="flex flex-col gap-4">
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 
-                  Iniciar Sesión
-                </Button>
-                <div className="text-sm text-center">
-                    <Link href="/forgot-password" className="underline hover:text-primary">
-                        ¿Olvidaste tu contraseña?
-                    </Link>
-                </div>
-                <Button variant="outline" asChild>
-                    <Link href="/register">¿No tienes una cuenta? Regístrate</Link>
-                </Button>
-              </CardFooter>
-            </form>
-          </Card>
+    <div className="w-full min-h-screen flex items-center justify-center p-4 bg-background">
+      <div className="w-full max-w-md space-y-6">
+        <div className="flex justify-center">
+            <Link href="/" className="relative w-[200px] h-[60px]" legacyBehavior>
+                <Image
+                  src="/sudone-titulo.png"
+                  alt="SUDONE Logo"
+                  fill
+                  priority
+                  sizes="200px" // <-- ¡SOLUCIÓN AÑADIDA!
+                  style={{ objectFit: 'contain' }}
+                />
+            </Link>
         </div>
+        <Card>
+          <form onSubmit={handleLogin}>
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">Inicia Sesión</CardTitle>
+              <CardDescription>Bienvenido de nuevo a SUDONE</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Correo Electrónico</Label>
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Contraseña</Label>
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} 
+                Iniciar Sesión
+              </Button>
+              <div className="text-sm text-center">
+                  <Link href="/forgot-password" className="underline hover:text-primary">
+                      ¿Olvidaste tu contraseña?
+                  </Link>
+              </div>
+              <Button variant="outline" asChild>
+                  <Link href="/register">¿No tienes una cuenta? Regístrate</Link>
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
       </div>
-    );
+    </div>
+  );
 }

@@ -1,4 +1,3 @@
-'''
 import { ref, set } from 'firebase/database';
 import { db } from './firebase'; // Make sure the path to your firebase config is correct
 
@@ -123,4 +122,3 @@ const seedDatabase = async () => {
 
 // Execute the function
 seedDatabase();
-'''

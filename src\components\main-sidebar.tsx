@@ -70,21 +70,21 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
       const isActive = pathname === finalHref || (finalHref !== '/' && pathname.startsWith(finalHref) && finalHref.length > 1);
 
       return (
-        <li key={item.href}>
-          <Link href={finalHref} passHref>
-            <Button
-              variant="ghost"
-              className={cn(
-                'main-sidebar-button w-full justify-start gap-2 text-foreground',
-              )}
-              data-active={isActive}
-              disabled={loading}
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="lg:text-base">{item.label}</span>
-            </Button>
-          </Link>
-        </li>
+          <li key={item.href}>
+              <Link href={finalHref} passHref legacyBehavior>
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    'main-sidebar-button w-full justify-start gap-2 text-foreground',
+                  )}
+                  data-active={isActive}
+                  disabled={loading}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="lg:text-base">{item.label}</span>
+                </Button>
+              </Link>
+          </li>
       );
     });
   };
@@ -95,65 +95,66 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   );
 
   return (
-    <aside className={sidebarClasses}>
-        <div className="flex h-16 items-center justify-center border-b p-2">
-          <Link href="/">
-            <Image
-              src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
-              alt="SUDONE Logo"
-              width={140}
-              height={40}
-              priority
-            />
-          </Link>
-        </div>
-        <div className="flex items-center gap-2 p-2">
-            {loading ? (
-                 <>
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-[100px]" />
-                        <Skeleton className="h-4 w-[80px]" />
-                    </div>
-                </>
-            ) : user ? (
-                <>
-                    <Link href={user.name === 'VISITANTE' ? '/login' : `/profile/${user.id}`}>
-                        <AnimatedAvatar>
-                            <Avatar className="w-12 h-12">
-                                <AvatarImage src={user.avatar} alt="User avatar" />
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                        </AnimatedAvatar>
-                    </Link>
-                    <div className="flex flex-col overflow-hidden">
-                        <span className="font-semibold truncate">{user.name}</span>
-                        {user.name !== 'VISITANTE' && <span className="text-sm text-muted-foreground truncate">@{user.name === 'Lucio Mingrone' ? 'luccio' : user.name.split(' ')[0].toLowerCase()}</span>}
-                    </div>
-                </>
-            ) : null}
-        </div>
-
-        <nav className="flex flex-1 flex-col">
-            <ul className="flex flex-col gap-1 p-2">
-                {renderMenuItems(menuItems)}
-            </ul>
-            <ul className="mt-auto flex flex-col gap-1 border-t p-2">
-                {renderMenuItems(footerMenuItems)}
-                 <li>
-                    <Button
-                        variant="ghost"
-                        className="main-sidebar-button w-full justify-start gap-2 text-foreground"
-                        onClick={handleLogout}
-                        disabled={loading}
-                    >
-                        <LogOut className="h-5 w-5" />
-                        <span className="lg:text-base">{user?.name === 'VISITANTE' ? 'INICIAR SESIÓN' : 'CERRAR SESIÓN'}</span>
-                    </Button>
-                </li>
-            </ul>
-        </nav>
-    </aside>
+      <aside className={sidebarClasses}>
+          <div className="flex h-16 items-center justify-center border-b p-2">
+            <Link href="/" legacyBehavior>
+              <Image
+                src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
+                alt="SUDONE Logo"
+                width={140}
+                height={40}
+                priority
+              />
+            </Link>
+          </div>
+          <div className="flex items-center gap-2 p-2">
+              {loading ? (
+                   <>
+                      <Skeleton className="h-12 w-12 rounded-full" />
+                      <div className="space-y-2">
+                          <Skeleton className="h-4 w-[100px]" />
+                          <Skeleton className="h-4 w-[80px]" />
+                      </div>
+                  </>
+              ) : user ? (
+                  <>
+                      <Link
+                          href={user.name === 'VISITANTE' ? '/login' : `/profile/${user.id}`}
+                          legacyBehavior>
+                          <AnimatedAvatar>
+                              <Avatar className="w-12 h-12">
+                                  <AvatarImage src={user.avatar} alt="User avatar" />
+                                  <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                          </AnimatedAvatar>
+                      </Link>
+                      <div className="flex flex-col overflow-hidden">
+                          <span className="font-semibold truncate">{user.name}</span>
+                          {user.name !== 'VISITANTE' && <span className="text-sm text-muted-foreground truncate">@{user.name === 'Lucio Mingrone' ? 'luccio' : user.name.split(' ')[0].toLowerCase()}</span>}
+                      </div>
+                  </>
+              ) : null}
+          </div>
+          <nav className="flex flex-1 flex-col">
+              <ul className="flex flex-col gap-1 p-2">
+                  {renderMenuItems(menuItems)}
+              </ul>
+              <ul className="mt-auto flex flex-col gap-1 border-t p-2">
+                  {renderMenuItems(footerMenuItems)}
+                   <li>
+                      <Button
+                          variant="ghost"
+                          className="main-sidebar-button w-full justify-start gap-2 text-foreground"
+                          onClick={handleLogout}
+                          disabled={loading}
+                      >
+                          <LogOut className="h-5 w-5" />
+                          <span className="lg:text-base">{user?.name === 'VISITANTE' ? 'INICIAR SESIÓN' : 'CERRAR SESIÓN'}</span>
+                      </Button>
+                  </li>
+              </ul>
+          </nav>
+      </aside>
   );
 }
 

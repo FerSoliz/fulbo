@@ -269,7 +269,7 @@ export default function CollectibleCardsPage() {
             return <div>{content}</div>;
         }
         if (item.href) {
-            return <Link href={item.href}>{content}</Link>
+            return <Link href={item.href} legacyBehavior>{content}</Link>;
         }
         return <button onClick={item.action}>{content}</button>;
     }
@@ -299,157 +299,157 @@ export default function CollectibleCardsPage() {
   };
 
   return (
-    <div className="collectible-page-background text-white min-h-screen">
-      <div id="stars-container" />
-       <div className="w-full h-screen flex flex-col items-center justify-between relative">
-        <motion.div
-            className="fixed top-0 left-0 right-0 z-10 w-full"
-            initial={{ y: "-100%" }}
-            animate={{ y: "0%" }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-          <div className="w-full max-w-lg mx-auto bg-card/80 backdrop-blur-sm border-b border-x border-border rounded-b-lg">
-            <div className="flex justify-between items-center h-20 px-4 relative">
-                <div className="w-1/3">
-                    <Dialog open={isCardSelectorOpen} onOpenChange={setIsCardSelectorOpen}>
-                        <DialogTrigger asChild>
-                             <div className="w-12 h-20 bg-muted/50 rounded-md flex items-center justify-center cursor-pointer hover:bg-muted/60 transition-colors">
-                                {userTeam.showcasedCard ? (
-                                    <div className="w-full h-full scale-[1.2]">
-                                         <CollectibleCard card={userTeam.showcasedCard} small />
-                                    </div>
-                                ) : (
-                                    <Plus className="w-6 h-6 text-white"/>
-                                )}
-                            </div>
-                        </DialogTrigger>
-                        <DialogContent>
-                             <DialogHeader>
-                                <DialogTitle>Elige tu carta para mostrar</DialogTitle>
-                             </DialogHeader>
-                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[60vh] overflow-y-auto">
-                                {userCollection.map(card => (
-                                    <div key={card.id} onClick={() => handleSelectShowcasedCard(card)} className="cursor-pointer">
-                                        <CollectibleCard card={card} small />
-                                    </div>
-                                ))}
-                             </div>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-                 <div className="w-1/3 flex flex-col items-center">
-                    {user && (
-                        <>
-                            <div className="relative w-20 h-20">
-                                <svg className="w-full h-full" viewBox="0 0 100 100">
-                                    <circle
-                                        className="text-muted/20"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                        cx="50"
-                                        cy="50"
-                                        r="40"
-                                        fill="transparent"
-                                    />
-                                    <motion.circle
-                                        className="text-accent"
-                                        stroke="currentColor"
-                                        strokeWidth="4"
-                                        cx="50"
-                                        cy="50"
-                                        r="40"
-                                        fill="transparent"
-                                        strokeLinecap="round"
-                                        strokeDasharray={2 * Math.PI * 40}
-                                        strokeDashoffset={2 * Math.PI * 40 * (1 - passProgress / 100)}
-                                        transform="rotate(-90 50 50)"
-                                        initial={{ strokeDashoffset: 2 * Math.PI * 40 }}
-                                        animate={{ strokeDashoffset: 2 * Math.PI * 40 * (1 - passProgress / 100) }}
-                                        transition={{ duration: 1, ease: "easeOut" }}
-                                    />
-                                </svg>
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <Avatar className="w-16 h-16">
-                                        <AvatarImage src={user.avatar} />
-                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
+      <div className="collectible-page-background text-white min-h-screen">
+          <div id="stars-container" />
+          <div className="w-full h-screen flex flex-col items-center justify-between relative">
+           <motion.div
+               className="fixed top-0 left-0 right-0 z-10 w-full"
+               initial={{ y: "-100%" }}
+               animate={{ y: "0%" }}
+               transition={{ duration: 0.5, ease: "easeOut" }}
+           >
+             <div className="w-full max-w-lg mx-auto bg-card/80 backdrop-blur-sm border-b border-x border-border rounded-b-lg">
+               <div className="flex justify-between items-center h-20 px-4 relative">
+                   <div className="w-1/3">
+                       <Dialog open={isCardSelectorOpen} onOpenChange={setIsCardSelectorOpen}>
+                           <DialogTrigger asChild>
+                                <div className="w-12 h-20 bg-muted/50 rounded-md flex items-center justify-center cursor-pointer hover:bg-muted/60 transition-colors">
+                                   {userTeam.showcasedCard ? (
+                                       <div className="w-full h-full scale-[1.2]">
+                                            <CollectibleCard card={userTeam.showcasedCard} small />
+                                       </div>
+                                   ) : (
+                                       <Plus className="w-6 h-6 text-white"/>
+                                   )}
+                               </div>
+                           </DialogTrigger>
+                           <DialogContent>
+                                <DialogHeader>
+                                   <DialogTitle>Elige tu carta para mostrar</DialogTitle>
+                                </DialogHeader>
+                                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 max-h-[60vh] overflow-y-auto">
+                                   {userCollection.map(card => (
+                                       <div key={card.id} onClick={() => handleSelectShowcasedCard(card)} className="cursor-pointer">
+                                           <CollectibleCard card={card} small />
+                                       </div>
+                                   ))}
                                 </div>
-                            </div>
-                            <span className="font-bold text-xs -mt-2 bg-card px-2 rounded-full">LVL {level}</span>
-                        </>
-                    )}
-                 </div>
-                 <div className="w-1/3 flex justify-end items-center gap-2">
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                             <Button variant="ghost" size="icon" className="relative">
-                                <Gift className="w-6 h-6"/>
-                                {availablePacks > 0 && (
-                                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full flex items-center justify-center text-xs font-bold text-white">
-                                        {availablePacks}
-                                    </div>
-                                )}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                             <DropdownMenuLabel>Recompensas</DropdownMenuLabel>
-                             <DropdownMenuSeparator />
-                             <DropdownMenuItem onClick={handleOpenPack} disabled={availablePacks <= 0}>
-                                <PackageOpen className="mr-2 h-4 w-4" />
-                                {availablePacks > 0 ? `Abrir Sobre (${availablePacks})` : "No hay sobres"}
-                             </DropdownMenuItem>
-                             {countdown && <DropdownMenuItem disabled>Próximo sobre en: {countdown}</DropdownMenuItem>}
-                        </DropdownMenuContent>
-                     </DropdownMenu>
+                           </DialogContent>
+                       </Dialog>
+                   </div>
+                    <div className="w-1/3 flex flex-col items-center">
+                       {user && (
+                           <>
+                               <div className="relative w-20 h-20">
+                                   <svg className="w-full h-full" viewBox="0 0 100 100">
+                                       <circle
+                                           className="text-muted/20"
+                                           stroke="currentColor"
+                                           strokeWidth="4"
+                                           cx="50"
+                                           cy="50"
+                                           r="40"
+                                           fill="transparent"
+                                       />
+                                       <motion.circle
+                                           className="text-accent"
+                                           stroke="currentColor"
+                                           strokeWidth="4"
+                                           cx="50"
+                                           cy="50"
+                                           r="40"
+                                           fill="transparent"
+                                           strokeLinecap="round"
+                                           strokeDasharray={2 * Math.PI * 40}
+                                           strokeDashoffset={2 * Math.PI * 40 * (1 - passProgress / 100)}
+                                           transform="rotate(-90 50 50)"
+                                           initial={{ strokeDashoffset: 2 * Math.PI * 40 }}
+                                           animate={{ strokeDashoffset: 2 * Math.PI * 40 * (1 - passProgress / 100) }}
+                                           transition={{ duration: 1, ease: "easeOut" }}
+                                       />
+                                   </svg>
+                                   <div className="absolute inset-0 flex items-center justify-center">
+                                       <Avatar className="w-16 h-16">
+                                           <AvatarImage src={user.avatar} />
+                                           <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                       </Avatar>
+                                   </div>
+                               </div>
+                               <span className="font-bold text-xs -mt-2 bg-card px-2 rounded-full">LVL {level}</span>
+                           </>
+                       )}
+                    </div>
+                    <div className="w-1/3 flex justify-end items-center gap-2">
+                        <DropdownMenu>
+                           <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="relative">
+                                   <Gift className="w-6 h-6"/>
+                                   {availablePacks > 0 && (
+                                       <div className="absolute -top-1 -right-1 w-5 h-5 bg-destructive rounded-full flex items-center justify-center text-xs font-bold text-white">
+                                           {availablePacks}
+                                       </div>
+                                   )}
+                               </Button>
+                           </DropdownMenuTrigger>
+                           <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Recompensas</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleOpenPack} disabled={availablePacks <= 0}>
+                                   <PackageOpen className="mr-2 h-4 w-4" />
+                                   {availablePacks > 0 ? `Abrir Sobre (${availablePacks})` : "No hay sobres"}
+                                </DropdownMenuItem>
+                                {countdown && <DropdownMenuItem disabled>Próximo sobre en: {countdown}</DropdownMenuItem>}
+                           </DropdownMenuContent>
+                        </DropdownMenu>
 
-                    <DropdownMenu>
-                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                                <MoreVertical className="w-6 h-6"/>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                                 <Link href="/">
-                                    <ArrowLeft className="mr-2 h-4 w-4" />
-                                    Salir del Juego
-                                </Link>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                 </div>
-            </div>
-            </div>
-        </motion.div>
+                       <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                               <Button variant="ghost" size="icon">
+                                   <MoreVertical className="w-6 h-6"/>
+                               </Button>
+                           </DropdownMenuTrigger>
+                           <DropdownMenuContent align="end">
+                               <DropdownMenuItem asChild>
+                                    <Link href="/" legacyBehavior>
+                                       <ArrowLeft className="mr-2 h-4 w-4" />
+                                       Salir del Juego
+                                   </Link>
+                               </DropdownMenuItem>
+                           </DropdownMenuContent>
+                       </DropdownMenu>
+                    </div>
+               </div>
+               </div>
+           </motion.div>
 
-        <main className="flex-1 flex items-center justify-center w-full z-0">
-             <AnimatePresence mode="wait">
-                <motion.div
-                  key={view}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3, ease: 'easeInOut' }}
-                  className="w-full h-full flex items-center justify-center"
-                >
-                  {renderCentralContent()}
-                </motion.div>
-             </AnimatePresence>
-        </main>
+           <main className="flex-1 flex items-center justify-center w-full z-0">
+                <AnimatePresence mode="wait">
+                   <motion.div
+                     key={view}
+                     initial={{ opacity: 0, y: 20 }}
+                     animate={{ opacity: 1, y: 0 }}
+                     exit={{ opacity: 0, y: -20 }}
+                     transition={{ duration: 0.3, ease: 'easeInOut' }}
+                     className="w-full h-full flex items-center justify-center"
+                   >
+                     {renderCentralContent()}
+                   </motion.div>
+                </AnimatePresence>
+           </main>
 
 
-        <motion.div 
-            className="fixed bottom-0 left-0 right-0 z-10 w-full bg-card/80 backdrop-blur-sm border-t border-border"
-            initial={{ y: "100%" }}
-            animate={{ y: "0%" }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-        >
-            <div className="flex justify-center items-center gap-4 p-2">
-                {menuItems.map((item) => <MenuItem key={item.id} item={item} />)}
-            </div>
-        </motion.div>
-    </div>
-    </div>
+           <motion.div 
+               className="fixed bottom-0 left-0 right-0 z-10 w-full bg-card/80 backdrop-blur-sm border-t border-border"
+               initial={{ y: "100%" }}
+               animate={{ y: "0%" }}
+               transition={{ duration: 0.5, ease: "easeOut" }}
+           >
+               <div className="flex justify-center items-center gap-4 p-2">
+                   {menuItems.map((item) => <MenuItem key={item.id} item={item} />)}
+               </div>
+           </motion.div>
+       </div>
+      </div>
   );
 }
 

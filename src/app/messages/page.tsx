@@ -151,13 +151,12 @@ function MessagesPageContent() {
           })}
         </ScrollArea>
       </div>
-
       {/* Area de Chat Activa */}
       <div className="w-2/3 flex flex-col">
         {activeConversation && otherParticipant ? (
           <>
             <div className="p-4 border-b flex items-center gap-3">
-              <Link href={`/profile/${otherParticipant.id}`}>
+              <Link href={`/profile/${otherParticipant.id}`} legacyBehavior>
                 <Avatar>
                   <AvatarImage src={otherParticipant.avatar} />
                   <AvatarFallback>{otherParticipant.name.charAt(0)}</AvatarFallback>

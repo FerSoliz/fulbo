@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-// --- IMPORTACIÓN CORREGIDA ---
 import type { User, Notification } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase'; 
@@ -32,13 +31,17 @@ interface UserContextType {
   logout: () => Promise<void>;
   notifications: Notification[];
   setNotifications: React.Dispatch<React.SetStateAction<Notification[]>>;
-  // ... (otros campos si los tienes)
+  allUsers: User[];
+  setAllUsers: React.Dispatch<React.SetStateAction<User[]>>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+  trackInteraction: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const router = useRouter();
@@ -52,7 +55,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const userRef = ref(db, `users/${firebaseUser.uid}`);
         unsubscribeUser = onValue(userRef, (snapshot) => {
           if (snapshot.exists()) {
-            // Aseguramos que los datos coincidan con el tipo User
             const dbUser = snapshot.val();
             setUser({ 
               id: firebaseUser.uid,
@@ -101,7 +103,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
-      // --- CONSTRUCCIÓN DEL PERFIL CON EL TIPO CORRECTO Y CENTRALIZADO ---
       const newUserProfile: Omit<User, 'id'> = {
         name: isGuestMigration ? guestData.name : name,
         username,
@@ -147,7 +148,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
           break;
       }
       toast({ title: "Error de Registro", description: errorMessage, variant: "destructive" });
-      setLoading(false); // Asegúrate de que el loading se detenga en caso de error
+      setLoading(false);
       return false;
     } finally {
       setLoading(false);
@@ -160,12 +161,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
     router.push('/');
   };
 
-  // Necesitarás ajustar estos valores si no están en la interfaz UserContextType
-  const dummySetState = () => {};
-  const dummyTrack = () => {};
+  const trackInteraction = useCallback(() => {
+    if (user && user.id !== 'visitor') {
+      const userRef = ref(db, `users/${user.id}`);
+      update(userRef, {
+        lastInteraction: new Date().toISOString(),
+      }).catch(err => console.error("Failed to track interaction:", err));
+    }
+  }, [user]);
 
   return (
-    <UserContext.Provider value={{ 
+    <UserContext.Provider value={{
         user, 
         loading, 
         login, 
@@ -173,7 +179,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
         logout, 
         notifications, 
         setNotifications,
-        // Añade aquí las propiedades que faltan si es necesario
+        allUsers,
+        setAllUsers,
+        setUser,
+        trackInteraction
     }}>
       {children}
     </UserContext.Provider>

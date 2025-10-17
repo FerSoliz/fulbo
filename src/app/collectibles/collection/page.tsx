@@ -49,7 +49,7 @@ export default function CollectionPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 text-white min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <Link href="/collectibles">
+        <Link href="/collectibles" legacyBehavior>
           <Button variant="ghost" className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver al Menú del Juego

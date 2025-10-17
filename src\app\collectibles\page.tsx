@@ -210,75 +210,75 @@ export default function CollectibleCardsPage() {
 const MainMenu = ({ onOpenPack, setView, user }: { onOpenPack: () => void, setView: (v: View) => void, user: any }) => {
     const isVisitor = user?.name === 'VISITANTE';
     return (
-    <Card className="w-full max-w-lg bg-card/70">
-      <div className="grid grid-cols-1 md:grid-cols-3">
-        <div className="relative md:col-span-1 h-64 md:h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-r-none">
-          <Image
-               src="https://i.postimg.cc/QMqLDWsL/BANNER-GAME.png"
-               alt="Banner del juego de cartas coleccionables"
-               fill
-               className="object-cover"
-           />
-        </div>
-        <div className="md:col-span-2 p-4 flex flex-col justify-center">
-          <CardHeader className="p-2">
-            <CardTitle className="text-2xl font-bold uppercase">MENU</CardTitle>
-          </CardHeader>
-          <CardContent className="p-2">
-            <div className="space-y-4">
-              <div>
-                <Button
-                     className={cn("w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full", isVisitor && "opacity-60 cursor-not-allowed")}
-                     onClick={onOpenPack}
-                     disabled={isVisitor}
-                >
-                  <div className="flex items-center gap-3"><PackageOpen className="w-5 h-5" /><span>ABRIR SOBRE</span></div>
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
-              </div>
-              <div>
-                <Link href="/collectibles/collection">
-                  <Button className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full">
-                    <div className="flex items-center gap-3"><Layers className="w-5 h-5" /><span>MI COLECCIÓN</span></div>
+      <Card className="w-full max-w-lg bg-card/70">
+        <div className="grid grid-cols-1 md:grid-cols-3">
+          <div className="relative md:col-span-1 h-64 md:h-full overflow-hidden rounded-t-lg md:rounded-l-lg md:rounded-r-none">
+            <Image
+                 src="https://i.postimg.cc/QMqLDWsL/BANNER-GAME.png"
+                 alt="Banner del juego de cartas coleccionables"
+                 fill
+                 className="object-cover"
+             />
+          </div>
+          <div className="md:col-span-2 p-4 flex flex-col justify-center">
+            <CardHeader className="p-2">
+              <CardTitle className="text-2xl font-bold uppercase">MENU</CardTitle>
+            </CardHeader>
+            <CardContent className="p-2">
+              <div className="space-y-4">
+                <div>
+                  <Button
+                       className={cn("w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full", isVisitor && "opacity-60 cursor-not-allowed")}
+                       onClick={onOpenPack}
+                       disabled={isVisitor}
+                  >
+                    <div className="flex items-center gap-3"><PackageOpen className="w-5 h-5" /><span>ABRIR SOBRE</span></div>
                     <ChevronRight className="w-5 h-5" />
                   </Button>
-                </Link>
+                </div>
+                <div>
+                  <Link href="/collectibles/collection" legacyBehavior>
+                    <Button className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full">
+                      <div className="flex items-center gap-3"><Layers className="w-5 h-5" /><span>MI COLECCIÓN</span></div>
+                      <ChevronRight className="w-5 h-5" />
+                    </Button>
+                  </Link>
+                </div>
+                <div>
+                  <Button
+                       className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
+                       onClick={() => setView("formation")}
+                       disabled
+                  >
+                    <div className="flex items-center gap-3"><Users className="w-5 h-5" /><span>MI EQUIPO</span></div>
+                    <ChevronRight className="w-5 h-5" />
+                  </Button>
+                </div>
+                <div>
+                  <Button
+                       className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
+                       onClick={() => setView("vs_match")}
+                       disabled
+                  >
+                    <div className="flex items-center gap-3"><Swords className="w-5 h-5" /><span>PARTIDO VS</span></div>
+                    <ChevronRight className="w-5 h-5" />
+                  </Button>
+                </div>
+                <div>
+                  <Button
+                       className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
+                       disabled
+                  >
+                    <div className="flex items-center gap-3"><ArrowLeftRight className="w-5 h-5" /><span>INTERCAMBIOS</span></div>
+                    <ChevronRight className="w-5 h-5" />
+                  </Button>
+                </div>
               </div>
-              <div>
-                <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
-                     onClick={() => setView("formation")}
-                     disabled
-                >
-                  <div className="flex items-center gap-3"><Users className="w-5 h-5" /><span>MI EQUIPO</span></div>
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
-              </div>
-              <div>
-                <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
-                     onClick={() => setView("vs_match")}
-                     disabled
-                >
-                  <div className="flex items-center gap-3"><Swords className="w-5 h-5" /><span>PARTIDO VS</span></div>
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
-              </div>
-              <div>
-                <Button
-                     className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 opacity-60 cursor-not-allowed rounded-full"
-                     disabled
-                >
-                  <div className="flex items-center gap-3"><ArrowLeftRight className="w-5 h-5" /><span>INTERCAMBIOS</span></div>
-                  <ChevronRight className="w-5 h-5" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
+            </CardContent>
+          </div>
         </div>
-      </div>
-    </Card>
- )
+      </Card>
+    );
 };
 
 const PackOpeningView = ({ cards, setView }: { cards: CardType[], setView: (v: View) => void }) => {

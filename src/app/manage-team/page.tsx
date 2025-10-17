@@ -62,32 +62,32 @@ export default function ManageTeamPage() {
   // 2. Guardia de acceso para ADMIN - La nueva lógica inteligente
   if (user?.role === 'admin') {
     return (
-        <div className="container mx-auto p-4 md:p-8">
-            <Card className="max-w-2xl mx-auto bg-blue-50 border-blue-200">
-                <CardHeader>
-                    <div className="flex items-center space-x-4">
-                        <Shield className="w-12 h-12 text-blue-600" />
-                        <div>
-                            <CardTitle className="text-2xl text-blue-800">Vista de Administrador</CardTitle>
-                            <CardDescription className="text-blue-700">
-                                Esta página es para que los capitanes gestionen su propio equipo.
-                            </CardDescription>
-                        </div>
+      <div className="container mx-auto p-4 md:p-8">
+        <Card className="max-w-2xl mx-auto bg-blue-50 border-blue-200">
+            <CardHeader>
+                <div className="flex items-center space-x-4">
+                    <Shield className="w-12 h-12 text-blue-600" />
+                    <div>
+                        <CardTitle className="text-2xl text-blue-800">Vista de Administrador</CardTitle>
+                        <CardDescription className="text-blue-700">
+                            Esta página es para que los capitanes gestionen su propio equipo.
+                        </CardDescription>
                     </div>
-                </CardHeader>
-                <CardContent>
-                    <p className="mb-4 text-gray-600">
-                        Como administrador, tu rol es supervisar todos los equipos del sistema desde un panel centralizado.
-                    </p>
-                    <Button asChild>
-                        <Link href="/admin/manage-teams">
-                            Ir al Panel de Administración de Equipos
-                            <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                    </Button>
-                </CardContent>
-            </Card>
-        </div>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <p className="mb-4 text-gray-600">
+                    Como administrador, tu rol es supervisar todos los equipos del sistema desde un panel centralizado.
+                </p>
+                <Button asChild>
+                    <Link href="/admin/manage-teams" legacyBehavior>
+                        Ir al Panel de Administración de Equipos
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                </Button>
+            </CardContent>
+        </Card>
+      </div>
     );
   }
 

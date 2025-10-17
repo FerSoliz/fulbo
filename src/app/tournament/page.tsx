@@ -163,182 +163,184 @@ export default function TournamentPage() {
     const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'editor';
 
    return (
-    <div className="p-4 sm:p-6 lg:p-8">
-     <div className="max-w-4xl mx-auto space-y-6">
-       <CardHeader className="px-0">
-           <CardTitle className="text-3xl">Información de Torneos</CardTitle>
-           <CardDescription>
-             Encuentra todos los detalles sobre nuestros torneos disponibles. ¡Inscríbete y compite!
-           </CardDescription>
-       </CardHeader>
-             
-             <div className="grid md:grid-cols-2 gap-6">
-        {tournaments.map((tournament) => (
-            <Card key={tournament.id} className="flex flex-col">
-                <CardHeader>
-                    <CardTitle className="flex items-center gap-3"><Trophy className="w-8 h-8 text-amber-400"/>{tournament.title}</CardTitle>
-                    <CardDescription>{tournament.subtitle}</CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow">
-                    <p className="text-muted-foreground text-sm">
-                        Haz clic en "MÁS INFO" para ver todos los detalles sobre premios, costos y más.
-                    </p>
-                </CardContent>
-                <CardFooter className="grid grid-cols-2 gap-2">
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button className="w-full" variant="outline">
-                                <Info className="mr-2 h-4 w-4"/>
-                                MÁS INFO
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-2xl">
-                             <DialogHeader>
-                                <DialogTitle className="text-2xl uppercase">{tournament.title}</DialogTitle>
-                                <DialogDescription>{tournament.subtitle}</DialogDescription>
-                             </DialogHeader>
-                             <div className="max-h-[70vh] overflow-y-auto pr-4 mt-4">
-                                <div className="p-4 bg-muted/20 rounded-lg">
-                                    <ul className="space-y-4">
-                                    {tournament.prizes && <InfoItem iconName="Award" text={tournament.prizes}/>}
-                                    {tournament.details.map((item, index) => (
-                                        <InfoItem key={index} iconName={item.iconName} text={item.text} highlight={item.highlight}/>
-                                    ))}
-                                    {tournament.days && <InfoItem iconName="Calendar" text={`DÍA DE JUEGO: ${tournament.days}`}/>}
-                                    {tournament.timeSlot && <InfoItem iconName="Clock" text={`HORARIOS: ${tournament.timeSlot}`}/>}
-                                    </ul>
-                                    
-                                     <div className="my-6 h-px w-full bg-border"></div>
+       <div className="p-4 sm:p-6 lg:p-8">
+           <div className="max-w-4xl mx-auto space-y-6">
+             <CardHeader className="px-0">
+                 <CardTitle className="text-3xl">Información de Torneos</CardTitle>
+                 <CardDescription>
+                   Encuentra todos los detalles sobre nuestros torneos disponibles. ¡Inscríbete y compite!
+                 </CardDescription>
+             </CardHeader>
+                   
+                   <div className="grid md:grid-cols-2 gap-6">
+              {tournaments.map((tournament) => (
+                  <Card key={tournament.id} className="flex flex-col">
+                      <CardHeader>
+                          <CardTitle className="flex items-center gap-3"><Trophy className="w-8 h-8 text-amber-400"/>{tournament.title}</CardTitle>
+                          <CardDescription>{tournament.subtitle}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="flex-grow">
+                          <p className="text-muted-foreground text-sm">
+                              Haz clic en "MÁS INFO" para ver todos los detalles sobre premios, costos y más.
+                          </p>
+                      </CardContent>
+                      <CardFooter className="grid grid-cols-2 gap-2">
+                          <Dialog>
+                              <DialogTrigger asChild>
+                                  <Button className="w-full" variant="outline">
+                                      <Info className="mr-2 h-4 w-4"/>
+                                      MÁS INFO
+                                  </Button>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-2xl">
+                                   <DialogHeader>
+                                      <DialogTitle className="text-2xl uppercase">{tournament.title}</DialogTitle>
+                                      <DialogDescription>{tournament.subtitle}</DialogDescription>
+                                   </DialogHeader>
+                                   <div className="max-h-[70vh] overflow-y-auto pr-4 mt-4">
+                                      <div className="p-4 bg-muted/20 rounded-lg">
+                                          <ul className="space-y-4">
+                                          {tournament.prizes && <InfoItem iconName="Award" text={tournament.prizes}/>}
+                                          {tournament.details.map((item, index) => (
+                                              <InfoItem key={index} iconName={item.iconName} text={item.text} highlight={item.highlight}/>
+                                          ))}
+                                          {tournament.days && <InfoItem iconName="Calendar" text={`DÍA DE JUEGO: ${tournament.days}`}/>}
+                                          {tournament.timeSlot && <InfoItem iconName="Clock" text={`HORARIOS: ${tournament.timeSlot}`}/>}
+                                          </ul>
+                                          
+                                           <div className="my-6 h-px w-full bg-border"></div>
 
-                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <h3 className="font-semibold flex items-center gap-2 text-lg"><DollarSign className="w-5 h-5 text-accent"/>Costos</h3>
-                                        <p className="text-muted-foreground">INSCRIPCIÓN: <span className="font-bold text-foreground">{tournament.costs.inscription}</span></p>
-                                        <p className="text-muted-foreground">PARTIDO: <span className="font-bold text-foreground">{tournament.costs.match}</span></p>
-                                    </div>
+                                           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                          <div className="space-y-2">
+                                              <h3 className="font-semibold flex items-center gap-2 text-lg"><DollarSign className="w-5 h-5 text-accent"/>Costos</h3>
+                                              <p className="text-muted-foreground">INSCRIPCIÓN: <span className="font-bold text-foreground">{tournament.costs.inscription}</span></p>
+                                              <p className="text-muted-foreground">PARTIDO: <span className="font-bold text-foreground">{tournament.costs.match}</span></p>
+                                          </div>
 
-                                    <div className="space-y-2">
-                                        <h3 className="font-semibold flex items-center gap-2 uppercase text-lg"><Info className="w-5 h-5 text-accent"/>Formato</h3>
-                                        {tournament.format.map((line, index) => (
-                                            <p key={index} className="text-muted-foreground uppercase">{line}</p>
-                                        ))}
-                                    </div>
-                                    </div>
+                                          <div className="space-y-2">
+                                              <h3 className="font-semibold flex items-center gap-2 uppercase text-lg"><Info className="w-5 h-5 text-accent"/>Formato</h3>
+                                              {tournament.format.map((line, index) => (
+                                                  <p key={index} className="text-muted-foreground uppercase">{line}</p>
+                                              ))}
+                                          </div>
+                                          </div>
 
-                                     <div className="my-6 h-px w-full bg-border"></div>
+                                           <div className="my-6 h-px w-full bg-border"></div>
 
-                                     <div className="flex flex-col items-start gap-2">
-                                        <h3 className="font-semibold flex items-center gap-2 text-lg"><Smartphone className="w-5 h-5 text-accent"/>Contacto</h3>
-                                        <p className="text-muted-foreground">{tournament.contact.name}: <span className="font-bold text-foreground">{tournament.contact.phone}</span> ☎️📞</p>
-                                        <p className="text-sm font-bold text-accent pt-2">{tournament.note}</p>
-                                    </div>
-                                </div>
-                             </div>
-                        </DialogContent>
-                    </Dialog>
-                    <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
-                        <Link href={`/tournament/register?tournamentName=${encodeURIComponent(tournament.title)}`}>
-                            <PenLine className="mr-2 h-4 w-4"/>
-                            INSCRIBIRME
-                        </Link>
-                    </Button>
-                </CardFooter>
-            </Card>
-        ))}
-      </div>
+                                           <div className="flex flex-col items-start gap-2">
+                                              <h3 className="font-semibold flex items-center gap-2 text-lg"><Smartphone className="w-5 h-5 text-accent"/>Contacto</h3>
+                                              <p className="text-muted-foreground">{tournament.contact.name}: <span className="font-bold text-foreground">{tournament.contact.phone}</span> ☎️📞</p>
+                                              <p className="text-sm font-bold text-accent pt-2">{tournament.note}</p>
+                                          </div>
+                                      </div>
+                                   </div>
+                              </DialogContent>
+                          </Dialog>
+                          <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                              <Link
+                                  href={`/tournament/register?tournamentName=${encodeURIComponent(tournament.title)}`}
+                                  legacyBehavior>
+                                  <PenLine className="mr-2 h-4 w-4"/>
+                                  INSCRIBIRME
+                              </Link>
+                          </Button>
+                      </CardFooter>
+                  </Card>
+              ))}
+            </div>
 
-        {isAdmin && (
-        <div className="fixed bottom-24 right-6 z-10">
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-                <Button className="rounded-full h-14 w-14 shadow-lg bg-accent hover:bg-accent/90" size="icon">
-                    <PlusCircle className="h-7 w-7" />
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Agregar Nueva Tarjeta de Torneo</DialogTitle>
-                    <DialogDescription>
-                        Completa la información para la nueva tarjeta de torneo.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="new-title">Título del Torneo</Label>
-                        <Input id="new-title" placeholder="Ej: TORNEO DE VERANO" value={newTournament.title || ''} onChange={(e) => setNewTournament(prev => ({...prev, title: e.target.value}))}/>
-                    </div>
+              {isAdmin && (
+              <div className="fixed bottom-24 right-6 z-10">
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+                  <DialogTrigger asChild>
+                      <Button className="rounded-full h-14 w-14 shadow-lg bg-accent hover:bg-accent/90" size="icon">
+                          <PlusCircle className="h-7 w-7" />
+                      </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                      <DialogHeader>
+                          <DialogTitle>Agregar Nueva Tarjeta de Torneo</DialogTitle>
+                          <DialogDescription>
+                              Completa la información para la nueva tarjeta de torneo.
+                          </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto pr-4">
+                          <div className="space-y-2">
+                              <Label htmlFor="new-title">Título del Torneo</Label>
+                              <Input id="new-title" placeholder="Ej: TORNEO DE VERANO" value={newTournament.title || ''} onChange={(e) => setNewTournament(prev => ({...prev, title: e.target.value}))}/>
+                          </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="new-subtitle">Subtítulo</Label>
-                        <Input id="new-subtitle" placeholder="Ej: FUTBOL 8 MIXTO" value={newTournament.subtitle || ''} onChange={(e) => setNewTournament(prev => ({...prev, subtitle: e.target.value}))}/>
-                    </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="new-subtitle">Subtítulo</Label>
+                              <Input id="new-subtitle" placeholder="Ej: FUTBOL 8 MIXTO" value={newTournament.subtitle || ''} onChange={(e) => setNewTournament(prev => ({...prev, subtitle: e.target.value}))}/>
+                          </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="new-inscription">Costo Inscripción</Label>
-                            <Input id="new-inscription" placeholder="$40.000" value={newTournament.costs?.inscription || ''} onChange={(e) => setNewTournament(prev => ({...prev, costs: {...prev.costs!, inscription: e.target.value}}))}/>
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <Label htmlFor="new-match-cost">Costo Partido</Label>
-                            <Input id="new-match-cost" placeholder="$70.000" value={newTournament.costs?.match || ''} onChange={(e) => setNewTournament(prev => ({...prev, costs: {...prev.costs!, match: e.target.value}}))}/>
-                        </div>
-                    </div>
+                          <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                  <Label htmlFor="new-inscription">Costo Inscripción</Label>
+                                  <Input id="new-inscription" placeholder="$40.000" value={newTournament.costs?.inscription || ''} onChange={(e) => setNewTournament(prev => ({...prev, costs: {...prev.costs!, inscription: e.target.value}}))}/>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                  <Label htmlFor="new-match-cost">Costo Partido</Label>
+                                  <Input id="new-match-cost" placeholder="$70.000" value={newTournament.costs?.match || ''} onChange={(e) => setNewTournament(prev => ({...prev, costs: {...prev.costs!, match: e.target.value}}))}/>
+                              </div>
+                          </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="new-days">Días de Juego</Label>
-                            <Input id="new-days" placeholder="Ej: Sábados" value={newTournament.days || ''} onChange={(e) => setNewTournament(prev => ({...prev, days: e.target.value}))}/>
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <Label htmlFor="new-time-slot">Franja Horaria</Label>
-                            <Input id="new-time-slot" placeholder="14:00 a 18:00 hs" value={newTournament.timeSlot || ''} onChange={(e) => setNewTournament(prev => ({...prev, timeSlot: e.target.value}))}/>
-                        </div>
-                    </div>
+                          <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                  <Label htmlFor="new-days">Días de Juego</Label>
+                                  <Input id="new-days" placeholder="Ej: Sábados" value={newTournament.days || ''} onChange={(e) => setNewTournament(prev => ({...prev, days: e.target.value}))}/>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                  <Label htmlFor="new-time-slot">Franja Horaria</Label>
+                                  <Input id="new-time-slot" placeholder="14:00 a 18:00 hs" value={newTournament.timeSlot || ''} onChange={(e) => setNewTournament(prev => ({...prev, timeSlot: e.target.value}))}/>
+                              </div>
+                          </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="new-prizes">Premios</Label>
-                        <Textarea id="new-prizes" placeholder="Detalla los premios para el campeón, goleador, etc." value={newTournament.prizes || ''} onChange={(e) => setNewTournament(prev => ({...prev, prizes: e.target.value}))}/>
-                    </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="new-prizes">Premios</Label>
+                              <Textarea id="new-prizes" placeholder="Detalla los premios para el campeón, goleador, etc." value={newTournament.prizes || ''} onChange={(e) => setNewTournament(prev => ({...prev, prizes: e.target.value}))}/>
+                          </div>
 
-                    <div className="space-y-2">
-                        <Label htmlFor="new-format">Formato</Label>
-                        <Textarea id="new-format" placeholder="Describe el formato del torneo." value={newTournament.format?.join('\n') || ''} onChange={(e) => setNewTournament(prev => ({...prev, format: e.target.value.split('\n')}))}/>
-                    </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="new-format">Formato</Label>
+                              <Textarea id="new-format" placeholder="Describe el formato del torneo." value={newTournament.format?.join('\n') || ''} onChange={(e) => setNewTournament(prev => ({...prev, format: e.target.value.split('\n')}))}/>
+                          </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="new-contact-name">Nombre Contacto</Label>
-                            <Input id="new-contact-name" placeholder="Juan Pérez" value={newTournament.contact?.name || ''} onChange={(e) => setNewTournament(prev => ({...prev, contact: {...prev.contact!, name: e.target.value}}))}/>
-                        </div>
-                        
-                        <div className="space-y-2">
-                            <Label htmlFor="new-contact-phone">Teléfono Contacto</Label>
-                            <Input id="new-contact-phone" type="tel" placeholder="1122334455" value={newTournament.contact?.phone || ''} onChange={(e) => setNewTournament(prev => ({...prev, contact: {...prev.contact!, phone: e.target.value}}))}/>
-                        </div>
-                    </div>
-                      
-                    <div className="space-y-2">
-                        <Label htmlFor="new-note">Nota Final</Label>
-                        <Input id="new-note" placeholder="¡No te quedes afuera!" value={newTournament.note || ''} onChange={(e) => setNewTournament(prev => ({...prev, note: e.target.value}))}/>
-                    </div>
-                </div>
+                          <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                  <Label htmlFor="new-contact-name">Nombre Contacto</Label>
+                                  <Input id="new-contact-name" placeholder="Juan Pérez" value={newTournament.contact?.name || ''} onChange={(e) => setNewTournament(prev => ({...prev, contact: {...prev.contact!, name: e.target.value}}))}/>
+                              </div>
+                              
+                              <div className="space-y-2">
+                                  <Label htmlFor="new-contact-phone">Teléfono Contacto</Label>
+                                  <Input id="new-contact-phone" type="tel" placeholder="1122334455" value={newTournament.contact?.phone || ''} onChange={(e) => setNewTournament(prev => ({...prev, contact: {...prev.contact!, phone: e.target.value}}))}/>
+                              </div>
+                          </div>
+                            
+                          <div className="space-y-2">
+                              <Label htmlFor="new-note">Nota Final</Label>
+                              <Input id="new-note" placeholder="¡No te quedes afuera!" value={newTournament.note || ''} onChange={(e) => setNewTournament(prev => ({...prev, note: e.target.value}))}/>
+                          </div>
+                      </div>
 
-                 <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="secondary">Cancelar</Button>
-                    </DialogClose>
-                    <Button type="button" onClick={handleSaveTournament}>
-                        <Save className="mr-2 h-4 w-4"/>
-                        Guardar Tarjeta
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-      )}
-    </div>
-  </div>
+                       <DialogFooter>
+                          <DialogClose asChild>
+                              <Button type="button" variant="secondary">Cancelar</Button>
+                          </DialogClose>
+                          <Button type="button" onClick={handleSaveTournament}>
+                              <Save className="mr-2 h-4 w-4"/>
+                              Guardar Tarjeta
+                          </Button>
+                      </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+            )}
+          </div>
+       </div>
    );
 }

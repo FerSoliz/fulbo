@@ -81,7 +81,6 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
           </Tooltip>
         </TooltipProvider>
       )}
-      
       {!post.authorName ? (
         <CardHeader className="flex flex-row items-center gap-4">
           <Skeleton className="h-10 w-10 rounded-full" />
@@ -92,14 +91,17 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
         </CardHeader>
       ) : (
         <CardHeader className="flex flex-row items-center gap-4">
-          <Link href={`/profile/${post.authorId}`}>
+          <Link href={`/profile/${post.authorId}`} legacyBehavior>
             <Avatar>
               <AvatarImage src={authorAvatar} alt={authorName} />
               <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
             </Avatar>
           </Link>
           <div className="flex-1">
-            <Link href={`/profile/${post.authorId}`} className="hover:underline">
+            <Link
+              href={`/profile/${post.authorId}`}
+              className="hover:underline"
+              legacyBehavior>
               <p className="font-semibold text-sm">{authorName}</p>
             </Link>
             <p className="text-xs text-muted-foreground">
@@ -116,7 +118,6 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
           )}
         </CardHeader>
       )}
-      
       <CardContent className="p-0">
         {post.content && <p className="px-6 pb-4 text-sm whitespace-pre-wrap">{post.content}</p>}
         
@@ -168,7 +169,12 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                 )}
               </div>
             ) : isTwitch ? (
-              <Link href={twitchUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}>
+              <Link
+                href={twitchUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}
+                legacyBehavior>
                 <div className="relative cursor-pointer group aspect-video bg-muted overflow-hidden">
                   <Image 
                     src={videoItem.url} 
@@ -245,7 +251,6 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
           </>
         )}
       </CardContent>
-
       <CardFooter className="flex-col items-start pt-4">
         <div className="flex items-center gap-4 w-full">
           <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor}>
@@ -266,10 +271,13 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                 <div className="flex flex-col gap-4 py-4 max-h-[400px] overflow-y-auto">
                   {Object.entries(post.likes).map(([userId, likeUser]) => (
                     <div key={userId} className="flex items-center gap-4">
-                      <Link href={`/profile/${userId}`}>
+                      <Link href={`/profile/${userId}`} legacyBehavior>
                         <Avatar><AvatarImage src={likeUser.avatar} alt={likeUser.name} /><AvatarFallback>{likeUser.name.charAt(0)}</AvatarFallback></Avatar>
                       </Link>
-                      <Link href={`/profile/${userId}`} className="font-semibold hover:underline">{likeUser.name}</Link>
+                      <Link
+                        href={`/profile/${userId}`}
+                        className="font-semibold hover:underline"
+                        legacyBehavior>{likeUser.name}</Link>
                     </div>
                   ))}
                 </div>
@@ -291,7 +299,10 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                 <Avatar className="h-8 w-8"><AvatarImage src={comment.authorAvatar} /><AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback></Avatar>
                 <div className="bg-muted p-3 rounded-lg w-full">
                   <div className="flex items-center justify-between">
-                    <Link href={`/profile/${comment.authorId}`} className="hover:underline">
+                    <Link
+                      href={`/profile/${comment.authorId}`}
+                      className="hover:underline"
+                      legacyBehavior>
                       <span className="font-semibold text-sm">{comment.authorName}</span>
                     </Link>
                     <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: es })}</p>

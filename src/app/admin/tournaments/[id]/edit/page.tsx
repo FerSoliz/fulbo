@@ -106,94 +106,94 @@ export default function EditTournamentPage() {
   }
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-        <div className="max-w-3xl mx-auto">
-            <Link href="/admin/manage-tournaments">
-                <Button variant="outline" className="mb-6">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Volver a Torneos
-                </Button>
-            </Link>
-            <Card>
-                <CardHeader>
-                    <CardTitle className="text-2xl">Editar Torneo</CardTitle>
-                    <CardDescription>Modifica los detalles del torneo "{tournament.name}".</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6 pt-6">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Nombre del Torneo</Label>
-                        <Input id="name" value={tournament.name || ''} onChange={e => handleInputChange('name', e.target.value)} />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         <div className="space-y-2">
-                            <Label htmlFor="type">Tipo</Label>
-                            <Select value={tournament.type || ''} onValueChange={value => handleInputChange('type', value)}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Liga">Liga</SelectItem>
-                                    <SelectItem value="Copa">Copa</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="format">Formato</Label>
-                            <Select value={tournament.format || ''} onValueChange={value => handleInputChange('format', value)}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="5v5">Fútbol 5</SelectItem>
-                                    <SelectItem value="7v7">Fútbol 7</SelectItem>
-                                    <SelectItem value="11v11">Fútbol 11</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                         <div className="space-y-2">
-                            <Label htmlFor="startDate">Fecha de Inicio</Label>
-                             <Popover>
-                                <PopoverTrigger asChild>
-                                <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                    "w-full justify-start text-left font-normal",
-                                    !tournament.startDate && "text-muted-foreground"
-                                    )}
-                                >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {tournament.startDate ? format(new Date(tournament.startDate), "PPP", { locale: es }) : <span>Elige una fecha</span>}
-                                </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0">
-                                <Calendar
-                                    mode="single"
-                                    selected={tournament.startDate ? new Date(tournament.startDate) : undefined}
-                                    onSelect={date => handleInputChange('startDate', date?.toISOString())}
-                                    initialFocus
-                                />
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="status">Estado</Label>
-                            <Select value={tournament.status || ''} onValueChange={value => handleInputChange('status', value)}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="upcoming">Próximo</SelectItem>
-                                    <SelectItem value="ongoing">En Juego</SelectItem>
-                                    <SelectItem value="finished">Finalizado</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                    <div className="flex justify-end pt-6 border-t">
-                        <Button onClick={handleSave} disabled={isSaving} size="lg">
-                            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Guardar Cambios
-                        </Button>
-                    </div>
-                </CardContent>
-            </Card>
-        </div>
-    </div>
-  )
+      <div className="p-4 sm:p-6 lg:p-8">
+          <div className="max-w-3xl mx-auto">
+              <Link href="/admin/manage-tournaments" legacyBehavior>
+                  <Button variant="outline" className="mb-6">
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Volver a Torneos
+                  </Button>
+              </Link>
+              <Card>
+                  <CardHeader>
+                      <CardTitle className="text-2xl">Editar Torneo</CardTitle>
+                      <CardDescription>Modifica los detalles del torneo "{tournament.name}".</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6 pt-6">
+                      <div className="space-y-2">
+                          <Label htmlFor="name">Nombre del Torneo</Label>
+                          <Input id="name" value={tournament.name || ''} onChange={e => handleInputChange('name', e.target.value)} />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           <div className="space-y-2">
+                              <Label htmlFor="type">Tipo</Label>
+                              <Select value={tournament.type || ''} onValueChange={value => handleInputChange('type', value)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value="Liga">Liga</SelectItem>
+                                      <SelectItem value="Copa">Copa</SelectItem>
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="format">Formato</Label>
+                              <Select value={tournament.format || ''} onValueChange={value => handleInputChange('format', value)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value="5v5">Fútbol 5</SelectItem>
+                                      <SelectItem value="7v7">Fútbol 7</SelectItem>
+                                      <SelectItem value="11v11">Fútbol 11</SelectItem>
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                      </div>
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                           <div className="space-y-2">
+                              <Label htmlFor="startDate">Fecha de Inicio</Label>
+                               <Popover>
+                                  <PopoverTrigger asChild>
+                                  <Button
+                                      variant={"outline"}
+                                      className={cn(
+                                      "w-full justify-start text-left font-normal",
+                                      !tournament.startDate && "text-muted-foreground"
+                                      )}
+                                  >
+                                      <CalendarIcon className="mr-2 h-4 w-4" />
+                                      {tournament.startDate ? format(new Date(tournament.startDate), "PPP", { locale: es }) : <span>Elige una fecha</span>}
+                                  </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-auto p-0">
+                                  <Calendar
+                                      mode="single"
+                                      selected={tournament.startDate ? new Date(tournament.startDate) : undefined}
+                                      onSelect={date => handleInputChange('startDate', date?.toISOString())}
+                                      initialFocus
+                                  />
+                                  </PopoverContent>
+                              </Popover>
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="status">Estado</Label>
+                              <Select value={tournament.status || ''} onValueChange={value => handleInputChange('status', value)}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                      <SelectItem value="upcoming">Próximo</SelectItem>
+                                      <SelectItem value="ongoing">En Juego</SelectItem>
+                                      <SelectItem value="finished">Finalizado</SelectItem>
+                                  </SelectContent>
+                              </Select>
+                          </div>
+                      </div>
+                      <div className="flex justify-end pt-6 border-t">
+                          <Button onClick={handleSave} disabled={isSaving} size="lg">
+                              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                              Guardar Cambios
+                          </Button>
+                      </div>
+                  </CardContent>
+              </Card>
+          </div>
+      </div>
+  );
 }

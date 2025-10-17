@@ -130,14 +130,14 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-4">
-        <Link href={`/profile/${author.id}`}>
+        <Link href={`/profile/${author.id}`} legacyBehavior>
           <Avatar>
             <AvatarImage src={author.avatar} alt={author.name} />
             <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
           </Avatar>
         </Link>
         <div className="flex-1">
-          <Link href={`/profile/${author.id}`} className="hover:underline">
+          <Link href={`/profile/${author.id}`} className="hover:underline" legacyBehavior>
             <div className="flex items-center gap-1">
                 <p className="font-semibold text-sm">{author.name}</p>
                 {author.isVerified && <Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={16} height={16} />}

@@ -167,12 +167,14 @@ function RegisterPageContent() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6 lg:p-8">
-      <Link href="/tournament">
-        <Button variant="outline" className="mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Volver a Torneos
-        </Button>
-      </Link>
+      <Button asChild variant="outline" className="mb-4">
+        <Link href="/tournament">
+            <span className="flex items-center">
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Volver a Torneos
+            </span>
+        </Link>
+      </Button>
       <Card>
         <CardHeader>
           <CardTitle className="text-3xl">Formulario de Inscripción</CardTitle>

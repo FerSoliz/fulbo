@@ -94,14 +94,16 @@ export default function RankingPage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Link href={`/profile/${user.id}`} className="flex items-center gap-3 group">
-                          <Avatar>
-                            <AvatarImage src={user.avatar} alt={user.name} />
-                            <AvatarFallback>{user.name?.charAt(0) ?? 'S'}</AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-medium group-hover:underline">{user.name}</p>
-                            <p className="text-xs text-muted-foreground">@{user.username}</p>
+                        <Link href={`/profile/${user.id}`} legacyBehavior>
+                          <div className="flex items-center gap-3 group">
+                            <Avatar>
+                              <AvatarImage src={user.avatar} alt={user.name} />
+                              <AvatarFallback>{user.name?.charAt(0) ?? 'S'}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium group-hover:underline">{user.name}</p>
+                              <p className="text-xs text-muted-foreground">@{user.username}</p>
+                            </div>
                           </div>
                         </Link>
                       </TableCell>

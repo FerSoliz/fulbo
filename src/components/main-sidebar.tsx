@@ -246,21 +246,24 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
       const isCollectibles = item.label === 'TGC SUDONE';
 
       return (
-        <li key={item.href} className={cn(isCollectibles && '')}>
-          <Link href={finalHref} passHref onClick={isAdminLink ? handleAdminPanelClick : handleMenuClick}>
-            <Button
-              variant='ghost'
-              className={cn(
-                'main-sidebar-button w-full justify-start gap-2 text-foreground'
-              )}
-              data-active={isActive}
-              disabled={loading}
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="lg:text-base">{item.label}</span>
-            </Button>
-          </Link>
-        </li>
+          <li key={item.href} className={cn(isCollectibles && '')}>
+              <Link
+                  href={finalHref}
+                  onClick={isAdminLink ? handleAdminPanelClick : handleMenuClick}
+                  >
+                <Button
+                  variant='ghost'
+                  className={cn(
+                    'main-sidebar-button w-full justify-start gap-2 text-foreground'
+                  )}
+                  data-active={isActive}
+                  disabled={loading}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span className="lg:text-base">{item.label}</span>
+                </Button>
+              </Link>
+          </li>
       );
     });
   };
@@ -271,103 +274,106 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
   );
 
   return (
-    <>
-    <aside className={cn(sidebarClasses, "rounded-r-xl")}>
-        <div className="flex h-16 items-center justify-center border-b p-2">
-           <Link href="/" onClick={onLinkClick}>
-            <div className="relative" style={{ width: '140px', height: '40px' }}>
-              <Image
-                src="/sudone-titulo.png"
-                alt="SUDONE Logo"
-                fill
-                style={{ objectFit: 'contain' }}
-                priority
-                sizes="140px"
-              />
-            </div>
-          </Link>
-        </div>
-        <div className="flex items-center gap-2 p-2">
-            {loading ? (
-                 <>
-                    <Skeleton className="h-12 w-12 rounded-full" />
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-[100px]" />
-                        <Skeleton className="h-4 w-[80px]" />
-                    </div>
-                </>
-            ) : user ? (
-                <>
-                    <Link href={user.id === 'visitor' ? '/login' : `/profile/${user.id}`} onClick={onLinkClick}>
-                        <AnimatedAvatar>
-                            <Avatar className="w-12 h-12">
-                                <AvatarImage src={user.avatar} alt="User avatar" />
-                                <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                        </AnimatedAvatar>
-                    </Link>
-                    <div className="flex flex-col overflow-hidden">
-                        {user.id !== 'visitor' ? (
-                          <>
-                            <span className="font-semibold truncate">@{user.username}</span>
-                            <span className="text-sm text-muted-foreground truncate">{user.name}</span>
-                          </>
-                        ) : (
-                           <span className="font-semibold truncate">{user.name}</span>
-                        )}
-                    </div>
-                </>
-            ) : null}
-        </div>
+      <>
+          <aside className={cn(sidebarClasses, "rounded-r-xl")}>
+              <div className="flex h-16 items-center justify-center border-b p-2">
+                 <Link href="/" onClick={onLinkClick}>
+                  <div className="relative" style={{ width: '140px', height: '40px' }}>
+                    <Image
+                      src="/sudone-titulo.png"
+                      alt="SUDONE Logo"
+                      fill
+                      style={{ objectFit: 'contain' }}
+                      priority
+                      sizes="140px"
+                    />
+                  </div>
+                </Link>
+              </div>
+              <div className="flex items-center gap-2 p-2">
+                  {loading ? (
+                       <>
+                          <Skeleton className="h-12 w-12 rounded-full" />
+                          <div className="space-y-2">
+                              <Skeleton className="h-4 w-[100px]" />
+                              <Skeleton className="h-4 w-[80px]" />
+                          </div>
+                      </>
+                  ) : user ? (
+                      <>
+                          <Link
+                              href={user.id === 'visitor' ? '/login' : `/profile/${user.id}`}
+                              onClick={onLinkClick}
+                              >
+                              <AnimatedAvatar>
+                                  <Avatar className="w-12 h-12">
+                                      <AvatarImage src={user.avatar} alt="User avatar" />
+                                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                              </AnimatedAvatar>
+                          </Link>
+                          <div className="flex flex-col overflow-hidden">
+                              {user.id !== 'visitor' ? (
+                                <>
+                                  <span className="font-semibold truncate">@{user.username}</span>
+                                  <span className="text-sm text-muted-foreground truncate">{user.name}</span>
+                                </>
+                              ) : (
+                                 <span className="font-semibold truncate">{user.name}</span>
+                              )}
+                          </div>
+                      </>
+                  ) : null}
+              </div>
 
-        <nav className="flex flex-1 flex-col">
-            <ul className="flex flex-col gap-1 p-2">
-                {renderMenuItems(menuItems)}
-            </ul>
-            <ul className="mt-auto flex flex-col gap-1 border-t p-2">
-                <div className="flex justify-start gap-2 py-2">
-                    {socialItems.map(item => (
-                        <li key={item.href}>
-                             <Link href={item.href} passHref target="_blank" rel="noopener noreferrer">
-                                <Button
-                                variant='destructive'
-                                size="icon"
-                                className='bg-red-600 hover:bg-red-700 text-white'
-                                >
-                                <item.icon className="h-5 w-5" />
-                                </Button>
-                            </Link>
-                        </li>
-                    ))}
-                </div>
-                {user && user.id !== 'visitor' && renderMenuItems(footerMenuItems)}
-                 {installPrompt && (
-                    <li>
-                        <Button
-                            variant="ghost"
-                            className="main-sidebar-button w-full justify-start gap-2 text-foreground"
-                            onClick={handleInstallClick}
-                        >
-                            <Download className="h-5 w-5" />
-                            <span className="lg:text-base">DESCARGAR APP</span>
-                        </Button>
-                    </li>
-                 )}
-                 <li>
-                    <Button
-                        variant="ghost"
-                        className="main-sidebar-button w-full justify-start gap-2 text-foreground"
-                        onClick={handleLogout}
-                        disabled={loading}
-                    >
-                        <LogOut className="h-5 w-5" />
-                        <span className="lg:text-base">{user?.id === 'visitor' ? 'INICIAR SESIÓN' : 'CERRAR SESIÓN'}</span>
-                    </Button>
-                </li>
-            </ul>
-        </nav>
-    </aside>
-    <AdminAuthDialog isOpen={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen} onAuthorized={handleAuthorization} />
-    </>
+              <nav className="flex flex-1 flex-col">
+                  <ul className="flex flex-col gap-1 p-2">
+                      {renderMenuItems(menuItems)}
+                  </ul>
+                  <ul className="mt-auto flex flex-col gap-1 border-t p-2">
+                      <div className="flex justify-start gap-2 py-2">
+                          {socialItems.map(item => (
+                              <li key={item.href}>
+                                   <Link href={item.href} target="_blank" rel="noopener noreferrer">
+                                      <Button
+                                      variant='destructive'
+                                      size="icon"
+                                      className='bg-red-600 hover:bg-red-700 text-white'
+                                      >
+                                      <item.icon className="h-5 w-5" />
+                                      </Button>
+                                  </Link>
+                              </li>
+                          ))}
+                      </div>
+                      {user && user.id !== 'visitor' && renderMenuItems(footerMenuItems)}
+                       {installPrompt && (
+                          <li>
+                              <Button
+                                  variant="ghost"
+                                  className="main-sidebar-button w-full justify-start gap-2 text-foreground"
+                                  onClick={handleInstallClick}
+                              >
+                                  <Download className="h-5 w-5" />
+                                  <span className="lg:text-base">DESCARGAR APP</span>
+                              </Button>
+                          </li>
+                       )}
+                       <li>
+                          <Button
+                              variant="ghost"
+                              className="main-sidebar-button w-full justify-start gap-2 text-foreground"
+                              onClick={handleLogout}
+                              disabled={loading}
+                          >
+                              <LogOut className="h-5 w-5" />
+                              <span className="lg:text-base">{user?.id === 'visitor' ? 'INICIAR SESIÓN' : 'CERRAR SESIÓN'}</span>
+                          </Button>
+                      </li>
+                  </ul>
+              </nav>
+          </aside>
+          <AdminAuthDialog isOpen={isAuthDialogOpen} onOpenChange={setIsAuthDialogOpen} onAuthorized={handleAuthorization} />
+      </>
   );
 }

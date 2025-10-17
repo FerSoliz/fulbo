@@ -14,7 +14,7 @@ export const TeamDisplay = ({ team }: TeamDisplayProps) => {
   if (!team || !team.id) return null;
 
   return (
-    <Link href={`/admin/teams/${team.id}`} passHref>
+    <Link href={`/admin/teams/${team.id}`} legacyBehavior>
       <div className="mt-4 p-3 bg-secondary/50 rounded-lg flex items-center gap-4 transition-colors hover:bg-secondary cursor-pointer">
         <Avatar className="w-12 h-12 border-2 border-muted">
           {team.crestUrl ? (
