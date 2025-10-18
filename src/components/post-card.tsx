@@ -26,11 +26,15 @@ interface PostCardProps {
   onDeletePost: (postId: string) => void;
 }
 
+const COMMENT_CHAR_LIMIT = 200;
+const COMMENT_TRUNCATE_LENGTH = 80;
+
 export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDeletePost }: PostCardProps) {
   const [commentText, setCommentText] = useState('');
   const [showComments, setShowComments] = useState(false);
   const [isYoutubePlaying, setIsYoutubePlaying] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
 
   const authorName = post.authorName || 'Usuario Desconocido';
   const authorAvatar = post.authorAvatar || 'https://avatar.vercel.sh/unknown.png';
@@ -42,10 +46,14 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
   };
 
   const handleAddComment = () => {
-    if (isVisitor || !commentText.trim()) return;
+    if (isVisitor || !commentText.trim() || commentText.length > COMMENT_CHAR_LIMIT) return;
     onAddComment(post.id, commentText);
     setCommentText('');
     setShowComments(true);
+  };
+
+  const toggleCommentExpansion = (commentId: string) => {
+    setExpandedComments(prev => ({ ...prev, [commentId]: true }));
   };
   
   const isPinned = post.isPinned && post.pinnedUntil && new Date(post.pinnedUntil) > new Date();
@@ -224,26 +232,39 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
         
         <CardFooter className="flex-col items-start pt-2">
           {showComments && (
-            <div className="w-full space-y-4 pt-4 mt-4 border-t px-4">
-              {post.comments && Object.entries(post.comments).map(([commentId, comment]) => (
-                <div key={commentId} className="flex items-start gap-3">
-                  <Avatar className="h-8 w-8"><AvatarImage src={comment.authorAvatar} /><AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback></Avatar>
-                  <div className="bg-muted p-3 rounded-lg w-full">
-                    <div className="flex items-center justify-between">
-                      <Link href={`/profile/${comment.authorId}`} className="hover:underline" legacyBehavior><span className="font-semibold text-sm">{comment.authorName}</span></Link>
-                      <p className="text-xs text-muted-foreground">{formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: es })}</p>
+            <div className="w-full space-y-3 pt-4 mt-4 border-t px-4">
+              {post.comments && Object.entries(post.comments).map(([commentId, comment]) => {
+                const isLong = comment.content.length > COMMENT_TRUNCATE_LENGTH;
+                const isExpanded = !!expandedComments[commentId];
+
+                return (
+                  <div key={commentId} className="flex items-start justify-between w-full text-sm gap-2">
+                    <div className="flex items-start gap-2 min-w-0">
+                      <Avatar className="h-8 w-8 flex-shrink-0"><AvatarImage src={comment.authorAvatar} /><AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback></Avatar>
+                      <div className={cn("flex-grow", { "whitespace-pre-wrap": isExpanded })}>
+                        <Link href={`/profile/${comment.authorId}`} className="hover:underline font-semibold mr-1">{comment.authorName}</Link>
+                        <span className="text-muted-foreground">: {!isExpanded && isLong ? `${comment.content.substring(0, COMMENT_TRUNCATE_LENGTH)}...` : comment.content}</span>
+                        {isLong && !isExpanded && (
+                            <button onClick={() => toggleCommentExpansion(commentId)} className="text-blue-500 hover:underline ml-1 text-xs font-semibold">ver más</button>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">{comment.content}</p>
+                    <p className="text-xs text-muted-foreground flex-shrink-0">{formatDistanceToNow(new Date(comment.createdAt), { addSuffix: true, locale: es })}</p>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
           {!isVisitor && (
-            <div className="flex w-full items-center gap-2 pt-4 mt-4 border-t px-4">
-              <Avatar className="h-8 w-8"><AvatarImage src={currentUser?.avatar} /><AvatarFallback>{currentUser?.name ? currentUser.name.charAt(0) : ''}</AvatarFallback></Avatar>
-              <Input placeholder="Escribe un comentario..." className="h-9" value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}/>
-              <Button size="sm" onClick={handleAddComment} disabled={!commentText.trim()}>Publicar</Button>
+            <div className="w-full pt-4 mt-4 border-t px-4">
+              <div className="flex w-full items-center gap-2">
+                <Avatar className="h-8 w-8"><AvatarImage src={currentUser?.avatar} /><AvatarFallback>{currentUser?.name ? currentUser.name.charAt(0) : ''}</AvatarFallback></Avatar>
+                <Input placeholder="Escribe un comentario..." className="h-9" value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddComment()} maxLength={COMMENT_CHAR_LIMIT}/>
+                <Button size="sm" onClick={handleAddComment} disabled={!commentText.trim() || commentText.length > COMMENT_CHAR_LIMIT}>Publicar</Button>
+              </div>
+              <div className="text-right text-xs text-muted-foreground mt-1 pr-14">
+                <span className={cn({ "text-red-500": commentText.length > COMMENT_CHAR_LIMIT })}>{commentText.length} / {COMMENT_CHAR_LIMIT}</span>
+              </div>
             </div>
           )}
         </CardFooter>
