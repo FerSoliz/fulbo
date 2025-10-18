@@ -67,46 +67,6 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
   
   const isLiked = currentUser && post.likes ? !!post.likes[currentUser.id] : false;
 
-  const ActionButtons = ({ isOverlay }: { isOverlay: boolean }) => {
-    const baseTextColor = isOverlay ? 'text-white' : 'text-primary';
-    const mutedTextColor = isOverlay ? 'text-gray-300' : 'text-muted-foreground';
-
-    return (
-      <div className={cn("flex items-center gap-4 w-full", isOverlay ? "px-4 pb-3" : "px-4")}>
-        <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor} className={cn("hover:bg-transparent", isOverlay && "hover:text-white/80")}>
-          <Heart className={cn("h-5 w-5", isLiked ? 'text-red-500 fill-current' : baseTextColor)} />
-          <span className="sr-only">Like</span>
-        </Button>
-        {post.likes && Object.keys(post.likes).length > 0 ? (
-          <Dialog>
-            <DialogTrigger asChild>
-              <span className={cn("text-sm font-medium cursor-pointer hover:underline", baseTextColor)}>
-                {Object.keys(post.likes).length} {Object.keys(post.likes).length === 1 ? 'Me gusta' : 'Me gusta'}
-              </span>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader><DialogTitle>Le gusta a</DialogTitle></DialogHeader>
-              <div className="flex flex-col gap-4 py-4 max-h-[400px] overflow-y-auto">
-                {Object.entries(post.likes).map(([userId, likeUser]) => (
-                  <div key={userId} className="flex items-center gap-4">
-                    <Link href={`/profile/${userId}`} legacyBehavior>
-                      <Avatar><AvatarImage src={likeUser.avatar} alt={likeUser.name} /><AvatarFallback>{likeUser.name.charAt(0)}</AvatarFallback></Avatar>
-                    </Link>
-                    <Link href={`/profile/${userId}`} className="font-semibold hover:underline" legacyBehavior>{likeUser.name}</Link>
-                  </div>
-                ))}
-              </div>
-            </DialogContent>
-          </Dialog>
-        ) : <span className={cn("text-sm font-medium", mutedTextColor)}>0 Me gusta</span>}
-        <Button variant="ghost" size="sm" onClick={() => setShowComments(!showComments)} className={cn("ml-auto", baseTextColor, isOverlay && "hover:text-white/80")}>
-          <MessageSquare className="h-5 w-5" />
-          <span className="ml-2 text-sm">{post.comments ? Object.keys(post.comments).length : 0}</span>
-        </Button>
-      </div>
-    );
-  };
-
   if (!post.authorName) {
     return (
       <div className="relative mt-6">
@@ -237,11 +197,32 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
       <Card className="relative">
         <CardContent className="p-0 border-b border-b-[#2490e3]">
           {hasMedia && <MediaContent />}
-          {hasContent && <p className={cn("px-6 py-4 text-sm whitespace-pre-wrap", !hasMedia && "border-t border-accent")}>{content}</p>}
+          {hasContent && (
+            !hasMedia ? (
+                <div className={cn("flex items-center justify-between px-6 py-3 border-t border-accent")}>
+                    <p className="text-sm whitespace-pre-wrap flex-grow mr-4">{content}</p>
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                        <div className="flex items-center gap-1">
+                            <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor} className="h-8 w-8">
+                                <Heart className={cn("h-5 w-5", isLiked ? 'text-red-500 fill-current' : 'text-muted-foreground')} />
+                            </Button>
+                            <span className="text-sm text-muted-foreground">{post.likes ? Object.keys(post.likes).length : 0}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                             <Button variant="ghost" size="icon" onClick={() => setShowComments(!showComments)} className="h-8 w-8">
+                                <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                            </Button>
+                            <span className="text-sm text-muted-foreground">{post.comments ? Object.keys(post.comments).length : 0}</span>
+                        </div>
+                    </div>
+                </div>
+            ) : (
+                <p className="px-6 py-4 text-sm whitespace-pre-wrap">{content}</p>
+            )
+          )}
         </CardContent>
         
         <CardFooter className="flex-col items-start pt-2">
-          {!hasMedia && <ActionButtons isOverlay={false} />}
           {showComments && (
             <div className="w-full space-y-4 pt-4 mt-4 border-t px-4">
               {post.comments && Object.entries(post.comments).map(([commentId, comment]) => (
