@@ -238,8 +238,8 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                 const isExpanded = !!expandedComments[commentId];
 
                 return (
-                  <div key={commentId} className="flex items-start justify-between w-full text-sm gap-2">
-                    <div className="flex items-start gap-2 min-w-0">
+                  <div key={commentId} className="flex items-center justify-between w-full text-sm gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
                       <Avatar className="h-8 w-8 flex-shrink-0"><AvatarImage src={comment.authorAvatar} /><AvatarFallback>{comment.authorName.charAt(0)}</AvatarFallback></Avatar>
                       <div className={cn("flex-grow", { "whitespace-pre-wrap": isExpanded })}>
                         <Link href={`/profile/${comment.authorId}`} className="hover:underline font-semibold mr-1">{comment.authorName}</Link>
