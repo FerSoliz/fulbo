@@ -64,9 +64,10 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
   const gridClasses = {
     1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-2 grid-rows-2', 4: 'grid-cols-2 grid-rows-2',
   };
+  
+  const isLiked = currentUser && post.likes ? !!post.likes[currentUser.id] : false;
 
   const ActionButtons = ({ isOverlay }: { isOverlay: boolean }) => {
-    const isLiked = currentUser && post.likes ? !!post.likes[currentUser.id] : false;
     const baseTextColor = isOverlay ? 'text-white' : 'text-primary';
     const mutedTextColor = isOverlay ? 'text-gray-300' : 'text-muted-foreground';
 
@@ -192,7 +193,17 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
       )}
 
       <div className="absolute bottom-0 left-0 right-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent pointer-events-none z-10" />
-      <div className="absolute bottom-0 left-0 right-0 z-20"><ActionButtons isOverlay={true} /></div>
+      <div className="absolute bottom-4 left-4 z-20 flex flex-col items-center gap-2">
+        <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor} className="h-auto p-1 rounded-full hover:bg-black/40">
+          <Heart className={cn('h-7 w-7 transition-all', isLiked ? 'text-red-500 fill-current' : 'text-white')} />
+        </Button>
+        <span className="text-white text-xs font-bold drop-shadow-lg">{post.likes ? Object.keys(post.likes).length : 0}</span>
+        
+        <Button variant="ghost" size="icon" onClick={() => setShowComments(!showComments)} className="h-auto p-1 mt-2 rounded-full hover:bg-black/40">
+          <MessageSquare className="h-7 w-7 text-white" />
+        </Button>
+        <span className="text-white text-xs font-bold drop-shadow-lg">{post.comments ? Object.keys(post.comments).length : 0}</span>
+      </div>
     </div>
   );
 
