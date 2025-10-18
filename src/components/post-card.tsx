@@ -153,13 +153,13 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
       )}
 
       <div className="absolute bottom-0 left-0 right-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent pointer-events-none z-10" />
-      <div className="absolute bottom-4 left-4 z-20 flex flex-col items-center gap-2">
+      <div className="absolute bottom-4 left-4 z-20 flex flex-col items-center">
         <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor} className="h-auto p-1 rounded-full hover:bg-black/40">
           <Heart className={cn('h-7 w-7 transition-all', isLiked ? 'text-red-500 fill-current' : 'text-white')} />
         </Button>
-        <span className="text-white text-xs font-bold drop-shadow-lg">{post.likes ? Object.keys(post.likes).length : 0}</span>
+        <span className="text-white text-xs font-bold drop-shadow-lg mb-2">{post.likes ? Object.keys(post.likes).length : 0}</span>
         
-        <Button variant="ghost" size="icon" onClick={() => setShowComments(!showComments)} className="h-auto p-1 mt-2 rounded-full hover:bg-black/40">
+        <Button variant="ghost" size="icon" onClick={() => setShowComments(!showComments)} className="h-auto p-1 rounded-full hover:bg-black/40">
           <MessageSquare className="h-7 w-7 text-white" />
         </Button>
         <span className="text-white text-xs font-bold drop-shadow-lg">{post.comments ? Object.keys(post.comments).length : 0}</span>
@@ -202,14 +202,14 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
                 <div className={cn("flex items-center justify-between px-6 py-3 border-t border-accent")}>
                     <p className="text-sm whitespace-pre-wrap flex-grow mr-4">{content}</p>
                     <div className="flex items-center gap-4 flex-shrink-0">
-                        <div className="flex items-center gap-1">
-                            <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor} className="h-8 w-8">
+                        <div className="flex items-center">
+                            <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor} className="h-8 w-8 mr-1">
                                 <Heart className={cn("h-5 w-5", isLiked ? 'text-red-500 fill-current' : 'text-muted-foreground')} />
                             </Button>
                             <span className="text-sm text-muted-foreground">{post.likes ? Object.keys(post.likes).length : 0}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                             <Button variant="ghost" size="icon" onClick={() => setShowComments(!showComments)} className="h-8 w-8">
+                        <div className="flex items-center">
+                             <Button variant="ghost" size="icon" onClick={() => setShowComments(!showComments)} className="h-8 w-8 mr-1">
                                 <MessageSquare className="h-5 w-5 text-muted-foreground" />
                             </Button>
                             <span className="text-sm text-muted-foreground">{post.comments ? Object.keys(post.comments).length : 0}</span>
