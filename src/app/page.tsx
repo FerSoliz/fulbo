@@ -134,10 +134,10 @@ export default function HomePage() {
   const canPost = currentUser?.role === 'admin' || currentUser?.role === 'captain';
 
   return (
-    <div className="max-w-2xl mx-auto space-y-4 p-4" aria-live="polite" aria-busy={loadingState.status === 'loading' || userContextLoading}>
+    <div className="max-w-2xl mx-auto p-4" aria-live="polite" aria-busy={loadingState.status === 'loading' || userContextLoading}>
       {currentUser && canPost && <CreatePostForm currentUser={currentUser} onAddPost={handleAddPost} />}
 
-      <div className="space-y-4">
+      <div className="space-y-12 mt-12">
         {userContextLoading || loadingState.status === 'loading' ? (
           Array.from({ length: 3 }).map((_, i) => <PostCardSkeleton key={i} />)
         ) : loadingState.data.length > 0 ? (

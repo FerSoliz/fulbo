@@ -299,3 +299,50 @@ Esta sección documenta la arquitectura de frontend y la capa de acceso a datos 
   - **Lógica Actualizada:** La función ahora es más robusta. Antes de actualizar, determina si un `playerId` corresponde a un usuario (`/users/{uid}`) o a un invitado (`/guestPlayers/{dni}`). Esto le permite **actualizar los `sudpoints` para ambos tipos de jugadores**, asegurando que los invitados también acumulen puntos que luego podrán ser migrados al registrarse.
 - **`seed.ts` y `migrations/` (Herramientas de Desarrollo)**
   - **Propósito:** `seed.ts` es para poblar la base de datos con datos de prueba. Los scripts en `migrations/` son para realizar cambios únicos en la estructura de la base de datos de forma segura y automatizada.
+
+---
+## 15. Guía de Estilos de Interfaz y Paleta de Colores
+
+Esta sección define la paleta de colores oficial para la interfaz de SudOne. El objetivo es asegurar una experiencia visual consistente en toda la aplicación.
+
+### 15.1. Configuración para Tailwind CSS
+
+Se recomienda agregar estos colores al archivo `tailwind.config.js` para facilitar su uso en todo el proyecto. Al asignarles un nombre de "token", podemos cambiar un color en un solo lugar y se actualizará en toda la aplicación.
+
+| Nombre Token | Valor Hex | Uso Sugerido |
+| :--- | :--- | :--- |
+| `primary` | `#21232f` | Fondos principales, menús oscuros |
+| `secondary` | `#2e303f` | Fondos secundarios, barras, menús laterales, relleno de inputs |
+| `container` | `#292e38` | Contenedores de contenido, tarjetas, botones |
+| `border-soft` | `#343b46` | Bordes y líneas divisorias |
+| `border-hard` | `#222222` | Bordes sutiles y finos |
+| `accent-blue` | `#2490e3` | Elementos de acento, líneas destacadas |
+| `accent-red` | `#fe0141` | Indicadores de selección, acentos importantes |
+
+### 15.2. Aplicación por Componente
+
+#### **Feed**
+
+| Elemento | Descripción | Color (Token) | Valor Hex |
+| :--- | :--- | :--- | :--- |
+| Contenedor del Buscador | Fondo del área que contiene el buscador en la sidebar. | `primary` | `#21232f` |
+| Relleno del Buscador | Fondo del campo de input del buscador. | `secondary` | `#2e303f` |
+| Contorno del Buscador | Borde del campo de input del buscador. | `border-soft` | `#343b46` |
+| Contenedores Generales | Fondo de las tarjetas o secciones principales del feed. | `container` | `#292e38` |
+| Líneas de Borde | Bordes superior e inferior que enmarcan contenedores. | `container` | `#292f38` |
+| Línea Inicio Comentarios | Línea vertical que marca el comienzo de los comentarios. | `accent-blue` | `#2490e3` |
+| Línea Divisora Comentarios | Separador entre comentarios individuales. | `border-soft` | `#343b46` |
+| Navegación Móvil | Fondo de la barra de navegación inferior en móviles. | `secondary` | `#2e303f` |
+
+#### **Perfil de Usuario**
+
+| Elemento | Descripción | Color (Token) | Valor Hex |
+| :--- | :--- | :--- | :--- |
+| Contenedor y Botones | Fondo para las secciones de contenido y botones. | `container` | `#292f38` |
+| Iconos de Botones | Color para los íconos dentro de los botones. | `container` | `#292f38` |
+| Marco Fino del Contenedor | Borde exterior de los contenedores principales. | `border-hard` | `#222222` |
+| Menús Laterales | Fondo de los menús de navegación secundarios en el perfil. | `secondary` | `#2e303f` |
+| Menú Central | Fondo del área de contenido principal o menú central. | `primary` | `#21232f` |
+| Texto Menú Activo | Color del texto para el ítem de menú que está seleccionado. | `primary` | `#21232f` |
+| Indicador Menú Activo | Línea inferior que resalta el ítem de menú seleccionado. | `accent-red` | `#fe0141` |
+
