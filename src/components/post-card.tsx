@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { Heart, MessageSquare, MoreHorizontal, Play, Star, Loader2, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -226,7 +226,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
       <Card className="relative">
         <CardContent className="p-0 border-b border-b-[#2490e3]">
           {hasMedia && <MediaContent />}
-          {hasContent && <p className="px-6 py-4 text-sm whitespace-pre-wrap">{content}</p>}
+          {hasContent && <p className={cn("px-6 py-4 text-sm whitespace-pre-wrap", !hasMedia && "border-t border-accent")}>{content}</p>}
         </CardContent>
         
         <CardFooter className="flex-col items-start pt-2">
