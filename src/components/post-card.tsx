@@ -224,7 +224,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
             </div>
         </div>
       <Card className="relative">
-        <CardContent className="p-0 pt-6 border-b border-b-[#2490e3]">
+        <CardContent className="p-0 border-b border-b-[#2490e3]">
           {hasMedia && <MediaContent />}
           {hasContent && <p className="px-6 py-4 text-sm whitespace-pre-wrap">{content}</p>}
         </CardContent>
@@ -250,7 +250,7 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
           {!isVisitor && (
             <div className="flex w-full items-center gap-2 pt-4 mt-4 border-t px-4">
               <Avatar className="h-8 w-8"><AvatarImage src={currentUser?.avatar} /><AvatarFallback>{currentUser?.name ? currentUser.name.charAt(0) : ''}</AvatarFallback></Avatar>
-              <Input placeholder="Escribe un comentario..." className="h-9" value={commentText} onChange={(e) => setCommentText(e.geo.json())} onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}/>
+              <Input placeholder="Escribe un comentario..." className="h-9" value={commentText} onChange={(e) => setCommentText(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleAddComment()}/>
               <Button size="sm" onClick={handleAddComment} disabled={!commentText.trim()}>Publicar</Button>
             </div>
           )}
