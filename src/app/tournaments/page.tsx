@@ -68,7 +68,7 @@ export default function TournamentsPage() {
             />
         </div>
         <div className="relative h-full flex items-end z-10">
-            <h1 className="italic uppercase text-4xl font-extrabold tracking-tighter text-white scale-y-150 origin-bottom-left leading-none" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
+            <h1 className="border-l-4 border-accent-red italic uppercase text-4xl font-extrabold tracking-tighter text-white scale-y-150 origin-bottom-left leading-none" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
                 Ligas en Curso
             </h1>
         </div>

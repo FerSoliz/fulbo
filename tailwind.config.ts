@@ -1,4 +1,4 @@
-import type {Config} from 'tailwindcss';
+import type { Config } from 'tailwindcss';
 
 export default {
   darkMode: ['class'],
@@ -15,6 +15,15 @@ export default {
         code: ['monospace'],
       },
       colors: {
+        // --- INICIO DE LA ADICIÓN ---
+        'primary': '#21232f',
+        'secondary': '#2e303f',
+        'container': '#292e38',
+        'border-soft': '#343b46',
+        'border-hard': '#222222',
+        'accent-blue': '#2490e3',
+        'accent-red': '#fe0141',
+        // --- FIN DE LA ADICIÓN ---
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -25,6 +34,7 @@ export default {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
         },
+        // Se mantiene la estructura original por si se usa en otros sitios
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
@@ -71,42 +81,26 @@ export default {
       },
       keyframes: {
         'accordion-down': {
-          from: {
-            height: '0',
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)',
-          },
+          from: { height: '0' },
+          to: { height: 'var(--radix-accordion-content-height)' },
         },
         'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-          to: {
-            height: '0',
-          },
+          from: { height: 'var(--radix-accordion-content-height)' },
+          to: { height: '0' },
         },
         shine: {
-          '0%': {
-            transform: 'translateX(-100%)',
-          },
-          '100%': {
-            transform: 'translateX(100%)',
-          },
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
         },
         'border-spin': {
-          '100%': {
-            transform: 'rotate(360deg)',
-          },
+          '100%': { transform: 'rotate(360deg)' },
         },
-        // Eliminado 'border-rotate'
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         shine: 'shine 1.5s infinite linear',
-        'border-spin': 'border-spin 8s linear infinite', // Aseguramos que solo esté esta animación
-        // Eliminado 'border-rotate'
+        'border-spin': 'border-spin 8s linear infinite',
       },
     },
   },
