@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { getAllTournaments } from '@/lib/firebase/db';
 import { FullTournament } from '@/lib/types';
 import Link from 'next/link';
 import { Trophy, MapPin, ShieldCheck } from 'lucide-react';
-
 
 const TournamentCard = ({ tournament }: { tournament: FullTournament }) => (
   <Link
@@ -58,10 +58,21 @@ export default function TournamentsPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6">
-      <header className="mb-8">
-        <h1 className="text-4xl font-extrabold tracking-tight">Ligas en Curso</h1>
-        <p className="text-muted-foreground mt-2 text-lg">Explora los torneos activos de SudOne y sigue las estadísticas de tu equipo.</p>
-      </header>
+      <div className="relative bg-card border rounded-lg shadow-lg overflow-hidden mb-8 h-28">
+        <div className="absolute right-0 top-0 bottom-0 w-48">
+            <Image
+                src="/assets/profile/fondo-pelota.png"
+                alt="Fondo de pelota de fútbol"
+                fill
+                className="object-contain object-right"
+            />
+        </div>
+        <div className="relative h-full flex items-end z-10">
+            <h1 className="italic uppercase text-4xl font-extrabold tracking-tighter text-white scale-y-150 origin-bottom-left leading-none" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
+                Ligas en Curso
+            </h1>
+        </div>
+      </div>
 
       {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
