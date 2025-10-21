@@ -30,7 +30,8 @@ const TournamentCard = ({ tournament }: { tournament: FullTournament }) => {
   return (
     <Link
       href={`/tournaments/${tournament.id}`}
-      className="relative block border border-soft rounded-lg shadow hover:bg-muted/50 transition-colors duration-200 overflow-hidden aspect-[2/1] border-b-2 border-b-accent-blue"
+      // AJUSTE: Se añade `z-0` para crear un nuevo contexto de apilamiento y evitar que las capas internas se solapen con la UI global.
+      className="relative z-0 block border border-soft rounded-lg shadow hover:bg-muted/50 transition-colors duration-200 overflow-hidden aspect-[2/1] border-b-2 border-b-accent-blue"
     >
       {/* --- Capas de Fondo --- */}
       <div className="absolute inset-0 bg-container z-0"></div>
