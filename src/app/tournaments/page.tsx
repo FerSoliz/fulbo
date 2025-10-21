@@ -5,60 +5,79 @@ import Image from 'next/image';
 import { getAllTournaments } from '@/lib/firebase/db';
 import { FullTournament } from '@/lib/types';
 import Link from 'next/link';
-import { Trophy, MapPin, ShieldCheck } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 
-const TournamentCard = ({ tournament }: { tournament: FullTournament }) => (
-  <Link
-    href={`/tournaments/${tournament.id}`}
-    // Contenedor principal: relativo y con overflow hidden.
-    className="relative block border rounded-lg shadow hover:bg-muted/50 transition-colors duration-200 overflow-hidden"
-  >
-    {/* --- INICIO DE CAPAS DE FONDO --- */}
+// --- FUNCIÓN AUXILIAR PARA OBTENER EL DÍA DE LA SEMANA ---
+const getSpanishDayOfWeek = (dateString: string): string | null => {
+  try {
+    const date = new Date(dateString);
 
-    {/* Capa 0: Fondo de color sólido. */}
-    <div className="absolute inset-0 bg-container z-0"></div>
+    if (isNaN(date.getTime())) return null;
 
-    {/* Capa 1: 'puntos.png'. Ahora con un zoom de 2x. */}
-    <Image
-      src="/assets/profile/puntos.png"
-      alt="Fondo decorativo de puntos"
-      fill
-      className="object-cover z-10 scale-[2.0]"
-    />
-
-    {/* Capa 2: 'estandarte.png'. Se mantiene intacto. */}
-    <Image
-      src="/assets/profile/estandarte.png"
-      alt="Estandarte decorativo"
-      fill
-      className="object-contain object-right opacity-80 z-20"
-    />
+    let dayName = date.toLocaleDateString('es-ES', { weekday: 'long', timeZone: 'UTC' });
     
-    {/* --- FIN DE CAPAS DE FONDO --- */}
+    return dayName.charAt(0).toUpperCase() + dayName.slice(1);
+  } catch (error) {
+    console.error("Error parsing date string:", dateString, error);
+    return null;
+  }
+};
 
-    {/* Capa 3: Contenido de texto. */}
-    <div className="relative p-5 z-30">
-      <div className="flex items-start gap-4">
-        <Trophy className="h-8 w-8 text-amber-400 mt-1" style={{ filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))' }} />
-        <div className="flex-1">
-          <h2 className="text-xl font-bold tracking-tight text-card-foreground" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>
+
+const TournamentCard = ({ tournament }: { tournament: FullTournament }) => {
+  const dayOfWeek = tournament.startDate ? getSpanishDayOfWeek(tournament.startDate) : null;
+
+  return (
+    <Link
+      href={`/tournaments/${tournament.id}`}
+      className="relative block border border-soft rounded-lg shadow hover:bg-muted/50 transition-colors duration-200 overflow-hidden aspect-[2/1] border-b-2 border-b-accent-blue"
+    >
+      {/* --- Capas de Fondo --- */}
+      <div className="absolute inset-0 bg-container z-0"></div>
+      <Image
+        src="/assets/profile/puntos.png"
+        alt="Fondo decorativo de puntos"
+        fill
+        className="object-cover z-10 scale-[2.0]"
+      />
+      <Image
+        src="/assets/profile/estandarte.png"
+        alt="Estandarte decorativo"
+        fill
+        className="object-contain object-right opacity-80 z-20"
+      />
+      
+      {/* --- Contenido de Texto --- */}
+      <div className="relative p-4 pl-0.5 pb-px z-30 flex flex-col justify-end h-full">
+        <div style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
+          <p className="italic uppercase font-bold text-2xl text-white leading-[1.125] tracking-tighter">
+            Liga Sudone
+          </p>
+          <h2 className="text-xs font-semibold tracking-tight text-white leading-tight truncate">
             {tournament.name}
           </h2>
-          <div className="mt-2 flex flex-col gap-2 text-sm text-muted-foreground" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }}>
-            <div className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              <span>{tournament.venue || 'Sede no definida'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4" />
-              <span>{tournament.status || 'Estado no definido'}</span>
-            </div>
+          <div className="text-xs text-gray-200">
+              <p className="leading-tight">
+                  {dayOfWeek && (
+                    <span>
+                      <span className="font-bold text-amber-400">DÍA:</span> {dayOfWeek}
+                    </span>
+                  )}
+                  {dayOfWeek && tournament.venue && (
+                    <span className="mx-2">|</span>
+                  )}
+                  {tournament.venue && (
+                    <span>
+                      <span className="font-bold text-amber-400">SEDE:</span> {tournament.venue}
+                    </span>
+                  )}
+              </p>
           </div>
         </div>
       </div>
-    </div>
-  </Link>
-);
+    </Link>
+  )
+};
 
 
 export default function TournamentsPage() {
@@ -86,7 +105,7 @@ export default function TournamentsPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6">
-      <div className="relative bg-card border rounded-lg shadow-lg overflow-hidden mb-8 h-28">
+      <div className="relative bg-container border rounded-lg shadow-lg overflow-hidden mb-8 h-28">
         <div className="absolute right-0 top-0 bottom-0 w-48">
             <Image
                 src="/assets/profile/fondo-pelota.png"
@@ -103,17 +122,10 @@ export default function TournamentsPage() {
       </div>
 
       {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-card border rounded-lg shadow p-5">
-              <div className="flex items-start gap-4 animate-pulse">
-                <div className="bg-muted rounded-full h-8 w-8 mt-1"></div>
-                <div className="flex-1 space-y-3 mt-1">
-                  <div className="h-5 bg-muted rounded w-3/4"></div>
-                  <div className="h-4 bg-muted rounded w-1/2"></div>
-                  <div className="h-4 bg-muted rounded w-1/3"></div>
-                </div>
-              </div>
+            <div key={i} className="bg-card border rounded-lg shadow p-5 aspect-[2/1]">
+              <div className="h-full bg-muted animate-pulse rounded-md"></div>
             </div>
           ))}
         </div>
