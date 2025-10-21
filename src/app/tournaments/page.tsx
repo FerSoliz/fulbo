@@ -10,14 +10,41 @@ import { Trophy, MapPin, ShieldCheck } from 'lucide-react';
 const TournamentCard = ({ tournament }: { tournament: FullTournament }) => (
   <Link
     href={`/tournaments/${tournament.id}`}
-    className="block bg-card border rounded-lg shadow hover:bg-muted/50 transition-colors duration-200"
-    >
-    <div className="p-5">
+    // Contenedor principal: relativo y con overflow hidden.
+    className="relative block border rounded-lg shadow hover:bg-muted/50 transition-colors duration-200 overflow-hidden"
+  >
+    {/* --- INICIO DE CAPAS DE FONDO --- */}
+
+    {/* Capa 0: Fondo de color sólido. */}
+    <div className="absolute inset-0 bg-container z-0"></div>
+
+    {/* Capa 1: 'puntos.png'. Ahora con un zoom de 2x. */}
+    <Image
+      src="/assets/profile/puntos.png"
+      alt="Fondo decorativo de puntos"
+      fill
+      className="object-cover z-10 scale-[2.0]"
+    />
+
+    {/* Capa 2: 'estandarte.png'. Se mantiene intacto. */}
+    <Image
+      src="/assets/profile/estandarte.png"
+      alt="Estandarte decorativo"
+      fill
+      className="object-contain object-right opacity-80 z-20"
+    />
+    
+    {/* --- FIN DE CAPAS DE FONDO --- */}
+
+    {/* Capa 3: Contenido de texto. */}
+    <div className="relative p-5 z-30">
       <div className="flex items-start gap-4">
-        <Trophy className="h-8 w-8 text-amber-400 mt-1" />
+        <Trophy className="h-8 w-8 text-amber-400 mt-1" style={{ filter: 'drop-shadow(0px 2px 2px rgba(0,0,0,0.5))' }} />
         <div className="flex-1">
-          <h2 className="text-xl font-bold tracking-tight text-card-foreground">{tournament.name}</h2>
-          <div className="mt-2 flex flex-col gap-2 text-sm text-muted-foreground">
+          <h2 className="text-xl font-bold tracking-tight text-card-foreground" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.7)' }}>
+            {tournament.name}
+          </h2>
+          <div className="mt-2 flex flex-col gap-2 text-sm text-muted-foreground" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.7)' }}>
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4" />
               <span>{tournament.venue || 'Sede no definida'}</span>
@@ -33,6 +60,7 @@ const TournamentCard = ({ tournament }: { tournament: FullTournament }) => (
   </Link>
 );
 
+
 export default function TournamentsPage() {
   const [tournaments, setTournaments] = useState<FullTournament[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,9 +71,9 @@ export default function TournamentsPage() {
       try {
         setIsLoading(true);
         const data = await getAllTournaments();
-        console.log("Datos de torneos recibidos de Firebase:", data); // Para depuración
         setTournaments(data);
-      } catch (err) {
+      } catch (err)
+      {
         setError('No se pudieron cargar los torneos. Por favor, inténtalo de nuevo más tarde.');
         console.error(err);
       } finally {
@@ -76,7 +104,6 @@ export default function TournamentsPage() {
 
       {isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* Skeleton Loader */}
           {[...Array(3)].map((_, i) => (
             <div key={i} className="bg-card border rounded-lg shadow p-5">
               <div className="flex items-start gap-4 animate-pulse">
@@ -99,7 +126,7 @@ export default function TournamentsPage() {
       )}
 
       {!isLoading && !error && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
           {tournaments.length > 0 ? (
             tournaments.map(tournament => (
               <TournamentCard key={tournament.id} tournament={tournament} />
