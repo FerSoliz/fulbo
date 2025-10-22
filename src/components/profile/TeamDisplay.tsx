@@ -14,7 +14,9 @@ export const TeamDisplay = ({ team }: TeamDisplayProps) => {
   if (!team || !team.id) return null;
 
   return (
-    <Link href={`/admin/teams/${team.id}`} legacyBehavior>
+    <Link href={`/admin/teams/${team.id}`}>
+      {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+      }
       <div className="mt-4 p-3 bg-secondary/50 rounded-lg flex items-center gap-4 transition-colors hover:bg-secondary cursor-pointer">
         <Avatar className="w-12 h-12 border-2 border-muted">
           {team.crestUrl ? (

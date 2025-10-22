@@ -55,14 +55,16 @@ export default function ForgotPasswordPage() {
     <div className="w-full min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md space-y-6">
         <div className="flex justify-center">
-            <Link href="/" legacyBehavior>
-                <Image
-                src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
-                alt="SUDONE Logo"
-                width={200}
-                height={60}
-                priority
-                />
+            <Link href="/">
+              {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+              }
+              <Image
+              src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
+              alt="SUDONE Logo"
+              width={200}
+              height={60}
+              priority
+              />
             </Link>
         </div>
         <Card>
@@ -73,10 +75,11 @@ export default function ForgotPasswordPage() {
                     Se ha enviado un enlace para restablecer la contraseña a <span className="font-bold text-foreground">{email}</span>. Por favor, revisa tu bandeja de entrada y spam.
                 </CardDescription>
                 <Button asChild className="mt-6 w-full">
-                    <Link href="/login" legacyBehavior>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Volver a Iniciar Sesión
-                    </Link>
+                    <Link href="/login">
+                      {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                      }
+                      <ArrowLeft className="mr-2 h-4 w-4" />Volver a Iniciar Sesión
+                                          </Link>
                 </Button>
              </CardContent>
           ) : (
@@ -106,10 +109,11 @@ export default function ForgotPasswordPage() {
                     {isLoading ? "Enviando..." : "Enviar Correo de Recuperación"}
                 </Button>
                 <Button variant="link" asChild>
-                    <Link href="/login" legacyBehavior>
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Volver a Iniciar Sesión
-                    </Link>
+                    <Link href="/login">
+                      {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                      }
+                      <ArrowLeft className="mr-2 h-4 w-4" />Volver a Iniciar Sesión
+                                          </Link>
                 </Button>
                 </CardFooter>
             </form>

@@ -94,7 +94,9 @@ export default function RankingPage() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <Link href={`/profile/${user.id}`} legacyBehavior>
+                        <Link href={`/profile/${user.id}`}>
+                          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                          }
                           <div className="flex items-center gap-3 group">
                             <Avatar>
                               <AvatarImage src={user.avatar} alt={user.name} />

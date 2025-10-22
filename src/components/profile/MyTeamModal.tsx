@@ -60,13 +60,17 @@ export const MyTeamModal = ({ profileUser, onClose }: MyTeamModalProps) => {
     <>
       <CardHeader className="text-center items-center pt-10 pb-6"><Avatar className='w-28 h-28 border-4 border-background shadow-md bg-muted'><UserX className='w-16 h-16 text-muted-foreground' /></Avatar><CardTitle className="mt-4 text-2xl font-bold">¡Eres Jugador Libre!</CardTitle><p className="text-muted-foreground mt-2">Aún no perteneces a ningún equipo.</p></CardHeader>
       <CardContent className="flex flex-col gap-4 px-6">
-        <Link href="/leagues/search-teams" legacyBehavior>
+        <Link href="/leagues/search-teams">
+          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+          }
           <Button size="lg" className="w-full">
             <Search className="mr-2 h-5 w-5" />
             <span>Buscar un equipo</span>
           </Button>
         </Link>
-        <Link href="/manage-team/create" legacyBehavior>
+        <Link href="/manage-team/create">
+          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+          }
           <Button size="lg" variant="secondary" className="w-full">
             <PlusCircle className="mr-2 h-5 w-5" />
             <span>Crear tu propio equipo</span>
@@ -88,12 +92,14 @@ export const MyTeamModal = ({ profileUser, onClose }: MyTeamModalProps) => {
               <h3 className='font-semibold flex items-center gap-2 text-muted-foreground px-2 pb-2'><Users className='w-5 h-5'/> Plantel</h3>
               {members.map((member: TeamMember) => (
                   <motion.div key={member.id} variants={itemVariants}>
-                      <Link href={`/profile/${member.id}`} legacyBehavior>
-                          <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-accent/80 transition-colors cursor-pointer" onClick={onClose}>
-                              <Avatar><AvatarImage src={member.avatar} alt={member.name} /><AvatarFallback>{member.name.charAt(0)}</AvatarFallback></Avatar>
-                              <div><p className="font-semibold">{member.name}</p><p className="text-xs text-muted-foreground">@{member.username}</p></div>
-                              {teamDetails?.captainId === member.id && <div className='ml-auto flex items-center gap-1 text-xs font-bold text-amber-500'><Crown className="w-4 h-4" /><span>CAPITÁN</span></div>}
-                          </div>
+                      <Link href={`/profile/${member.id}`}>
+                        {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                        }
+                        <div className="flex items-center gap-4 p-2 rounded-lg hover:bg-accent/80 transition-colors cursor-pointer" onClick={onClose}>
+                            <Avatar><AvatarImage src={member.avatar} alt={member.name} /><AvatarFallback>{member.name.charAt(0)}</AvatarFallback></Avatar>
+                            <div><p className="font-semibold">{member.name}</p><p className="text-xs text-muted-foreground">@{member.username}</p></div>
+                            {teamDetails?.captainId === member.id && <div className='ml-auto flex items-center gap-1 text-xs font-bold text-amber-500'><Crown className="w-4 h-4" /><span>CAPITÁN</span></div>}
+                        </div>
                       </Link>
                   </motion.div>
               ))}

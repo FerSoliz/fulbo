@@ -122,10 +122,9 @@ export function PageHeader() {
                                       const Icon = notificationIcons[notif.type] || Bell;
                                       return (
                                           <DropdownMenuItem key={notif.id} asChild className="p-0">
-                                              <Link
-                                                  href={notif.link}
-                                                  className="flex items-start gap-3 p-2 w-full"
-                                                  legacyBehavior>
+                                              <Link href={notif.link} className="flex items-start gap-3 p-2 w-full">
+                                                  {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                                                  }
                                                   <div className="relative">
                                                       <Icon className="h-4 w-4 mt-1" />
                                                       {!notif.isRead && <div className="absolute -right-1 top-0 h-1.5 w-1.5 rounded-full bg-accent" />}
@@ -154,7 +153,9 @@ export function PageHeader() {
                                   )}
                               </DropdownMenuContent>
                           </DropdownMenu>
-                          <Link href={`/profile/${user.id}`} legacyBehavior>
+                          <Link href={`/profile/${user.id}`}>
+                              {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                              }
                               <Button variant="ghost" size="icon" className="rounded-full">
                                   <Avatar>
                                       <AvatarImage src={user.avatar} alt={user.name} />
@@ -164,7 +165,9 @@ export function PageHeader() {
                           </Link>
                       </>
                   ) : (
-                      <Link href="/login" legacyBehavior>
+                      <Link href="/login">
+                          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                          }
                           <Button>Iniciar Sesión</Button>
                       </Link>
                   )}
@@ -181,8 +184,9 @@ export function PageHeader() {
                   <Link
                       href="https://www.monsterenergy.com"
                       target="_blank"
-                      rel="noopener noreferrer"
-                      legacyBehavior>
+                      rel="noopener noreferrer">
+                      {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                      }
                       <Image
                           src={bannerUrl || "/banner-monster.jpg"} // Usa la URL dinámica o el fallback
                           alt="Banner Principal de Sudone"

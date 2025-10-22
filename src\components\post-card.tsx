@@ -130,14 +130,18 @@ export function PostCard({ post, currentUser, onUpdatePost, onDeletePost, allUse
   return (
     <Card>
       <CardHeader className="flex flex-row items-center gap-4">
-        <Link href={`/profile/${author.id}`} legacyBehavior>
+        <Link href={`/profile/${author.id}`}>
+          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+          }
           <Avatar>
             <AvatarImage src={author.avatar} alt={author.name} />
             <AvatarFallback>{author.name.charAt(0)}</AvatarFallback>
           </Avatar>
         </Link>
         <div className="flex-1">
-          <Link href={`/profile/${author.id}`} className="hover:underline" legacyBehavior>
+          <Link href={`/profile/${author.id}`} className="hover:underline">
+            {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+            }
             <div className="flex items-center gap-1">
                 <p className="font-semibold text-sm">{author.name}</p>
                 {author.isVerified && <Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={16} height={16} />}

@@ -238,11 +238,11 @@ export default function TournamentPage() {
                           </Dialog>
                           <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                               <Link
-                                  href={`/tournament/register?tournamentName=${encodeURIComponent(tournament.title)}`}
-                                  legacyBehavior>
-                                  <PenLine className="mr-2 h-4 w-4"/>
-                                  INSCRIBIRME
-                              </Link>
+                                  href={`/tournament/register?tournamentName=${encodeURIComponent(tournament.title)}`}>
+                                  {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                                  }
+                                  <PenLine className="mr-2 h-4 w-4"/>INSCRIBIRME
+                                                                </Link>
                           </Button>
                       </CardFooter>
                   </Card>

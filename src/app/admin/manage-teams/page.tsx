@@ -115,10 +115,11 @@ export default function ManageTeamsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuItem asChild>
-                            <Link href={`/admin/teams/${team.id}`} legacyBehavior>
-                              <Users className="mr-2 h-4 w-4" />
-                              Gestionar Plantilla
-                            </Link>
+                            <Link href={`/admin/teams/${team.id}`}>
+                              {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                              }
+                              <Users className="mr-2 h-4 w-4" />Gestionar Plantilla
+                                                          </Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleOpenEditDialog(team)}><Edit className="mr-2 h-4 w-4" />Editar Equipo</DropdownMenuItem>
                           <DropdownMenuSeparator />

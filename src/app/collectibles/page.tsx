@@ -269,7 +269,11 @@ export default function CollectibleCardsPage() {
             return <div>{content}</div>;
         }
         if (item.href) {
-            return <Link href={item.href} legacyBehavior>{content}</Link>;
+            return (
+                <Link href={item.href}>
+                    {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                    }{content}</Link>
+            );
         }
         return <button onClick={item.action}>{content}</button>;
     }
@@ -410,10 +414,11 @@ export default function CollectibleCardsPage() {
                            </DropdownMenuTrigger>
                            <DropdownMenuContent align="end">
                                <DropdownMenuItem asChild>
-                                    <Link href="/" legacyBehavior>
-                                       <ArrowLeft className="mr-2 h-4 w-4" />
-                                       Salir del Juego
-                                   </Link>
+                                    <Link href="/">
+                                        {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                                        }
+                                        <ArrowLeft className="mr-2 h-4 w-4" />Salir del Juego
+                                                                           </Link>
                                </DropdownMenuItem>
                            </DropdownMenuContent>
                        </DropdownMenu>

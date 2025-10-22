@@ -49,7 +49,9 @@ export default function CollectionPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 text-white min-h-screen">
       <div className="max-w-7xl mx-auto">
-        <Link href="/collectibles" legacyBehavior>
+        <Link href="/collectibles">
+          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+          }
           <Button variant="ghost" className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver al Menú del Juego

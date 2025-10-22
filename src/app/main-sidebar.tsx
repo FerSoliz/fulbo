@@ -59,7 +59,9 @@ export function MainSidebar({ user }: MainSidebarProps) {
 
       return (
         <li key={item.href}>
-          <Link href={item.href} passHref legacyBehavior>
+          <Link href={item.href}>
+            {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+            }
             <Button
               variant="ghost"
               className={cn(
@@ -79,7 +81,9 @@ export function MainSidebar({ user }: MainSidebarProps) {
   return (
     <aside className="fixed left-0 hidden h-screen w-64 flex-col border-r bg-card md:flex">
       <div className="flex h-16 items-center justify-center border-b p-2">
-        <Link href="/" legacyBehavior>
+        <Link href="/">
+          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+          }
           <Image
             src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
             alt="SUDONE Logo"
@@ -90,13 +94,15 @@ export function MainSidebar({ user }: MainSidebarProps) {
         </Link>
       </div>
       <div className="flex items-center gap-2 p-2">
-          <Link href="/profile" legacyBehavior>
-              <AnimatedAvatar>
-                  <Avatar className="w-12 h-12">
-                      <AvatarImage src={user.avatarUrl} alt="User avatar" />
-                      <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-              </AnimatedAvatar>
+          <Link href="/profile">
+            {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+            }
+            <AnimatedAvatar>
+                <Avatar className="w-12 h-12">
+                    <AvatarImage src={user.avatarUrl} alt="User avatar" />
+                    <AvatarFallback>U</AvatarFallback>
+                </Avatar>
+            </AnimatedAvatar>
           </Link>
           <div className="flex flex-col">
               <span className="font-semibold">Carlos Estevez</span>

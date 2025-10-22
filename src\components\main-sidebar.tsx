@@ -71,18 +71,20 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
 
       return (
           <li key={item.href}>
-              <Link href={finalHref} passHref legacyBehavior>
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    'main-sidebar-button w-full justify-start gap-2 text-foreground',
-                  )}
-                  data-active={isActive}
-                  disabled={loading}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span className="lg:text-base">{item.label}</span>
-                </Button>
+              <Link href={finalHref}>
+                  {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                  }
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      'main-sidebar-button w-full justify-start gap-2 text-foreground',
+                    )}
+                    data-active={isActive}
+                    disabled={loading}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span className="lg:text-base">{item.label}</span>
+                  </Button>
               </Link>
           </li>
       );
@@ -97,14 +99,16 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
   return (
       <aside className={sidebarClasses}>
           <div className="flex h-16 items-center justify-center border-b p-2">
-            <Link href="/" legacyBehavior>
-              <Image
-                src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
-                alt="SUDONE Logo"
-                width={140}
-                height={40}
-                priority
-              />
+            <Link href="/">
+                {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                }
+                <Image
+                  src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
+                  alt="SUDONE Logo"
+                  width={140}
+                  height={40}
+                  priority
+                />
             </Link>
           </div>
           <div className="flex items-center gap-2 p-2">
@@ -118,9 +122,9 @@ export function MainSidebar({ isMobile = false }: { isMobile?: boolean }) {
                   </>
               ) : user ? (
                   <>
-                      <Link
-                          href={user.name === 'VISITANTE' ? '/login' : `/profile/${user.id}`}
-                          legacyBehavior>
+                      <Link href={user.name === 'VISITANTE' ? '/login' : `/profile/${user.id}`}>
+                          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                          }
                           <AnimatedAvatar>
                               <Avatar className="w-12 h-12">
                                   <AvatarImage src={user.avatar} alt="User avatar" />

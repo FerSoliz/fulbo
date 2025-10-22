@@ -237,7 +237,9 @@ const MainMenu = ({ onOpenPack, setView, user }: { onOpenPack: () => void, setVi
                   </Button>
                 </div>
                 <div>
-                  <Link href="/collectibles/collection" legacyBehavior>
+                  <Link href="/collectibles/collection">
+                    {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                    }
                     <Button className="w-full h-auto p-3 justify-between text-base font-semibold border-b-4 border-red-800 bg-gradient-to-b from-destructive to-red-800 text-white shadow-lg transition-all duration-200 transform hover:-translate-y-0.5 rounded-full">
                       <div className="flex items-center gap-3"><Layers className="w-5 h-5" /><span>MI COLECCIÓN</span></div>
                       <ChevronRight className="w-5 h-5" />

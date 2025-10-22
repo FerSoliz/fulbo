@@ -125,7 +125,13 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
           )}
         </div>
       ) : isTwitch ? (
-        <Link href={twitchUrl} target="_blank" rel="noopener noreferrer" aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`} legacyBehavior>
+        <Link
+          href={twitchUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}>
+          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+          }
           <div className="aspect-video bg-muted overflow-hidden">
             <Image src={videoItem.url} alt="Miniatura del stream de Twitch" fill className="object-contain" onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" /></div>
@@ -177,31 +183,31 @@ export function PostCard({ post, currentUser, onLikeToggle, onAddComment, onDele
 
   return (
     <div className="relative mt-6">
-        <div className="absolute top-0 left-0 right-0 w-full z-10 px-4 flex justify-between items-start pointer-events-none">
-            <div className="flex items-start gap-3 pointer-events-auto">
-                <div className="transform -translate-y-1/2">
-                    <Link href={`/profile/${post.authorId}`} passHref>
-                    <Avatar className="w-12 h-12 border-4 border-background">
-                        <AvatarImage src={authorAvatar} alt={authorName} />
-                        <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    </Link>
-                </div>
-                <div className="transform -translate-y-full">
-                    <p className="text-sm pt-1">
-                    <Link href={`/profile/${post.authorId}`} className="hover:underline font-semibold text-foreground mr-2">
-                        {authorName}
-                    </Link>
-                    {post.location && <span className="text-slate-500 text-xs align-middle">· {post.location}</span>}
-                    </p>
-                </div>
-            </div>
-            <div className="transform -translate-y-full pointer-events-auto">
-                <p className="text-xs text-slate-500 text-right pt-1">
-                    {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: es })}
-                </p>
-            </div>
-        </div>
+      <div className="absolute top-0 left-0 right-0 w-full z-10 px-4 flex justify-between items-start pointer-events-none">
+          <div className="flex items-start gap-3 pointer-events-auto">
+              <div className="transform -translate-y-1/2">
+                  <Link href={`/profile/${post.authorId}`}>
+                  <Avatar className="w-12 h-12 border-4 border-background">
+                      <AvatarImage src={authorAvatar} alt={authorName} />
+                      <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  </Link>
+              </div>
+              <div className="transform -translate-y-full">
+                  <p className="text-sm pt-1">
+                  <Link href={`/profile/${post.authorId}`} className="hover:underline font-semibold text-foreground mr-2">
+                      {authorName}
+                  </Link>
+                  {post.location && <span className="text-slate-500 text-xs align-middle">· {post.location}</span>}
+                  </p>
+              </div>
+          </div>
+          <div className="transform -translate-y-full pointer-events-auto">
+              <p className="text-xs text-slate-500 text-right pt-1">
+                  {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true, locale: es })}
+              </p>
+          </div>
+      </div>
       <Card className="relative">
         <CardContent className="p-0 border-b border-b-[#2490e3]">
           {hasMedia && <MediaContent />}

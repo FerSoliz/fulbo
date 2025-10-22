@@ -104,7 +104,9 @@ export default function ManageTournamentsPage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-4xl mx-auto">
-        <Link href="/admin" legacyBehavior>
+        <Link href="/admin">
+          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+          }
           <Button variant="outline" className="mb-6">
             <ArrowLeft className="mr-2 h-4 w-4" />
             Volver al Panel
@@ -130,8 +132,10 @@ export default function ManageTournamentsPage() {
                           <CardTitle>{tournament.name}</CardTitle>
                           <div className="flex items-center gap-1 -mt-2 -mr-2">
                               <Button asChild variant="ghost" size="icon">
-                                  <Link href={`/admin/tournaments/${tournament.id}/edit`} legacyBehavior>
-                                      <Pen className="h-4 w-4 text-muted-foreground" />
+                                  <Link href={`/admin/tournaments/${tournament.id}/edit`}>
+                                    {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                                    }
+                                    <Pen className="h-4 w-4 text-muted-foreground" />
                                   </Link>
                               </Button>
                               <AlertDialog>
@@ -159,8 +163,12 @@ export default function ManageTournamentsPage() {
                        <p className={cn("text-sm font-semibold", tournament.status === 'ongoing' && "text-green-500", tournament.status === 'finished' && "text-red-500")}>Estado: {tournament.status}</p>
                     </CardContent>
                     <CardFooter className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <Button asChild variant="outline"><Link href={`/admin/tournaments/${tournament.id}`} legacyBehavior><Calendar className="mr-2 h-4 w-4" />VER FIXTURE</Link></Button>
-                      <Button asChild><Link href={`/admin/tournaments/${tournament.id}/teams`} legacyBehavior><Users className="mr-2 h-4 w-4" />EDITAR EQUIPOS</Link></Button>
+                      <Button asChild variant="outline"><Link href={`/admin/tournaments/${tournament.id}`}>
+                        {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                        }<Calendar className="mr-2 h-4 w-4" />VER FIXTURE</Link></Button>
+                      <Button asChild><Link href={`/admin/tournaments/${tournament.id}/teams`}>
+                        {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                        }<Users className="mr-2 h-4 w-4" />EDITAR EQUIPOS</Link></Button>
                     </CardFooter>
                   </Card>
                 ))}
@@ -168,7 +176,9 @@ export default function ManageTournamentsPage() {
             ) : (
               <div className="text-center py-10 border-2 border-dashed rounded-lg">
                 <p className="text-muted-foreground">No hay torneos creados todavía.</p>
-                <Link href="/admin/create-competition" legacyBehavior><Button variant="link" className="mt-2">Crear el primero</Button></Link>
+                <Link href="/admin/create-competition">
+                  {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                  }<Button variant="link" className="mt-2">Crear el primero</Button></Link>
               </div>
             )}
           </CardContent>

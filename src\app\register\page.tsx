@@ -117,14 +117,16 @@ export default function RegisterPage() {
     <div className="w-full min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md space-y-6">
         <div className="flex justify-center">
-            <Link href="/" legacyBehavior>
-                <Image
-                src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
-                alt="SUDONE Logo"
-                width={200}
-                height={60}
-                priority
-                />
+            <Link href="/">
+              {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+              }
+              <Image
+              src="https://i.postimg.cc/sgTxwJtP/sudone-titulo.png"
+              alt="SUDONE Logo"
+              width={200}
+              height={60}
+              priority
+              />
             </Link>
         </div>
         <Card>

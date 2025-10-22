@@ -100,14 +100,16 @@ export function PageHeader() {
                       <DropdownMenuSeparator />
                       {favorites.map(fav => (
                            <DropdownMenuItem key={fav.id} asChild>
-                              <Link href="#" className="flex items-center justify-between" legacyBehavior>
-                                   <div className="flex items-center gap-2">
-                                       <Avatar className="w-6 h-6">
-                                          <AvatarImage src={fav.avatar} />
-                                          <AvatarFallback>{fav.abbrev}</AvatarFallback>
-                                      </Avatar>
-                                      <span className="text-sm">{fav.name}</span>
-                                   </div>
+                              <Link href="#" className="flex items-center justify-between">
+                                  {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                                  }
+                                  <div className="flex items-center gap-2">
+                                      <Avatar className="w-6 h-6">
+                                         <AvatarImage src={fav.avatar} />
+                                         <AvatarFallback>{fav.abbrev}</AvatarFallback>
+                                     </Avatar>
+                                     <span className="text-sm">{fav.name}</span>
+                                  </div>
                                   {fav.hasNewContent && <div className="h-2 w-2 rounded-full bg-accent" />}
                               </Link>
                            </DropdownMenuItem>
@@ -116,7 +118,9 @@ export function PageHeader() {
                   </DropdownMenu>
               </div>
               <div className="flex flex-1 items-center justify-end gap-2">
-                  <Link href="/collectibles" legacyBehavior>
+                  <Link href="/collectibles">
+                      {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                      }
                       <Button variant="ghost" className="flex items-center gap-2">
                           <Layers className="h-6 w-6 text-destructive" />
                           <span className="font-bold text-sm">GRATIS</span>
@@ -136,17 +140,19 @@ export function PageHeader() {
                               const Icon = notificationIcons[notif.type] || Bell;
                               return (
                                   <DropdownMenuItem key={notif.id} asChild>
-                                      <Link href={notif.link} className="flex items-start gap-3" legacyBehavior>
-                                           <div className="relative">
-                                               <Icon className="h-4 w-4 mt-1" />
-                                               {!notif.isRead && <div className="absolute -right-1 top-0 h-1.5 w-1.5 rounded-full bg-accent" />}
-                                           </div>
-                                           <div className="flex-1">
-                                               <p className="text-sm whitespace-normal">{notif.message}</p>
-                                               <p className="text-xs text-muted-foreground mt-1">
-                                                   {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: es })}
-                                               </p>
-                                           </div>
+                                      <Link href={notif.link} className="flex items-start gap-3">
+                                          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                                          }
+                                          <div className="relative">
+                                              <Icon className="h-4 w-4 mt-1" />
+                                              {!notif.isRead && <div className="absolute -right-1 top-0 h-1.5 w-1.5 rounded-full bg-accent" />}
+                                          </div>
+                                          <div className="flex-1">
+                                              <p className="text-sm whitespace-normal">{notif.message}</p>
+                                              <p className="text-xs text-muted-foreground mt-1">
+                                                  {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: es })}
+                                              </p>
+                                          </div>
                                       </Link>
                                   </DropdownMenuItem>
                               );
@@ -170,11 +176,13 @@ export function PageHeader() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <Link href={`/profile/${user.id}`} legacyBehavior>
-                            <DropdownMenuItem>
-                              <UserIcon className="mr-2 h-4 w-4" />
-                              <span>Perfil</span>
-                            </DropdownMenuItem>
+                          <Link href={`/profile/${user.id}`}>
+                              {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                              }
+                              <DropdownMenuItem>
+                                <UserIcon className="mr-2 h-4 w-4" />
+                                <span>Perfil</span>
+                              </DropdownMenuItem>
                           </Link>
                           <DropdownMenuItem onClick={handleLogout}>
                             <LogOut className="mr-2 h-4 w-4" />
@@ -183,7 +191,9 @@ export function PageHeader() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                   ) : (
-                      <Link href="/login" legacyBehavior>
+                      <Link href="/login">
+                          {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                          }
                           <Button>Iniciar Sesión</Button>
                       </Link>
                   )}
@@ -202,8 +212,9 @@ export function PageHeader() {
              <Link
                  href="https://www.monsterenergy.com"
                  target="_blank"
-                 rel="noopener noreferrer"
-                 legacyBehavior>
+                 rel="noopener noreferrer">
+                 {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                 }
                  <Image
                      src="https://i.postimg.cc/PNGVGZ92/banner-monster.png"
                      alt="Monster Energy Banner"

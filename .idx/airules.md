@@ -173,6 +173,12 @@ Esta sección describe la arquitectura de datos NoSQL de la Realtime Database. L
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Optimización Responsiva de la Vista de Torneos:**
+  - **Fecha:** 2024-05-26
+  - **Descripción:** Se ha llevado a cabo una refactorización detallada de la página de torneos para mejorar significativamente su visualización en dispositivos móviles, siguiendo un proceso iterativo de ajustes finos.
+  - **Ajuste de Título:** Se redujo la altura de la tarjeta de título para compactar la cabecera en móviles, usando un diseño responsivo que mantiene la altura original en escritorio.
+  - **Optimización de Espaciado:** Se redujeron los márgenes (`padding`) de la página y el espacio (`gap`) entre las tarjetas de torneos en la vista móvil. Esto permite que las tarjetas sean más anchas y aprovechen mejor el espacio disponible en pantalla.
+  - **Refinamiento de Texto:** Se unificó el estilo del texto en las tarjetas, convirtiéndolo a mayúsculas y ajustando el espaciado entre los datos (día y sede) para una presentación más limpia y profesional.
 - **Mejora de la Visualización de Torneos y Limpieza de Rutas:**
   - **Fecha:** 2024-05-25
   - **Descripción:** Se realizó una refactorización integral de la visualización de torneos y se eliminó código obsoleto para mejorar la mantenibilidad del proyecto.
@@ -345,4 +351,3 @@ Se recomienda agregar estos colores al archivo `tailwind.config.js` para facilit
 | Menú Central | Fondo del área de contenido principal o menú central. | `primary` | `#21232f` |
 | Texto Menú Activo | Color del texto para el ítem de menú que está seleccionado. | `primary` | `#21232f` |
 | Indicador Menú Activo | Línea inferior que resalta el ítem de menú seleccionado. | `accent-red` | `#fe0141` |
-

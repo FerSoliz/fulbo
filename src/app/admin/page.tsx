@@ -111,11 +111,13 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent className="flex-grow"></CardContent>
                 <CardContent>
-                    <Link href={action.href} legacyBehavior>
-                    <Button className={`w-full ${action.color}`}>
-                        Ir a {action.title}
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    <Link href={action.href}>
+                      {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
+                      }
+                      <Button className={`w-full ${action.color}`}>
+                          Ir a {action.title}
+                          <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
                     </Link>
                 </CardContent>
               </Card>

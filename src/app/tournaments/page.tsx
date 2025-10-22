@@ -16,7 +16,7 @@ const getSpanishDayOfWeek = (dateString: string): string | null => {
 
     let dayName = date.toLocaleDateString('es-ES', { weekday: 'long', timeZone: 'UTC' });
     
-    return dayName.charAt(0).toUpperCase() + dayName.slice(1);
+    return dayName;
   } catch (error) {
     console.error("Error parsing date string:", dateString, error);
     return null;
@@ -30,7 +30,6 @@ const TournamentCard = ({ tournament }: { tournament: FullTournament }) => {
   return (
     <Link
       href={`/tournaments/${tournament.id}`}
-      // AJUSTE: Se añade `z-0` para crear un nuevo contexto de apilamiento y evitar que las capas internas se solapen con la UI global.
       className="relative z-0 block border border-soft rounded-lg shadow hover:bg-muted/50 transition-colors duration-200 overflow-hidden aspect-[2/1] border-b-2 border-b-accent-blue"
     >
       {/* --- Capas de Fondo --- */}
@@ -51,21 +50,21 @@ const TournamentCard = ({ tournament }: { tournament: FullTournament }) => {
       {/* --- Contenido de Texto --- */}
       <div className="relative p-4 pl-0.5 pb-px z-30 flex flex-col justify-end h-full">
         <div style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.8)' }}>
-          <p className="italic uppercase font-bold text-2xl text-white leading-[1.125] tracking-tighter">
+          <p className="italic uppercase font-bold text-base md:text-2xl text-white leading-[1.125] tracking-tighter">
             Liga Sudone
           </p>
-          <h2 className="text-xs font-semibold tracking-tight text-white leading-tight truncate">
+          <h2 className="text-[10px] md:text-xs font-semibold tracking-tight text-white leading-snug truncate uppercase">
             {tournament.name}
           </h2>
-          <div className="text-xs text-gray-200">
-              <p className="leading-tight">
+          <div className="text-[10px] md:text-xs text-gray-200">
+              <p className="leading-snug uppercase">
                   {dayOfWeek && (
                     <span>
                       <span className="font-bold text-amber-400">DÍA:</span> {dayOfWeek}
                     </span>
                   )}
                   {dayOfWeek && tournament.venue && (
-                    <span className="mx-2">|</span>
+                    <span className="mx-1">|</span>
                   )}
                   {tournament.venue && (
                     <span>
@@ -105,8 +104,8 @@ export default function TournamentsPage() {
   }, []);
 
   return (
-    <div className="max-w-5xl mx-auto p-4 md:p-6">
-      <div className="relative bg-container border rounded-lg shadow-lg overflow-hidden mb-8 h-28">
+    <div className="max-w-5xl mx-auto p-2 md:p-6">
+      <div className="relative bg-container border rounded-lg shadow-lg overflow-hidden mb-8 h-20 md:h-28">
         <div className="absolute right-0 top-0 bottom-0 w-48">
             <Image
                 src="/assets/profile/fondo-pelota.png"
@@ -116,14 +115,14 @@ export default function TournamentsPage() {
             />
         </div>
         <div className="relative h-full flex items-end z-10">
-            <h1 className="border-l-2 border-accent-red italic uppercase text-4xl font-extrabold tracking-tighter text-white scale-y-150 origin-bottom-left leading-none" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
+            <h1 className="border-l-2 border-accent-red italic uppercase text-2xl md:text-4xl font-extrabold tracking-tighter text-white scale-y-150 origin-bottom-left leading-none" style={{ textShadow: '2px 2px 8px rgba(0,0,0,0.8)' }}>
                 Ligas en Curso
             </h1>
         </div>
       </div>
 
       {isLoading && (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-1 md:gap-6">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="bg-card border rounded-lg shadow p-5 aspect-[2/1]">
               <div className="h-full bg-muted animate-pulse rounded-md"></div>
@@ -139,7 +138,7 @@ export default function TournamentsPage() {
       )}
 
       {!isLoading && !error && (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-1 md:gap-6">
           {tournaments.length > 0 ? (
             tournaments.map(tournament => (
               <TournamentCard key={tournament.id} tournament={tournament} />
