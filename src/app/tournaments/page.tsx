@@ -38,12 +38,14 @@ const TournamentCard = ({ tournament }: { tournament: FullTournament }) => {
         src="/assets/profile/puntos.png"
         alt="Fondo decorativo de puntos"
         fill
+        sizes="(max-width: 1024px) 50vw, 33vw"
         className="object-cover z-10 scale-[2.0]"
       />
       <Image
         src="/assets/profile/estandarte.png"
         alt="Estandarte decorativo"
         fill
+        sizes="(max-width: 1024px) 50vw, 33vw"
         className="object-contain object-right opacity-80 z-20"
       />
       
@@ -53,25 +55,28 @@ const TournamentCard = ({ tournament }: { tournament: FullTournament }) => {
           <p className="italic uppercase font-bold text-base md:text-2xl text-white leading-[1.125] tracking-tighter">
             Liga Sudone
           </p>
-          <h2 className="text-[10px] md:text-xs font-semibold tracking-tight text-white leading-snug truncate uppercase">
-            {tournament.name}
-          </h2>
-          <div className="text-[10px] md:text-xs text-gray-200">
-              <p className="leading-snug uppercase">
-                  {dayOfWeek && (
-                    <span>
-                      <span className="font-bold text-amber-400">DÍA:</span> {dayOfWeek}
-                    </span>
-                  )}
-                  {dayOfWeek && tournament.venue && (
-                    <span className="mx-1">|</span>
-                  )}
-                  {tournament.venue && (
-                    <span>
-                      <span className="font-bold text-amber-400">SEDE:</span> {tournament.venue}
-                    </span>
-                  )}
-              </p>
+          {/* Contenedor con line-clamp para asegurar 2 líneas de contenido */}
+          <div className="line-clamp-2 text-[10px] md:text-xs">
+            <h2 className="font-semibold tracking-tight text-white leading-snug uppercase">
+              {tournament.name}
+            </h2>
+            <div className="text-gray-200">
+                <p className="leading-snug uppercase">
+                    {dayOfWeek && (
+                      <span>
+                        <span className="font-bold text-amber-400">DÍA:</span> {dayOfWeek}
+                      </span>
+                    )}
+                    {dayOfWeek && tournament.venue && (
+                      <span className="mx-1">|</span>
+                    )}
+                    {tournament.venue && (
+                      <span>
+                        <span className="font-bold text-amber-400">SEDE:</span> {tournament.venue}
+                      </span>
+                    )}
+                </p>
+            </div>
           </div>
         </div>
       </div>
@@ -111,6 +116,7 @@ export default function TournamentsPage() {
                 src="/assets/profile/fondo-pelota.png"
                 alt="Fondo de pelota de fútbol"
                 fill
+                sizes="192px"
                 className="object-contain object-right"
             />
         </div>
