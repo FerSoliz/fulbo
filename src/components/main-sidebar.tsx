@@ -226,16 +226,21 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
 
       const isAdminLink = item.href?.startsWith('/admin');
       
-      // 3. Modificar la lógica de visualización de los enlaces de admin
-      // Si no es admin/editor Y el link es de admin, NO lo mostramos.
       if (isAdminLink && user?.role !== 'admin' && user?.role !== 'editor') {
+        return null;
+      }
+      
+      // Ocultar el enlace de Coleccionables si el usuario no está logueado
+      const isCollectiblesLink = item.href === '/collectibles';
+      const isVisitor = !user || user.id === 'visitor';
+      if (isCollectiblesLink && isVisitor) {
         return null;
       }
 
       let finalHref = item.href;
       if(item.label === 'MI PERFIL' && user && user.id !== 'visitor') {
           finalHref = `/profile/${user.id}`;
-      } else if (item.label === 'MI PERFIL' && (!user || user.id === 'visitor')) {
+      } else if (item.label === 'MI PERFIL' && isVisitor) {
           finalHref = '/login'; // Redirect visitor to login
       }
       
@@ -243,10 +248,8 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
         ? pathname === '/'
         : (pathname === finalHref || pathname.startsWith(`${finalHref}/`));
 
-      const isCollectibles = item.label === 'TGC SUDONE';
-
       return (
-          <li key={item.href} className={cn(isCollectibles && '')}>
+          <li key={item.href}>
               <Link
                   href={finalHref}
                   onClick={isAdminLink ? handleAdminPanelClick : handleMenuClick}

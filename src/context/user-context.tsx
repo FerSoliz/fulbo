@@ -1,10 +1,11 @@
+
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { User, Notification } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { auth, db } from '@/lib/firebase'; 
+import { auth, db } from '@/lib/firebase';
 import { ref, onValue, get, update, Unsubscribe } from 'firebase/database';
 import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { RegisterInput } from '@/lib/validators';
@@ -23,6 +24,8 @@ const defaultVisitor: User = {
     dni: '',
 };
 
+const SIX_HOURS_IN_MS = 6 * 60 * 60 * 1000;
+
 interface UserContextType {
   user: User | null;
   loading: boolean;
@@ -35,6 +38,13 @@ interface UserContextType {
   setAllUsers: React.Dispatch<React.SetStateAction<User[]>>;
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   trackInteraction: () => void;
+  // Collectibles state
+  availablePacks: number;
+  setAvailablePacks: React.Dispatch<React.SetStateAction<number>>;
+  nextPackTimestamp: number | null;
+  setNextPackTimestamp: React.Dispatch<React.SetStateAction<number | null>>;
+  countdown: string;
+  trackPackOpening: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -44,6 +54,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [availablePacks, setAvailablePacks] = useState<number>(0);
+  const [nextPackTimestamp, setNextPackTimestamp] = useState<number | null>(null);
+  const [countdown, setCountdown] = useState<string>('');
   const router = useRouter();
   const { toast } = useToast();
 
@@ -56,17 +69,76 @@ export function UserProvider({ children }: { children: ReactNode }) {
         unsubscribeUser = onValue(userRef, (snapshot) => {
           if (snapshot.exists()) {
             const dbUser = snapshot.val();
-            setUser({ 
-              id: firebaseUser.uid,
-              ...dbUser
-            });
+            let userForState: User = { id: firebaseUser.uid, ...dbUser };
+            let packsForState = 0;
+            let tsForState: number | null = null;
+
+            // --- INICIO DE LA LÓGICA DE MIGRACIÓN / INICIALIZACIÓN ---
+            if (dbUser.collectibles === undefined) {
+              console.log(`Usuario sin estructura 'collectibles'. Creando/Migrando para: ${firebaseUser.uid}`);
+              
+              packsForState = dbUser.availablePacks || 0;
+              tsForState = dbUser.nextPackTimestamp || null;
+
+              const newCollectiblesStructure = {
+                availablePacks: packsForState,
+                nextPackTimestamp: tsForState,
+                cardIds: [],
+                team: {
+                  name: 'Mi Equipo',
+                  formation: { starters: Array(5).fill(null), subs: Array(3).fill(null) },
+                  showcasedCard: null,
+                }
+              };
+              userForState.collectibles = newCollectiblesStructure;
+
+              const updates: { [key: string]: any } = {
+                [`/users/${firebaseUser.uid}/collectibles`]: newCollectiblesStructure,
+                [`/users/${firebaseUser.uid}/availablePacks`]: null,
+                [`/users/${firebaseUser.uid}/nextPackTimestamp`]: null,
+              };
+              
+              update(ref(db), updates).catch(err => console.error("Error durante la migración/inicialización de datos:", err));
+            } else {
+              const collectiblesData = dbUser.collectibles || {};
+              packsForState = collectiblesData.availablePacks || 0;
+              tsForState = collectiblesData.nextPackTimestamp || null;
+            }
+
+            // --- INICIO DE LA LÓGICA PROACTIVA DEL TEMPORIZADOR ---
+            if (packsForState < 2 && tsForState === null) {
+              console.log(`Usuario ${firebaseUser.uid} elegible para un nuevo sobre. Iniciando temporizador.`);
+              const newTimestamp = Date.now() + SIX_HOURS_IN_MS;
+              tsForState = newTimestamp; // Actualizar para el estado local
+
+              if (userForState.collectibles) {
+                userForState.collectibles.nextPackTimestamp = newTimestamp;
+              } else {
+                userForState.collectibles = { nextPackTimestamp: newTimestamp };
+              }
+
+              const collectiblesRef = ref(db, `users/${firebaseUser.uid}/collectibles`);
+              update(collectiblesRef, { nextPackTimestamp: newTimestamp })
+                .catch(err => console.error("Error al iniciar el temporizador proactivo:", err));
+            }
+            // --- FIN DE LA LÓGICA PROACTIVA ---
+
+            // Actualización final del estado
+            setUser(userForState);
+            setAvailablePacks(packsForState);
+            setNextPackTimestamp(tsForState);
+
           } else {
-             setUser(null); 
+            setUser(null); 
+            setAvailablePacks(0);
+            setNextPackTimestamp(null);
           }
           setLoading(false);
         });
       } else {
         setUser(defaultVisitor);
+        setAvailablePacks(0);
+        setNextPackTimestamp(null);
         setLoading(false);
       }
     });
@@ -75,6 +147,43 @@ export function UserProvider({ children }: { children: ReactNode }) {
       unsubscribeUser();
     };
   }, []);
+
+  useEffect(() => {
+    if (!nextPackTimestamp) {
+      setCountdown('');
+      return;
+    }
+
+    const intervalId = setInterval(() => {
+      const now = Date.now();
+      const timeLeft = nextPackTimestamp - now;
+
+      if (timeLeft <= 0) {
+        clearInterval(intervalId);
+        setCountdown('');
+        if (user && user.id !== 'visitor' && availablePacks < 2) {
+           const newPackCount = availablePacks + 1;
+           setAvailablePacks(newPackCount);
+           const newNextTimestamp = newPackCount < 2 ? Date.now() + SIX_HOURS_IN_MS : null;
+           setNextPackTimestamp(newNextTimestamp);
+           const collectiblesRef = ref(db, `users/${user.id}/collectibles`);
+           update(collectiblesRef, {
+               availablePacks: newPackCount,
+               nextPackTimestamp: newNextTimestamp
+           });
+        }
+        return;
+      }
+
+      const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+      const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+      setCountdown(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [nextPackTimestamp, user, availablePacks]);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
     setLoading(true);
@@ -103,7 +212,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const uid = userCredential.user.uid;
 
-      const newUserProfile: Omit<User, 'id'> = {
+      const newUserProfile: Omit<User, 'id'> & { collectibles?: any } = {
         name: isGuestMigration ? guestData.name : name,
         username,
         email,
@@ -116,6 +225,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
         location: '',
         sudpoints: isGuestMigration && guestData.sudpoints ? guestData.sudpoints : 0,
         team: isGuestMigration && guestData.team ? guestData.team : null,
+        collectibles: {
+          availablePacks: 1,
+          nextPackTimestamp: null,
+          cardIds: [],
+          team: {
+            name: 'Mi Equipo',
+            formation: { starters: Array(5).fill(null), subs: Array(3).fill(null) },
+            showcasedCard: null,
+          }
+        }
       };
 
       const updates: { [key: string]: any } = {};
@@ -170,6 +289,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  const trackPackOpening = useCallback(async () => {
+    if (!user || user.id === 'visitor' || availablePacks <= 0) return;
+
+    const newPackCount = availablePacks - 1;
+    let newNextTimestamp = nextPackTimestamp;
+
+    if (nextPackTimestamp === null && newPackCount < 2) {
+      newNextTimestamp = Date.now() + SIX_HOURS_IN_MS;
+    }
+
+    setAvailablePacks(newPackCount);
+    setNextPackTimestamp(newNextTimestamp);
+
+    try {
+      const collectiblesRef = ref(db, `users/${user.id}/collectibles`);
+      await update(collectiblesRef, {
+        availablePacks: newPackCount,
+        nextPackTimestamp: newNextTimestamp,
+      });
+    } catch (error) {
+      console.error("Failed to update pack data in DB:", error);
+      toast({ title: "Error de Sincronización", description: "No se pudo guardar el estado de tus sobres. Intenta de nuevo.", variant: "destructive" });
+      setAvailablePacks(availablePacks);
+      setNextPackTimestamp(nextPackTimestamp); 
+    }
+  }, [user, availablePacks, nextPackTimestamp, toast]);
+
   return (
     <UserContext.Provider value={{
         user, 
@@ -182,7 +328,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
         allUsers,
         setAllUsers,
         setUser,
-        trackInteraction
+        trackInteraction,
+        availablePacks,
+        setAvailablePacks,
+        nextPackTimestamp,
+        setNextPackTimestamp,
+        countdown,
+        trackPackOpening
     }}>
       {children}
     </UserContext.Provider>

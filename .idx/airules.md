@@ -1,3 +1,4 @@
+
 ## 1. Persona
 - Eres un desarrollador/a **senior** full-stack experto/a en **Node.js, Next.js, React, Tailwind CSS** y **TypeScript**.  
 - Dominas **Firebase** (Authentication, Realtime Database, Storage, Hosting, FCM).  
@@ -173,6 +174,22 @@ Esta sección describe la arquitectura de datos NoSQL de la Realtime Database. L
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Centralización de la Lógica de Sobres de Cartas:**
+  - **Fecha:** 2024-05-27
+  - **Descripción:** Se ha refactorizado y centralizado toda la lógica relacionada con la gestión de sobres de cartas coleccionables en el contexto de usuario (`src/context/user-context.tsx`) para resolver un error `TypeError` y mejorar la robustez del sistema.
+  - **Corrección de Error:** Se solucionó el error `TypeError: trackPackOpening is not a function` que ocurría al intentar abrir un sobre. El error se debía a que la función era llamada en la página de coleccionables pero su lógica no estaba implementada ni provista por el `useUser` hook.
+  - **Gestión de Estado Centralizada:** Toda la gestión del estado de los sobres (la cantidad de sobres disponibles `availablePacks`, el temporizador para el siguiente sobre `nextPackTimestamp` y la cuenta regresiva `countdown`) se movió desde la página `collectibles/page.tsx` al `UserProvider`.
+  - **Sincronización con Base de Datos:** El contexto ahora se encarga de leer el estado de los sobres desde la Realtime Database al iniciar sesión y de guardarlo de forma atómica cada vez que un usuario abre un sobre, usando la función `trackPackOpening`.
+  - **Código Simplificado:** Como resultado, el código de la página `collectibles/page.tsx` se ha simplificado significativamente, eliminando la lógica de estado redundante y delegando toda la responsabilidad al `user-context`.
+- **Refactorización de Módulo de Coleccionables y Migración a Realtime Database:**
+  - **Fecha:** 2024-05-27
+  - **Descripción:** Se ha refactorizado por completo la página de coleccionables (`/collectibles`) para mejorar su estructura y se ha migrado toda la lógica de persistencia de datos de Firestore a Realtime Database.
+  - **Modularización de Componentes:** La página se dividió en componentes más pequeños y reutilizables (`MainMenu`, `PackOpeningView`, `TeamFormationView`), cada uno con su propia responsabilidad, mejorando la legibilidad y mantenibilidad del código.
+  - **Eliminación de Firestore:** Se han removido por completo las importaciones y las llamadas a la base de datos Firestore (`doc`, `getDoc`, `setDoc`). La página ya no tiene ninguna conexión con este servicio.
+  - **Integración de la Nueva Capa de Datos:** Se importaron y utilizaron las nuevas funciones `getUserCollectibles`, `saveUserCardCollection` y `saveUserTeamFormation` del módulo centralizado `lib/firebase/db/collectibles.ts`.
+  - **Refactorización del Flujo de Datos:**
+    - **Lectura (`useEffect`):** Al cargar la página, ahora se utiliza `getUserCollectibles(user.id)` para obtener toda la información del juego (colección y equipo) en una sola llamada a Realtime Database, lo cual es más eficiente.
+    - **Escritura (`onSave`):** Las funciones de guardado ahora delegan la responsabilidad a `saveUserCardCollection` y `saveUserTeamFormation`, centralizando la lógica de base de datos y manteniendo el componente principal limpio.
 - **Optimización Responsiva de la Vista de Torneos:**
   - **Fecha:** 2024-05-26
   - **Descripción:** Se ha llevado a cabo una refactorización detallada de la página de torneos para mejorar significativamente su visualización en dispositivos móviles, siguiendo un proceso iterativo de ajustes finos.

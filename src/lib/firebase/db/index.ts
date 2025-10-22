@@ -14,3 +14,4 @@ export * from './products';
 export * from './cashEntries';
 export * from './stats';
 export * from './appConfig';
+export * from './collectibles'; // <- Añadida la exportación para el nuevo módulo
