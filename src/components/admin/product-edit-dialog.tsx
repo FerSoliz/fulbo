@@ -19,6 +19,7 @@ import Image from 'next/image';
 // --- Esquema de Validación con Zod ---
 const productSchema = z.object({
   name: z.string().min(3, { message: 'El nombre debe tener al menos 3 caracteres.' }),
+  tienda: z.string().optional(), // Nuevo campo para la tienda
   description: z.string().min(10, { message: 'La descripción debe tener al menos 10 caracteres.' }),
   price: z.coerce.number().positive({ message: 'El precio debe ser un número positivo.' }),
   stock: z.coerce.number().int().nonnegative({ message: 'El stock debe ser un número entero no negativo.' }),
@@ -80,8 +81,10 @@ function ProductForm({ onSave, onFinished, productToEdit }: ProductFormProps) {
         resolver: zodResolver(productSchema),
         defaultValues: productToEdit ? {
             ...productToEdit,
+            tienda: productToEdit.tienda || ''
         } : {
             name: '',
+            tienda: '',
             description: '',
             price: 0,
             stock: 0,
@@ -93,7 +96,7 @@ function ProductForm({ onSave, onFinished, productToEdit }: ProductFormProps) {
         if (productToEdit) {
             form.reset(productToEdit);
         } else {
-            form.reset({ name: '', description: '', price: 0, stock: 0, imageUrl: '' });
+            form.reset({ name: '', tienda: '', description: '', price: 0, stock: 0, imageUrl: '' });
         }
     }, [productToEdit, form]);
 
@@ -123,20 +126,34 @@ function ProductForm({ onSave, onFinished, productToEdit }: ProductFormProps) {
     return (
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                {/* ... (campos del formulario) */}
-                <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Nombre</FormLabel>
-                        <FormControl>
-                            <Input placeholder="Camiseta oficial SudOne" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem className="col-span-2">
+                            <FormLabel>Nombre del Producto</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Camiseta oficial SudOne" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="tienda"
+                        render={({ field }) => (
+                            <FormItem className="col-span-2">
+                            <FormLabel>Tienda / Marca</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Ej: Botines Zeta, Indumentaria SudOne" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
                 <FormField
                     control={form.control}
                     name="description"

@@ -292,6 +292,7 @@ export interface Product {
     stock: number;
     imageUrl: string;
     category: string;
+    tienda?: string; // Tienda o marca del producto (ej: "Botines Zeta")
 }
 
 // ---- TIPOS PARA EL FEED SOCIAL ----
