@@ -21,6 +21,7 @@ export function ProductDataTable({ products, onEdit, onDelete }: ProductDataTabl
           <TableRow>
             <TableHead className="w-[80px]">Imagen</TableHead>
             <TableHead>Nombre</TableHead>
+            <TableHead className="w-[150px]">Tienda / Marca</TableHead>
             <TableHead className="w-[150px]">Precio</TableHead>
             <TableHead className="w-[100px]">Stock</TableHead>
             <TableHead className="w-[50px]">Acciones</TableHead>
@@ -40,6 +41,7 @@ export function ProductDataTable({ products, onEdit, onDelete }: ProductDataTabl
                   />
                 </TableCell>
                 <TableCell className="font-medium">{product.name}</TableCell>
+                <TableCell>{product.tienda || '-'}</TableCell>
                 <TableCell>
                   {new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }).format(product.price)}
                 </TableCell>
@@ -66,7 +68,7 @@ export function ProductDataTable({ products, onEdit, onDelete }: ProductDataTabl
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={5} className="h-24 text-center">
+              <TableCell colSpan={6} className="h-24 text-center">
                 No hay productos en la tienda. ¡Añade el primero!
               </TableCell>
             </TableRow>
