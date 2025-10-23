@@ -1,4 +1,3 @@
-
 'use client';
 
 import Image from 'next/image';
@@ -82,66 +81,79 @@ export const ProfileHeader = ({
   const handleChangeTransferStatus = (status: 'libre' | 'traspaso' | 'blindado') => onSaveProfile({ transferStatus: status });
 
   return (
-    <Card>
-        <div className="relative w-full aspect-[4/1]">
-            {profileBackground && <Image src={profileBackground} alt="Fondo de perfil" fill className="object-cover rounded-t-lg" priority />}
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
-            <div className="absolute top-2 right-2 z-10 flex gap-2 items-center">
-            {currentCrest && <div className="w-10 h-10"><Image src={currentCrest} alt="Escudo del equipo" width={40} height={40} /></div>}
+    <Card className="overflow-hidden !rounded-t-7xl">
+      <div className="relative w-full aspect-[4/1]">
+        {profileBackground && <Image src={profileBackground} alt="Fondo de perfil" fill className="object-cover" priority />}
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
+
+        {/* --- MODIFICACIÓN: Iconos completamente pegados --- */}
+        {(currentCrest || isOwnProfile) && (
+          <div className="absolute bottom-0 right-0 z-10 flex items-center">
+            {currentCrest && (
+              <div className="w-8 h-8">
+                <Image src={currentCrest} alt="Escudo del equipo" width={32} height={32} />
+              </div>
+            )}
             {isOwnProfile && (
-                <DropdownMenu>
+              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <button className="w-10 h-10" aria-label="Opciones de perfil">
-                    <Image src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png" alt="Opciones" width={40} height={40} />
-                    </button>
+                  <button className="w-8 h-8" aria-label="Opciones de perfil">
+                    <Image src="https://i.postimg.cc/QMwW1G7J/witget-tuerquita.png" alt="Opciones" width={32} height={32} />
+                  </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <BackgroundChangerDialog user={profileUser} onSave={onSaveProfile}>
+                  <BackgroundChangerDialog user={profileUser} onSave={onSaveProfile}>
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}> <ImageIcon className="mr-2 h-4 w-4" />Cambiar Fondo </DropdownMenuItem>
-                    </BackgroundChangerDialog>
-                    <EditProfileDialog user={profileUser} onSave={onSaveProfile}>
+                  </BackgroundChangerDialog>
+                  <EditProfileDialog user={profileUser} onSave={onSaveProfile}>
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()}> <Pencil className="mr-2 h-4 w-4" />Editar Perfil </DropdownMenuItem>
-                    </EditProfileDialog>
-                    <DropdownMenuSub>
+                  </EditProfileDialog>
+                  <DropdownMenuSub>
                     <DropdownMenuSubTrigger> <Handshake className="mr-2 h-4 w-4" /><span>Estado de Fichaje</span> </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
-                        <DropdownMenuItem onClick={() => handleChangeTransferStatus('libre')}>Libre</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleChangeTransferStatus('traspaso')}>Traspaso</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleChangeTransferStatus('blindado')}>Blindado</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleChangeTransferStatus('libre')}>Libre</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleChangeTransferStatus('traspaso')}>Traspaso</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleChangeTransferStatus('blindado')}>Blindado</DropdownMenuItem>
                     </DropdownMenuSubContent>
-                    </DropdownMenuSub>
+                  </DropdownMenuSub>
                 </DropdownMenuContent>
-                </DropdownMenu>
+              </DropdownMenu>
             )}
-            </div>
-            <div className="absolute bottom-0 left-6 translate-y-1/2">
-            <div className={cn('relative group', isOwnProfile && 'cursor-pointer')} onClick={handleAvatarClick} role="button" aria-label={isOwnProfile ? "Cambiar avatar" : "Avatar del usuario"}>
-                <AnimatedAvatar>
-                <Avatar className="w-24 h-24 text-4xl border-4 border-background">
-                    <AvatarImage src={avatar} alt={name} />
-                    <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-                </Avatar>
-                </AnimatedAvatar>
-                {isUploading && <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center" aria-live="polite" aria-label="Subiendo avatar"><Loader2 className="w-8 h-8 animate-spin" /></div>}
-            </div>
-            </div>
-        </div>
+          </div>
+        )}
 
-      <CardHeader className="pt-16 pb-4 px-6">
-        <div className="flex items-center gap-2">
-          <CardTitle className="text-2xl">{name}</CardTitle>
-          {isVerified && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span aria-label="Usuario verificado"><Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={24} height={24} /></span>
-                </TooltipTrigger>
-                <TooltipContent><p>Verificado</p></TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+        <div className="absolute bottom-0 left-6 translate-y-1/2">
+          <div className={cn('relative group', isOwnProfile && 'cursor-pointer')} onClick={handleAvatarClick} role="button" aria-label={isOwnProfile ? "Cambiar avatar" : "Avatar del usuario"}>
+            <AnimatedAvatar>
+              <Avatar className="w-24 h-24 text-4xl border-4 border-background">
+                <AvatarImage src={avatar} alt={name} />
+                <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+              </Avatar>
+            </AnimatedAvatar>
+            {isUploading && <div className="absolute inset-0 bg-black/60 rounded-full flex items-center justify-center" aria-live="polite" aria-label="Subiendo avatar"><Loader2 className="w-8 h-8 animate-spin" /></div>}
+          </div>
         </div>
-        <CardDescription>@{username} · {role}</CardDescription>
+      </div>
+
+      {/* --- MODIFICACIÓN: Estilo en línea para forzar el espaciado --- */}
+      <CardHeader className="pt-14 pb-4 px-6 flex flex-col space-y-1">
+        <CardTitle className="text-4xl italic" style={{ letterSpacing: '-0.05em' }}>
+          <span className="text-accent-red">#</span>{username.toUpperCase()}
+        </CardTitle>
+        <CardDescription className="flex items-center gap-2 text-base">
+            <span>{name}</span>
+            {isVerified && (
+                <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                    <span aria-label="Usuario verificado"><Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={18} height={18} /></span>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Verificado</p></TooltipContent>
+                </Tooltip>
+                </TooltipProvider>
+            )}
+            <span>· {role}</span>
+        </CardDescription>
         <TeamDisplay team={team} />
       </CardHeader>
 
@@ -165,14 +177,14 @@ export const ProfileHeader = ({
               <Trophy className="h-5 w-5 text-amber-500 -ml-2" aria-label="Meta de Sudpoints" />
             </div>
             <div className="flex justify-between mt-1">
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <p className="text-xs text-muted-foreground">Siguiente Nivel</p>
-                        </TooltipTrigger>
-                        <TooltipContent><p>{divisionInfo.pointsToNextDivision} SP para ascender a {divisionInfo.nextDivisionName}</p></TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-xs text-muted-foreground">Siguiente Nivel</p>
+                  </TooltipTrigger>
+                  <TooltipContent><p>{divisionInfo.pointsToNextDivision} SP para ascender a {divisionInfo.nextDivisionName}</p></TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
               <p className="text-sm font-semibold flex items-center gap-1">
                 {divisionInfo.pointsInDivision} / {divisionInfo.totalPointsForDivision} SP
               </p>

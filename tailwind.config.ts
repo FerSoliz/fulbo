@@ -78,6 +78,10 @@ export default {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
+        '4xl': '2rem',
+        '5xl': '2.5rem',
+        '6xl': '3rem',
+        '7xl': '4rem', // ¡Nuevo valor extra grande!
       },
       keyframes: {
         'accordion-down': {

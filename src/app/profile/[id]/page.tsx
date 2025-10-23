@@ -96,24 +96,24 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
-      <ProfileHeader 
-        profileUser={profileUser}
-        onSaveProfile={handleProfileUpdate}
-        onAvatarChange={handleAvatarUpload}
-        onSendMessage={() => toast({ title: 'Próximamente', description: 'La mensajería aún no está implementada.' })}
-        onTransferClick={() => toast({ title: 'Próximamente', description: 'El mercado de fichajes se abrirá pronto.' })}
-      />
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6 rounded-t-20x2 overflow-hidden">
+        <ProfileHeader 
+          profileUser={profileUser}
+          onSaveProfile={handleProfileUpdate}
+          onAvatarChange={handleAvatarUpload}
+          onSendMessage={() => toast({ title: 'Próximamente', description: 'La mensajería aún no está implementada.' })}
+          onTransferClick={() => toast({ title: 'Próximamente', description: 'El mercado de fichajes se abrirá pronto.' })}
+        />
 
-      {view === 'buttons' ? (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-          <ProfileActions setView={setView} />
-        </motion.div>
-      ) : (
-        <AnimatePresence mode="wait">
-          {ActiveView && <ActiveView {...viewProps} />}
-        </AnimatePresence>
-      )}
+        {view === 'buttons' ? (
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            <ProfileActions setView={setView} />
+          </motion.div>
+        ) : (
+          <AnimatePresence mode="wait">
+            {ActiveView && <ActiveView {...viewProps} />}
+          </AnimatePresence>
+        )}
     </div>
   );
 }
