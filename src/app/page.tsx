@@ -1,57 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { CreatePostForm } from '@/components/create-post-form';
 import { PostCard } from '@/components/post-card';
 import { Post } from '@/lib/types';
 import { useUser } from '@/context/user-context';
-import { db } from '@/lib/firebase';
-import { ref, onValue, remove, query, orderByChild } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 import { PostCardSkeleton } from '@/components/post-card-skeleton';
-import { createPost, togglePostLike, addCommentToPost } from '@/lib/firebase/db';
-
-type LoadingState = {
-  status: 'idle' | 'loading' | 'success' | 'error';
-  data: Post[];
-};
+import {
+  createPost,
+  togglePostLike,
+  addCommentToPost,
+  deletePost,
+} from '@/lib/firebase/db/posts';
+import { usePosts } from '@/hooks/use-posts'; // ¡Nuestro nuevo hook!
 
 export default function HomePage() {
   const { user: currentUser, loading: userContextLoading } = useUser();
-  const [loadingState, setLoadingState] = useState<LoadingState>({ status: 'idle', data: [] });
+  const { posts, status: postsStatus } = usePosts(); // ¡Aquí está la magia!
   const { toast } = useToast();
-
-  useEffect(() => {
-    setLoadingState({ status: 'loading', data: [] });
-    const postsQuery = query(ref(db, 'posts'), orderByChild('createdAt'));
-
-    const unsubscribe = onValue(postsQuery, (snapshot) => {
-      try {
-        const postsList: Post[] = [];
-        snapshot.forEach(childSnapshot => {
-          postsList.push({ id: childSnapshot.key!, ...childSnapshot.val() });
-        });
-
-        const sortedPosts = postsList.reverse();
-
-        const now_ts = new Date().getTime();
-        const pinned = sortedPosts.filter(p => p.isPinned && p.pinnedUntil && p.pinnedUntil > now_ts);
-        const unpinned = sortedPosts.filter(p => !p.isPinned || !p.pinnedUntil || p.pinnedUntil <= now_ts);
-
-        setLoadingState({ status: 'success', data: [...pinned, ...unpinned] });
-      } catch (error) {
-        console.error("Error procesando datos de RTDB: ", error);
-        toast({ title: "Error de datos", description: "Hubo un problema al procesar las publicaciones.", variant: "destructive" });
-        setLoadingState({ status: 'error', data: [] });
-      }
-    }, (error) => {
-      console.error("Error al cargar publicaciones de RTDB: ", error);
-      toast({ title: "Error de conexión", description: "No se pudieron cargar las publicaciones.", variant: "destructive" });
-      setLoadingState({ status: 'error', data: [] });
-    });
-
-    return () => unsubscribe();
-  }, [toast]);
 
   const handleAddPost = async (postData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments' | 'authorName' | 'authorAvatar' | 'authorUsername'>) => {
     if (!currentUser || currentUser.id === 'visitor' || currentUser.role === 'player') return;
@@ -77,16 +43,9 @@ export default function HomePage() {
       toast({ title: "Inicia sesión", description: "Debes iniciar sesión para reaccionar.", variant: "destructive" });
       return;
     }
-    
-    const user = {
-      id: currentUser.id,
-      name: currentUser.name,
-      avatar: currentUser.avatar,
-      username: currentUser.username,
-    };
 
     try {
-      await togglePostLike(postId, user);
+      await togglePostLike(postId, currentUser);
     } catch (error: any) {
       console.error("Error al actualizar like: ", error);
       toast({ title: "Error de red", description: `No se pudo guardar tu reacción: ${error.message}.`, variant: "destructive" });
@@ -100,15 +59,8 @@ export default function HomePage() {
     }
     if (!commentText.trim()) return;
 
-    const author = {
-      id: currentUser.id,
-      name: currentUser.name,
-      avatar: currentUser.avatar,
-      username: currentUser.username,
-    };
-
     try {
-      await addCommentToPost(postId, commentText, author);
+      await addCommentToPost(postId, commentText, currentUser);
       toast({ title: "Comentario publicado" });
     } catch (error: any) {
       console.error("Error al añadir comentario: ", error);
@@ -117,16 +69,17 @@ export default function HomePage() {
   };
 
   const handleDeletePost = async (postId: string) => {
-    const postToDelete = loadingState.data.find(p => p.id === postId);
+    const postToDelete = posts.find((p) => p.id === postId);
     if (!currentUser || (currentUser.role !== 'admin' && currentUser.id !== postToDelete?.authorId)) {
       toast({ title: "Acceso denegado", description: "No tienes permiso para eliminar esta publicación.", variant: "destructive" });
       return;
     }
+
     try {
-      await remove(ref(db, `posts/${postId}`));
+      await deletePost(postId);
       toast({ title: "Publicación eliminada" });
     } catch (error: any) {
-      console.error("Error al eliminar publicación de RTDB: ", error);
+      console.error("Error al eliminar publicación: ", error);
       toast({ title: "Error al eliminar", description: `No se pudo eliminar la publicación: ${error.message}.`, variant: "destructive" });
     }
   };
@@ -134,14 +87,14 @@ export default function HomePage() {
   const canPost = currentUser?.role === 'admin' || currentUser?.role === 'captain';
 
   return (
-    <div className="max-w-2xl mx-auto p-4" aria-live="polite" aria-busy={loadingState.status === 'loading' || userContextLoading}>
+    <div className="max-w-2xl mx-auto p-4" aria-live="polite" aria-busy={postsStatus === 'loading' || userContextLoading}>
       {currentUser && canPost && <CreatePostForm currentUser={currentUser} onAddPost={handleAddPost} />}
 
       <div className="space-y-12 mt-12">
-        {userContextLoading || loadingState.status === 'loading' ? (
+        {userContextLoading || postsStatus === 'loading' ? (
           Array.from({ length: 3 }).map((_, i) => <PostCardSkeleton key={i} />)
-        ) : loadingState.data.length > 0 ? (
-          loadingState.data.map((post) => (
+        ) : posts.length > 0 ? (
+          posts.map((post) => (
             <PostCard
               key={post.id}
               post={post}

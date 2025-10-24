@@ -165,31 +165,31 @@ export const ProfileHeader = ({
         </div>
 
         {!isLeyenda ? (
-          <div className="flex items-center gap-4">
-            <div className="flex-grow">
-              <div className="relative h-2 bg-muted rounded-full" role="progressbar" aria-valuenow={divisionInfo.progressPercentage} aria-valuemin={0} aria-valuemax={100}>
+          <div>
+            <div className="flex items-center gap-2">
+              <div className="relative h-2 flex-grow bg-muted rounded-full">
                 <motion.div
-                  className="absolute inset-y-0 left-0 bg-primary rounded-full flex items-center justify-center"
+                  className="absolute inset-y-0 left-0 bg-primary rounded-full"
                   initial={{ width: '0%' }}
                   animate={{ width: `${divisionInfo.progressPercentage}%` }}
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                 />
               </div>
-              <div className="flex justify-between mt-1">
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <p className="text-xs text-muted-foreground">Siguiente Nivel</p>
-                    </TooltipTrigger>
-                    <TooltipContent><p>{divisionInfo.pointsToNextDivision} SP para ascender a {divisionInfo.nextDivisionName}</p></TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <p className="text-sm font-semibold flex items-center gap-1">
-                  {divisionInfo.pointsInDivision} / {divisionInfo.totalPointsForDivision}
-                </p>
-              </div>
+              <Image src="/assets/profile/logosd.png" alt="Siguiente División" width={40} height={40} />
             </div>
-            <Image src="/assets/profile/logosd.png" alt="Siguiente División" width={40} height={40} className="-ml-2" />
+            <div className="flex justify-between mt-1 pr-[48px]">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <p className="text-[11px] text-white uppercase">Siguiente Nivel</p>
+                  </TooltipTrigger>
+                  <TooltipContent><p>{divisionInfo.pointsToNextDivision} SP para ascender a {divisionInfo.nextDivisionName}</p></TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <p className="text-[11px] text-white font-semibold">
+                {divisionInfo.pointsInDivision} / {divisionInfo.totalPointsForDivision}
+              </p>
+            </div>
           </div>
         ) : (
           <div className="text-center py-4">
