@@ -318,7 +318,9 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
                           <div className="flex flex-col overflow-hidden">
                               {user.id !== 'visitor' ? (
                                 <>
-                                  <span className="font-semibold truncate">@{user.username}</span>
+                                  <div className="font-semibold truncate italic">
+                                    <span className="text-accent-red">#</span>{user.username.toUpperCase()}
+                                  </div>
                                   <span className="text-sm text-muted-foreground truncate">{user.name}</span>
                                 </>
                               ) : (

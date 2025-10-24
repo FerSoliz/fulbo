@@ -103,7 +103,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6 rounded-t-20x2 overflow-hidden">
+    <div className="container mx-auto px-4 pt-2 pb-4 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:pb-8 lg:pt-6 space-y-2 rounded-t-20x2 overflow-hidden">
       <div className="flex justify-between items-center w-full">
         <div>
           {profileUser?.team && <ProfileTeamBadge team={profileUser.team} />}
