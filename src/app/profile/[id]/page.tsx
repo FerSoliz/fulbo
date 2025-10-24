@@ -13,6 +13,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { updateUserProfile, updateUserAvatar } from '@/lib/firebase/db/users';
 
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
+import { ProfileTeamBadge } from '@/components/profile/ProfileTeamBadge';
 import { ProfileActions, ProfileView } from '@/components/profile/ProfileActions';
 import { SudonePassView } from '@/components/profile/SudonePassView';
 import { RankingPreview } from '@/components/profile/RankingPreview';
@@ -94,13 +95,18 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6 rounded-t-20x2 overflow-hidden">
-        <ProfileHeader 
-          profileUser={profileUser}
-          onSaveProfile={handleProfileUpdate}
-          onAvatarChange={handleAvatarUpload}
-          onSendMessage={() => toast({ title: 'Próximamente', description: 'La mensajería aún no está implementada.' })}
-          onTransferClick={() => toast({ title: 'Próximamente', description: 'El mercado de fichajes se abrirá pronto.' })}
-        />
+      {profileUser?.team && (
+        <div className="w-full flex justify-start">
+          <ProfileTeamBadge team={profileUser.team} />
+        </div>
+      )}
+      <ProfileHeader 
+        profileUser={profileUser}
+        onSaveProfile={handleProfileUpdate}
+        onAvatarChange={handleAvatarUpload}
+        onSendMessage={() => toast({ title: 'Próximamente', description: 'La mensajería aún no está implementada.' })}
+        onTransferClick={() => toast({ title: 'Próximamente', description: 'El mercado de fichajes se abrirá pronto.' })}
+      />
 
         {view === 'buttons' ? (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>

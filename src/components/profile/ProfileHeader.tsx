@@ -33,7 +33,6 @@ import {
 import { EditProfileDialog } from './EditProfileDialog';
 import { BackgroundChangerDialog } from './BackgroundChangerDialog';
 import { TransferStatusBadge } from './TransferStatusBadge';
-import { TeamDisplay } from './TeamDisplay';
 import { useRef } from 'react';
 import { motion } from 'framer-motion';
 
@@ -63,7 +62,7 @@ export const ProfileHeader = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwnProfile = currentUser?.id === profileUser.id;
-  const { name, username, role, isVerified, avatar, profileBackground, sudpoints = 0, team, transferStatus } = profileUser;
+  const { name, username, role, isVerified, avatar, profileBackground, sudpoints = 0, transferStatus } = profileUser;
 
   const divisionInfo = getDivisionInfo(sudpoints);
   const isLeyenda = !isFinite(divisionInfo.endOfDivisionPoints);
@@ -152,7 +151,6 @@ export const ProfileHeader = ({
               <span>· {role}</span>
           </CardDescription>
         </div>
-        <TeamDisplay team={team} />
       </CardHeader>
 
       <CardContent className="px-6 space-y-4">
