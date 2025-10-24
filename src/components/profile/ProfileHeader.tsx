@@ -135,25 +135,26 @@ export const ProfileHeader = ({
         </div>
       </div>
 
-      {/* --- MODIFICACIÓN: Estilo en línea para forzar el espaciado --- */}
-      <CardHeader className="pt-14 pb-4 px-6 flex flex-col space-y-1">
-        <CardTitle className="text-4xl italic" style={{ letterSpacing: '-0.05em' }}>
-          <span className="text-accent-red">#</span>{username.toUpperCase()}
-        </CardTitle>
-        <CardDescription className="flex items-center gap-2 text-base">
-            <span>{name}</span>
-            {isVerified && (
-                <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                    <span aria-label="Usuario verificado"><Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={18} height={18} /></span>
-                    </TooltipTrigger>
-                    <TooltipContent><p>Verificado</p></TooltipContent>
-                </Tooltip>
-                </TooltipProvider>
-            )}
-            <span>· {role}</span>
-        </CardDescription>
+      <CardHeader className="pt-14 pb-4 px-6 flex flex-col gap-2">
+        <div>
+          <CardTitle className="text-4xl italic mb-0 leading-[0.8]" style={{ letterSpacing: '-0.05em' }}>
+            <span className="text-accent-red">#</span>{username.toUpperCase()}
+          </CardTitle>
+          <CardDescription className="flex items-center gap-2 text-base">
+              <span className="font-semibold text-white">#{name.toUpperCase()}</span>
+              {isVerified && (
+                  <TooltipProvider>
+                  <Tooltip>
+                      <TooltipTrigger asChild>
+                      <span aria-label="Usuario verificado"><Image src="https://i.postimg.cc/8cm263zS/verificado.png" alt="Verificado" width={18} height={18} /></span>
+                      </TooltipTrigger>
+                      <TooltipContent><p>Verificado</p></TooltipContent>
+                  </Tooltip>
+                  </TooltipProvider>
+              )}
+              <span>· {role}</span>
+          </CardDescription>
+        </div>
         <TeamDisplay team={team} />
       </CardHeader>
 
@@ -164,9 +165,9 @@ export const ProfileHeader = ({
         </div>
 
         {!isLeyenda ? (
-          <>
-            <div className="flex items-center gap-4">
-              <div className="relative flex-grow h-2 bg-muted rounded-full" role="progressbar" aria-valuenow={divisionInfo.progressPercentage} aria-valuemin={0} aria-valuemax={100}>
+          <div className="flex items-center gap-4">
+            <div className="flex-grow">
+              <div className="relative h-2 bg-muted rounded-full" role="progressbar" aria-valuenow={divisionInfo.progressPercentage} aria-valuemin={0} aria-valuemax={100}>
                 <motion.div
                   className="absolute inset-y-0 left-0 bg-primary rounded-full flex items-center justify-center"
                   initial={{ width: '0%' }}
@@ -174,22 +175,22 @@ export const ProfileHeader = ({
                   transition={{ duration: 0.5, ease: 'easeOut' }}
                 />
               </div>
-              <Trophy className="h-5 w-5 text-amber-500 -ml-2" aria-label="Meta de Sudpoints" />
+              <div className="flex justify-between mt-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <p className="text-xs text-muted-foreground">Siguiente Nivel</p>
+                    </TooltipTrigger>
+                    <TooltipContent><p>{divisionInfo.pointsToNextDivision} SP para ascender a {divisionInfo.nextDivisionName}</p></TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <p className="text-sm font-semibold flex items-center gap-1">
+                  {divisionInfo.pointsInDivision} / {divisionInfo.totalPointsForDivision}
+                </p>
+              </div>
             </div>
-            <div className="flex justify-between mt-1">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <p className="text-xs text-muted-foreground">Siguiente Nivel</p>
-                  </TooltipTrigger>
-                  <TooltipContent><p>{divisionInfo.pointsToNextDivision} SP para ascender a {divisionInfo.nextDivisionName}</p></TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <p className="text-sm font-semibold flex items-center gap-1">
-                {divisionInfo.pointsInDivision} / {divisionInfo.totalPointsForDivision} SP
-              </p>
-            </div>
-          </>
+            <Image src="/assets/profile/logosd.png" alt="Siguiente División" width={40} height={40} className="-ml-2" />
+          </div>
         ) : (
           <div className="text-center py-4">
             <p className="text-lg font-bold text-amber-500">¡LEYENDA MUNDIAL! 🏅</p>
