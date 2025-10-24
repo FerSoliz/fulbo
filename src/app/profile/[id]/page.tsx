@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUpcomingMatches, EnrichedMatch } from '@/hooks/use-upcoming-matches'; // Importamos el nuevo hook y el tipo
 import { UserProfile } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -14,6 +15,7 @@ import { updateUserProfile, updateUserAvatar } from '@/lib/firebase/db/users';
 
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileTeamBadge } from '@/components/profile/ProfileTeamBadge';
+import { ClockBadge } from '@/components/profile/ClockBadge';
 import { ProfileActions, ProfileView } from '@/components/profile/ProfileActions';
 import { SudonePassView } from '@/components/profile/SudonePassView';
 import { RankingPreview } from '@/components/profile/RankingPreview';
@@ -42,7 +44,11 @@ export default function ProfilePage() {
   const { uploadFile } = useUpload();
   const [view, setView] = useState<ProfileView>('buttons');
 
-  const { profileUser, loading } = useUserProfile(userId);
+  const { profileUser, loading: profileLoading } = useUserProfile(userId);
+  // Usamos el nuevo hook para obtener los próximos partidos
+  const { upcomingMatches, loading: matchesLoading } = useUpcomingMatches(profileUser?.team?.id);
+
+  const nextMatch = upcomingMatches?.[0]; // El próximo partido es el primero de la lista
 
   const handleProfileUpdate = async (data: Partial<UserProfile>) => {
     if (!profileUser) return;
@@ -79,7 +85,7 @@ export default function ProfilePage() {
 
   const ActiveView = viewComponents[view] || null;
 
-  if (loading) {
+  if (profileLoading) {
     return <div className="flex items-center justify-center h-screen" role="status" aria-live="polite"><Loader2 className="h-12 w-12 animate-spin text-primary" /><span className="sr-only">Cargando perfil...</span></div>;
   }
 
@@ -91,15 +97,23 @@ export default function ProfilePage() {
       profileUser: profileUser,
       profileUserId: userId,
       onClose: () => setView('buttons'),
+      // Pasamos los datos relevantes a la vista activa
+      upcomingMatches: upcomingMatches, 
+      loadingMatches: matchesLoading,
   };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8 space-y-6 rounded-t-20x2 overflow-hidden">
-      {profileUser?.team && (
-        <div className="w-full flex justify-start">
-          <ProfileTeamBadge team={profileUser.team} />
+      <div className="flex justify-between items-center w-full">
+        <div>
+          {profileUser?.team && <ProfileTeamBadge team={profileUser.team} />}
         </div>
-      )}
+        <div>
+          {/* Pasamos el próximo partido al ClockBadge */}
+          <ClockBadge nextMatch={nextMatch} />
+        </div>
+      </div>
+
       <ProfileHeader 
         profileUser={profileUser}
         onSaveProfile={handleProfileUpdate}

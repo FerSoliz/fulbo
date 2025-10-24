@@ -1,33 +1,22 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { getUpcomingMatchesForTeam } from '@/lib/firebase/db';
-import { ref, get } from 'firebase/database';
-import { db } from '@/lib/firebase';
-import { UserProfile, Match } from '@/lib/types';
+import { EnrichedMatch } from '@/hooks/use-upcoming-matches'; // Importamos el tipo
 import { Loader2, X, CalendarX, Trophy, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
 // --- Interfaces y Tipos ---
 
 interface NextMatchViewProps {
-  profileUser: UserProfile;
   onClose: () => void;
+  upcomingMatches: EnrichedMatch[];
+  loadingMatches: boolean;
 }
 
-interface EnrichedMatch extends Match {
-  tournamentName: string;
-  homeTeamName: string;
-  awayTeamName: string;
-  homeTeamLogo: string;
-  awayTeamLogo: string;
-}
-
-// --- Componente de Tarjeta de Partido Individual (Diseño Compacto) ---
+// --- Componente de Tarjeta de Partido Individual ---
 
 const UpcomingMatchCard = ({ match }: { match: EnrichedMatch }) => {
     const { time, month, day } = useMemo(() => {
@@ -88,74 +77,15 @@ const UpcomingMatchCard = ({ match }: { match: EnrichedMatch }) => {
     );
 }
 
-
 // --- Componente Principal del Modal ---
 
 const backdropVariants = { hidden: { opacity: 0 }, visible: { opacity: 1 } };
 const modalVariants = { hidden: { opacity: 0, y: 30, scale: 0.98 }, visible: { opacity: 1, y: 0, scale: 1 }, exit: { opacity: 0, y: 30, scale: 0.98 } };
 
-export const NextMatchView = ({ profileUser, onClose }: NextMatchViewProps) => {
-  const [loading, setLoading] = useState(true);
-  const [upcomingMatches, setUpcomingMatches] = useState<EnrichedMatch[]>([]);
-  const { toast } = useToast();
-
-  const teamId = profileUser.team?.id;
-
-  useEffect(() => {
-    if (!teamId) {
-      setLoading(false);
-      return;
-    }
-
-    const fetchAndEnrichMatches = async () => {
-      setLoading(true);
-      try {
-        const rawMatches = await getUpcomingMatchesForTeam(teamId);
-        if (rawMatches.length === 0) {
-          setUpcomingMatches([]);
-          return; 
-        }
-
-        const tournamentIds = [...new Set(rawMatches.map(m => m.tournamentId).filter(Boolean))];
-        const teamIds = [...new Set(rawMatches.flatMap(m => [m.homeTeamId, m.awayTeamId]).filter(Boolean))];
-
-        const [tournamentsSnap, teamsSnap] = await Promise.all([
-            Promise.all(tournamentIds.map(id => get(ref(db, `tournaments/${id}`)))),
-            Promise.all(teamIds.map(id => get(ref(db, `teams/${id}`))))
-        ]);
-
-        const tournamentsMap = new Map(tournamentsSnap.map(snap => [snap.key, snap.val()]));
-        const teamsMap = new Map(teamsSnap.map(snap => [snap.key, snap.val()]));
-
-        const enriched = rawMatches.map(match => {
-            const tournament = tournamentsMap.get(match.tournamentId);
-            const homeTeam = teamsMap.get(match.homeTeamId);
-            const awayTeam = teamsMap.get(match.awayTeamId);
-            return {
-                ...match,
-                tournamentName: tournament?.name || 'Torneo Desconocido',
-                homeTeamName: homeTeam?.name || 'Equipo Local',
-                awayTeamName: awayTeam?.name || 'Equipo Visitante',
-                homeTeamLogo: homeTeam?.logoUrl || '', 
-                awayTeamLogo: awayTeam?.logoUrl || '',
-            };
-        });
-
-        setUpcomingMatches(enriched);
-
-      } catch (error) {
-        console.error("[NextMatchView] Error al buscar próximos partidos:", error);
-        toast({ title: "Error", description: "No se pudo cargar la información de los próximos partidos.", variant: "destructive" });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAndEnrichMatches();
-  }, [teamId, toast]);
+export const NextMatchView = ({ onClose, upcomingMatches, loadingMatches }: NextMatchViewProps) => {
 
   const renderContent = () => {
-    if (loading) {
+    if (loadingMatches) {
       return (
         <div className="h-96 flex items-center justify-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
