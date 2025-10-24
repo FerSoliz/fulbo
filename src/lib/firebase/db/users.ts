@@ -1,4 +1,4 @@
-import { ref, get, query, orderByChild, equalTo } from 'firebase/database';
+import { ref, get, query, orderByChild, equalTo, update } from 'firebase/database';
 import { db } from '../../firebase';
 import { User, FoundPlayer } from '../../types';
 import { getGuestPlayerByDni } from './guestPlayers';
@@ -59,7 +59,7 @@ export const findUserByDni = async (dni: string): Promise<FoundPlayer | null> =>
         const userData: User = childSnapshot.val();
         if (!foundUser) {
             foundUser = {
-            id: childSnapshot.key!,
+            id: childSnapshot.key! as string, // Aseguramos que sea string
             name: userData.name,
             dni: userData.dni,
             username: userData.username,
@@ -79,4 +79,29 @@ export const findUserByDni = async (dni: string): Promise<FoundPlayer | null> =>
     console.error('Error al buscar usuario por DNI:', error);
     return null;
   }
+};
+
+/**
+ * Actualiza el perfil de un usuario registrado en la Realtime Database.
+ * @param userId El ID del usuario cuyo perfil se va a actualizar.
+ * @param data Un objeto con los campos a actualizar del perfil del usuario. (Partial<User> permite actualizar solo algunos campos)
+ * @returns Una promesa que se resuelve cuando la actualización se completa.
+ */
+export const updateUserProfile = async (userId: string, data: Partial<User>): Promise<void> => {
+  if (!userId) {
+    throw new Error('El ID de usuario es requerido para actualizar el perfil.');
+  }
+  const userRef = ref(db, `users/${userId}`);
+  await update(userRef, data);
+};
+
+/**
+ * Actualiza la URL del avatar de un usuario registrado.
+ * Esta función es un wrapper para `updateUserProfile` para una semántica más clara.
+ * @param userId El ID del usuario cuyo avatar se va a actualizar.
+ * @param avatarUrl La nueva URL del avatar.
+ * @returns Una promesa que se resuelve cuando la actualización se completa.
+ */
+export const updateUserAvatar = async (userId: string, avatarUrl: string): Promise<void> => {
+  await updateUserProfile(userId, { avatar: avatarUrl });
 };

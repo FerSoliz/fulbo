@@ -5,14 +5,13 @@ import { useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
-import { useUserProfile } from '@/hooks/useUserProfile'; // ¡Importamos nuestro nuevo hook!
-import { ref, update } from 'firebase/database';
-import { db } from '@/lib/firebase';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { UserProfile } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-// --- Componentes de la Vista de Perfil ---
+import { updateUserProfile, updateUserAvatar } from '@/lib/firebase/db/users';
+
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileActions, ProfileView } from '@/components/profile/ProfileActions';
 import { SudonePassView } from '@/components/profile/SudonePassView';
@@ -23,11 +22,8 @@ import { PlayerStatsView } from '@/components/profile/PlayerStatsView';
 import { MatchHistoryView } from '@/components/profile/MatchHistoryView';
 import { NextMatchView } from '@/components/profile/NextMatchView';
 
-// --- MEJORA: Mapeo de Componentes para las Vistas ---
-// Este objeto asocia cada string de `ProfileView` con el componente que debe renderizar.
-// Es una solución mucho más limpia y escalable que múltiples condicionales `&&`.
 const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
-  buttons: () => null, // El estado inicial no renderiza nada aquí.
+  buttons: () => null,
   sudone_pass: SudonePassView,
   ranking_preview: RankingPreview,
   my_team: MyTeamModal,
@@ -45,18 +41,13 @@ export default function ProfilePage() {
   const { uploadFile } = useUpload();
   const [view, setView] = useState<ProfileView>('buttons');
 
-  // --- MEJORA: Lógica de datos abstraída en el hook ---
-  // Toda la complejidad de `onValue`, `off`, `loading`, etc., está ahora dentro de `useUserProfile`.
-  // El componente de la página solo consume los datos. ¡Mucho más limpio!
   const { profileUser, loading } = useUserProfile(userId);
 
   const handleProfileUpdate = async (data: Partial<UserProfile>) => {
     if (!profileUser) return;
-    const userRef = ref(db, `users/${profileUser.id}`);
     try {
-      await update(userRef, data);
+      await updateUserProfile(profileUser.id, data);
       toast({ title: 'Éxito', description: 'Perfil actualizado correctamente.' });
-      // Si el usuario actualiza su propio perfil, refrescamos el contexto.
       if (currentUser && currentUser.id === profileUser.id) {
         await refreshUser();
       }
@@ -72,12 +63,19 @@ export default function ProfilePage() {
     const path = `users/${profileUser.id}/avatars/${file.name}`;
     const url = await uploadFile(file, path);
     if (url) {
-      await handleProfileUpdate({ avatar: url });
+      try {
+        await updateUserAvatar(profileUser.id, url);
+        toast({ title: 'Éxito', description: 'Avatar actualizado correctamente.' });
+        if (currentUser && currentUser.id === profileUser.id) {
+            await refreshUser();
+        }
+      } catch (error) {
+        console.error("Error updating avatar:", error);
+        toast({ title: "Error", description: "No se pudo actualizar el avatar.", variant: "destructive" });
+      }
     }
   };
 
-  // --- MEJORA: Renderización dinámica de la vista activa ---
-  // Seleccionamos el componente correcto del mapeo.
   const ActiveView = viewComponents[view] || null;
 
   if (loading) {
@@ -88,10 +86,9 @@ export default function ProfilePage() {
     return <div className="p-8 text-center" aria-live="polite">Usuario no encontrado.</div>;
   }
   
-  // Las props que necesitará el componente de vista activa.
   const viewProps = {
       profileUser: profileUser,
-      profileUserId: userId, // Algunos componentes solo necesitan el ID
+      profileUserId: userId,
       onClose: () => setView('buttons'),
   };
 
