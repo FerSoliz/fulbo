@@ -16,10 +16,17 @@ export const PlayerRankingCard = ({ user }: PlayerRankingCardProps) => {
   const divisionInfo = getDivisionInfo(user.sudpoints ?? 0);
   const divisionColor = divisionInfo?.color || 'hsl(var(--foreground))';
 
+  const cardStyle = {
+    backgroundImage: `linear-gradient(rgba(41, 46, 56, 0.75), rgba(41, 46, 56, 0.75)), url('/assets/profile/puntos.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  };
+
   return (
     <Link
       href={`/profile/${user.id}`}
-      className="flex items-center bg-container p-2 rounded-lg gap-2 transition-colors hover:bg-secondary border border-border-soft"
+      className="flex items-center p-2 rounded-lg gap-2 transition-all hover:brightness-125 border border-border-soft"
+      style={cardStyle}
     >
         {/* Rank */}
         <div className={cn('flex items-center justify-center w-8 font-bold text-xl')}>
