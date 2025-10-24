@@ -23,31 +23,31 @@ export const PlayerRankingCard = ({ user }: PlayerRankingCardProps) => {
   return (
     <Link
       href={`/profile/${user.id}`}
-      className="flex items-center bg-container p-3 rounded-lg gap-3 transition-colors hover:bg-secondary border border-border-soft"
+      className="flex items-center bg-container p-2 rounded-lg gap-2 transition-colors hover:bg-secondary border border-border-soft"
     >
         {/* Rank */}
-        <div className={cn('flex items-center justify-center w-10 font-bold text-2xl', getRankColor(user.rank))}>
-            {user.rank === 1 ? <Crown className="w-7 h-7" /> : user.rank}
+        <div className={cn('flex items-center justify-center w-8 font-bold text-xl', getRankColor(user.rank))}>
+            {user.rank === 1 ? <Crown className="w-6 h-6" /> : user.rank}
         </div>
 
         {/* Avatar */}
-        <Avatar className="w-12 h-12 border-2 border-background">
+        <Avatar className="w-10 h-10 border-2 border-background">
             <AvatarImage src={user.avatar} alt={user.name} />
             <AvatarFallback>{user.name?.charAt(0) ?? 'S'}</AvatarFallback>
         </Avatar>
 
         {/* Info del Jugador y Stats */}
-        <div className="flex-1 grid grid-cols-2 items-center gap-2">
+        <div className="flex-1 grid grid-cols-2 items-center gap-1.5">
             {/* Nombre y Username */}
             <div className='flex-1 min-w-0'>
-                <p className="font-bold text-base truncate">{user.name}</p>
-                <p className="text-sm text-muted-foreground truncate">@{user.username}</p>
+                <p className="font-bold text-sm truncate">{user.name}</p>
+                <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
             </div>
 
             {/* División y Puntos */}
-            <div className="flex flex-col items-end gap-1.5">
+            <div className="flex flex-col items-end gap-1">
                 <DivisionBadge sudpoints={user.sudpoints ?? 0} />
-                <Badge variant="outline" className="font-bold text-xs py-1">
+                <Badge variant="outline" className="font-bold text-[11px] py-0.5 px-2">
                     {user.sudpoints ?? 0} SP
                 </Badge>
             </div>

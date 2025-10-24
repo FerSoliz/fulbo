@@ -29,16 +29,16 @@ export function DivisionBadge({ sudpoints }: DivisionBadgeProps) {
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-2 rounded-full px-3 py-1'
+        'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5'
       )}
       // Usamos el color dinámico de nuestra función
       style={{ backgroundColor: `${divisionInfo.color}20`, color: divisionInfo.color }}
     >
-      <Icon className="h-4 w-4" />
-      <span className="font-bold uppercase text-sm">{divisionInfo.name}</span>
+      <Icon className="h-3 w-3" />
+      <span className="font-bold uppercase text-xs">{divisionInfo.name}</span>
       {/* Mostramos el nivel solo si existe */}
       {divisionInfo.level && (
-        <span className="font-mono text-xs font-bold">{divisionInfo.level}</span>
+        <span className="font-mono text-[10px] font-bold">{divisionInfo.level}</span>
       )}
     </div>
   );
