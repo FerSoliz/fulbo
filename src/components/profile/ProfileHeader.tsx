@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { UserProfile } from '@/lib/types';
 import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
-import { getDivisionInfo } from '@/lib/utils'; // ¡Nuestra función inteligente!
+import { getDivisionInfo } from '@/lib/utils';
 import {
   Card,
   CardContent,
@@ -36,7 +36,6 @@ import { TransferStatusBadge } from './TransferStatusBadge';
 import { TeamDisplay } from './TeamDisplay';
 import { useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy } from 'lucide-react';
 
 const crestMap: { [key: string]: string } = {
   'https://i.postimg.cc/1RfWNTCC/lusail.png': 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png',
@@ -66,7 +65,6 @@ export const ProfileHeader = ({
   const isOwnProfile = currentUser?.id === profileUser.id;
   const { name, username, role, isVerified, avatar, profileBackground, sudpoints = 0, team, transferStatus } = profileUser;
 
-  // --- LÓGICA DE PROGRESO CENTRALIZADA ---
   const divisionInfo = getDivisionInfo(sudpoints);
   const isLeyenda = !isFinite(divisionInfo.endOfDivisionPoints);
 
@@ -86,7 +84,6 @@ export const ProfileHeader = ({
         {profileBackground && <Image src={profileBackground} alt="Fondo de perfil" fill className="object-cover" priority />}
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
 
-        {/* --- MODIFICACIÓN: Iconos completamente pegados --- */}
         {(currentCrest || isOwnProfile) && (
           <div className="absolute bottom-0 right-0 z-10 flex items-center">
             {currentCrest && (
@@ -159,44 +156,49 @@ export const ProfileHeader = ({
       </CardHeader>
 
       <CardContent className="px-6 space-y-4">
-        <div className="flex items-center gap-4">
-          <DivisionBadge sudpoints={sudpoints} />
-          {transferStatus && <TransferStatusBadge user={profileUser} onTransferClick={onTransferClick} />}
-        </div>
+        <div className="space-y-2"> 
+          <div className="flex items-center gap-4">
+            <DivisionBadge sudpoints={sudpoints} />
+            {transferStatus && <TransferStatusBadge user={profileUser} onTransferClick={onTransferClick} />}
+          </div>
 
-        {!isLeyenda ? (
-          <div>
+          {!isLeyenda ? (
             <div className="flex items-center gap-2">
-              <div className="relative h-2 flex-grow bg-muted rounded-full">
-                <motion.div
-                  className="absolute inset-y-0 left-0 bg-primary rounded-full"
-                  initial={{ width: '0%' }}
-                  animate={{ width: `${divisionInfo.progressPercentage}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
-                />
+              {/* Contenedor Flex para la barra y los textos */} 
+              <div className="flex flex-col flex-grow">
+                <div className="relative h-2 flex-grow bg-muted rounded-full">
+                  <motion.div
+                    className="absolute inset-y-0 left-0 bg-primary rounded-full"
+                    initial={{ width: '0%' }}
+                    animate={{ width: `${divisionInfo.progressPercentage}%` }}
+                    transition={{ duration: 0.5, ease: 'easeOut' }}
+                  />
+                </div>
+                {/* Ajustamos el margen y line-height para que los textos queden pegados a la barra */} 
+                <div className="flex justify-between mt-0">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <p className="text-[11px] text-white uppercase leading-none">Siguiente Nivel</p>
+                      </TooltipTrigger>
+                      <TooltipContent><p>{divisionInfo.pointsToNextDivision} SP para ascender a {divisionInfo.nextDivisionName}</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <p className="text-[11px] text-white font-semibold leading-none">
+                    {divisionInfo.pointsInDivision} / {divisionInfo.totalPointsForDivision}
+                  </p>
+                </div>
               </div>
-              <Image src="/assets/profile/logosd.png" alt="Siguiente División" width={40} height={40} />
+              {/* El logo con translate-y negativo para subirlo */} 
+              <Image src="/assets/profile/logosd.png" alt="Siguiente División" width={40} height={40} className="-translate-y-2" />
             </div>
-            <div className="flex justify-between mt-1 pr-[48px]">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <p className="text-[11px] text-white uppercase">Siguiente Nivel</p>
-                  </TooltipTrigger>
-                  <TooltipContent><p>{divisionInfo.pointsToNextDivision} SP para ascender a {divisionInfo.nextDivisionName}</p></TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-              <p className="text-[11px] text-white font-semibold">
-                {divisionInfo.pointsInDivision} / {divisionInfo.totalPointsForDivision}
-              </p>
+          ) : (
+            <div className="text-center py-2">
+              <p className="text-lg font-bold text-amber-500">¡LEYENDA MUNDIAL! 🏅</p>
+              <p className="text-sm text-muted-foreground">Has alcanzado la cima. Total: {sudpoints} SP</p>
             </div>
-          </div>
-        ) : (
-          <div className="text-center py-4">
-            <p className="text-lg font-bold text-amber-500">¡LEYENDA MUNDIAL! 🏅</p>
-            <p className="text-sm text-muted-foreground">Has alcanzado la cima. Total: {sudpoints} SP</p>
-          </div>
-        )}
+          )}
+        </div>
 
         <input type="file" ref={fileInputRef} onChange={onAvatarChange} className="hidden" accept="image/*" disabled={isUploading} aria-label="Subir nueva imagen de perfil" />
         {!isOwnProfile && <Button onClick={onSendMessage} className="w-full"><MessageSquare className="mr-2 h-4 w-4" />Enviar Mensaje</Button>}
