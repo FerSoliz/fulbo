@@ -6,7 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { useUpcomingMatches, EnrichedMatch } from '@/hooks/use-upcoming-matches'; // Importamos el nuevo hook y el tipo
+import { useUpcomingMatches } from '@/hooks/use-upcoming-matches';
 import { UserProfile } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -43,12 +43,12 @@ export default function ProfilePage() {
   const { user: currentUser, refreshUser } = useUser();
   const { uploadFile } = useUpload();
   const [view, setView] = useState<ProfileView>('buttons');
+  const [activeTab, setActiveTab] = useState<'perfil' | 'equipo'>('perfil');
 
   const { profileUser, loading: profileLoading } = useUserProfile(userId);
-  // Usamos el nuevo hook para obtener los próximos partidos
   const { upcomingMatches, loading: matchesLoading } = useUpcomingMatches(profileUser?.team?.id);
 
-  const nextMatch = upcomingMatches?.[0]; // El próximo partido es el primero de la lista
+  const nextMatch = upcomingMatches?.[0];
 
   const handleProfileUpdate = async (data: Partial<UserProfile>) => {
     if (!profileUser) return;
@@ -86,18 +86,17 @@ export default function ProfilePage() {
   const ActiveView = viewComponents[view] || null;
 
   if (profileLoading) {
-    return <div className="flex items-center justify-center h-screen" role="status" aria-live="polite"><Loader2 className="h-12 w-12 animate-spin text-primary" /><span className="sr-only">Cargando perfil...</span></div>;
+    return <div className="flex items-center justify-center h-screen"><Loader2 className="h-12 w-12 animate-spin" /></div>;
   }
 
   if (!profileUser) {
-    return <div className="p-8 text-center" aria-live="polite">Usuario no encontrado.</div>;
+    return <div className="p-8 text-center">Usuario no encontrado.</div>;
   }
   
   const viewProps = {
       profileUser: profileUser,
       profileUserId: userId,
       onClose: () => setView('buttons'),
-      // Pasamos los datos relevantes a la vista activa
       upcomingMatches: upcomingMatches, 
       loadingMatches: matchesLoading,
   };
@@ -109,7 +108,6 @@ export default function ProfilePage() {
           {profileUser?.team && <ProfileTeamBadge team={profileUser.team} />}
         </div>
         <div>
-          {/* Pasamos el próximo partido al ClockBadge */}
           <ClockBadge nextMatch={nextMatch} />
         </div>
       </div>
@@ -120,17 +118,23 @@ export default function ProfilePage() {
         onAvatarChange={handleAvatarUpload}
         onSendMessage={() => toast({ title: 'Próximamente', description: 'La mensajería aún no está implementada.' })}
         onTransferClick={() => toast({ title: 'Próximamente', description: 'El mercado de fichajes se abrirá pronto.' })}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        hasTeam={!!profileUser?.team}
       />
 
-        {view === 'buttons' ? (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-            <ProfileActions setView={setView} />
-          </motion.div>
-        ) : (
-          <AnimatePresence mode="wait">
-            {ActiveView && <ActiveView {...viewProps} />}
-          </AnimatePresence>
-        )}
+      {/* ===== LÓGICA DE RENDERIZADO SIMPLIFICADA ===== */}
+      {view === 'buttons' ? (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+          {/* 1. ProfileActions ahora se renderiza siempre que la vista sea 'buttons' */}
+          {/* 2. Le pasamos la pestaña activa para que filtre los botones correctos. */}
+          <ProfileActions setView={setView} activeTab={activeTab} />
+        </motion.div>
+      ) : (
+        <AnimatePresence mode="wait">
+          {ActiveView && <ActiveView {...viewProps} />}
+        </AnimatePresence>
+      )}
     </div>
   );
 }

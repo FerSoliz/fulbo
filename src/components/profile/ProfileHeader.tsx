@@ -35,6 +35,7 @@ import { BackgroundChangerDialog } from './BackgroundChangerDialog';
 import { TransferStatusBadge } from './TransferStatusBadge';
 import { useRef } from 'react';
 import { motion } from 'framer-motion';
+import { ProfileNav } from './ProfileNav'; // <-- ¡IMPORTANTE!
 
 const crestMap: { [key: string]: string } = {
   'https://i.postimg.cc/1RfWNTCC/lusail.png': 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png',
@@ -48,6 +49,10 @@ interface ProfileHeaderProps {
   onSendMessage: () => void;
   onTransferClick: () => void;
   onAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  // ===== 1. AÑADIMOS LAS NUEVAS PROPS =====
+  activeTab: 'perfil' | 'equipo';
+  onTabChange: (tab: 'perfil' | 'equipo') => void;
+  hasTeam: boolean;
 }
 
 export const ProfileHeader = ({
@@ -55,7 +60,11 @@ export const ProfileHeader = ({
   onSaveProfile,
   onSendMessage,
   onTransferClick,
-  onAvatarChange
+  onAvatarChange,
+  // ===== 2. RECIBIMOS LAS NUEVAS PROPS =====
+  activeTab,
+  onTabChange,
+  hasTeam
 }: ProfileHeaderProps) => {
   const { user: currentUser } = useUser();
   const { isUploading } = useUpload();
@@ -201,6 +210,13 @@ export const ProfileHeader = ({
         <input type="file" ref={fileInputRef} onChange={onAvatarChange} className="hidden" accept="image/*" disabled={isUploading} aria-label="Subir nueva imagen de perfil" />
         {!isOwnProfile && <Button onClick={onSendMessage} className="w-full"><MessageSquare className="mr-2 h-4 w-4" />Enviar Mensaje</Button>}
       </CardContent>
+      
+      {/* ===== 3. INSERTAMOS LA NAVEGACIÓN DENTRO DEL CARD ===== */}
+      <ProfileNav
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        hasTeam={hasTeam}
+      />
     </Card>
   );
 };
