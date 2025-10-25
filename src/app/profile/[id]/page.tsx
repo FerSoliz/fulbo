@@ -44,33 +44,37 @@ const actionCards = [
     view: 'stats' as ProfileView,
     title: 'Estadísticas',
     tab: 'perfil',
-    bgImage: '/assets/profile/fondo-pelota.png', 
+    bgImage: '/assets/profile/persona.png',
   },
   {
     view: 'ranking_preview' as ProfileView,
     title: 'Ranking',
     tab: 'perfil',
-    bgImage: '/assets/profile/estandarte.png', // Nueva imagen para Ranking
+    bgImage: '/assets/profile/estandarte.png',
   },
   {
     view: 'favorite_tournaments' as ProfileView,
     title: 'Torneos',
     tab: 'perfil',
+    bgImage: '/assets/profile/fondo-pelota.png',
   },
   {
     view: 'history' as ProfileView,
-    title: 'Historial', 
+    title: 'Historial',
     tab: 'equipo',
+    bgImage: '/assets/profile/estandarte.png',
   },
   {
     view: 'next_match' as ProfileView,
-    title: 'Fixture', 
+    title: 'Fixture',
     tab: 'equipo',
+    bgImage: '/assets/profile/fondo-pelota.png',
   },
   {
     view: 'my_team' as ProfileView,
-    title: 'Equipo', 
+    title: 'Equipo',
     tab: 'equipo',
+    bgImage: '/assets/profile/team.png', // Actualizado a team.png
   },
 ];
 
