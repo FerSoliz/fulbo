@@ -24,7 +24,7 @@ export const ProfileNav = ({ activeTab, onTabChange, hasTeam }: ProfileNavProps)
           className={cn(
             'py-1 transition-all duration-200 border-b-2 rounded-none uppercase',
             activeTab === 'perfil'
-              ? 'font-bold text-amber-400 border-accent-red hover:bg-transparent hover:text-amber-400'
+              ? 'font-bold text-amber-400 border-accent-red bg-black/10 shadow-inner'
               : 'text-muted-foreground border-transparent'
           )}
         >
@@ -37,7 +37,7 @@ export const ProfileNav = ({ activeTab, onTabChange, hasTeam }: ProfileNavProps)
           className={cn(
             'py-1 transition-all duration-200 border-b-2 rounded-none uppercase',
             activeTab === 'equipo'
-              ? 'font-bold text-amber-400 border-accent-red hover:bg-transparent hover:text-amber-400'
+              ? 'font-bold text-amber-400 border-accent-red bg-black/10 shadow-inner'
               : 'text-muted-foreground border-transparent'
           )}
         >
