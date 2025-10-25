@@ -38,17 +38,19 @@ const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
   favorite_tournaments: TournamentsView,
 };
 
-// Tarjetas de acción con títulos actualizados
+// Tarjetas de acción con imágenes de fondo secundarias
 const actionCards = [
   {
     view: 'stats' as ProfileView,
     title: 'Estadísticas',
     tab: 'perfil',
+    bgImage: '/assets/profile/fondo-pelota.png', 
   },
   {
     view: 'ranking_preview' as ProfileView,
     title: 'Ranking',
     tab: 'perfil',
+    bgImage: '/assets/profile/estandarte.png', // Nueva imagen para Ranking
   },
   {
     view: 'favorite_tournaments' as ProfileView,
@@ -173,6 +175,7 @@ export default function ProfilePage() {
               <ActionCard
                 title={card.title}
                 onClick={() => setView(card.view)}
+                secondaryBgImage={card.bgImage}
               />
             </div>
           ))}
