@@ -14,9 +14,8 @@ export const ProfileNav = ({ activeTab, onTabChange, hasTeam }: ProfileNavProps)
     return null;
   }
   
-  // La clase 'p-1' se cambia por 'px-1 pt-1' para eliminar el padding inferior.
   return (
-    <div className="px-1 pt-1"> 
+    <div className="pt-1">
       <div className="grid grid-cols-2 gap-1">
         <Button
           variant="ghost"
