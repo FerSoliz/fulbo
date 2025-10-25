@@ -16,12 +16,17 @@ export const ActionCard = ({ title, onClick }: ActionCardProps) => {
       className="cursor-pointer h-full"
       onClick={onClick}
     >
-      <Card className="relative rounded-none bg-container hover:bg-container/80 transition-colors h-full overflow-hidden">
-        {/*
-          - Se usa un valor negativo en 'bottom' para forzar el texto hacia abajo.
-          - Esto contrarresta las métricas internas de la fuente y elimina la "flotación".
-        */}
-        <CardTitle className="absolute bottom-[-2px] left-[1px] transform origin-left scale-x-50 uppercase italic text-3xl tracking-wider font-bold leading-none">
+      {/* 
+        - Ajuste de Zoom: Se incrementa el `backgroundSize` a '300%' para un efecto más pronunciado.
+      */}
+      <Card 
+        className="relative rounded-none h-full overflow-hidden bg-center"
+        style={{
+          backgroundImage: "url('/assets/profile/puntos.png')",
+          backgroundSize: '300%', 
+        }}
+      >
+        <CardTitle className="absolute bottom-[1px] left-[1px] transform origin-left scale-x-50 uppercase italic text-3xl tracking-wider font-bold leading-none">
           {title}
         </CardTitle>
       </Card>
