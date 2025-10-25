@@ -7,7 +7,7 @@ import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useUpcomingMatches } from '@/hooks/use-upcoming-matches';
-import { UserProfile } from '@/lib/types';
+import { UserProfile, ProfileView } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -16,7 +16,9 @@ import { updateUserProfile, updateUserAvatar } from '@/lib/firebase/db/users';
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileTeamBadge } from '@/components/profile/ProfileTeamBadge';
 import { ClockBadge } from '@/components/profile/ClockBadge';
-import { ProfileActions, ProfileView } from '@/components/profile/ProfileActions';
+import { ActionCard } from '@/components/profile/ActionCard';
+
+// Vistas de los modales
 import { SudonePassView } from '@/components/profile/SudonePassView';
 import { RankingPreview } from '@/components/profile/RankingPreview';
 import { TournamentsView } from '@/components/profile/TournamentsView';
@@ -35,6 +37,40 @@ const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
   next_match: NextMatchView,
   favorite_tournaments: TournamentsView,
 };
+
+// Tarjetas de acción con títulos actualizados
+const actionCards = [
+  {
+    view: 'stats' as ProfileView,
+    title: 'Estadísticas',
+    tab: 'perfil',
+  },
+  {
+    view: 'ranking_preview' as ProfileView,
+    title: 'Ranking',
+    tab: 'perfil',
+  },
+  {
+    view: 'favorite_tournaments' as ProfileView,
+    title: 'Torneos',
+    tab: 'perfil',
+  },
+  {
+    view: 'history' as ProfileView,
+    title: 'Historial', 
+    tab: 'equipo',
+  },
+  {
+    view: 'next_match' as ProfileView,
+    title: 'Fixture', 
+    tab: 'equipo',
+  },
+  {
+    view: 'my_team' as ProfileView,
+    title: 'Equipo', 
+    tab: 'equipo',
+  },
+];
 
 export default function ProfilePage() {
   const params = useParams();
@@ -100,6 +136,8 @@ export default function ProfilePage() {
       upcomingMatches: upcomingMatches, 
       loadingMatches: matchesLoading,
   };
+  
+  const cardsForTab = actionCards.filter(card => card.tab === activeTab);
 
   return (
     <div className="container mx-auto px-4 pt-2 pb-4 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:pb-8 lg:pt-6 space-y-2 rounded-t-20x2 overflow-hidden">
@@ -123,12 +161,21 @@ export default function ProfilePage() {
         hasTeam={!!profileUser?.team}
       />
 
-      {/* ===== LÓGICA DE RENDERIZADO SIMPLIFICADA ===== */}
       {view === 'buttons' ? (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
-          {/* 1. ProfileActions ahora se renderiza siempre que la vista sea 'buttons' */}
-          {/* 2. Le pasamos la pestaña activa para que filtre los botones correctos. */}
-          <ProfileActions setView={setView} activeTab={activeTab} />
+        <motion.div 
+            className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+         >
+          {cardsForTab.map((card) => (
+            <div key={card.view} className="aspect-[2.5/1]">
+              <ActionCard
+                title={card.title}
+                onClick={() => setView(card.view)}
+              />
+            </div>
+          ))}
         </motion.div>
       ) : (
         <AnimatePresence mode="wait">

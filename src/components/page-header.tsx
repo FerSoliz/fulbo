@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import * as React from 'react';
+import { usePathname } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import {
   DropdownMenu,
@@ -41,23 +42,28 @@ const notificationIcons: { [key: string]: React.ElementType } = {
 export function PageHeader() {
   const { user, loading, logout, notifications, setNotifications } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const [bannerUrl, setBannerUrl] = React.useState<string | null>(null);
   const [isBannerLoading, setIsBannerLoading] = React.useState(true);
 
+  const isProfilePage = pathname.startsWith('/profile/');
+
   React.useEffect(() => {
-    const fetchBannerUrl = async () => {
-      try {
-        const url = await getHeaderBannerUrl();
-        setBannerUrl(url);
-      } catch (error) {
-        console.error("Error al cargar el banner:", error);
-      } finally {
-        setIsBannerLoading(false);
-      }
-    };
-    fetchBannerUrl();
-  }, []);
+    if (!isProfilePage) {
+      const fetchBannerUrl = async () => {
+        try {
+          const url = await getHeaderBannerUrl();
+          setBannerUrl(url);
+        } catch (error) {
+          console.error("Error al cargar el banner:", error);
+        } finally {
+          setIsBannerLoading(false);
+        }
+      };
+      fetchBannerUrl();
+    }
+  }, [isProfilePage]);
   
   const hasUnreadNotifications = notifications.some(n => !n.isRead);
 
@@ -170,28 +176,30 @@ export function PageHeader() {
           <div className="border-t border-border/50 px-4 pt-2 pb-3 md:hidden">
              <GlobalSearch />
           </div>
-          <div className="px-4 pb-2 relative">
-             {isBannerLoading ? (
-                <Skeleton className="w-full h-[150px] rounded-lg" />
-             ) : (
-                <>
-                  <Link
-                      href="https://www.monsterenergy.com"
-                      target="_blank"
-                      rel="noopener noreferrer">
-                      <Image
-                          src={bannerUrl || "/banner-monster.jpg"} // Usa la URL dinámica o el fallback
-                          alt="Banner Principal de Sudone"
-                          width={1200}
-                          height={150}
-                          priority
-                          className="rounded-lg object-cover"
-                      />
-                  </Link>
-                  <EditBannerButton onUploadComplete={setBannerUrl} />
-                </>
-             )}
-         </div>
+          {!isProfilePage && (
+             <div className="px-4 pb-2 relative">
+                {isBannerLoading ? (
+                   <Skeleton className="w-full h-[150px] rounded-lg" />
+                ) : (
+                   <>
+                     <Link
+                         href="https://www.monsterenergy.com"
+                         target="_blank"
+                         rel="noopener noreferrer">
+                         <Image
+                             src={bannerUrl || "/banner-monster.jpg"} // Usa la URL dinámica o el fallback
+                             alt="Banner Principal de Sudone"
+                             width={1200}
+                             height={150}
+                             priority
+                             className="rounded-lg object-cover"
+                         />
+                     </Link>
+                     <EditBannerButton onUploadComplete={setBannerUrl} />
+                   </>
+                )}
+            </div>
+          )}
       </header>
   );
 }
