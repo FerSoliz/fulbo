@@ -133,7 +133,7 @@ export const ProfileHeader = ({
 
       <CardHeader className="pt-14 pb-4 px-6 flex flex-col gap-2">
         <div>
-          <CardTitle className="text-4xl italic mb-0 leading-[0.8]" style={{ letterSpacing: '-0.05em' }}>
+        <CardTitle className="transform origin-left scale-x-50 md:scale-x-100 text-4xl italic mb-0 leading-[0.8] tracking-tighter">
             <span className="text-accent-red">#</span>{username.toUpperCase()}
           </CardTitle>
           <CardDescription className="flex items-center gap-2 text-base">
