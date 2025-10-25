@@ -169,7 +169,7 @@ export default function ProfilePage() {
             exit={{ opacity: 0, y: -20 }}
          >
           {cardsForTab.map((card) => (
-            <div key={card.view} className="aspect-[2.5/1]">
+            <div key={card.view} className="aspect-[2.17/1]">
               <ActionCard
                 title={card.title}
                 onClick={() => setView(card.view)}
