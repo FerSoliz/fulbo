@@ -14,8 +14,9 @@ export const ProfileNav = ({ activeTab, onTabChange, hasTeam }: ProfileNavProps)
     return null;
   }
   
+  // La clase 'p-1' se cambia por 'px-1 pt-1' para eliminar el padding inferior.
   return (
-    <div className="p-1">
+    <div className="px-1 pt-1"> 
       <div className="grid grid-cols-2 gap-1">
         <Button
           variant="ghost"
@@ -24,9 +25,7 @@ export const ProfileNav = ({ activeTab, onTabChange, hasTeam }: ProfileNavProps)
           className={cn(
             'py-1 transition-all duration-200 border-b-2 rounded-none uppercase',
             activeTab === 'perfil'
-              // ACTIVO: Mantiene el color y fondo transparente incluso en hover
               ? 'font-bold text-amber-400 border-accent-red hover:bg-transparent hover:text-amber-400'
-              // INACTIVO: Permite el hover por defecto para dar feedback
               : 'text-muted-foreground border-transparent'
           )}
         >
@@ -39,9 +38,7 @@ export const ProfileNav = ({ activeTab, onTabChange, hasTeam }: ProfileNavProps)
           className={cn(
             'py-1 transition-all duration-200 border-b-2 rounded-none uppercase',
             activeTab === 'equipo'
-              // ACTIVO: Mantiene el color y fondo transparente incluso en hover
               ? 'font-bold text-amber-400 border-accent-red hover:bg-transparent hover:text-amber-400'
-              // INACTIVO: Permite el hover por defecto para dar feedback
               : 'text-muted-foreground border-transparent'
           )}
         >

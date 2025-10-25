@@ -87,7 +87,7 @@ export const ProfileHeader = ({
   const handleChangeTransferStatus = (status: 'libre' | 'traspaso' | 'blindado') => onSaveProfile({ transferStatus: status });
 
   return (
-    <Card className="overflow-hidden !rounded-t-7xl bg-[url('/assets/profile/puntos.png')]">
+    <Card className="overflow-hidden rounded-t-7xl rounded-b-none bg-[url('/assets/profile/puntos.png')]">
       <div className="relative w-full aspect-[4/1]">
         {profileBackground && <Image src={profileBackground} alt="Fondo de perfil" fill className="object-cover" priority />}
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
