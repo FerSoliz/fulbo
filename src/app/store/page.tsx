@@ -5,6 +5,7 @@ import { getProducts } from '@/lib/firebase/db';
 import { Product } from '@/lib/types';
 import { ProductCard } from '@/components/product-card';
 import { useToast } from '@/hooks/use-toast';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { ProductCardSkeleton } from '@/components/product-card-skeleton';
 import { StoreFilters } from '@/components/store-filters';
 
@@ -15,6 +16,7 @@ export default function StorePage() {
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const { toast } = useToast();
   const initialStoreSet = useRef(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -61,6 +63,33 @@ export default function StorePage() {
     return products.filter(p => p.tienda === selectedStore);
   }, [products, selectedStore]);
 
+  const renderableProducts = useMemo(() => {
+    if (!isMobile || !expandedProductId) {
+        return filteredProducts;
+    }
+
+    const expandedIndex = filteredProducts.findIndex(p => p.id === expandedProductId);
+
+    // Si no se encuentra o es el primer elemento, no se necesita reordenar.
+    if (expandedIndex <= 0) {
+        return filteredProducts;
+    }
+
+    // En una cuadrícula de 2 columnas, los elementos de la derecha tienen un índice impar.
+    const isRightCard = expandedIndex % 2 !== 0;
+
+    if (isRightCard) {
+        const newProducts = [...filteredProducts];
+        // Intercambiar la tarjeta expandida con la anterior para que se renderice primero en la fila.
+        const previousCard = newProducts[expandedIndex - 1];
+        newProducts[expandedIndex - 1] = newProducts[expandedIndex];
+        newProducts[expandedIndex] = previousCard;
+        return newProducts;
+    }
+
+    return filteredProducts;
+  }, [filteredProducts, expandedProductId, isMobile]);
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -83,9 +112,9 @@ export default function StorePage() {
                 <ProductCardSkeleton key={i} />
             ))}
           </div>
-        ) : filteredProducts.length > 0 ? (
+        ) : renderableProducts.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {filteredProducts.map((product) => (
+            {renderableProducts.map((product) => (
               <ProductCard 
                   key={product.id} 
                   product={product}
