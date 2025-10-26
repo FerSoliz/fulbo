@@ -111,7 +111,7 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
       )}
 
       {isYoutube ? (
-        <div className="aspect-video bg-black overflow-hidden">
+        <div className="aspect-square bg-black overflow-hidden">
           {!isYoutubePlaying && (
             <div className="absolute inset-0 cursor-pointer group" onClick={() => setIsYoutubePlaying(true)} role="button" aria-label="Reproducir video de YouTube">
               <Image src={videoItem.url} alt="Miniatura del video de YouTube" fill className="object-cover transition-opacity duration-300 group-hover:opacity-80" onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Video+No+Disponible'; }} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" priority={isPriority} />
@@ -131,7 +131,7 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`Ver en directo a ${videoItem.videoId} en Twitch`}>
-          <div className="aspect-video bg-muted overflow-hidden">
+          <div className="aspect-square bg-muted overflow-hidden">
             <Image src={videoItem.url} alt="Miniatura del stream de Twitch" fill className="object-contain" onError={(e) => { e.currentTarget.src = 'https://placehold.co/1280x720/211536/9386b8?text=Stream+Offline'; }} sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" priority={isPriority} />
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center"><Play className="h-16 w-16 text-white group-hover:scale-110 transition-transform" /></div>
           </div>
@@ -139,20 +139,20 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
       ) : imageMedia.length > 0 && (
         <Dialog>
           <DialogTrigger asChild>
-             <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer`}>
+             <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer aspect-square bg-muted`}>
               {imageMedia.slice(0, 4).map((item, index) => (
-                <div key={item.url || index} className={cn("relative bg-muted w-full", imageCount === 3 && index === 0 && "row-span-2", imageCount > 1 && "aspect-square")}>
-                  {imageCount === 1 ? <Image src={item.url} alt={`Post media ${index + 1}`} width={1000} height={1000} className="w-full h-auto object-contain" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" priority={isPriority} /> : <Image src={item.url} alt={`Post media ${index + 1}`} fill className="object-contain" sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" priority={isPriority && index === 0} />}
+                <div key={item.url || index} className={cn("relative bg-muted w-full h-full", imageCount === 3 && index === 0 && "row-span-2 col-span-1", imageCount >= 3 && index > 0 && "col-span-1")}>
+                  <Image src={item.url} alt={`Post media ${index + 1}`} fill className="object-cover" sizes="(max-width: 768px) 50vw, 33vw" priority={isPriority && index === 0} />
                   {index === 3 && imageCount > 4 && <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-3xl font-bold">+{imageCount - 4}</div>}
                 </div>
               ))}
             </div>
           </DialogTrigger>
-          <DialogContent className="p-0 bg-transparent border-none max-w-4xl w-full">
-            <Carousel>
+          <DialogContent className="p-0 bg-transparent border-none max-w-7xl w-screen h-screen flex items-center justify-center">
+            <Carousel className="w-full max-w-4xl">
               <CarouselContent>
                 {imageMedia.map((item, index) => (
-                  <CarouselItem key={item.url || index} className="relative aspect-video">
+                  <CarouselItem key={item.url || index} className="relative h-[90vh]">
                      <Image
                         src={item.url}
                         alt={`Post media ${index + 1}`}
@@ -165,11 +165,14 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
               </CarouselContent>
               {imageMedia.length > 1 && (
                 <>
-                  <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10" />
-                  <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10" />
+                  <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white" />
+                  <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/50 hover:bg-black/70 text-white" />
                 </>
               )}
             </Carousel>
+             <Button asChild variant="ghost" size="icon" className="absolute top-4 right-4 z-50 bg-black/50 hover:bg-black/70 rounded-full h-9 w-9">
+                <DialogTrigger><X className="h-5 w-5 text-white"/></DialogTrigger>
+            </Button>
           </DialogContent>
         </Dialog>
       )}
