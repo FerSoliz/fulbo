@@ -140,13 +140,13 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
         <Dialog>
             <DialogTrigger asChild>
                 {imageCount === 1 ? (
-                    <div className="relative cursor-pointer bg-black">
+                    <div className="relative cursor-pointer">
                         <Image
                             src={imageMedia[0].url}
                             alt={`Post media 1`}
                             width={1000} 
                             height={1000}
-                            className="w-full h-auto object-contain max-h-[70vh]"
+                            className="w-full h-auto"
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             priority={isPriority}
                         />
