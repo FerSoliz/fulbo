@@ -114,6 +114,7 @@ export function PageHeader() {
                      <Skeleton className="h-10 w-10 rounded-full" />
                   ) : user && user.id !== 'visitor' ? (
                       <>
+                          {/* MENÚ DE NOTIFICACIONES OCULTADO TEMPORALMENTE
                           <DropdownMenu onOpenChange={(open) => open && handleOpenNotifications()}>
                               <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" size="icon" className="relative">
@@ -157,6 +158,7 @@ export function PageHeader() {
                                   )}
                               </DropdownMenuContent>
                           </DropdownMenu>
+                          */}
                           <Link href={`/profile/${user.id}`}>
                               <Button variant="ghost" size="icon" className="rounded-full">
                                   <Avatar>

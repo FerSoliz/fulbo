@@ -20,7 +20,7 @@ import {
   KeyRound,
   Loader2,
   Download,
-  Landmark, // 1. Importar el icono
+  Landmark,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -38,7 +38,6 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { useToast } from '@/hooks/use-toast';
 
-
 const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
     { href: '/tournaments', icon: Trophy, label: 'LIGAS EN CURSO' },
@@ -46,8 +45,7 @@ const menuItems = [
     { href: '/store', icon: Store, label: 'TIENDA' },
     { href: '/collectibles', icon: Swords, label: 'TGC SUDONE' },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
-    { href: '/messages', icon: MessageSquare, label: 'MENSAJES' },
-    // 2. Agrupar los enlaces de admin
+    // { href: '/messages', icon: MessageSquare, label: 'MENSAJES' }, // Ocultado temporalmente
     { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN' },
 ];
 
@@ -93,7 +91,7 @@ const AdminAuthDialog = ({ isOpen, onOpenChange, onAuthorized }: { isOpen: boole
 
     const handleVerify = () => {
         setIsLoading(true);
-        setTimeout(() => { // Simulating network delay
+        setTimeout(() => {
             if (password === correctPassword) {
                 onAuthorized();
                 toast({ title: "Acceso concedido", description: "¡Bienvenido, Editor! Tu rol ha sido actualizado." });
@@ -104,7 +102,7 @@ const AdminAuthDialog = ({ isOpen, onOpenChange, onAuthorized }: { isOpen: boole
             setIsLoading(false);
             setPassword('');
         }, 500);
-    }
+    };
     
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -138,7 +136,7 @@ const AdminAuthDialog = ({ isOpen, onOpenChange, onAuthorized }: { isOpen: boole
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    )
+    );
 }
 
 interface BeforeInstallPromptEvent extends Event {

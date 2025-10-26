@@ -195,7 +195,7 @@ Esta sección sirve como un registro vivo del estado de las funcionalidades del 
   - **Descripción:** Se ha llevado a cabo una refactorización detallada de la página de torneos para mejorar significativamente su visualización en dispositivos móviles, siguiendo un proceso iterativo de ajustes finos.
   - **Ajuste de Título:** Se redujo la altura de la tarjeta de título para compactar la cabecera en móviles, usando un diseño responsivo que mantiene la altura original en escritorio.
   - **Optimización de Espaciado:** Se redujeron los márgenes (`padding`) de la página y el espacio (`gap`) entre las tarjetas de torneos en la vista móvil. Esto permite que las tarjetas sean más anchas y aprovechen mejor el espacio disponible en pantalla.
-  - **Refinamiento de Texto:** Se unificó el estilo del texto en las tarjetas, convirtiéndolo a mayúsculas y ajustando el espaciado entre los datos (día y sede) para una presentación más limpia y profesional.
+  - **Refinamiento de Texto:** Se unificó el estilo del texto en las tarjetas, convirtiéndelo a mayúsculas y ajustando el espaciado entre los datos (día y sede) para una presentación más limpia y profesional.
 - **Mejora de la Visualización de Torneos y Limpieza de Rutas:**
   - **Fecha:** 2024-05-25
   - **Descripción:** Se realizó una refactorización integral de la visualización de torneos y se eliminó código obsoleto para mejorar la mantenibilidad del proyecto.
@@ -220,6 +220,15 @@ Esta sección sirve como un registro vivo del estado de las funcionalidades del 
   - **Reproducción Inline (YouTube):** Los videos de YouTube ahora se reproducen directamente en la tarjeta del post. Al hacer clic, una animación suave reemplaza la miniatura con el reproductor de video, que incluye un estado de carga (`spinner`) para una mejor UX.
   - **Previsualización Inteligente (Formulario):** Al crear un post, cuando un usuario pega un enlace de YouTube o Twitch, el sistema genera automáticamente una previsualización del video y **elimina la URL del campo de texto**. Esto evita contenido duplicado y mejora la limpieza de los posts.
   - **Enlaces a Twitch:** Los enlaces a canales o clips de Twitch siguen mostrándose como una miniatura interactiva que redirige a la plataforma de Twitch en una nueva pestaña.
+
+### Funcionalidades Deshabilitadas Temporalmente
+- **Deshabilitación de Mensajería y Notificaciones:**
+  - **Fecha:** 2024-05-27
+  - **Descripción:** Se ha decidido posponer el desarrollo de las funcionalidades de mensajería interna y notificaciones para priorizar el desarrollo de los módulos centrales del proyecto (torneos, ranking, perfiles).
+  - **Cambios Realizados:**
+    - Se ocultó el enlace "MENSAJES" del menú de navegación lateral (`src/components/main-sidebar.tsx`).
+    - Se ocultó el ícono de notificaciones y su menú desplegable en la cabecera principal (`src/components/page-header.tsx`).
+  - **Próximos Pasos:** Estas funcionalidades se reactivarán y desarrollarán en una futura fase del proyecto, cuando las características principales estén consolidadas.
 
 ### Tareas a Futuro
 - **Soporte para múltiples equipos por jugador:**
