@@ -138,15 +138,36 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
         </Link>
       ) : imageMedia.length > 0 && (
         <Dialog>
-          <DialogTrigger asChild>
-             <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer aspect-square bg-muted`}>
-              {imageMedia.slice(0, 4).map((item, index) => (
-                <div key={item.url || index} className={cn("relative bg-muted w-full h-full", imageCount === 3 && index === 0 && "row-span-2 col-span-1", imageCount >= 3 && index > 0 && "col-span-1")}>
-                  <Image src={item.url} alt={`Post media ${index + 1}`} fill className="object-cover" sizes="(max-width: 768px) 50vw, 33vw" priority={isPriority && index === 0} />
-                  {index === 3 && imageCount > 4 && <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-3xl font-bold">+{imageCount - 4}</div>}
-                </div>
-              ))}
-            </div>
+            <DialogTrigger asChild>
+                {imageCount === 1 ? (
+                    <div className="relative cursor-pointer bg-black">
+                        <Image
+                            src={imageMedia[0].url}
+                            alt={`Post media 1`}
+                            width={1000} 
+                            height={1000}
+                            className="w-full h-auto object-contain max-h-[70vh]"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            priority={isPriority}
+                        />
+                    </div>
+                ) : (
+                    <div className={`grid ${gridClasses[Math.min(imageCount, 4) as keyof typeof gridClasses]} gap-1 overflow-hidden cursor-pointer aspect-square bg-muted`}>
+                        {imageMedia.slice(0, 4).map((item, index) => (
+                            <div key={item.url || index} className={cn("relative bg-muted w-full h-full", imageCount === 3 && index === 0 && "row-span-2 col-span-1", imageCount >= 3 && index > 0 && "col-span-1")}>
+                                <Image 
+                                    src={item.url} 
+                                    alt={`Post media ${index + 1}`} 
+                                    fill 
+                                    className="object-cover" 
+                                    sizes="(max-width: 768px) 50vw, 33vw" 
+                                    priority={isPriority && index === 0}
+                                />
+                                {index === 3 && imageCount > 4 && <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-3xl font-bold">+{imageCount - 4}</div>}
+                            </div>
+                        ))}
+                    </div>
+                )}
           </DialogTrigger>
           <DialogContent className="p-0 bg-transparent border-none max-w-7xl w-screen h-screen flex items-center justify-center">
             <Carousel className="w-full max-w-4xl">
