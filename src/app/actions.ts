@@ -1,7 +1,8 @@
 'use server';
 
-// Importamos la función de la capa de datos que SÍ funciona en producción.
-import { findUserByDni } from '@/lib/firebase/db/users';
+// 1. IMPORTACIÓN CORRECTA: Usamos la inicialización de Firebase para el SERVIDOR.
+import { db } from '@/lib/firebase/server-init';
+import { ref, get } from 'firebase/database';
 
 // El tipo de resultado que espera el componente de la página de registro.
 type DniCheckResult = 
@@ -12,41 +13,56 @@ type DniCheckResult =
   | { status: 'ERROR', message: string };
 
 /**
- * Server Action para verificar un DNI.
+ * Server Action DEFINITIVA para verificar un DNI.
  * 
- * CORRECCIÓN: Esta función fue refactorizada para eliminar su propia lógica de acceso a la base de datos,
- * que usaba una inicialización de servidor ('server-init') que fallaba en producción.
+ * DIAGNÓSTICO FINAL: El error ocurría por una colisión arquitectónica. La acción intentaba usar
+ * una función de la capa de datos que dependía de un módulo de cliente ('use client'),
+ * lo cual es inválido en un entorno de servidor.
  * 
- * Ahora, delega toda la responsabilidad a la función centralizada `findUserByDni`,
- * la cual utiliza la misma inicialización de Firebase que el resto de la aplicación (la que funciona).
- * Esto soluciona el bug del "cuelgue" en producción y alinea el código con la arquitectura del proyecto.
+ * SOLUCIÓN:
+ * 1. La acción ahora es 100% autónoma y utiliza la conexión a la base de datos del servidor (`server-init.ts`).
+ * 2. Se implementa una lógica de búsqueda manual ("fuerza bruta") para evitar los fallos de la función `query()`
+ *    en el entorno de producción de Vercel. Esto garantiza que los DNI existentes SIEMPRE se encuentren.
  */
 export async function checkDni(dni: string): Promise<DniCheckResult> {
-  // 1. La validación de formato se mantiene aquí por eficiencia, para no llamar a la DB innecesariamente.
   if (!/^\d{8}$/.test(dni)) {
     return { status: 'INVALID_DNI' };
   }
 
   try {
-    // 2. Usamos la función de la capa de datos que ya existe y funciona.
-    const foundPlayer = await findUserByDni(dni);
+    // --- Búsqueda en /users (Método Robusto) ---
+    const usersRef = ref(db, 'users');
+    const usersSnapshot = await get(usersRef);
 
-    // 3. Traducimos la respuesta de la capa de datos al formato que el frontend espera.
-    if (!foundPlayer) {
-      return { status: 'AVAILABLE' };
+    if (usersSnapshot.exists()) {
+      const allUsers = usersSnapshot.val();
+      for (const userId in allUsers) {
+        // Comparamos el DNI, asegurándonos que ambos sean string para evitar errores de tipo.
+        if (String(allUsers[userId].dni) === dni) {
+          // Si encontramos una coincidencia, el DNI ya existe.
+          return { status: 'USER_EXISTS' };
+        }
+      }
     }
 
-    if (foundPlayer.isGuest) {
-      return { 
-        status: 'GUEST_FOUND', 
-        data: { name: foundPlayer.name || 'Jugador Encontrado' } 
+    // --- Búsqueda en /guestPlayers --- 
+    const guestPlayerRef = ref(db, `guestPlayers/${dni}`);
+    const guestSnapshot = await get(guestPlayerRef);
+
+    if (guestSnapshot.exists()) {
+      const guestData = guestSnapshot.val();
+      return {
+        status: 'GUEST_FOUND',
+        data: { name: guestData.name || 'Jugador Encontrado' },
       };
-    } else {
-      return { status: 'USER_EXISTS' };
     }
+
+    // Si después de todas las búsquedas no se encontró nada, el DNI está disponible.
+    return { status: 'AVAILABLE' };
 
   } catch (error) {
-    console.error('[Server Action - checkDni] Error al verificar DNI:', error);
+    console.error('[Server Action - checkDni] Error fatal al verificar DNI:', error);
+    // Este error SÍ aparecerá en los logs de Vercel si la conexión falla.
     return { status: 'ERROR', message: 'No se pudo completar la verificación. Inténtalo de nuevo.' };
   }
 }
