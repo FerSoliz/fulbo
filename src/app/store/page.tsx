@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { getProducts } from '@/lib/firebase/db';
 import { Product } from '@/lib/types';
 import { ProductCard } from '@/components/product-card';
@@ -12,7 +12,9 @@ export default function StorePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStore, setSelectedStore] = useState('Todos');
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const { toast } = useToast();
+  const initialStoreSet = useRef(false);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -40,6 +42,17 @@ export default function StorePage() {
     const storeSet = new Set(products.map(p => p.tienda).filter(Boolean) as string[]);
     return Array.from(storeSet);
   }, [products]);
+
+  useEffect(() => {
+    if (stores.length > 0 && !initialStoreSet.current) {
+        setSelectedStore(stores[0]);
+        initialStoreSet.current = true;
+    }
+  }, [stores]);
+
+  const handleToggleDetails = (productId: string) => {
+    setExpandedProductId(prevId => (prevId === productId ? null : productId));
+  };
 
   const filteredProducts = useMemo(() => {
     if (selectedStore === 'Todos') {
@@ -76,6 +89,8 @@ export default function StorePage() {
               <ProductCard 
                   key={product.id} 
                   product={product}
+                  isExpanded={expandedProductId === product.id}
+                  onToggleDetails={() => handleToggleDetails(product.id)}
               />
             ))}
           </div>

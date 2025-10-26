@@ -9,7 +9,7 @@ interface StoreFiltersProps {
 }
 
 export function StoreFilters({ stores, selectedStore, onSelectStore }: StoreFiltersProps) {
-  const allStores = ['Todos', ...stores];
+  const allStores = [...stores, 'Todos'];
 
   return (
     <div className="w-full overflow-x-auto pb-2 mb-6">

@@ -226,7 +226,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         sudpoints: isGuestMigration && guestData.sudpoints ? guestData.sudpoints : 0,
         team: isGuestMigration && guestData.team ? guestData.team : null,
         collectibles: {
-          availablePacks: 1,
+          availablePacks: 2,
           nextPackTimestamp: null,
           cardIds: [],
           team: {
