@@ -332,3 +332,64 @@ export const listenToAllTeams = (callback: (teams: Team[]) => void): Unsubscribe
 
     return unsubscribe;
 };
+
+// --- NUEVA FUNCIÓN AÑADIDA ---
+
+/**
+ * Actualiza los detalles de un equipo (nombre/logo) y propaga los cambios (fan-out)
+ * a los perfiles de todos sus miembros (jugadores registrados e invitados).
+ * Esta operación es atómica para garantizar la consistencia de los datos.
+ *
+ * @param teamId El ID del equipo a actualizar.
+ * @param teamData Un objeto con los nuevos datos del equipo. Debe contener `name` y opcionalmente `logoUrl`.
+ */
+export const updateTeamWithFanOut = async (
+  teamId: string,
+  teamData: { name: string; logoUrl?: string }
+) => {
+  try {
+    const teamRef = ref(db, `teams/${teamId}`);
+    const teamSnapshot = await get(teamRef);
+
+    if (!teamSnapshot.exists()) {
+      throw new Error(`El equipo con ID ${teamId} no existe.`);
+    }
+
+    const currentTeamData = teamSnapshot.val();
+    const updates: { [key: string]: any } = {};
+
+    // 1. Preparar la actualización para el nodo principal del equipo
+    updates[`/teams/${teamId}/name`] = teamData.name;
+    if (teamData.logoUrl) {
+      updates[`/teams/${teamId}/logoUrl`] = teamData.logoUrl;
+    }
+
+    // 2. Preparar las actualizaciones para cada jugador del equipo (Fan-out)
+    if (currentTeamData.players) {
+      const updatedTeamInfoForPlayer = {
+        id: teamId,
+        name: teamData.name,
+        crestUrl: teamData.logoUrl || currentTeamData.logoUrl || null,
+      };
+
+      for (const playerId in currentTeamData.players) {
+        const playerInfo = currentTeamData.players[playerId];
+        if (playerInfo.isGuest) {
+          // Actualizar perfil de jugador invitado
+          updates[`/guestPlayers/${playerId}/team`] = updatedTeamInfoForPlayer;
+        } else {
+          // Actualizar perfil de jugador registrado
+          updates[`/users/${playerId}/team`] = updatedTeamInfoForPlayer;
+        }
+      }
+    }
+
+    // 3. Ejecutar todas las actualizaciones de forma atómica
+    await update(ref(db), updates);
+    return true;
+
+  } catch (error) {
+    console.error("Error al actualizar el equipo y propagar los cambios:", error);
+    return false;
+  }
+};

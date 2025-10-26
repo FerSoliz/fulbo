@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-// --- CORRECCIÓN DE IMPORTACIONES ---
-import { db, storage } from '@/lib/firebase';
-// Se importa `update` para realizar actualizaciones parciales y se mantiene `set` para crear nuevos documentos.
-import { ref as dbRef, set, push, update } from 'firebase/database';
+// --- IMPORTACIONES CENTRALIZADAS ---
+import { storage, db } from '@/lib/firebase';
+// Importamos nuestra nueva función para actualizar y propagar cambios.
+import { updateTeamWithFanOut } from '@/lib/firebase/db';
+// Ya no necesitamos `update` directamente en el componente.
+import { ref as dbRef, set, push } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -15,12 +17,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Save, X, Image as ImageIcon, AlertCircle } from 'lucide-react';
 
-// --- TIPOS DE DATOS ---
 interface Team {
   id: string;
   name: string;
   logoUrl?: string;
-  // Se añaden los campos opcionales para que el tipo sea más preciso
   players?: { [key: string]: any };
   tournaments?: { [key: string]: any };
 }
@@ -89,29 +89,22 @@ export function UpsertTeamDialog({ open, onOpenChange, teamToEdit, onSuccess }: 
         logoUrl = await getDownloadURL(uploadResult.ref);
       }
 
-      const teamRef = dbRef(db, `teams/${teamId}`);
-
       if (isEditMode) {
-        // --- LÓGICA DE ACTUALIZACIÓN ---
-        // Se construye un objeto solo con los datos que han cambiado.
-        const updatedData: Partial<Team> = {
+        // --- LÓGICA DE ACTUALIZACIÓN CENTRALIZADA ---
+        // Se construye el objeto con los datos a actualizar.
+        const updatedData = {
           name: name.trim(),
+          logoUrl: logoUrl,
         };
-        // Solo se añade la URL del logo si se ha subido uno nuevo o si ya existía.
-        if (logoUrl) {
-          updatedData.logoUrl = logoUrl;
-        }
-        // Se utiliza `update` para no sobreescribir los datos existentes como `players`.
-        await update(teamRef, updatedData);
+        // Se llama a la función centralizada que maneja la actualización y el fan-out.
+        await updateTeamWithFanOut(teamId, updatedData);
       } else {
         // --- LÓGICA DE CREACIÓN ---
-        // Se utiliza `set` para crear un equipo nuevo con la estructura completa.
-        await set(teamRef, {
+        await set(dbRef(db, `teams/${teamId}`), {
           id: teamId,
           name: name.trim(),
           logoUrl: logoUrl,
-          // Se inicializan los campos `players` y `tournaments` para asegurar la consistencia de datos.
-          players: {}, 
+          players: {},
           tournaments: {},
         });
       }
