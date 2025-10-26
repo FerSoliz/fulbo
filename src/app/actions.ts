@@ -1,64 +1,52 @@
 'use server';
 
-// ¡CORRECCIÓN CRÍTICA! Importamos la instancia de la DB desde el archivo de inicialización del servidor.
-import { db } from '@/lib/firebase/server-init';
-import { ref, get, query, orderByChild, equalTo, limitToFirst } from 'firebase/database';
+// Importamos la función de la capa de datos que SÍ funciona en producción.
+import { findUserByDni } from '@/lib/firebase/db/users';
 
-// Definimos los tipos de resultado posibles para que el frontend sepa qué esperar.
+// El tipo de resultado que espera el componente de la página de registro.
 type DniCheckResult = 
-  | { status: 'USER_EXISTS' } // El DNI ya pertenece a una cuenta registrada.
-  | { status: 'GUEST_FOUND', data: { name: string } } // El DNI pertenece a un jugador invitado.
-  | { status: 'AVAILABLE' } // El DNI está libre.
-  | { status: 'INVALID_DNI' } // El formato del DNI no es válido.
-  | { status: 'ERROR', message: string }; // Ocurrió un error en el servidor.
+  | { status: 'USER_EXISTS' } 
+  | { status: 'GUEST_FOUND', data: { name: string } } 
+  | { status: 'AVAILABLE' } 
+  | { status: 'INVALID_DNI' } 
+  | { status: 'ERROR', message: string };
 
 /**
- * Verifica la existencia de un DNI en la base de datos (usuarios y jugadores invitados).
- * Se ejecuta de forma segura en el servidor.
- * @param dni El Documento Nacional de Identidad a verificar.
- * @returns Un objeto indicando el estado del DNI.
+ * Server Action para verificar un DNI.
+ * 
+ * CORRECCIÓN: Esta función fue refactorizada para eliminar su propia lógica de acceso a la base de datos,
+ * que usaba una inicialización de servidor ('server-init') que fallaba en producción.
+ * 
+ * Ahora, delega toda la responsabilidad a la función centralizada `findUserByDni`,
+ * la cual utiliza la misma inicialización de Firebase que el resto de la aplicación (la que funciona).
+ * Esto soluciona el bug del "cuelgue" en producción y alinea el código con la arquitectura del proyecto.
  */
 export async function checkDni(dni: string): Promise<DniCheckResult> {
-  // 1. Validación de formato básica.
+  // 1. La validación de formato se mantiene aquí por eficiencia, para no llamar a la DB innecesariamente.
   if (!/^\d{8}$/.test(dni)) {
     return { status: 'INVALID_DNI' };
   }
 
   try {
-    // 2. Buscar si ya existe un USUARIO registrado con ese DNI.
-    // Usamos una consulta indexada para un rendimiento óptimo.
-    const usersQuery = query(
-      ref(db, 'users'), 
-      orderByChild('dni'), 
-      equalTo(dni),
-      limitToFirst(1)
-    );
-    const userSnapshot = await get(usersQuery);
+    // 2. Usamos la función de la capa de datos que ya existe y funciona.
+    const foundPlayer = await findUserByDni(dni);
 
-    if (userSnapshot.exists()) {
-      // Si encontramos un resultado, no necesitamos seguir buscando.
+    // 3. Traducimos la respuesta de la capa de datos al formato que el frontend espera.
+    if (!foundPlayer) {
+      return { status: 'AVAILABLE' };
+    }
+
+    if (foundPlayer.isGuest) {
+      return { 
+        status: 'GUEST_FOUND', 
+        data: { name: foundPlayer.name || 'Jugador Encontrado' } 
+      };
+    } else {
       return { status: 'USER_EXISTS' };
     }
 
-    // 3. Si no es un usuario, buscar si existe como JUGADOR INVITADO.
-    // La búsqueda aquí es directa y muy rápida, ya que el DNI es la clave.
-    const guestPlayerRef = ref(db, `guestPlayers/${dni}`);
-    const guestSnapshot = await get(guestPlayerRef);
-
-    if (guestSnapshot.exists()) {
-      const guestData = guestSnapshot.val();
-      return { 
-        status: 'GUEST_FOUND', 
-        data: { name: guestData.name || 'Nombre no encontrado' } 
-      };
-    }
-
-    // 4. Si no se encontró en ninguna de las dos ramas, está disponible.
-    return { status: 'AVAILABLE' };
-
   } catch (error) {
-    console.error('Error severo al verificar DNI:', error);
-    // Es importante notificar al frontend si algo falló en el servidor.
-    return { status: 'ERROR', message: 'No se pudo completar la verificación en este momento.' };
+    console.error('[Server Action - checkDni] Error al verificar DNI:', error);
+    return { status: 'ERROR', message: 'No se pudo completar la verificación. Inténtalo de nuevo.' };
   }
 }
