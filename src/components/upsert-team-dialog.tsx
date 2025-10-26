@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 // --- CORRECCIÓN DE IMPORTACIONES ---
-// Cambiamos la importación de `rtdb` a `db` para que coincida con el archivo de configuración.
 import { db, storage } from '@/lib/firebase';
-import { ref as dbRef, set, push } from 'firebase/database';
+// Se importa `update` para realizar actualizaciones parciales y se mantiene `set` para crear nuevos documentos.
+import { ref as dbRef, set, push, update } from 'firebase/database';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
@@ -20,6 +20,9 @@ interface Team {
   id: string;
   name: string;
   logoUrl?: string;
+  // Se añaden los campos opcionales para que el tipo sea más preciso
+  players?: { [key: string]: any };
+  tournaments?: { [key: string]: any };
 }
 
 interface UpsertTeamDialogProps {
@@ -76,23 +79,42 @@ export function UpsertTeamDialog({ open, onOpenChange, teamToEdit, onSuccess }: 
     setIsSaving(true);
 
     try {
-      let logoUrl = teamToEdit?.logoUrl || '';
-      // Usamos `db` en lugar de `rtdb`.
       const teamId = teamToEdit?.id || push(dbRef(db, 'teams')).key;
-
       if (!teamId) throw new Error("No se pudo generar un ID para el equipo.");
 
+      let logoUrl = teamToEdit?.logoUrl || '';
       if (logoFile) {
         const logoStorageRef = storageRef(storage, `team-logos/${teamId}`);
         const uploadResult = await uploadBytes(logoStorageRef, logoFile);
         logoUrl = await getDownloadURL(uploadResult.ref);
       }
 
-      // Usamos `db` en lugar de `rtdb`.
-      await set(dbRef(db, `teams/${teamId}`), {
-        name: name.trim(),
-        logoUrl: logoUrl,
-      });
+      const teamRef = dbRef(db, `teams/${teamId}`);
+
+      if (isEditMode) {
+        // --- LÓGICA DE ACTUALIZACIÓN ---
+        // Se construye un objeto solo con los datos que han cambiado.
+        const updatedData: Partial<Team> = {
+          name: name.trim(),
+        };
+        // Solo se añade la URL del logo si se ha subido uno nuevo o si ya existía.
+        if (logoUrl) {
+          updatedData.logoUrl = logoUrl;
+        }
+        // Se utiliza `update` para no sobreescribir los datos existentes como `players`.
+        await update(teamRef, updatedData);
+      } else {
+        // --- LÓGICA DE CREACIÓN ---
+        // Se utiliza `set` para crear un equipo nuevo con la estructura completa.
+        await set(teamRef, {
+          id: teamId,
+          name: name.trim(),
+          logoUrl: logoUrl,
+          // Se inicializan los campos `players` y `tournaments` para asegurar la consistencia de datos.
+          players: {}, 
+          tournaments: {},
+        });
+      }
 
       toast({
         title: `¡Equipo ${isEditMode ? 'actualizado' : 'creado'}!`,
