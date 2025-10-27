@@ -30,7 +30,7 @@ const TournamentCard = ({ tournament }: { tournament: FullTournament }) => {
   return (
     <Link
       href={`/tournaments/${tournament.id}`}
-      className="relative z-0 block border border-soft rounded-lg shadow hover:bg-muted/50 transition-colors duration-200 overflow-hidden aspect-[2/1] border-b-2 border-b-accent-blue"
+      className="relative z-0 block border border-soft rounded-none shadow hover:bg-muted/50 transition-colors duration-200 overflow-hidden aspect-[2/1] border-b-2 border-b-accent-blue"
     >
       {/* --- Capas de Fondo --- */}
       <div className="absolute inset-0 bg-container z-0"></div>
@@ -110,7 +110,7 @@ export default function TournamentsPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-2 md:p-6">
-      <div className="relative bg-container border rounded-lg shadow-lg overflow-hidden mb-8 h-20 md:h-28">
+      <div className="relative bg-container border rounded-none shadow-lg overflow-hidden mb-8 h-20 md:h-28">
         <div className="absolute right-0 top-0 bottom-0 w-48">
             <Image
                 src="/assets/profile/fondo-pelota.png"
@@ -130,7 +130,7 @@ export default function TournamentsPage() {
       {isLoading && (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-1 md:gap-6">
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-card border rounded-lg shadow p-5 aspect-[2/1]">
+            <div key={i} className="bg-card border rounded-none shadow p-5 aspect-[2/1]">
               <div className="h-full bg-muted animate-pulse rounded-md"></div>
             </div>
           ))}
@@ -138,7 +138,7 @@ export default function TournamentsPage() {
       )}
 
       {error && (
-        <div className="text-center text-red-500 bg-red-100 dark:bg-red-900/20 dark:text-red-400 p-4 rounded-md border border-red-200 dark:border-red-800">
+        <div className="text-center text-red-500 bg-red-100 dark:bg-red-900/20 dark:text-red-400 p-4 rounded-none border border-red-200 dark:border-red-800">
           <p>{error}</p>
         </div>
       )}

@@ -45,23 +45,21 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="w-full min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex justify-center">
             <Link href="/" className="relative w-[200px] h-[60px]">
-              {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
-              }
               <Image
                 src="/sudone-titulo.png"
                 alt="SUDONE Logo"
                 fill
                 priority
-                sizes="200px" // <-- ¡SOLUCIÓN AÑADIDA!
+                sizes="200px"
                 style={{ objectFit: 'contain' }}
               />
             </Link>
         </div>
-        <Card>
+        <Card className="bg-secondary/50 backdrop-blur-md border-white/10 rounded-none">
           {isSent ? (
              <CardContent className="pt-6 text-center">
                 <CardTitle className="text-2xl mb-2">Revisa tu Correo</CardTitle>
@@ -90,6 +88,7 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    className="bg-black/20 border-white/20"
                   />
                 </div>
               </CardContent>
