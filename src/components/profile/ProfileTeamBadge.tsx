@@ -22,7 +22,7 @@ export const ProfileTeamBadge = ({ team }: ProfileTeamBadgeProps) => {
 
       {/* Tarjeta posicionada y con padding/texto reducido */}
       <div className="absolute left-7 z-0">
-        <Card className="relative bg-container shadow-md overflow-hidden [clip-path:polygon(0%_0%,_100%_0%,_88%_100%,_0%_100%)] border-0">
+        <Card className="relative bg-container shadow-md overflow-hidden [clip-path:polygon(0%_0%,_100%_0%,_88%_100%,_0%_100%)] border-0 rounded-none">
           <div className="py-0.5 pl-5 pr-4">
             <p className="text-white font-semibold text-xs whitespace-nowrap">{team.name}</p>
           </div>

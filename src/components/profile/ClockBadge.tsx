@@ -81,7 +81,7 @@ export const ClockBadge = ({ nextMatch }: ClockBadgeProps) => {
   return (
     <div className="relative flex items-center justify-end h-10">
       <div className="absolute right-7 z-0">
-        <Card className="relative bg-container shadow-md overflow-hidden [clip-path:polygon(0%_0%,_100%_0%,_100%_100%,_12%_100%)] border-0">
+        <Card className="relative bg-container shadow-md overflow-hidden [clip-path:polygon(0%_0%,_100%_0%,_100%_100%,_12%_100%)] border-0 rounded-none">
           <div className="py-0.5 pr-5 pl-7 min-w-[90px] text-center"> {/* Ancho mínimo para estabilidad */}
             <p className="text-white font-semibold text-xs whitespace-nowrap">{getCountdownText()}</p>
           </div>
