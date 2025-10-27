@@ -25,7 +25,7 @@
         "awayTeamId",
         "status"
       ],
-      ".read": "auth != null",
+      ".read": true,
       "$matchId": {
         ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'"
       }

@@ -1,8 +1,7 @@
-
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import type { User, Notification } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from '@/lib/firebase';
@@ -58,6 +57,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [nextPackTimestamp, setNextPackTimestamp] = useState<number | null>(null);
   const [countdown, setCountdown] = useState<string>('');
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -73,7 +73,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
             let packsForState = 0;
             let tsForState: number | null = null;
 
-            // --- INICIO DE LA LÓGICA DE MIGRACIÓN / INICIALIZACIÓN ---
             if (dbUser.collectibles === undefined) {
               console.log(`Usuario sin estructura 'collectibles'. Creando/Migrando para: ${firebaseUser.uid}`);
               
@@ -105,11 +104,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
               tsForState = collectiblesData.nextPackTimestamp || null;
             }
 
-            // --- INICIO DE LA LÓGICA PROACTIVA DEL TEMPORIZADOR ---
             if (packsForState < 2 && tsForState === null) {
               console.log(`Usuario ${firebaseUser.uid} elegible para un nuevo sobre. Iniciando temporizador.`);
               const newTimestamp = Date.now() + SIX_HOURS_IN_MS;
-              tsForState = newTimestamp; // Actualizar para el estado local
+              tsForState = newTimestamp;
 
               if (userForState.collectibles) {
                 userForState.collectibles.nextPackTimestamp = newTimestamp;
@@ -121,9 +119,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
               update(collectiblesRef, { nextPackTimestamp: newTimestamp })
                 .catch(err => console.error("Error al iniciar el temporizador proactivo:", err));
             }
-            // --- FIN DE LA LÓGICA PROACTIVA ---
 
-            // Actualización final del estado
             setUser(userForState);
             setAvailablePacks(packsForState);
             setNextPackTimestamp(tsForState);
@@ -147,6 +143,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
       unsubscribeUser();
     };
   }, []);
+
+  useEffect(() => {
+    if (loading) return;
+
+    const publicRoutes = ['/login', '/register', '/forgot-password', '/'];
+    const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/tournaments') || pathname.startsWith('/tournament') || pathname.startsWith('/profile') || pathname.startsWith('/ranking');
+
+    if (user?.id === 'visitor' && !isPublicRoute) {
+      router.push('/');
+    }
+
+  }, [user, loading, pathname, router]);
 
   useEffect(() => {
     if (!nextPackTimestamp) {
