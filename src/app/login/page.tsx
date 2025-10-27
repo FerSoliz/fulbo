@@ -45,7 +45,7 @@ export default function LoginPage() {
               />
             </Link>
         </div>
-        <Card className="bg-secondary/50 backdrop-blur-md border-white/10">
+        <Card className="bg-secondary/50 backdrop-blur-md border-white/10 rounded-none">
           <form onSubmit={handleLogin}>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Inicia Sesión</CardTitle>

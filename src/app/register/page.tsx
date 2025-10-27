@@ -161,7 +161,7 @@ export default function RegisterPage() {
               <Image src="/sudone-titulo.png" alt="SUDONE Logo" fill priority sizes="200px" style={{ objectFit: 'contain' }} />
             </Link>
         </div>
-        <Card className="bg-secondary/50 backdrop-blur-md border-white/10">
+        <Card className="bg-secondary/50 backdrop-blur-md border-white/10 rounded-none">
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">{dniStepCompleted ? 'Completa tu Perfil' : 'Crea tu Cuenta'}</CardTitle>
