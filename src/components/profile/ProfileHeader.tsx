@@ -46,12 +46,14 @@ const crestMap: { [key: string]: string } = {
 
 const GuestRegisterBanner = ({ guestName, guestDni }: { guestName: string; guestDni: string }) => (
   <Link href={`/register?dni=${guestDni}`} passHref>
-    <div className="relative text-center p-4 rounded-lg bg-gradient-to-r from-accent-red to-red-700 hover:from-red-700 hover:to-accent-red transition-all duration-300 cursor-pointer shadow-lg">
-      <div className="absolute -top-3 -left-3 w-8 h-8 bg-white rounded-full flex items-center justify-center">
-        <Star className="text-accent-red w-5 h-5" />
+    <div className="flex items-center text-center p-2.5 rounded-lg bg-gradient-to-r from-accent-red to-red-700 hover:from-red-700 hover:to-accent-red transition-all duration-300 cursor-pointer shadow-md">
+      <div className="flex-shrink-0 w-6 h-6 bg-white rounded-full flex items-center justify-center mr-3">
+        <Star className="text-accent-red w-4 h-4" />
       </div>
-      <p className="font-bold text-white text-lg">¿Eres {guestName}?</p>
-      <p className="text-sm text-white/90">¡Regístrate para reclamar tu perfil y guardar tus estadísticas!</p>
+      <div className="text-left">
+        <p className="font-bold text-white text-sm leading-tight">¿Eres {guestName}?</p>
+        <p className="text-xs text-white/80">¡Regístrate para reclamar tu perfil!</p>
+      </div>
     </div>
   </Link>
 );
