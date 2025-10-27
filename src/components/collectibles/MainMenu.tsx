@@ -38,22 +38,34 @@ export const MainMenu = ({ onOpenPack, availablePacks, countdown, user }: MainMe
         </div>
       </div>
       <div className="relative z-10 mt-6 w-full flex justify-center gap-4">
-        <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
-          <Image
-            src="https://i.postimg.cc/t4NZKwwX/SHOP-CARD.png"
-            alt="Tienda de cartas"
-            width={154}
-            height={154}
-          />
-        </button>
-        <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
-          <Image
-            src="https://i.postimg.cc/0QRpxDZv/BOTON-VS.png"
-            alt="Modo VS"
-            width={154}
-            height={154}
-          />
-        </button>
+        <div className="relative">
+            <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
+                <Image
+                    src="https://i.postimg.cc/t4NZKwwX/SHOP-CARD.png"
+                    alt="Tienda de cartas"
+                    width={154}
+                    height={154}
+                    className="rounded-xl"
+                />
+            </button>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-destructive text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
+                PRÓXIMAMENTE
+            </div>
+        </div>
+        <div className="relative">
+            <button className="transition-transform hover:scale-105 drop-shadow-lg" disabled>
+                <Image
+                    src="https://i.postimg.cc/0QRpxDZv/BOTON-VS.png"
+                    alt="Modo VS"
+                    width={154}
+                    height={154}
+                    className="rounded-xl"
+                />
+            </button>
+            <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-destructive text-white text-[10px] font-bold px-2 py-1 rounded-full shadow-lg">
+                PRÓXIMAMENTE
+            </div>
+        </div>
       </div>
       {/* El botón de misiones ha sido eliminado para evitar confusión */}
     </div>

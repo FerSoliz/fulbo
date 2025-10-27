@@ -157,7 +157,7 @@ export default function CollectibleCardsPage() {
 
   const menuItems = [
     { id: 'collection', label: 'MI COLECCIÓN', icon: Layers, href: '/collectibles/collection' },
-    { id: 'team', label: 'MI EQUIPO', icon: Users, action: () => setView('formation') },
+    { id: 'team', label: 'MI EQUIPO', icon: Users, action: () => setView('formation'), disabled: true },
     { id: 'trade', label: 'INTERCAMBIOS', icon: ArrowLeftRight, disabled: true },
   ];
 
@@ -201,7 +201,14 @@ export default function CollectibleCardsPage() {
     );
 
     if (item.disabled) {
-        return <div>{content}</div>;
+        return (
+            <div className="relative cursor-not-allowed">
+                {content}
+                <div className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-destructive text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-lg">
+                    PRÓXIMAMENTE
+                </div>
+            </div>
+        );
     }
     if (item.href) {
         return <Link href={item.href}>{content}</Link>;

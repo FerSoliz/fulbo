@@ -43,7 +43,7 @@ const menuItems = [
     { href: '/tournaments', icon: Trophy, label: 'LIGAS EN CURSO' },
     { href: '/tournament', icon: Ticket, label: 'INSCRIBIRME' },
     { href: '/store', icon: Store, label: 'TIENDA' },
-    { href: '/collectibles', icon: Swords, label: 'TGC SUDONE' },
+    { href: '/collectibles', icon: Swords, label: 'TCG SUDONE' },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
     // { href: '/messages', icon: MessageSquare, label: 'MENSAJES' }, // Ocultado temporalmente
     { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN' },
@@ -79,7 +79,6 @@ const socialItems = [
 ];
 
 const footerMenuItems = [
-    { href: '/settings', icon: Cog, label: 'CONFIGURACIÓN' },
     { href: '/profile', icon: UserIcon, label: 'MI PERFIL' },
 ];
 
