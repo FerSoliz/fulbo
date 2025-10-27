@@ -2,18 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
-import { getUpcomingMatchesForTeam } from '@/lib/firebase/db';
-import { ref, get } from 'firebase/database';
-import { db } from '@/lib/firebase';
+import { getUpcomingMatchesForTeam, getMultipleTeams, getMultipleTournaments } from '@/lib/firebase/db';
 import { Match } from '@/lib/types';
 
-// Interfaz para el partido "enriquecido" que devolverá el hook
 export interface EnrichedMatch extends Match {
   tournamentName: string;
   homeTeamName: string;
   awayTeamName: string;
-  homeTeamLogo: string;
-  awayTeamLogo: string;
+  homeTeamLogo?: string;
+  awayTeamLogo?: string;
 }
 
 export const useUpcomingMatches = (teamId: string | undefined) => {
@@ -41,25 +38,20 @@ export const useUpcomingMatches = (teamId: string | undefined) => {
         const tournamentIds = [...new Set(rawMatches.map(m => m.tournamentId).filter(Boolean))];
         const teamIds = [...new Set(rawMatches.flatMap(m => [m.homeTeamId, m.awayTeamId]).filter(Boolean))];
 
-        const [tournamentsSnap, teamsSnap] = await Promise.all([
-            Promise.all(tournamentIds.map(id => get(ref(db, `tournaments/${id}`)))),
-            Promise.all(teamIds.map(id => get(ref(db, `teams/${id}`))))
+        // Usar las funciones centralizadas getMultiple, igual que en useMatchHistory
+        const [tournamentsMap, teamsMap] = await Promise.all([
+          getMultipleTournaments(tournamentIds),
+          getMultipleTeams(teamIds),
         ]);
 
-        const tournamentsMap = new Map(tournamentsSnap.map(snap => [snap.key, snap.val()]));
-        const teamsMap = new Map(teamsSnap.map(snap => [snap.key, snap.val()]));
-
-        const enriched = rawMatches.map(match => {
-            const tournament = tournamentsMap.get(match.tournamentId);
-            const homeTeam = teamsMap.get(match.homeTeamId);
-            const awayTeam = teamsMap.get(match.awayTeamId);
+        const enriched = rawMatches.map((match): EnrichedMatch => {
             return {
                 ...match,
-                tournamentName: tournament?.name || 'Torneo Desconocido',
-                homeTeamName: homeTeam?.name || 'Equipo Local',
-                awayTeamName: awayTeam?.name || 'Equipo Visitante',
-                homeTeamLogo: homeTeam?.logoUrl || '', 
-                awayTeamLogo: awayTeam?.logoUrl || '',
+                tournamentName: tournamentsMap[match.tournamentId]?.name || 'Torneo Desconocido',
+                homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
+                awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
+                homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl || '', 
+                awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl || '',
             };
         });
 

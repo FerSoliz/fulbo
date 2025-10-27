@@ -3,15 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getMatchHistoryForTeam, getMultipleTeams, getMultipleTournaments } from '@/lib/firebase/db';
-import { Match, Tournament, Team } from '@/lib/types';
-
-export interface EnrichedMatch extends Match {
-  tournamentName: string;
-  homeTeamName: string;
-  homeTeamLogo?: string;
-  awayTeamName: string;
-  awayTeamLogo?: string;
-}
+import { Match, Tournament, Team, EnrichedMatch } from '@/lib/types';
 
 interface UseMatchHistoryReturn {
   matches: EnrichedMatch[];
@@ -38,7 +30,6 @@ export function useMatchHistory(teamId: string | undefined | null): UseMatchHist
       setError(null);
 
       try {
-        // 1. Obtener los partidos crudos como un objeto
         const rawMatchesObject = await getMatchHistoryForTeam(teamId);
         const rawMatchesArray = Object.values(rawMatchesObject);
 
@@ -49,37 +40,45 @@ export function useMatchHistory(teamId: string | undefined | null): UseMatchHist
           return;
         }
 
-        // 2. Extraer IDs únicos para torneos y equipos
-        const tournamentIds = [...new Set(rawMatchesArray.map(m => m.tournamentId))];
+        const finishedMatches = rawMatchesArray.filter(match => match.status === 'finished');
+
+        if (finishedMatches.length === 0) {
+            setMatches([]);
+            // Aún queremos mostrar los torneos en el filtro aunque no haya partidos terminados
+            const tournamentIds = [...new Set(rawMatchesArray.map(m => m.tournamentId))];
+            const tournamentsMap = await getMultipleTournaments(tournamentIds);
+            setTournaments(Object.values(tournamentsMap));
+            setLoading(false);
+            return;
+        }
+
+        const tournamentIds = [...new Set(finishedMatches.map(m => m.tournamentId))];
         
-        // Reemplazo de .flatMap por .reduce para mayor compatibilidad
-        const allTeamIds = rawMatchesArray.reduce((ids, match) => {
+        const allTeamIds = finishedMatches.reduce((ids, match) => {
           ids.push(match.homeTeamId, match.awayTeamId);
           return ids;
         }, [] as string[]);
         const teamIds = [...new Set(allTeamIds)];
 
-        // 3. Obtener los datos de enriquecimiento en paralelo
         const [tournamentsMap, teamsMap] = await Promise.all([
           getMultipleTournaments(tournamentIds),
           getMultipleTeams(teamIds),
         ]);
 
-        // 4. Enriquecer los datos y ordenarlos
-        const enriched = rawMatchesArray
+        const enriched = finishedMatches
           .map((match): EnrichedMatch => ({
             ...match,
             tournamentName: tournamentsMap[match.tournamentId]?.name || 'Torneo Desconocido',
             homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
-            homeTeamLogo: teamsMap[match.hometeamId]?.logoUrl,
+            homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl,
             awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
             awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl,
           }))
-          // Ordenar por fecha, del más nuevo al más antiguo
           .sort((a, b) => {
-            const dateA = a.date ? new Date(a.date).getTime() : 0;
-            const dateB = b.date ? new Date(b.date).getTime() : 0;
-            return dateB - dateA;
+            // Asumimos que date y details.time existen para partidos finalizados
+            const dateTimeA = new Date(`${a.details?.date}T${a.details?.time || '00:00'}`).getTime();
+            const dateTimeB = new Date(`${b.details?.date}T${b.details?.time || '00:00'}`).getTime();
+            return dateTimeB - dateTimeA;
           });
 
         setMatches(enriched);

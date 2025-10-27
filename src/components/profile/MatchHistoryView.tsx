@@ -20,23 +20,22 @@ interface MatchHistoryViewProps {
 const backdropVariants = { hidden: { opacity: 0 }, visible: { opacity: 1 } };
 const modalVariants = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 25, stiffness: 500 } }, exit: { opacity: 0, y: 30 } };
 
-
-// --- Componente de Tarjeta de Historial ---
-const HistoryMatchCard = ({ match, currentUserTeamId }: { match: EnrichedMatch, currentUserTeamId: string }) => {
+// --- Componente de Tarjeta de Historial (Refactorizado) ---
+const PastMatchCard = ({ match, currentUserTeamId }: { match: EnrichedMatch, currentUserTeamId: string }) => {
     const { resultColor, resultText } = useMemo(() => {
         if (match.status !== 'finished' || !match.result || typeof match.result.home !== 'number' || typeof match.result.away !== 'number') {
-            return { resultColor: 'border-gray-400/60', resultText: '-' };
+            return { resultColor: 'border-gray-500/50', resultText: 'Pend.' };
         }
 
         const homeScore = match.result.home;
         const awayScore = match.result.away;
         const isHome = match.homeTeamId === currentUserTeamId;
 
-        let color = 'border-yellow-500/60'; // Empate
+        let color = 'border-yellow-500/70'; // Empate
         if ((isHome && homeScore > awayScore) || (!isHome && awayScore > homeScore)) {
-            color = 'border-green-500/60'; // Victoria
+            color = 'border-green-500/70'; // Victoria
         } else if ((isHome && homeScore < awayScore) || (!isHome && awayScore < homeScore)) {
-            color = 'border-red-500/60'; // Derrota
+            color = 'border-red-500/70'; // Derrota
         }
 
         return {
@@ -46,25 +45,38 @@ const HistoryMatchCard = ({ match, currentUserTeamId }: { match: EnrichedMatch, 
     }, [match, currentUserTeamId]);
 
     const { month, day } = useMemo(() => {
-        if (!match.details?.date) return { month: null, day: null };
+        const dateStr = match.details?.date;
+        if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('-')) {
+            return { month: null, day: null };
+        }
         try {
-            const matchDate = new Date(match.details.date);
-            if (isNaN(matchDate.getTime())) return { month: null, day: null };
-            return {
-                month: matchDate.toLocaleDateString('es-ES', { month: 'short' }).replace('.',''),
-                day: matchDate.getDate().toString(),
-            };
-        } catch { return { month: null, day: null }; }
+            // Lógica de fecha segura usando Date.UTC para evitar errores de zona horaria
+            const parts = dateStr.split('-');
+            const year = parseInt(parts[0], 10);
+            const monthIndex = parseInt(parts[1], 10) - 1;
+            const dayOfMonth = parseInt(parts[2], 10);
+            const safeUTCDate = new Date(Date.UTC(year, monthIndex, dayOfMonth));
+
+            const month = safeUTCDate.toLocaleDateString('es-AR', { timeZone: 'UTC', month: 'short' }).replace('.', '');
+            const day = safeUTCDate.toLocaleDateString('es-AR', { timeZone: 'UTC', day: 'numeric' });
+            
+            return { month, day };
+        } catch { 
+            return { month: null, day: null }; 
+        }
     }, [match.details?.date]);
 
     return (
         <Card className={`w-full bg-card/70 shadow-sm mb-3 last:mb-0 border-l-4 ${resultColor} rounded-lg overflow-hidden`}>
             <div className="flex items-stretch">
-                <div className="flex flex-col items-center justify-center bg-primary/10 px-3 py-2 text-center text-primary">
+                {/* Bloque de Fecha y Resultado (Estilo Unificado) */}
+                <div className="flex flex-col items-center justify-center bg-primary/10 px-3.5 py-2 text-center text-primary">
                     <span className="text-xs font-semibold uppercase tracking-wider capitalize">{month || '-'}</span>
                     <span className="text-2xl font-bold leading-tight">{day || '-'}</span>
-                    <span className="text-sm font-bold bg-card/80 text-card-foreground rounded-full px-2 py-0.5 -mb-1 mt-1">{resultText}</span>
+                    <span className="text-sm font-semibold text-white/90 mt-0.5">{resultText}</span>
                 </div>
+                
+                {/* Bloque de Información del Partido (Coherente con NextMatchView) */}
                 <div className="flex-1 p-3">
                     <div className="flex items-center gap-2">
                         <img src={match.homeTeamLogo || '/assets/images/default-team-logo.png'} alt={match.homeTeamName} className="h-5 w-5 rounded-full object-cover border border-border" />
@@ -149,7 +161,7 @@ export const MatchHistoryView = ({ profileUser, onClose }: MatchHistoryViewProps
           <div className="flex-grow overflow-y-auto pr-1 -mr-1 sm:pr-2 sm:-mr-2 scrollbar-thin scrollbar-thumb-muted-foreground/20">
             {filteredMatches.length > 0 ? (
               filteredMatches.map((match: EnrichedMatch) => (
-                <HistoryMatchCard key={match.id} match={match} currentUserTeamId={teamId!} />
+                <PastMatchCard key={match.id} match={match} currentUserTeamId={teamId!} />
               ))
             ) : (
               <div className="text-center py-10 text-muted-foreground flex flex-col items-center justify-center h-full">
