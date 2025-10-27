@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react'; // <-- PASO 1: Importar useCallback
 import { useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-context';
@@ -38,7 +38,6 @@ const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
   favorite_tournaments: TournamentsView,
 };
 
-// Tarjetas de acción con imágenes de fondo secundarias
 const actionCards = [
   {
     view: 'stats' as ProfileView,
@@ -74,7 +73,7 @@ const actionCards = [
     view: 'my_team' as ProfileView,
     title: 'Equipo',
     tab: 'equipo',
-    bgImage: '/assets/profile/team.png', // Actualizado a team.png
+    bgImage: '/assets/profile/team.png',
   },
 ];
 
@@ -124,6 +123,11 @@ export default function ProfilePage() {
       }
     }
   };
+  
+  // --- PASO 2: Crear una función estable con useCallback ---
+  const handleCloseModal = useCallback(() => {
+    setView('buttons');
+  }, []); // El array vacío garantiza que la función nunca se recree
 
   const ActiveView = viewComponents[view] || null;
 
@@ -138,7 +142,8 @@ export default function ProfilePage() {
   const viewProps = {
       profileUser: profileUser,
       profileUserId: userId,
-      onClose: () => setView('buttons'),
+      teamId: profileUser.team?.id,
+      onClose: handleCloseModal, // <-- PASO 3: Pasar la función estable
       upcomingMatches: upcomingMatches, 
       loadingMatches: matchesLoading,
   };

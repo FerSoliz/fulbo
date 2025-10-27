@@ -1,27 +1,23 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ref, get } from 'firebase/database';
+import { ref, get, onValue, off } from 'firebase/database';
 import { db } from '@/lib/firebase';
-import { UserProfile } from '@/lib/types';
 
-// Tipos que el hook devolverá.
+// Tipos (sin cambios)
 export interface TeamDetails {
   id: string;
   name: string;
   crestUrl?: string;
   captainId: string | null;
 }
-
-// El tipo TeamMember ahora es más flexible para acomodar datos de invitados.
 export interface TeamMember {
   id: string;
   name: string;
-  avatar?: string; // El avatar es opcional para invitados
-  username?: string; // Username es opcional (los invitados no tienen)
+  avatar?: string;
+  username?: string;
   isGuest: boolean;
 }
-
 interface UseTeamDetailsReturn {
   teamDetails: TeamDetails | null;
   members: TeamMember[];
@@ -30,8 +26,9 @@ interface UseTeamDetailsReturn {
 }
 
 /**
- * Un hook para obtener los detalles completos de un equipo, incluyendo su lista de miembros (registrados e invitados).
- * @param teamId - El ID del equipo a buscar. Si es nulo, no se realiza ninguna búsqueda.
+ * Hook refactorizado para obtener detalles del equipo en tiempo real de forma eficiente.
+ * Separa la carga de los detalles del equipo de la carga de los miembros para evitar
+ * recargas innecesarias y eliminar el parpadeo.
  */
 export function useTeamDetails(teamId: string | undefined | null): UseTeamDetailsReturn {
   const [teamDetails, setTeamDetails] = useState<TeamDetails | null>(null);
@@ -39,95 +36,94 @@ export function useTeamDetails(teamId: string | undefined | null): UseTeamDetail
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // --- EFECTO 1: Escuchar los detalles del equipo (nombre, logo, capitán) ---
   useEffect(() => {
-    // Si no hay teamId, no hay nada que buscar.
     if (!teamId) {
-      setLoading(false);
       setTeamDetails(null);
-      setMembers([]);
       return;
     }
 
-    const fetchDetails = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const teamRef = ref(db, `teams/${teamId}`);
-        const teamSnapshot = await get(teamRef);
-
-        if (!teamSnapshot.exists()) {
-          console.warn(`No se encontró el equipo con ID: ${teamId}`);
-          setTeamDetails(null);
-          setMembers([]);
-          return;
-        }
-
-        const teamData = teamSnapshot.val();
+    const detailsRef = ref(db, `teams/${teamId}`);
+    const unsubscribeDetails = onValue(detailsRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const teamData = snapshot.val();
         setTeamDetails({
-          id: teamSnapshot.key,
+          id: snapshot.key as string,
           name: teamData.name,
           crestUrl: teamData.logoUrl,
           captainId: teamData.captainId || null,
         });
+      } else {
+        setError(new Error(`Equipo con id ${teamId} no encontrado.`));
+        setTeamDetails(null);
+      }
+    });
 
-        if (teamData.players && typeof teamData.players === 'object') {
-          const playerEntries = Object.entries(teamData.players);
+    return () => unsubscribeDetails();
+  }, [teamId]);
 
-          const memberPromises = playerEntries.map(async ([playerId, playerData]) => {
-            const { isGuest } = playerData as { isGuest: boolean };
+  // --- EFECTO 2: Escuchar la lista de jugadores y cargarlos ---
+  useEffect(() => {
+    if (!teamId) {
+      setMembers([]);
+      setLoading(false);
+      return;
+    }
 
-            if (isGuest) {
-              // Es un jugador invitado, buscar en /guestPlayers
-              const guestRef = ref(db, `guestPlayers/${playerId}`);
-              const guestSnapshot = await get(guestRef);
-              if (guestSnapshot.exists()) {
-                const guestData = guestSnapshot.val();
-                // Adaptamos el invitado a la estructura de TeamMember
-                return {
-                  id: guestSnapshot.key,
-                  name: guestData.name,
+    const playersRef = ref(db, `teams/${teamId}/players`);
+    setLoading(true);
+
+    const unsubscribePlayers = onValue(playersRef, async (snapshot) => {
+      if (!snapshot.exists() || !snapshot.hasChildren()) {
+        setMembers([]);
+        setLoading(false);
+        return;
+      }
+
+      const playersData = snapshot.val();
+      const playerEntries = Object.entries(playersData);
+
+      try {
+        const memberPromises = playerEntries.map(async ([playerId, playerData]) => {
+          const { isGuest } = playerData as { isGuest: boolean };
+          const playerRef = ref(db, isGuest ? `guestPlayers/${playerId}` : `users/${playerId}`);
+          const playerSnapshot = await get(playerRef);
+
+          if (playerSnapshot.exists()) {
+            const data = playerSnapshot.val();
+            return isGuest
+              ? {
+                  id: playerSnapshot.key as string,
+                  name: data.name,
                   isGuest: true,
-                  // Los invitados no tienen avatar o username en la app, usamos placeholders
-                  username: `invitado-${guestData.dni}`.toLowerCase(),
-                  avatar: '/user-placeholder.png' // Placeholder genérico para invitados
-                } as TeamMember;
-              }
-            } else {
-              // Es un usuario registrado, buscar en /users
-              const userRef = ref(db, `users/${playerId}`);
-              const userSnapshot = await get(userRef);
-              if (userSnapshot.exists()) {
-                const userData = userSnapshot.val();
-                // Adaptamos el usuario a la estructura de TeamMember
-                return {
-                  id: userSnapshot.key,
-                  name: userData.name,
-                  avatar: userData.avatar,
-                  username: userData.username,
+                  username: `invitado-${data.dni}`.toLowerCase(),
+                  avatar: '/user-placeholder.png',
+                }
+              : {
+                  id: playerSnapshot.key as string,
+                  name: data.name,
+                  avatar: data.avatar,
+                  username: data.username,
                   isGuest: false,
-                } as TeamMember;
-              }
-            }
-            return null; // Si no se encuentra el jugador en ninguna colección
-          });
+                };
+          }
+          return null;
+        });
 
-          const memberResults = (await Promise.all(memberPromises)).filter(Boolean) as TeamMember[];
-          setMembers(memberResults);
-          
-        } else {
-          setMembers([]);
-        }
-
-      } catch (err: any) {
-        console.error(`Error al obtener los detalles del equipo ${teamId}:`, err);
-        setError(err);
+        const memberResults = (await Promise.all(memberPromises)).filter(
+          (m): m is TeamMember => m !== null
+        );
+        setMembers(memberResults);
+      } catch (err) {
+        console.error("Error cargando miembros del equipo:", err);
+        setError(err instanceof Error ? err : new Error(String(err)));
+        setMembers([]);
       } finally {
         setLoading(false);
       }
-    };
+    });
 
-    fetchDetails();
-    
+    return () => unsubscribePlayers();
   }, [teamId]);
 
   return { teamDetails, members, loading, error };
