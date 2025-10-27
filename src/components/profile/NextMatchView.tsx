@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { EnrichedMatch } from '@/hooks/use-upcoming-matches'; // Importamos el tipo
+import { EnrichedMatch } from '@/hooks/use-upcoming-matches';
 import { Loader2, X, CalendarX, Trophy, MapPin } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
@@ -20,20 +20,40 @@ interface NextMatchViewProps {
 
 const UpcomingMatchCard = ({ match }: { match: EnrichedMatch }) => {
     const { time, month, day } = useMemo(() => {
-        if (!match.details?.date) return { time: null, month: null, day: null };
-        try {
-            const matchDate = new Date(match.details.date);
-            if (isNaN(matchDate.getTime())) return { time: null, month: null, day: null };
+        const dateStr = match.details?.date; // Formato: "YYYY-MM-DD"
+        const timeStr = match.details?.time; // Formato: "HH:mm" o undefined
 
-            return {
-                time: matchDate.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false }),
-                month: matchDate.toLocaleDateString('es-ES', { month: 'short' }).replace('.',''),
-                day: matchDate.getDate().toString(),
-            };
+        if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('-')) {
+            return { time: null, month: null, day: null };
+        }
+
+        try {
+            // --- Lógica para DÍA y MES ---
+            // Se necesita procesar el string para obtener el nombre del mes.
+            const parts = dateStr.split('-');
+            const year = parseInt(parts[0], 10);
+            const monthIndex = parseInt(parts[1], 10) - 1; // JS month es 0-indexado
+            const dayOfMonth = parseInt(parts[2], 10);
+
+            // Se crea una fecha explícitamente en UTC para evitar conversiones de zona horaria.
+            const safeUTCDate = new Date(Date.UTC(year, monthIndex, dayOfMonth));
+
+            const monthFormatOptions: Intl.DateTimeFormatOptions = { timeZone: 'UTC', month: 'short' };
+            const dayFormatOptions: Intl.DateTimeFormatOptions = { timeZone: 'UTC', day: 'numeric' };
+
+            const month = safeUTCDate.toLocaleDateString('es-AR', monthFormatOptions).replace('.', '');
+            const day = safeUTCDate.toLocaleDateString('es-AR', dayFormatOptions);
+
+            // --- Lógica para la HORA ---
+            // "Simplemente mostrar lo que se lee". No se parsea, solo se valida el formato.
+            const time = timeStr && /^\d{2}:\d{2}$/.test(timeStr) ? timeStr : null;
+
+            return { time, month, day };
+
         } catch {
             return { time: null, month: null, day: null };
         }
-    }, [match.details?.date]);
+    }, [match.details?.date, match.details?.time]);
 
     return (
         <Card className="w-full bg-card/70 shadow-sm mb-3 last:mb-0 border-l-4 border-primary/70 rounded-lg overflow-hidden">
@@ -42,7 +62,8 @@ const UpcomingMatchCard = ({ match }: { match: EnrichedMatch }) => {
                 <div className="flex flex-col items-center justify-center bg-primary/10 px-3.5 py-2 text-center text-primary">
                     <span className="text-xs font-semibold uppercase tracking-wider capitalize">{month || '-'}</span>
                     <span className="text-2xl font-bold leading-tight">{day || '-'}</span>
-                    <span className="text-xs font-medium">{time ? `${time}hs` : ''}</span>
+                    {/* Muestra la hora directamente como viene, sin "hs" ni formato extra */}
+                    {time && <span className="text-xs font-medium">{time}</span>}
                 </div>
 
                 {/* Bloque de Información del Partido */}
