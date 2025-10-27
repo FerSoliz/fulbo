@@ -13,12 +13,14 @@ export interface User {
   profileBackground?: string;
   team?: {
     id: string;
-    name: "string";
-    crestUrl: "string";
+    name: string;
+    crestUrl: string;
   } | null;
   sudpoints: number;
   availablePacks: number;
   nextPackTimestamp: number;
+  isVerified?: boolean;
+  transferStatus?: 'libre' | 'traspaso' | 'blindado';
 }
 
 export interface GuestPlayer {
@@ -26,11 +28,43 @@ export interface GuestPlayer {
   dni: string;
   team?: {
     id: string;
-    name: "string";
-    crestUrl: "string";
+    name: string;
+    crestUrl: string;
   } | null;
   sudpoints: number;
 }
+
+// Interfaz Unificada para Perfiles (¡NUEVA!)
+// Representa tanto a un usuario registrado como a un invitado.
+// La usamos en el frontend para manejar ambos casos con un solo objeto.
+export interface UserProfile {
+  id: string; // UID para usuarios, DNI para invitados
+  isGuest: boolean; // Flag para diferenciar
+
+  // --- Campos Comunes ---
+  name: string;
+  dni: string;
+  sudpoints: number;
+  team?: {
+    id: string;
+    name: string;
+    crestUrl: string;
+  } | null;
+
+  // --- Campos de Usuario Registrado (Opcionales) ---
+  username?: string;
+  email?: string;
+  role?: 'Admin' | 'Captain' | 'Player';
+  avatar?: string;
+  profileBackground?: string;
+  isVerified?: boolean;
+  transferStatus?: 'libre' | 'traspaso' | 'blindado';
+  
+  // --- Campos de Juego (Opcionales) ---
+  availablePacks?: number;
+  nextPackTimestamp?: number;
+}
+
 
 export interface Team {
   id: string;

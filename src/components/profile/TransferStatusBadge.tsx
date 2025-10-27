@@ -36,12 +36,12 @@ export const TransferStatusBadge = ({ user, onTransferClick }: TransferStatusBad
           <button
             onClick={isClickable ? onTransferClick : undefined}
             className={cn(
-              'flex items-center gap-2 text-white font-bold text-xs px-3 py-1 rounded-full',
+              'inline-flex items-center gap-1.5 text-white font-bold text-xs px-2 py-0.5 rounded-full',
               config.color,
               isClickable && 'cursor-pointer'
             )}
           >
-            {isClickable ? <Handshake className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+            {isClickable ? <Handshake className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
             <span>{config.text}</span>
           </button>
         </TooltipTrigger>

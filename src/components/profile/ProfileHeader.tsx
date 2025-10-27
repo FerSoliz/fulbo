@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { UserProfile } from '@/lib/types';
 import { useUser } from '@/context/user-context';
@@ -24,24 +25,36 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubTrigger,
-  DropdownMenuSubContent
+  DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Loader2, MessageSquare, Pencil, Image as ImageIcon, Handshake
+  Loader2, MessageSquare, Pencil, Image as ImageIcon, Handshake, Star
 } from 'lucide-react';
 import { EditProfileDialog } from './EditProfileDialog';
 import { BackgroundChangerDialog } from './BackgroundChangerDialog';
 import { TransferStatusBadge } from './TransferStatusBadge';
 import { useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ProfileNav } from './ProfileNav'; // <-- ¡IMPORTANTE!
+import { ProfileNav } from './ProfileNav';
 
 const crestMap: { [key: string]: string } = {
   'https://i.postimg.cc/1RfWNTCC/lusail.png': 'https://i.postimg.cc/YqTT9ktz/escudito-afa.png',
   'https://i.postimg.cc/BnnbJSjY/ELMONUMENTALRIVERPLATE2.png': 'https://i.postimg.cc/3wts3GNd/escudito-river.png',
-  'https://i.postimg.cc/fL20hVKv/LABOMBONERABOCAJUNIORS.jpg': 'https://i.postimg.cc/50jZytQp/escudito-de-boca.png'
+  'https://i.postimg.cc/fL20hVKv/LABOMBONERABOCAJUNIORS.jpg': 'https://i.postimg.cc/50jZytQp/escudito-de-boca.png',
 };
+
+const GuestRegisterBanner = ({ guestName, guestDni }: { guestName: string; guestDni: string }) => (
+  <Link href={`/register?dni=${guestDni}`} passHref>
+    <div className="relative text-center p-4 rounded-lg bg-gradient-to-r from-accent-red to-red-700 hover:from-red-700 hover:to-accent-red transition-all duration-300 cursor-pointer shadow-lg">
+      <div className="absolute -top-3 -left-3 w-8 h-8 bg-white rounded-full flex items-center justify-center">
+        <Star className="text-accent-red w-5 h-5" />
+      </div>
+      <p className="font-bold text-white text-lg">¿Eres {guestName}?</p>
+      <p className="text-sm text-white/90">¡Regístrate para reclamar tu perfil y guardar tus estadísticas!</p>
+    </div>
+  </Link>
+);
 
 interface ProfileHeaderProps {
   profileUser: UserProfile;
@@ -49,42 +62,42 @@ interface ProfileHeaderProps {
   onSendMessage: () => void;
   onTransferClick: () => void;
   onAvatarChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  // ===== 1. AÑADIMOS LAS NUEVAS PROPS =====
   activeTab: 'perfil' | 'equipo';
   onTabChange: (tab: 'perfil' | 'equipo') => void;
   hasTeam: boolean;
 }
 
-export const ProfileHeader = ({
-  profileUser,
-  onSaveProfile,
-  onSendMessage,
-  onTransferClick,
-  onAvatarChange,
-  // ===== 2. RECIBIMOS LAS NUEVAS PROPS =====
-  activeTab,
-  onTabChange,
-  hasTeam
-}: ProfileHeaderProps) => {
+export function ProfileHeader({ 
+  profileUser, 
+  onSaveProfile, 
+  onSendMessage, 
+  onTransferClick, 
+  onAvatarChange, 
+  activeTab, 
+  onTabChange, 
+  hasTeam 
+}: ProfileHeaderProps) {
   const { user: currentUser } = useUser();
   const { isUploading } = useUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwnProfile = currentUser?.id === profileUser.id;
-  const { name, username, role, isVerified, avatar, profileBackground, sudpoints = 0, transferStatus } = profileUser;
+  const { name, username = '', role, isVerified, avatar, profileBackground, sudpoints = 0, transferStatus, isGuest, dni } = profileUser;
 
   const divisionInfo = getDivisionInfo(sudpoints);
   const isLeyenda = !isFinite(divisionInfo.endOfDivisionPoints);
 
   const currentCrest = profileBackground ? crestMap[profileBackground] : null;
 
-  const handleAvatarClick = () => {
-    if (isOwnProfile && !isUploading) {
+  function handleAvatarClick() {
+    if (isOwnProfile && !isUploading && !isGuest) {
       fileInputRef.current?.click();
     }
-  };
+  }
 
-  const handleChangeTransferStatus = (status: 'libre' | 'traspaso' | 'blindado') => onSaveProfile({ transferStatus: status });
+  function handleChangeTransferStatus(status: 'libre' | 'traspaso' | 'blindado') {
+    onSaveProfile({ transferStatus: status });
+  }
 
   return (
     <Card className="overflow-hidden rounded-t-7xl rounded-b-none bg-[url('/assets/profile/puntos.png')]">
@@ -92,14 +105,14 @@ export const ProfileHeader = ({
         {profileBackground && <Image src={profileBackground} alt="Fondo de perfil" fill className="object-cover" priority />}
         <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
 
-        {(currentCrest || isOwnProfile) && (
+        {(currentCrest || (isOwnProfile && !isGuest)) && (
           <div className="absolute bottom-0 right-0 z-10 flex items-center">
             {currentCrest && (
               <div className="w-8 h-8">
                 <Image src={currentCrest} alt="Escudo del equipo" width={32} height={32} />
               </div>
             )}
-            {isOwnProfile && (
+            {isOwnProfile && !isGuest && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="w-8 h-8" aria-label="Opciones de perfil">
@@ -128,7 +141,7 @@ export const ProfileHeader = ({
         )}
 
         <div className="absolute bottom-0 left-6 translate-y-1/2">
-          <div className={cn('relative group', isOwnProfile && 'cursor-pointer')} onClick={handleAvatarClick} role="button" aria-label={isOwnProfile ? "Cambiar avatar" : "Avatar del usuario"}>
+          <div className={cn('relative group', isOwnProfile && !isGuest && 'cursor-pointer')} onClick={handleAvatarClick} role="button" aria-label={isOwnProfile && !isGuest ? "Cambiar avatar" : "Avatar del usuario"}>
             <AnimatedAvatar>
               <Avatar className="w-24 h-24 text-4xl border-4 border-background">
                 <AvatarImage src={avatar} alt={name} />
@@ -142,7 +155,7 @@ export const ProfileHeader = ({
 
       <CardHeader className="pt-14 pb-4 px-6 flex flex-col gap-2">
         <div>
-        <CardTitle className="transform origin-left scale-x-50 md:scale-x-100 text-4xl font-bold italic mb-0 leading-[0.8] tracking-tighter">
+          <CardTitle className="transform origin-left scale-x-50 md:scale-x-100 text-4xl font-bold italic mb-0 leading-[0.8] tracking-tighter">
             <span className="text-accent-red">#</span>{username.toUpperCase()}
           </CardTitle>
           <CardDescription className="flex items-center gap-2 text-base">
@@ -171,7 +184,6 @@ export const ProfileHeader = ({
 
           {!isLeyenda ? (
             <div className="flex items-center gap-2">
-              {/* Contenedor Flex para la barra y los textos */} 
               <div className="flex flex-col flex-grow">
                 <div className="relative h-2 flex-grow bg-muted rounded-full">
                   <motion.div
@@ -181,7 +193,6 @@ export const ProfileHeader = ({
                     transition={{ duration: 0.5, ease: 'easeOut' }}
                   />
                 </div>
-                {/* Ajustamos el margen y line-height para que los textos queden pegados a la barra */} 
                 <div className="flex justify-between mt-0">
                   <TooltipProvider>
                     <Tooltip>
@@ -196,7 +207,6 @@ export const ProfileHeader = ({
                   </p>
                 </div>
               </div>
-              {/* El logo con translate-y negativo para subirlo */} 
               <Image src="/assets/profile/logosd.png" alt="Siguiente División" width={40} height={40} className="-translate-y-2" />
             </div>
           ) : (
@@ -207,11 +217,16 @@ export const ProfileHeader = ({
           )}
         </div>
 
-        <input type="file" ref={fileInputRef} onChange={onAvatarChange} className="hidden" accept="image/*" disabled={isUploading} aria-label="Subir nueva imagen de perfil" />
-        {!isOwnProfile && <Button onClick={onSendMessage} className="w-full"><MessageSquare className="mr-2 h-4 w-4" />Enviar Mensaje</Button>}
+        {isGuest ? (
+          <GuestRegisterBanner guestName={name} guestDni={dni!} />
+        ) : (
+          <>
+            <input type="file" ref={fileInputRef} onChange={onAvatarChange} className="hidden" accept="image/*" disabled={isUploading} aria-label="Subir nueva imagen de perfil" />
+            {!isOwnProfile && <Button onClick={onSendMessage} className="w-full"><MessageSquare className="mr-2 h-4 w-4" />Enviar Mensaje</Button>}
+          </>
+        )}
       </CardContent>
       
-      {/* ===== 3. INSERTAMOS LA NAVEGACIÓN DENTRO DEL CARD ===== */}
       <ProfileNav
         activeTab={activeTab}
         onTabChange={onTabChange}
@@ -219,4 +234,4 @@ export const ProfileHeader = ({
       />
     </Card>
   );
-};
+}
