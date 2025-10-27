@@ -80,7 +80,7 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
     return (
       <div className="relative mt-6">
         <div className="absolute top-0 left-4 z-10 transform -translate-y-1/2">
-          <Skeleton className="w-12 h-12 rounded-full border-4 border-background" />
+          <Skeleton className="w-12 h-12 rounded-full border-2 border-background" />
         </div>
         <Card>
           <div className="h-6" />
@@ -92,7 +92,7 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
   }
   
   const MediaContent = () => (
-    <div className={cn("relative border-t border-accent", hasContent && "border-b border-accent")}>
+    <div className={cn("relative border-t-2 border-accent", hasContent && "border-b-2 border-accent")}>
       {isPinned && (
         <TooltipProvider>
           <Tooltip>
@@ -219,7 +219,7 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
           <div className="flex items-start gap-3 pointer-events-auto">
               <div className="transform -translate-y-1/2">
                   <Link href={`/profile/${post.authorId}`}>
-                  <Avatar className="w-12 h-12 border-4 border-background">
+                  <Avatar className="w-12 h-12 border-2 border-accent">
                       <AvatarImage src={authorAvatar} alt={authorName} />
                       <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
                   </Avatar>
@@ -241,11 +241,11 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
           </div>
       </div>
       <Card className="relative">
-        <CardContent className="p-0 border-b border-b-[#2490e3]">
+        <CardContent className="p-0">
           {hasMedia && <MediaContent />}
           {hasContent && (
             !hasMedia ? (
-                <div className={cn("flex items-center justify-between px-6 py-3 border-t border-accent")}>
+                <div className={cn("flex items-center justify-between px-6 py-3 border-t-2 border-accent")}>
                     <p className="text-sm whitespace-pre-wrap flex-grow mr-4">{content}</p>
                     <div className="flex items-center gap-4 flex-shrink-0">
                         <div className="flex items-center">
