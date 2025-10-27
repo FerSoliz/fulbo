@@ -38,32 +38,49 @@ export function useMatchHistory(teamId: string | undefined | null): UseMatchHist
       setError(null);
 
       try {
-        const rawMatches = await getMatchHistoryForTeam(teamId);
-        if (rawMatches.length === 0) {
+        // 1. Obtener los partidos crudos como un objeto
+        const rawMatchesObject = await getMatchHistoryForTeam(teamId);
+        const rawMatchesArray = Object.values(rawMatchesObject);
+
+        if (rawMatchesArray.length === 0) {
           setMatches([]);
           setTournaments([]);
           setLoading(false);
           return;
         }
 
-        const tournamentIds = [...new Set(rawMatches.map(m => m.tournamentId))];
-        const teamIds = [...new Set(rawMatches.flatMap(m => [m.homeTeamId, m.awayTeamId]))];
+        // 2. Extraer IDs únicos para torneos y equipos
+        const tournamentIds = [...new Set(rawMatchesArray.map(m => m.tournamentId))];
+        
+        // Reemplazo de .flatMap por .reduce para mayor compatibilidad
+        const allTeamIds = rawMatchesArray.reduce((ids, match) => {
+          ids.push(match.homeTeamId, match.awayTeamId);
+          return ids;
+        }, [] as string[]);
+        const teamIds = [...new Set(allTeamIds)];
 
+        // 3. Obtener los datos de enriquecimiento en paralelo
         const [tournamentsMap, teamsMap] = await Promise.all([
           getMultipleTournaments(tournamentIds),
           getMultipleTeams(teamIds),
         ]);
 
-        const enriched = rawMatches
+        // 4. Enriquecer los datos y ordenarlos
+        const enriched = rawMatchesArray
           .map((match): EnrichedMatch => ({
             ...match,
             tournamentName: tournamentsMap[match.tournamentId]?.name || 'Torneo Desconocido',
             homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
-            homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl,
+            homeTeamLogo: teamsMap[match.hometeamId]?.logoUrl,
             awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
             awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl,
           }))
-          .sort((a, b) => new Date(b.details?.date).getTime() - new Date(a.details?.date).getTime());
+          // Ordenar por fecha, del más nuevo al más antiguo
+          .sort((a, b) => {
+            const dateA = a.date ? new Date(a.date).getTime() : 0;
+            const dateB = b.date ? new Date(b.date).getTime() : 0;
+            return dateB - dateA;
+          });
 
         setMatches(enriched);
         setTournaments(Object.values(tournamentsMap));

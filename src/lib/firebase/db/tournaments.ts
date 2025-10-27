@@ -1,6 +1,6 @@
-import { ref, get, query } from 'firebase/database';
-import { db } from '../../firebase';
-import { FullTournament, Tournament, TournamentStats, Standing, Scorer, Sanction } from '../../types';
+import { ref, get, query, orderByChild, equalTo } from 'firebase/database';
+import { db } from '@/lib/firebase';
+import { FullTournament, Tournament, Team, Match, Standing, Scorer, Sanction, TournamentStats } from '@/lib/types';
 
 /**
  * Obtiene una lista de todos los torneos disponibles.
@@ -12,7 +12,6 @@ export const getAllTournaments = async (): Promise<FullTournament[]> => {
     const snapshot = await get(tournamentsRef);
 
     if (!snapshot.exists()) {
-      console.log("[DB Service] No se encontraron torneos.");
       return [];
     }
 
@@ -23,44 +22,27 @@ export const getAllTournaments = async (): Promise<FullTournament[]> => {
 
     return tournamentsList;
   } catch (error) {
-    console.error("[DB Service] Error crítico al obtener todos los torneos:", error);
+    console.error("[DB Service] Error al obtener torneos:", error);
     return [];
   }
 };
 
 /**
- * Obtiene los detalles de múltiples torneos a la vez.
- * @param tournamentIds Un array de IDs de torneos.
- * @returns Un mapa (diccionario) donde las claves son los IDs y los valores son los datos del torneo.
- */
-export const getMultipleTournaments = async (tournamentIds: string[]): Promise<Record<string, Tournament>> => {
-    const tournamentPromises = tournamentIds.map(id => get(ref(db, `tournaments/${id}`)));
-    const tournamentSnapshots = await Promise.all(tournamentPromises);
-    const tournamentsMap: Record<string, Tournament> = {};
-    tournamentSnapshots.forEach(snap => {
-        if (snap.exists()) {
-            tournamentsMap[snap.key!] = { id: snap.key!, ...snap.val() };
-        }
-    });
-    return tournamentsMap;
-};
-
-
-/**
- * Obtiene los detalles completos de un torneo, incluyendo sus estadísticas (tabla de posiciones, goleadores, sanciones).
- * Enriquecimiento de datos: busca nombres de equipos asociados a las estadísticas.
+ * Obtiene los detalles completos de un torneo, incluyendo estadísticas, partidos y equipos.
  * @param tournamentId El ID del torneo.
  * @returns Una promesa que se resuelve con el objeto FullTournament o null si no se encuentra.
  */
 export const getTournamentDetails = async (tournamentId: string): Promise<FullTournament | null> => {
-  console.log(`[DB Service] Obteniendo detalles enriquecidos para el torneo: ${tournamentId}`);
+  console.log(`[DB Service] Obteniendo detalles completos para el torneo: ${tournamentId}`);
   try {
     const tournamentRef = ref(db, `tournaments/${tournamentId}`);
     const statsRef = ref(db, `tournament_stats/${tournamentId}`);
+    const matchesQuery = query(ref(db, 'matches'), orderByChild('tournamentId'), equalTo(tournamentId));
 
-    const [tournamentSnapshot, statsSnapshot] = await Promise.all([
+    const [tournamentSnapshot, statsSnapshot, matchesSnapshot] = await Promise.all([
       get(tournamentRef),
       get(statsRef),
+      get(matchesQuery)
     ]);
 
     if (!tournamentSnapshot.exists()) {
@@ -68,61 +50,73 @@ export const getTournamentDetails = async (tournamentId: string): Promise<FullTo
       return null;
     }
 
-    const tournamentData = tournamentSnapshot.val();
-    const statsData: TournamentStats | null = statsSnapshot.exists() ? statsSnapshot.val() : null;
+    const tournamentData: Tournament = tournamentSnapshot.val();
+    const statsData = statsSnapshot.exists() ? statsSnapshot.val() : null;
     const teamIds = tournamentData.teams ? Object.keys(tournamentData.teams) : [];
 
-    // Obtener detalles de todos los equipos del torneo en paralelo
     const teamsPromises = teamIds.map(id => get(ref(db, `teams/${id}`)));
     const teamsSnapshots = await Promise.all(teamsPromises);
-    const teamsMap = teamsSnapshots.reduce((acc, snap) => {
+    
+    const teamsList: Team[] = [];
+    const teamsMap: { [id: string]: { name: string, logoUrl: string } } = {};
+    teamsSnapshots.forEach(snap => {
       if (snap.exists()) {
-        const team = snap.val();
-        acc[snap.key!] = { name: team.name, logoUrl: team.logoUrl };
+        const team = { id: snap.key!, ...snap.val() };
+        teamsList.push(team);
+        teamsMap[team.id] = { name: team.name, logoUrl: team.logoUrl || '' };
       }
-      return acc;
-    }, {} as { [id: string]: { name: string, logoUrl: string } });
+    });
 
-    console.log("[DB Service] Mapa de equipos construido:", teamsMap);
+    const matches: Match[] = [];
+    if (matchesSnapshot.exists()) {
+      matchesSnapshot.forEach(matchSnap => {
+        const matchData = matchSnap.val();
+        matches.push({
+          id: matchSnap.key!,
+          ...matchData,
+          homeTeamName: teamsMap[matchData.homeTeamId]?.name,
+          awayTeamName: teamsMap[matchData.awayTeamId]?.name,
+          homeTeamCrest: teamsMap[matchData.homeTeamId]?.logoUrl,
+          awayTeamCrest: teamsMap[matchData.awayTeamId]?.logoUrl,
+        });
+      });
+    }
+    matches.sort((a, b) => {
+      const dateA = a.date ? new Date(a.date).getTime() : 0;
+      const dateB = b.date ? new Date(b.date).getTime() : 0;
+      return dateB - dateA;
+    });
 
     const standings: Standing[] = statsData?.positions?.map((pos, index) => ({
       rank: index + 1,
-      team: teamsMap[pos.teamId]?.name || pos.teamName || 'Equipo Desconocido',
-      played: pos.played,
-      won: pos.won,
-      drawn: pos.drawn,
-      lost: pos.lost,
-      points: pos.points,
+      team: teamsMap[pos.teamId]?.name || 'Equipo Desconocido',
+      played: pos.played, won: pos.won, drawn: pos.drawn, lost: pos.lost, points: pos.points,
       crestUrl: teamsMap[pos.teamId]?.logoUrl || ''
     })) || [];
 
     const scorers: Scorer[] = statsData?.scorers?.map((scorer, index) => ({
       rank: index + 1,
-      player: `${scorer.playerInfo.name} ${scorer.playerInfo.lastName || ''}`.trim(),
-      team: teamsMap[scorer.teamId]?.name || scorer.teamName || 'Equipo Desconocido',
+      player: `${scorer.playerInfo?.name || ''} ${scorer.playerInfo?.lastName || ''}`.trim(),
+      team: teamsMap[scorer.teamId]?.name || 'Equipo Desconocido',
       goals: scorer.goals,
     })) || [];
     
     const sanctions: Sanction[] = statsData?.sanctions?.map(sanc => ({
-      player: `${sanc.playerInfo.name} ${sanc.playerInfo.lastName || ''}`.trim(),
-      team: teamsMap[sanc.teamId]?.name || sanc.teamName || 'Equipo Desconocido',
-      yellowCards: sanc.yellowCards,
-      redCards: sanc.redCards,
+      player: `${sanc.playerInfo?.name || ''} ${sanc.playerInfo?.lastName || ''}`.trim(),
+      team: teamsMap[sanc.teamId]?.name || 'Equipo Desconocido',
+      yellowCards: sanc.yellowCards, redCards: sanc.redCards,
     })) || [];
 
     const fullTournamentData: FullTournament = {
       id: tournamentSnapshot.key!,
-      name: tournamentData.name,
-      category: tournamentData.category,
-      startDate: tournamentData.startDate,
-      endDate: tournamentData.endDate,
-      venue: tournamentData.venue,
+      ...tournamentData,
       standings,
       scorers,
       sanctions,
+      matches, 
+      teamsList,
     };
 
-    console.log(`[DB Service] Datos combinados y enriquecidos para ${tournamentId}:`, fullTournamentData);
     return fullTournamentData;
 
   } catch (error) {
@@ -132,18 +126,51 @@ export const getTournamentDetails = async (tournamentId: string): Promise<FullTo
 };
 
 /**
- * Obtiene solo las estadísticas consolidadas de un torneo (posiciones, goleadores, sanciones).
+ * Obtiene los datos de múltiples torneos de forma eficiente.
+ * @param tournamentIds Un array con los IDs de los torneos a obtener.
+ * @returns Un mapa (objeto) donde cada clave es un ID de torneo y el valor son los datos del torneo.
+ */
+export const getMultipleTournaments = async (tournamentIds: string[]): Promise<{ [key: string]: Tournament }> => {
+  if (tournamentIds.length === 0) {
+    return {};
+  }
+
+  try {
+    const uniqueTournamentIds = [...new Set(tournamentIds)];
+    const tournamentsPromises = uniqueTournamentIds.map(id => get(ref(db, `tournaments/${id}`)));
+    const tournamentsSnapshots = await Promise.all(tournamentsPromises);
+
+    const tournamentsMap: { [key: string]: Tournament } = {};
+
+    tournamentsSnapshots.forEach(snapshot => {
+      if (snapshot.exists()) {
+        tournamentsMap[snapshot.key!] = snapshot.val();
+      }
+    });
+
+    return tournamentsMap;
+  } catch (error) {
+    console.error("[DB Service] Error al obtener múltiples torneos:", error);
+    return {};
+  }
+};
+
+/**
+ * Obtiene las estadísticas agregadas de un torneo (posiciones, goleadores, etc.).
  * @param tournamentId El ID del torneo.
- * @returns Una promesa que se resuelve con el objeto TournamentStats o null si no se encuentran.
+ * @returns Una promesa que se resuelve con el objeto de estadísticas del torneo o null.
  */
 export const getTournamentStats = async (tournamentId: string): Promise<TournamentStats | null> => {
   try {
     const statsRef = ref(db, `tournament_stats/${tournamentId}`);
     const snapshot = await get(statsRef);
-    if (snapshot.exists()) return snapshot.val() as TournamentStats;
-    return null; 
+
+    if (snapshot.exists()) {
+      return snapshot.val() as TournamentStats;
+    }
+    return null;
   } catch (error) {
-    console.error(`Error al obtener estadísticas para el torneo ${tournamentId}:`, error);
-    throw new Error('No se pudieron cargar las estadísticas del torneo.');
+    console.error(`[DB Service] Error al obtener estadísticas del torneo ${tournamentId}:`, error);
+    return null;
   }
 };
