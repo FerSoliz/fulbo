@@ -34,7 +34,7 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="font-body antialiased bg-background">
+      <body className="font-body antialiased bg-background-mobile md:bg-background-desktop bg-cover bg-center bg-fixed">
         <UserProvider>
           <CartProvider>
             <LayoutContent>{children}</LayoutContent>

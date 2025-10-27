@@ -154,17 +154,14 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="w-full min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex justify-center">
             <Link href="/" className="relative w-[200px] h-[60px]">
-              {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
-              }
               <Image src="/sudone-titulo.png" alt="SUDONE Logo" fill priority sizes="200px" style={{ objectFit: 'contain' }} />
             </Link>
         </div>
-        <Card>
-          {/* MODIFICADO: Ahora el handleSubmit envuelve todo el formulario y gestiona la validación al final */}
+        <Card className="bg-secondary/50 backdrop-blur-md border-white/10">
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">{dniStepCompleted ? 'Completa tu Perfil' : 'Crea tu Cuenta'}</CardTitle>
@@ -187,7 +184,7 @@ export default function RegisterPage() {
                         </Button>
                     )}
                   </div>
-                  <Input id="dni" type="text" inputMode="numeric" pattern="[0-9]*" maxLength={8} {...register('dni')} readOnly={dniStepCompleted} />
+                  <Input id="dni" type="text" inputMode="numeric" pattern="[0-9]*" maxLength={8} {...register('dni')} readOnly={dniStepCompleted} className="bg-black/20 border-white/20" />
                   {errors.dni && !dniStepCompleted && (<p className="text-sm font-medium text-destructive flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4" />{errors.dni.message}</p>)}
                   {!dniStepCompleted && getDniMessageComponent()}
                 </div>
@@ -196,27 +193,27 @@ export default function RegisterPage() {
                   <>
                     <div className="space-y-2">
                       <Label htmlFor="name">Nombre y Apellido</Label>
-                      <Input id="name" {...register('name')} />
+                      <Input id="name" {...register('name')} className="bg-black/20 border-white/20" />
                       {errors.name && (<p className="text-sm font-medium text-destructive flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4" />{errors.name.message}</p>)}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="username">Nombre de Usuario</Label>
-                      <Input id="username" {...register('username')} />
+                      <Input id="username" {...register('username')} className="bg-black/20 border-white/20" />
                       {errors.username && (<p className="text-sm font-medium text-destructive flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4" />{errors.username.message}</p>)}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Correo Electrónico</Label>
-                      <Input id="email" type="email" {...register('email')} />
+                      <Input id="email" type="email" {...register('email')} className="bg-black/20 border-white/20" />
                       {errors.email && (<p className="text-sm font-medium text-destructive flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4" />{errors.email.message}</p>)}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Contraseña</Label>
-                      <Input id="password" type="password" {...register('password')} />
+                      <Input id="password" type="password" {...register('password')} className="bg-black/20 border-white/20" />
                       {errors.password && (<p className="text-sm font-medium text-destructive flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4" />{errors.password.message}</p>)}
                     </div>
                     <div className="space-y-2">
                         <Label>Elige tu Equipo de Hincha</Label>
-                        <div className="grid grid-cols-3 gap-2"> {backgrounds.map(bg => (<button key={bg.name} type="button" onClick={() => setSelectedBackground(bg)} className={`flex flex-col items-center justify-center p-2 rounded-lg border-2 ${selectedBackground.name === bg.name ? 'border-primary' : 'border-transparent'}`}><Image src={bg.crest} alt={bg.name} width={40} height={40} /><span className="text-xs mt-1">{bg.name}</span></button>))} </div>
+                        <div className="grid grid-cols-3 gap-2"> {backgrounds.map(bg => (<button key={bg.name} type="button" onClick={() => setSelectedBackground(bg)} className={`flex flex-col items-center justify-center p-2 rounded-lg border-2 ${selectedBackground.name === bg.name ? 'border-primary bg-primary/10' : 'border-transparent bg-black/20'}`}><Image src={bg.crest} alt={bg.name} width={40} height={40} /><span className="text-xs mt-1">{bg.name}</span></button>))} </div>
                     </div>
                   </>
                 )}
@@ -232,7 +229,6 @@ export default function RegisterPage() {
                   {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Registrarme y Finalizar
                 </Button>
               )}
-              {/* --- NUEVO: Contenedor para mostrar errores de registro --- */}
               {registrationError && (
                   <div className="text-sm font-medium text-destructive flex items-center gap-2 mt-2 p-2 bg-destructive/10 rounded-md">
                       <AlertCircle className="h-4 w-4" />

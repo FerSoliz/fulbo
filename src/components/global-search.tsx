@@ -126,20 +126,24 @@ export function GlobalSearch() {
     <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
-            variant="outline"
-            className="relative h-9 w-full justify-start rounded-full text-sm text-muted-foreground sm:pr-12"
+            variant="ghost"
+            className="relative h-9 w-full justify-start rounded-full text-sm text-muted-foreground sm:pr-12 bg-black/20 backdrop-blur-sm border border-white/10 hover:bg-black/30"
           >
             <Search className="h-4 w-4 mr-2" />
             <span className="hidden lg:inline-flex">Buscar...</span>
             <span className="inline-flex lg:hidden">Buscar...</span>
-            <kbd className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+            <kbd className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border border-white/10 bg-transparent px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
               <span className="text-xs">⌘</span>K
             </kbd>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-             <Command shouldFilter={false}>
+        <PopoverContent 
+          className="w-[var(--radix-popover-trigger-width)] p-0 bg-secondary/80 backdrop-blur-md border-white/10"
+          align="start"
+        >
+             <Command shouldFilter={false} className="bg-transparent">
                 <CommandInput 
+                    className="bg-transparent focus:bg-transparent"
                     placeholder="Busca un perfil, torneo, página..." 
                     value={searchValue}
                     onValueChange={setSearchValue}
@@ -148,7 +152,7 @@ export function GlobalSearch() {
                     {searchValue.length < 3 && history.length > 0 && (
                         <CommandGroup heading="Búsquedas Recientes">
                             {history.map(item => (
-                                <CommandItem key={`hist-${item.id}`} onSelect={() => handleSelect(item.path, item)} className="flex justify-between items-center group">
+                                <CommandItem key={`hist-${item.id}`} onSelect={() => handleSelect(item.path, item)} className="flex justify-between items-center group hover:bg-white/10">
                                     <div className="flex items-center">
                                         <History className="h-4 w-4 mr-3 text-muted-foreground"/>
                                         {item.name}
@@ -165,7 +169,7 @@ export function GlobalSearch() {
                          <CommandEmpty>No se encontraron resultados.</CommandEmpty>
                          {filteredData.filter(i => i.type === 'USUARIO').length > 0 && <CommandGroup heading="Usuarios">
                              {filteredData.filter(i => i.type === 'USUARIO').map(item => (
-                                 <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)}>
+                                 <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)} className="hover:bg-white/10">
                                      <Avatar className="h-6 w-6 mr-3">
                                          <AvatarImage src={item.avatar}/>
                                          <AvatarFallback>{item.name.charAt(0)}</AvatarFallback>
@@ -176,7 +180,7 @@ export function GlobalSearch() {
                          </CommandGroup>}
                          {filteredData.filter(i => i.type === 'TORNEO').length > 0 && <CommandGroup heading="Torneos">
                              {filteredData.filter(i => i.type === 'TORNEO').map(item => (
-                                 <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)}>
+                                 <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)} className="hover:bg-white/10">
                                      {getIcon(item.type)}
                                      {item.name}
                                  </CommandItem>
@@ -184,7 +188,7 @@ export function GlobalSearch() {
                          </CommandGroup>}
                          {filteredData.filter(i => i.type === 'PÁGINA' || i.type === 'JUEGO').length > 0 && <CommandGroup heading="Otras Páginas">
                              {filteredData.filter(i => i.type === 'PÁGINA' || i.type === 'JUEGO').map(item => (
-                                 <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)}>
+                                 <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)} className="hover:bg-white/10">
                                      {getIcon(item.type)}
                                      {item.name}
                                  </CommandItem>

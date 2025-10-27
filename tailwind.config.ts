@@ -9,13 +9,16 @@ export default {
   ],
   theme: {
     extend: {
+      backgroundImage: {
+        'background-desktop': "url('/fondoEscritorio.jpg')",
+        'background-mobile': "url('/fondoMobile.jpg')",
+      },
       fontFamily: {
         body: ['Inter', 'sans-serif'],
         headline: ['Inter', 'sans-serif'],
         code: ['monospace'],
       },
       colors: {
-        // --- INICIO DE LA ADICIÓN ---
         'primary': '#21232f',
         'secondary': '#2e303f',
         'container': '#292e38',
@@ -23,7 +26,6 @@ export default {
         'border-hard': '#222222',
         'accent-blue': '#2490e3',
         'accent-red': '#fe0141',
-        // --- FIN DE LA ADICIÓN ---
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -34,7 +36,6 @@ export default {
           DEFAULT: 'hsl(var(--popover))',
           foreground: 'hsl(var(--popover-foreground))',
         },
-        // Se mantiene la estructura original por si se usa en otros sitios
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
@@ -81,7 +82,7 @@ export default {
         '4xl': '2rem',
         '5xl': '2.5rem',
         '6xl': '3rem',
-        '7xl': '4rem', // ¡Nuevo valor extra grande!
+        '7xl': '4rem',
       },
       keyframes: {
         'accordion-down': {

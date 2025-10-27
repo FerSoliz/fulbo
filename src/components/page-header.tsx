@@ -90,7 +90,7 @@ export function PageHeader() {
   }
 
   return (
-      <header className="sticky top-0 z-20 w-full bg-background">
+      <header className="sticky top-0 z-20 w-full backdrop-blur-md border-b border-white/10">
           <div className="flex h-14 items-center justify-between px-4 sm:px-6">
               <div className="md:hidden flex-1">
                   <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
@@ -114,51 +114,7 @@ export function PageHeader() {
                      <Skeleton className="h-10 w-10 rounded-full" />
                   ) : user && user.id !== 'visitor' ? (
                       <>
-                          {/* MENÚ DE NOTIFICACIONES OCULTADO TEMPORALMENTE
-                          <DropdownMenu onOpenChange={(open) => open && handleOpenNotifications()}>
-                              <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="relative">
-                                      <Bell className="h-5 w-5" />
-                                      {hasUnreadNotifications && <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500" />}
-                                  </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" className="w-80">
-                                  <DropdownMenuLabel>Notificaciones</DropdownMenuLabel>
-                                  <DropdownMenuSeparator />
-                                  {notifications.length > 0 ? notifications.map(notif => {
-                                      const Icon = notificationIcons[notif.type] || Bell;
-                                      return (
-                                          <DropdownMenuItem key={notif.id} asChild className="p-0">
-                                              <Link href={notif.link} className="flex items-start gap-3 p-2 w-full">
-                                                  <div className="relative">
-                                                      <Icon className="h-4 w-4 mt-1" />
-                                                      {!notif.isRead && <div className="absolute -right-1 top-0 h-1.5 w-1.5 rounded-full bg-accent" />}
-                                                  </div>
-                                                  <div className="flex-1">
-                                                      <p className="text-sm whitespace-normal">{notif.message}</p>
-                                                      <p className="text-xs text-muted-foreground mt-1">
-                                                          {formatDistanceToNow(new Date(notif.createdAt), { addSuffix: true, locale: es })}
-                                                      </p>
-                                                      {notif.actions && (
-                                                          <div className="flex gap-2 mt-2">
-                                                              {notif.actions.map(action => (
-                                                                  <Button key={action.label} size="sm" variant={action.label === 'Aceptar' ? 'default' : 'outline'} onClick={(e) => handleNotificationAction(e, action.action)}>
-                                                                      {action.label === 'Aceptar' ? <UserCheck className="mr-2 h-4 w-4"/> : <UserX className="mr-2 h-4 w-4"/>}
-                                                                      {action.label}
-                                                                  </Button>
-                                                              ))}
-                                                          </div>
-                                                      )}
-                                                  </div>
-                                              </Link>
-                                          </DropdownMenuItem>
-                                      );
-                                  }) : (
-                                      <p className="p-4 text-sm text-center text-muted-foreground">No tienes notificaciones.</p>
-                                  )}
-                              </DropdownMenuContent>
-                          </DropdownMenu>
-                          */}
+                          {/* MENÚ DE NOTIFICACIONES OCULTADO TEMPORALMENTE */}
                           <Link href={`/profile/${user.id}`}>
                               <Button variant="ghost" size="icon" className="rounded-full">
                                   <Avatar>

@@ -31,23 +31,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="w-full min-h-screen flex items-center justify-center p-4 bg-background">
+    <div className="w-full min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
         <div className="flex justify-center">
             <Link href="/" className="relative w-[200px] h-[60px]">
-              {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
-              }
               <Image
                 src="/sudone-titulo.png"
                 alt="SUDONE Logo"
                 fill
                 priority
-                sizes="200px" // <-- ¡SOLUCIÓN AÑADIDA!
+                sizes="200px"
                 style={{ objectFit: 'contain' }}
               />
             </Link>
         </div>
-        <Card>
+        <Card className="bg-secondary/50 backdrop-blur-md border-white/10">
           <form onSubmit={handleLogin}>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Inicia Sesión</CardTitle>
@@ -56,11 +54,11 @@ export default function LoginPage() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Correo Electrónico</Label>
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-black/20 border-white/20" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Contraseña</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="bg-black/20 border-white/20" />
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">
@@ -73,7 +71,7 @@ export default function LoginPage() {
                       ¿Olvidaste tu contraseña?
                   </Link>
               </div>
-              <Button variant="outline" asChild>
+              <Button variant="outline" asChild className="bg-black/20 border-white/20 hover:bg-black/30">
                   <Link href="/register">¿No tienes una cuenta? Regístrate</Link>
               </Button>
             </CardFooter>
