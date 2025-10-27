@@ -148,7 +148,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (loading) return;
 
     const publicRoutes = ['/login', '/register', '/forgot-password', '/'];
-    const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/tournaments') || pathname.startsWith('/tournament') || pathname.startsWith('/profile') || pathname.startsWith('/ranking');
+    const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/tournaments') || pathname.startsWith('/tournament') || pathname.startsWith('/profile') || pathname.startsWith('/ranking') || pathname.startsWith('/store');
 
     if (user?.id === 'visitor' && !isPublicRoute) {
       router.push('/');
