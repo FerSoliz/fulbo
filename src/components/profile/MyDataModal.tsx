@@ -58,7 +58,7 @@ export function MyDataModal({ profileUser, onClose, onSave }: MyDataModalProps) 
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="bg-secondary border-border-soft text-white">
+      <DialogContent className="bg-secondary/30 backdrop-blur-sm border-border-soft text-white">
         <DialogHeader>
           <DialogTitle>Mis Datos</DialogTitle>
         </DialogHeader>

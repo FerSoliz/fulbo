@@ -36,15 +36,15 @@ export function MyDataView({ profileUser, onClose }: MyDataViewProps) {
   const dataPoints = [
     { label: 'Edad', value: age || 'No especificada' },
     { label: 'Teléfono', value: phone || 'No especificado' },
-    { 
-      label: 'Posición de Juego', 
-      value: playingPosition ? positionTranslations[playingPosition] : 'No especificada' 
+    {
+      label: 'Posición de Juego',
+      value: playingPosition ? positionTranslations[playingPosition] : 'No especificada'
     },
   ];
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="bg-secondary border-border-soft text-white">
+      <DialogContent className="bg-secondary/30 backdrop-blur-sm border-border-soft text-white">
         <DialogHeader>
           <DialogTitle className="text-white">Datos de {profileUser.name}</DialogTitle>
         </DialogHeader>
@@ -66,8 +66,8 @@ export function MyDataView({ profileUser, onClose }: MyDataViewProps) {
             <div className="flex flex-wrap gap-2">
               {selectedSurfaces.length > 0 ? (
                 selectedSurfaces.map(surface => (
-                  <Badge 
-                    key={surface} 
+                  <Badge
+                    key={surface}
                     variant="outline"
                     className="border-accent-red text-white text-sm px-2.5 py-0.5"
                   >
