@@ -92,11 +92,11 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
   }
   
   const MediaContent = () => (
-    <div className={cn("relative border-t-2 border-accent", hasContent && "border-b-2 border-accent")}>
+    <div className="relative border-y-4 border-accent-red">
       {isPinned && (
         <TooltipProvider>
           <Tooltip>
-            <TooltipTrigger asChild><div className="absolute top-2 left-2 z-20 text-accent cursor-pointer"><Star className="h-5 w-5 fill-current"/></div></TooltipTrigger>
+            <TooltipTrigger asChild><div className="absolute top-2 left-2 z-20 text-accent-red cursor-pointer"><Star className="h-5 w-5 fill-current"/></div></TooltipTrigger>
             <TooltipContent><p>Publicación Fijada</p></TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -219,7 +219,7 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
           <div className="flex items-start gap-3 pointer-events-auto">
               <div className="transform -translate-y-1/2">
                   <Link href={`/profile/${post.authorId}`}>
-                  <Avatar className="w-12 h-12 border-2 border-accent">
+                  <Avatar className="w-12 h-12 border-4 border-accent-red">
                       <AvatarImage src={authorAvatar} alt={authorName} />
                       <AvatarFallback>{authorName.charAt(0)}</AvatarFallback>
                   </Avatar>
@@ -245,25 +245,27 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
           {hasMedia && <MediaContent />}
           {hasContent && (
             !hasMedia ? (
-                <div className={cn("flex items-center justify-between px-6 py-3 border-t-2 border-accent")}>
-                    <p className="text-sm whitespace-pre-wrap flex-grow mr-4">{content}</p>
-                    <div className="flex items-center gap-4 flex-shrink-0">
-                        <div className="flex items-center">
-                            <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor} className="h-8 w-8 mr-1">
-                                <Heart className={cn("h-5 w-5", isLiked ? 'text-red-500 fill-current' : 'text-muted-foreground')} />
-                            </Button>
-                            <span className="text-sm text-muted-foreground">{post.likes ? Object.keys(post.likes).length : 0}</span>
-                        </div>
-                        <div className="flex items-center">
-                             <Button variant="ghost" size="icon" onClick={() => setShowComments(!showComments)} className="h-8 w-8 mr-1">
-                                <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                            </Button>
-                            <span className="text-sm text-muted-foreground">{post.comments ? Object.keys(post.comments).length : 0}</span>
-                        </div>
-                    </div>
+                <div className="border-t-4 border-accent-red">
+                  <div className={cn("flex items-center justify-between px-6 py-3 border-b-4 border-accent-blue")}>
+                      <p className="text-sm whitespace-pre-wrap flex-grow mr-4">{content}</p>
+                      <div className="flex items-center gap-4 flex-shrink-0">
+                          <div className="flex items-center">
+                              <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor} className="h-8 w-8 mr-1">
+                                  <Heart className={cn("h-5 w-5", isLiked ? 'text-red-500 fill-current' : 'text-muted-foreground')} />
+                              </Button>
+                              <span className="text-sm text-muted-foreground">{post.likes ? Object.keys(post.likes).length : 0}</span>
+                          </div>
+                          <div className="flex items-center">
+                              <Button variant="ghost" size="icon" onClick={() => setShowComments(!showComments)} className="h-8 w-8 mr-1">
+                                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
+                              </Button>
+                              <span className="text-sm text-muted-foreground">{post.comments ? Object.keys(post.comments).length : 0}</span>
+                          </div>
+                      </div>
+                  </div>
                 </div>
             ) : (
-                <p className="px-6 py-4 text-sm whitespace-pre-wrap">{content}</p>
+                <p className="px-6 py-4 text-sm whitespace-pre-wrap border-b-4 border-accent-blue">{content}</p>
             )
           )}
         </CardContent>
