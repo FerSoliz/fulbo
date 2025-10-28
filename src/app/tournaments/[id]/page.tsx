@@ -160,11 +160,11 @@ export default function TournamentDetailPage() {
             </TabsList>
 
             <TabsContent value="fixture" className="mt-4">
-              {/* ¡Le pasamos el nombre del torneo aquí! */}
               <FixtureView 
                 matches={tournament.matches} 
                 teamsMap={teamsMap} 
                 tournamentName={tournament.name} 
+                venue={tournament.venue} // <-- ¡AQUÍ LE PASAMOS LA SEDE!
               />
             </TabsContent>
 

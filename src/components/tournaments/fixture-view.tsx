@@ -13,11 +13,12 @@ interface EnrichedMatchInternal extends Match {
     homeTeamLogo?: string;
     awayTeamName: string;
     awayTeamLogo?: string;
-    tournamentName?: string; // <-- Prop para el nombre del torneo
+    tournamentName?: string;
+    venue?: string; // <-- Prop para la sede
 }
 
 // --- Componente Principal de la Vista del Fixture ---
-export const FixtureView = ({ matches, teamsMap, tournamentName }: { matches?: Match[], teamsMap?: any, tournamentName?: string }) => {
+export const FixtureView = ({ matches, teamsMap, tournamentName, venue }: { matches?: Match[], teamsMap?: any, tournamentName?: string, venue?: string }) => {
     const [currentRound, setCurrentRound] = useState(1);
 
     const { rounds, totalRounds } = useMemo(() => {
@@ -30,11 +31,13 @@ export const FixtureView = ({ matches, teamsMap, tournamentName }: { matches?: M
             }
             acc[round].push({
                 ...match,
-                tournamentName: tournamentName, // <-- ¡Añadimos el nombre del torneo aquí!
+                tournamentName: tournamentName,
+                venue: venue, // <-- ¡Añadimos la sede aquí!
                 homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
                 homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl,
                 awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
                 awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl,
+                details: match.details, 
             });
             return acc;
         }, {} as Record<number, EnrichedMatchInternal[]>);
@@ -47,7 +50,7 @@ export const FixtureView = ({ matches, teamsMap, tournamentName }: { matches?: M
         }
 
         return { rounds: groupedByRound, totalRounds: totalRounds };
-    }, [matches, teamsMap, tournamentName, currentRound]);
+    }, [matches, teamsMap, tournamentName, venue, currentRound]);
 
     const matchesForCurrentRound = rounds[currentRound] || [];
 

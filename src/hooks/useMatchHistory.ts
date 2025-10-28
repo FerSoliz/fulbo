@@ -44,7 +44,6 @@ export function useMatchHistory(teamId: string | undefined | null): UseMatchHist
 
         if (finishedMatches.length === 0) {
             setMatches([]);
-            // Aún queremos mostrar los torneos en el filtro aunque no haya partidos terminados
             const tournamentIds = [...new Set(rawMatchesArray.map(m => m.tournamentId))];
             const tournamentsMap = await getMultipleTournaments(tournamentIds);
             setTournaments(Object.values(tournamentsMap));
@@ -66,16 +65,20 @@ export function useMatchHistory(teamId: string | undefined | null): UseMatchHist
         ]);
 
         const enriched = finishedMatches
-          .map((match): EnrichedMatch => ({
-            ...match,
-            tournamentName: tournamentsMap[match.tournamentId]?.name || 'Torneo Desconocido',
-            homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
-            homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl,
-            awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
-            awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl,
-          }))
+          .map((match): EnrichedMatch => {
+            const tournament = tournamentsMap[match.tournamentId];
+            return {
+              ...match,
+              details: match.details,
+              tournamentName: tournament?.name || 'Torneo Desconocido',
+              venue: tournament?.venue, // <-- ¡CORRECCIÓN FINAL APLICADA!
+              homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
+              homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl,
+              awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
+              awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl,
+            }
+          })
           .sort((a, b) => {
-            // Asumimos que date y details.time existen para partidos finalizados
             const dateTimeA = new Date(`${a.details?.date}T${a.details?.time || '00:00'}`).getTime();
             const dateTimeB = new Date(`${b.details?.date}T${b.details?.time || '00:00'}`).getTime();
             return dateTimeB - dateTimeA;

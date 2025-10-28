@@ -53,7 +53,8 @@ export const MatchCard = ({ match, highlightTeamId, useBottomAccent = false }: M
         return { isFinished: finished, resultColor: color };
     }, [match, highlightTeamId]);
 
-    const venue = match.details?.venue || 'Sede a confirmar';
+    // ¡CORRECCIÓN! Leemos la sede desde la raíz del objeto enriquecido.
+    const venue = match.venue || 'Sede a confirmar';
 
     // --- RENDERIZADO DEL COMPONENTE ---
     return (
