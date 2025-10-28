@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { EnrichedMatch } from '@/hooks/use-upcoming-matches';
-import { Loader2, X, CalendarX, Trophy, MapPin } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Loader2, X, CalendarX } from 'lucide-react';
+import { MatchCard } from '@/components/match-card'; // Importa la tarjeta centralizada
 
 // --- Interfaces y Tipos ---
 
@@ -14,88 +14,6 @@ interface NextMatchViewProps {
   onClose: () => void;
   upcomingMatches: EnrichedMatch[];
   loadingMatches: boolean;
-}
-
-// --- Componente de Tarjeta de Partido Individual ---
-
-const UpcomingMatchCard = ({ match }: { match: EnrichedMatch }) => {
-    const { time, month, day } = useMemo(() => {
-        const dateStr = match.details?.date; // Formato: "YYYY-MM-DD"
-        const timeStr = match.details?.time; // Formato: "HH:mm" o undefined
-
-        if (!dateStr || typeof dateStr !== 'string' || !dateStr.includes('-')) {
-            return { time: null, month: null, day: null };
-        }
-
-        try {
-            // --- Lógica para DÍA y MES ---
-            // Se necesita procesar el string para obtener el nombre del mes.
-            const parts = dateStr.split('-');
-            const year = parseInt(parts[0], 10);
-            const monthIndex = parseInt(parts[1], 10) - 1; // JS month es 0-indexado
-            const dayOfMonth = parseInt(parts[2], 10);
-
-            // Se crea una fecha explícitamente en UTC para evitar conversiones de zona horaria.
-            const safeUTCDate = new Date(Date.UTC(year, monthIndex, dayOfMonth));
-
-            const monthFormatOptions: Intl.DateTimeFormatOptions = { timeZone: 'UTC', month: 'short' };
-            const dayFormatOptions: Intl.DateTimeFormatOptions = { timeZone: 'UTC', day: 'numeric' };
-
-            const month = safeUTCDate.toLocaleDateString('es-AR', monthFormatOptions).replace('.', '');
-            const day = safeUTCDate.toLocaleDateString('es-AR', dayFormatOptions);
-
-            // --- Lógica para la HORA ---
-            // "Simplemente mostrar lo que se lee". No se parsea, solo se valida el formato.
-            const time = timeStr && /^\d{2}:\d{2}$/.test(timeStr) ? timeStr : null;
-
-            return { time, month, day };
-
-        } catch {
-            return { time: null, month: null, day: null };
-        }
-    }, [match.details?.date, match.details?.time]);
-
-    return (
-        <Card className="w-full bg-card/70 shadow-sm mb-3 last:mb-0 border-l-4 border-primary/70 rounded-lg overflow-hidden">
-            <div className="flex items-stretch">
-                {/* Bloque de Fecha */}
-                <div className="flex flex-col items-center justify-center bg-primary/10 px-3.5 py-2 text-center text-primary">
-                    <span className="text-xs font-semibold uppercase tracking-wider capitalize">{month || '-'}</span>
-                    <span className="text-2xl font-bold leading-tight">{day || '-'}</span>
-                    {/* Muestra la hora directamente como viene, sin "hs" ni formato extra */}
-                    {time && <span className="text-xs font-medium">{time}</span>}
-                </div>
-
-                {/* Bloque de Información del Partido */}
-                <div className="flex-1 p-3">
-                    {/* Equipos */}
-                    <div className="flex items-center gap-2">
-                        <img src={match.homeTeamLogo || '/assets/images/default-team-logo.png'} alt={match.homeTeamName} className="h-5 w-5 rounded-full object-cover border border-border" />
-                        <span className="text-sm font-semibold text-card-foreground truncate flex-1">{match.homeTeamName}</span>
-                        <span className="text-xs font-bold text-muted-foreground/80 mx-1">vs</span>
-                        <span className="text-sm font-semibold text-card-foreground truncate flex-1 text-right">{match.awayTeamName}</span>
-                        <img src={match.awayTeamLogo || '/assets/images/default-team-logo.png'} alt={match.awayTeamName} className="h-5 w-5 rounded-full object-cover border border-border" />
-                    </div>
-                    
-                    <Separator className="my-1.5 bg-border/40" />
-                    
-                    {/* Detalles */}
-                    <div className="text-xs text-muted-foreground space-y-0.5">
-                        <div className="flex items-center gap-1.5 truncate">
-                            <Trophy className="h-3 w-3 shrink-0 opacity-80" />
-                            <span className="truncate">{match.tournamentName}</span>
-                        </div>
-                        {match.details?.field && (
-                            <div className="flex items-center gap-1.5 truncate">
-                                <MapPin className="h-3 w-3 shrink-0 opacity-80" />
-                                <span className="truncate">{match.details.field}</span>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </Card>
-    );
 }
 
 // --- Componente Principal del Modal ---
@@ -117,19 +35,21 @@ export const NextMatchView = ({ onClose, upcomingMatches, loadingMatches }: Next
     if (upcomingMatches.length === 0) {
       return (
         <div className="text-center h-96 flex flex-col justify-center items-center text-muted-foreground p-8">
-          <CalendarX className="w-20 h-20 mb-4 text-primary" />
-          <h3 className="text-2xl font-bold text-card-foreground">Sin Partidos Pendientes</h3>
-          <p className="mt-2">Actualmente, no hay partidos programados para este equipo.</p>
+          <CalendarX className="w-16 h-16 sm:w-20 sm:h-20 mb-4 text-primary" />
+          <h3 className="text-xl sm:text-2xl font-bold text-card-foreground">Sin Partidos Pendientes</h3>
+          <p className="mt-2 text-sm sm:text-base">Actualmente, no hay partidos programados para este equipo.</p>
         </div>
       );
     }
 
     return (
         <div className="p-1 sm:p-2">
-            <h2 className="text-2xl font-bold text-center mb-4 text-card-foreground">Próximos Partidos</h2>
-            {upcomingMatches.map(match => (
-                <UpcomingMatchCard key={match.id} match={match} />
-            ))}
+            <h2 className="text-xl sm:text-2xl font-bold text-center my-3 sm:my-4 text-card-foreground">Próximos Partidos</h2>
+            <div className="space-y-2 sm:space-y-3">
+              {upcomingMatches.map(match => (
+                  <MatchCard key={match.id} match={match} />
+              ))}
+            </div>
         </div>
     );
   };
@@ -144,7 +64,7 @@ export const NextMatchView = ({ onClose, upcomingMatches, loadingMatches }: Next
       exit="hidden"
     >
       <motion.div
-        className="relative w-full max-w-md bg-card rounded-2xl border shadow-xl flex flex-col"
+        className="relative w-full max-w-lg bg-card rounded-none border shadow-xl flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
         variants={modalVariants}
       >
@@ -158,7 +78,7 @@ export const NextMatchView = ({ onClose, upcomingMatches, loadingMatches }: Next
           <X className="h-5 w-5" />
         </Button>
 
-        <CardFooter className='bg-card/95 backdrop-blur-sm border-t mt-auto py-4 px-6'>
+        <CardFooter className='bg-card/95 backdrop-blur-sm border-t mt-auto py-3 px-4 sm:py-4 sm:px-6'>
           <Button variant="outline" className="w-full" onClick={onClose}>Cerrar</Button>
         </CardFooter>
       </motion.div>

@@ -6,54 +6,7 @@ import { getMultipleTeams } from '@/lib/firebase/db';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
-
-// --- Componente de la Tarjeta de Partido (Estilo Unificado) ---
-const TournamentMatchCard = ({ match }: { match: EnrichedMatch }) => {
-
-    const { month, day, time } = useMemo(() => {
-        const dateStr = match.details?.date;
-        const timeStr = match.details?.time;
-        if (!dateStr) return { month: null, day: null, time: null };
-        try {
-            const [year, monthNum, dayNum] = dateStr.split('-').map(Number);
-            const safeDate = new Date(Date.UTC(year, monthNum - 1, dayNum));
-            return {
-                month: safeDate.toLocaleDateString('es-AR', { month: 'short', timeZone: 'UTC' }).replace('.', ''),
-                day: safeDate.getUTCDate().toString(),
-                time: timeStr || null
-            };
-        } catch { return { month: null, day: null, time: null }; }
-    }, [match.details]);
-
-    const resultText = useMemo(() => {
-        if (match.status !== 'finished' || !match.result) return time ? `${time} hs` : 'A confirmar';
-        return `${match.result.home} - ${match.result.away}`;
-    }, [match.status, match.result, time]);
-
-    return (
-        <Card className="w-full bg-card/70 shadow-sm rounded-lg overflow-hidden border-l-4 border-transparent">
-            <div className="flex items-stretch">
-                {/* Bloque de Fecha y Hora/Resultado */}
-                <div className="flex flex-col items-center justify-center bg-primary/10 px-3.5 py-2 text-center text-primary w-[75px] flex-shrink-0">
-                    <span className="text-xs font-semibold uppercase tracking-wider capitalize">{month || '-'}</span>
-                    <span className="text-2xl font-bold leading-tight">{day || '-'}</span>
-                    <span className="text-sm font-semibold text-white/90 mt-0.5 whitespace-nowrap">{resultText}</span>
-                </div>
-                
-                {/* Bloque de Información del Partido */}
-                <div className="flex-1 p-3 min-w-0">
-                    <div className="flex items-center gap-2">
-                        <img src={match.homeTeamLogo || '/assets/images/default-team-logo.png'} alt={match.homeTeamName} className="h-5 w-5 rounded-full object-cover border border-border" />
-                        <span className="text-sm font-semibold text-card-foreground truncate flex-1">{match.homeTeamName}</span>
-                        <span className="text-xs font-bold text-muted-foreground/80 mx-1">vs</span>
-                        <span className="text-sm font-semibold text-card-foreground truncate flex-1 text-right">{match.awayTeamName}</span>
-                        <img src={match.awayTeamLogo || '/assets/images/default-team-logo.png'} alt={match.awayTeamName} className="h-5 w-5 rounded-full object-cover border border-border" />
-                    </div>
-                </div>
-            </div>
-        </Card>
-    );
-}
+import { MatchCard } from '@/components/match-card'; // Importa la nueva tarjeta centralizada
 
 // --- Componente Principal de la Vista del Fixture ---
 export const FixtureView = ({ matches }: { matches?: Match[] }) => {
@@ -126,7 +79,7 @@ export const FixtureView = ({ matches }: { matches?: Match[] }) => {
                     </div>
                     <div className="space-y-3">
                         {groupedMatches[date].map(match => (
-                            <TournamentMatchCard key={match.id} match={match} />
+                            <MatchCard key={match.id} match={match} />
                         ))}
                     </div>
                 </div>
