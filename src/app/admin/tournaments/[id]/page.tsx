@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -19,12 +20,10 @@ import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { AddMatchDialog } from '@/components/add-match-dialog';
-import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2 } from 'lucide-react';
+import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2, Video, VideoOff } from 'lucide-react';
 
-// --- TIPOS (actualizados para reflejar la nueva estructura de stats.ts)
 import { Tournament, Team, Match, Stats, PageState, PlayerStatsInfo } from '@/lib/types';
 
-// --- LÓGICA DE NEGOCIO (sin cambios aquí) ---
 const generateRoundRobinFixture = (teams: Team[]) => {
     const schedule: { round: number; homeTeamId: string; awayTeamId: string; }[] = [];
     let localTeams = [...teams];
@@ -42,8 +41,6 @@ const generateRoundRobinFixture = (teams: Team[]) => {
     return schedule;
 };
 
-
-// --- COMPONENTE PRINCIPAL ---
 export default function TournamentFixturePage() {
     const router = useRouter();
     const params = useParams();
@@ -58,6 +55,7 @@ export default function TournamentFixturePage() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isAddMatchDialogOpen, setIsAddMatchDialogOpen] = useState(false);
+    const [editingVideoMatchId, setEditingVideoMatchId] = useState<string | null>(null);
 
     const updateMatchData = (matchId: string, path: string, value: any) => {
         set(ref(db, `matches/${matchId}/${path}`), value);
@@ -72,7 +70,6 @@ export default function TournamentFixturePage() {
         if (!matchSnap.exists()) return { homeScore: 0, awayScore: 0 };
         const matchData = matchSnap.val();
 
-        // CORRECCIÓN: Obtener los jugadores directamente de la DB para evitar "stale state"
         const homePlayersSnap = await get(ref(db, `teams/${matchData.homeTeamId}/players`));
         const awayPlayersSnap = await get(ref(db, `teams/${matchData.awayTeamId}/players`));
 
@@ -99,7 +96,7 @@ export default function TournamentFixturePage() {
 
         await update(ref(db, `matches/${matchId}/result`), { home: homeScore, away: awayScore });
         return { homeScore, awayScore };
-    }, [toast]); // Se elimina `teams` de las dependencias
+    }, [toast]);
 
     const handleStatsSaved = useCallback(async (match: Match) => {
         if (!tournament) return;
@@ -228,8 +225,7 @@ export default function TournamentFixturePage() {
         <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
                 <Link href="/admin/manage-tournaments">
-                    {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
-                    }<Button variant="outline" className="mb-6"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button></Link>
+                    <Button variant="outline" className="mb-6"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button></Link>
                 <div className="mb-8"><h1 className="text-3xl font-bold tracking-tight">{tournament?.name}</h1><p className="text-muted-foreground">Gestiona el fixture, resultados y estadísticas del torneo.</p></div>
                 <Tabs defaultValue="fixture">
                     <TabsList className="grid w-full grid-cols-4"><TabsTrigger value="fixture">Fixture</TabsTrigger><TabsTrigger value="positions">Posiciones</TabsTrigger><TabsTrigger value="scorers">Goleadores</TabsTrigger><TabsTrigger value="sanctions">Sanciones</TabsTrigger></TabsList>
@@ -258,10 +254,40 @@ export default function TournamentFixturePage() {
                                                                     <span className="text-2xl font-bold">-</span>
                                                                     <Input readOnly type="number" placeholder="-" className="w-16 h-12 text-center text-lg font-bold bg-muted/50" value={match.result?.away ?? ''} />
                                                                 </div>
-                                                                <div className="grid grid-cols-3 gap-2 text-xs">
+                                                                <div className="grid grid-cols-4 gap-2 text-xs">
                                                                     <Input type="date" className="h-8" defaultValue={match.details?.date || ''} onBlur={(e) => updateMatchData(match.id, 'details/date', e.target.value)} disabled={match.status === 'finished'}/>
                                                                     <Input type="time" className="h-8" defaultValue={match.details?.time || ''} onBlur={(e) => updateMatchData(match.id, 'details/time', e.target.value)} disabled={match.status === 'finished'}/>
                                                                     <Input placeholder="Árbitro" className="h-8" defaultValue={match.details?.referee || ''} onBlur={(e) => updateMatchData(match.id, 'details/referee', e.target.value)} disabled={match.status === 'finished'}/>
+                                                                    <div className="relative">
+                                                                        {editingVideoMatchId === match.id ? (
+                                                                            <Input
+                                                                                placeholder="URL Video"
+                                                                                className="h-8 pr-8"
+                                                                                defaultValue={match.details?.videoUrl || ''}
+                                                                                onBlur={(e) => {
+                                                                                    updateMatchData(match.id, 'details/videoUrl', e.target.value);
+                                                                                    setEditingVideoMatchId(null);
+                                                                                }}
+                                                                                onKeyDown={(e) => {
+                                                                                  if (e.key === 'Enter') {
+                                                                                    updateMatchData(match.id, 'details/videoUrl', e.currentTarget.value);
+                                                                                    setEditingVideoMatchId(null);
+                                                                                  }
+                                                                                }}
+                                                                                autoFocus
+                                                                            />
+                                                                        ) : (
+                                                                            <Button
+                                                                                variant="outline"
+                                                                                size="sm"
+                                                                                className="h-8 w-full justify-start px-2 font-normal text-muted-foreground"
+                                                                                onClick={() => setEditingVideoMatchId(match.id)}
+                                                                            >
+                                                                                {match.details?.videoUrl ? <Video className="h-4 w-4 mr-2 text-green-400" /> : <VideoOff className="h-4 w-4 mr-2" />}
+                                                                                <span className="truncate">{match.details?.videoUrl ? 'Ver/Editar' : 'Añadir video'}</span>
+                                                                            </Button>
+                                                                        )}
+                                                                    </div>
                                                                 </div>
                                                             </CardContent>
                                                             <CardContent className="flex items-center justify-between">

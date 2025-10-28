@@ -1,38 +1,41 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { Match } from '@/lib/types';
+// MODIFICADO: Se importa el tipo centralizado EnrichedMatch
+import { Match, EnrichedMatch, Team } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { MatchCard } from '@/components/match-card';
 
-// --- Interfaz enriquecida para uso interno del componente ---
-interface EnrichedMatchInternal extends Match {
-    homeTeamName: string;
-    homeTeamLogo?: string;
-    awayTeamName: string;
-    awayTeamLogo?: string;
+// ELIMINADO: La interfaz local ya no es necesaria.
+
+// --- Propiedades del Componente ---
+interface FixtureViewProps {
+    matches?: Match[];
+    teamsMap?: Record<string, Team>;
     tournamentName?: string;
-    venue?: string; // <-- Prop para la sede
+    venue?: string;
 }
 
 // --- Componente Principal de la Vista del Fixture ---
-export const FixtureView = ({ matches, teamsMap, tournamentName, venue }: { matches?: Match[], teamsMap?: any, tournamentName?: string, venue?: string }) => {
+export const FixtureView = ({ matches, teamsMap, tournamentName, venue }: FixtureViewProps) => {
     const [currentRound, setCurrentRound] = useState(1);
 
     const { rounds, totalRounds } = useMemo(() => {
         if (!matches || !teamsMap) return { rounds: {}, totalRounds: 0 };
 
+        // MODIFICADO: El acumulador ahora usa el tipo EnrichedMatch importado.
         const groupedByRound = matches.reduce((acc, match) => {
             const round = match.round || 0;
             if (!acc[round]) {
                 acc[round] = [];
             }
+            // Se crea un objeto que cumple con la interfaz EnrichedMatch
             acc[round].push({
                 ...match,
                 tournamentName: tournamentName,
-                venue: venue, // <-- ¡Añadimos la sede aquí!
+                venue: venue,
                 homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
                 homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl,
                 awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
@@ -40,13 +43,15 @@ export const FixtureView = ({ matches, teamsMap, tournamentName, venue }: { matc
                 details: match.details, 
             });
             return acc;
-        }, {} as Record<number, EnrichedMatchInternal[]>);
+        }, {} as Record<number, EnrichedMatch[]>);
         
         const roundKeys = Object.keys(groupedByRound).map(Number).sort((a,b) => a - b);
         const totalRounds = roundKeys.length;
 
+        // Lógica para ajustar la ronda actual si no hay partidos cargados para ella
         if (totalRounds > 0 && !groupedByRound[currentRound]) {
-            setCurrentRound(roundKeys[0] || 1);
+            const firstAvailableRound = roundKeys.find(r => groupedByRound[r]?.length > 0);
+            setCurrentRound(firstAvailableRound || roundKeys[0] || 1);
         }
 
         return { rounds: groupedByRound, totalRounds: totalRounds };
@@ -60,34 +65,37 @@ export const FixtureView = ({ matches, teamsMap, tournamentName, venue }: { matc
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between p-2 rounded-lg bg-secondary/50">
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => setCurrentRound(r => r - 1)}
-                    disabled={currentRound <= 1}
-                >
-                    <ChevronLeft className="h-5 w-5" />
-                </Button>
-                
-                <div className="text-center">
-                    <h3 className="font-bold text-base">Jornada {currentRound}</h3>
-                </div>
+            {totalRounds > 1 && (
+                <div className="flex items-center justify-between p-2 rounded-lg bg-secondary/50">
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setCurrentRound(r => r - 1)}
+                        disabled={currentRound <= 1}
+                    >
+                        <ChevronLeft className="h-5 w-5" />
+                    </Button>
+                    
+                    <div className="text-center">
+                        <h3 className="font-bold text-base">Jornada {currentRound}</h3>
+                    </div>
 
-                <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => setCurrentRound(r => r + 1)}
-                    disabled={currentRound >= totalRounds}
-                >
-                    <ChevronRight className="h-5 w-5" />
-                </Button>
-            </div>
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        onClick={() => setCurrentRound(r => r + 1)}
+                        disabled={currentRound >= totalRounds}
+                    >
+                        <ChevronRight className="h-5 w-5" />
+                    </Button>
+                </div>
+            )}
 
             <div className="space-y-3">
                 {matchesForCurrentRound.length > 0 ? (
                     matchesForCurrentRound.map(match => (
-                        <MatchCard key={match.id} match={match as any} useBottomAccent={true} />
+                        // MODIFICADO: Se ha eliminado el `as any`. ¡Código limpio y seguro!
+                        <MatchCard key={match.id} match={match} useBottomAccent={true} />
                     ))
                 ) : (
                     <p className="text-center text-muted-foreground py-4">No hay partidos para esta jornada.</p>

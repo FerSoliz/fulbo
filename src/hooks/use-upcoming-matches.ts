@@ -1,17 +1,13 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useToast } from './use-toast';
 import { getUpcomingMatchesForTeam, getMultipleTeams, getMultipleTournaments } from '@/lib/firebase/db';
-import { Match } from '@/lib/types';
+// MODIFICADO: Se importa el tipo centralizado
+import { EnrichedMatch, Match } from '@/lib/types';
 
-export interface EnrichedMatch extends Match {
-  tournamentName: string;
-  homeTeamName: string;
-  awayTeamName: string;
-  homeTeamLogo?: string;
-  awayTeamLogo?: string;
-}
+// ELIMINADO: La definición local de EnrichedMatch ya no es necesaria.
 
 export const useUpcomingMatches = (teamId: string | undefined) => {
   const [loading, setLoading] = useState(true);
@@ -38,16 +34,18 @@ export const useUpcomingMatches = (teamId: string | undefined) => {
         const tournamentIds = [...new Set(rawMatches.map(m => m.tournamentId).filter(Boolean))];
         const teamIds = [...new Set(rawMatches.flatMap(m => [m.homeTeamId, m.awayTeamId]).filter(Boolean))];
 
-        // Usar las funciones centralizadas getMultiple, igual que en useMatchHistory
         const [tournamentsMap, teamsMap] = await Promise.all([
           getMultipleTournaments(tournamentIds),
           getMultipleTeams(teamIds),
         ]);
 
         const enriched = rawMatches.map((match): EnrichedMatch => {
+            const tournament = tournamentsMap[match.tournamentId];
             return {
                 ...match,
-                tournamentName: tournamentsMap[match.tournamentId]?.name || 'Torneo Desconocido',
+                details: match.details, // MODIFICADO: Se asegura que `details` se propague
+                tournamentName: tournament?.name || 'Torneo Desconocido',
+                venue: tournament?.venue,
                 homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
                 awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
                 homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl || '', 

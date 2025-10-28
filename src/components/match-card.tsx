@@ -1,9 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import type { EnrichedMatch } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Youtube, MapPin } from 'lucide-react';
 import Link from 'next/link';
 
@@ -20,9 +21,35 @@ interface MatchCardProps {
  */
 export const TournamentMatchCard = ({ match }: { match: EnrichedMatch }) => <MatchCard match={match} />;
 
+// --- FUNCIÓN AUXILIAR PARA VIDEO ---
+const getEmbedUrl = (url: string | undefined): string => {
+    if (!url) return '';
+    try {
+        const urlObj = new URL(url);
+        // Maneja URLs cortas de YouTube (youtu.be/VIDEO_ID)
+        if (urlObj.hostname === 'youtu.be') {
+            return `https://www.youtube.com/embed/${urlObj.pathname.slice(1)}`;
+        }
+        // Maneja URLs estándar de YouTube (youtube.com/watch?v=VIDEO_ID)
+        if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
+            const videoId = urlObj.searchParams.get('v');
+            if (videoId) {
+                return `https://www.youtube.com/embed/${videoId}`;
+            }
+        }
+    } catch (e) {
+        console.error("URL de video inválida:", e);
+        return ''; // Retorna string vacío si la URL es inválida
+    }
+    // Si no es una URL de YouTube conocida, no se puede incrustar
+    return '';
+};
+
 
 // --- COMPONENTE PRINCIPAL (MOBILE-FIRST) ---
 export const MatchCard = ({ match, highlightTeamId, useBottomAccent = false }: MatchCardProps) => {
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     // --- MEMOS PARA DATOS CALCULADOS ---
     const { shortDate, time } = useMemo(() => {
@@ -53,8 +80,8 @@ export const MatchCard = ({ match, highlightTeamId, useBottomAccent = false }: M
         return { isFinished: finished, resultColor: color };
     }, [match, highlightTeamId]);
 
-    // ¡CORRECCIÓN! Leemos la sede desde la raíz del objeto enriquecido.
     const venue = match.venue || 'Sede a confirmar';
+    const embedUrl = useMemo(() => getEmbedUrl(match.details?.videoUrl), [match.details?.videoUrl]);
 
     // --- RENDERIZADO DEL COMPONENTE ---
     return (
@@ -76,10 +103,27 @@ export const MatchCard = ({ match, highlightTeamId, useBottomAccent = false }: M
                             <MapPin className="h-3 w-3 text-accent-red" />
                             <span>{venue}</span>
                         </div>
-                        {match.details?.youtube_url ? (
-                            <Link href={match.details.youtube_url} target="_blank" rel="noopener noreferrer" aria-label="Ver resumen en YouTube">
-                                <Youtube className="h-5 w-5 text-red-600 hover:scale-110 transition-transform"/>
-                            </Link>
+                        {embedUrl ? (
+                            <>
+                                <button onClick={() => setIsModalOpen(true)} aria-label="Ver resumen del partido">
+                                    <Youtube className="h-5 w-5 text-red-600 hover:scale-110 transition-transform cursor-pointer"/>
+                                </button>
+                                <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                                    <DialogContent className="max-w-4xl p-0 bg-black border-accent-red">
+                                        <div className="aspect-video">
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                src={embedUrl}
+                                                title="Reproductor de video de YouTube"
+                                                frameBorder="0"
+                                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                                allowFullScreen
+                                            ></iframe>
+                                        </div>
+                                    </DialogContent>
+                                </Dialog>
+                            </>
                         ) : (
                             <Youtube className="h-5 w-5 text-muted-foreground/30" />
                         )}
