@@ -143,15 +143,13 @@ export default function TournamentDetailPage() {
           </header>
 
           <Tabs defaultValue="fixture" className="w-full">
-            <div className="overflow-x-auto">
-              <TabsList className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground">
-                <TabsTrigger value="fixture">Fixture</TabsTrigger>
-                <TabsTrigger value="positions">Posiciones</TabsTrigger>
-                <TabsTrigger value="teams">Equipos</TabsTrigger>
-                <TabsTrigger value="scorers">Goleadores</TabsTrigger>
-                <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
-              </TabsList>
-            </div>
+            <TabsList className="flex flex-wrap sm:flex-nowrap h-auto sm:h-9 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground">
+              <TabsTrigger value="fixture">Fixture</TabsTrigger>
+              <TabsTrigger value="positions">Posiciones</TabsTrigger>
+              <TabsTrigger value="teams">Equipos</TabsTrigger>
+              <TabsTrigger value="scorers">Goleadores</TabsTrigger>
+              <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
+            </TabsList>
 
             {/* --- CONTENIDO FINAL DE LAS PESTAÑAS -- */}
             <TabsContent value="fixture" className="mt-4">

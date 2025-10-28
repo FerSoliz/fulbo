@@ -3,13 +3,14 @@
 import { useMemo } from 'react';
 import type { EnrichedMatch } from '@/lib/types';
 import { Card } from '@/components/ui/card';
-import { Youtube } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Youtube, MapPin } from 'lucide-react';
 import Link from 'next/link';
 
 // --- PROPS ---
 interface MatchCardProps {
   match: EnrichedMatch;
-  highlightTeamId?: string; // Opcional: resalta el resultado para este equipo.
+  highlightTeamId?: string;
 }
 
 // --- COMPONENTE DEPRECADO (COMPATIBILIDAD) ---
@@ -18,22 +19,23 @@ interface MatchCardProps {
  */
 export const TournamentMatchCard = ({ match }: { match: EnrichedMatch }) => <MatchCard match={match} />;
 
+
 // --- COMPONENTE PRINCIPAL (MOBILE-FIRST) ---
 export const MatchCard = ({ match, highlightTeamId }: MatchCardProps) => {
 
     // --- MEMOS PARA DATOS CALCULADOS ---
     const { shortDate, time } = useMemo(() => {
         const dateStr = match.details?.date;
-        if (!dateStr) return { shortDate: null, time: null };
+        if (!dateStr) return { shortDate: 'A Confirmar', time: null };
         try {
             const [year, monthNum, dayNum] = dateStr.split('-').map(Number);
             const safeDate = new Date(Date.UTC(year, monthNum - 1, dayNum));
             return {
                 shortDate: safeDate.toLocaleDateString('es-AR', { month: 'short', day: 'numeric', timeZone: 'UTC' }).replace('.', ''),
-                time: match.details?.time ? `${match.details.time} hs` : '-'
+                time: match.details?.time ? `${match.details.time} hs` : null
             };
         } catch {
-            return { shortDate: 'Fecha inválida', time: '-' };
+            return { shortDate: 'Fecha inválida', time: null };
         }
     }, [match.details]);
 
@@ -50,59 +52,75 @@ export const MatchCard = ({ match, highlightTeamId }: MatchCardProps) => {
         return { isFinished: finished, resultColor: color };
     }, [match, highlightTeamId]);
 
+    const venue = match.details?.venue || 'Sede a confirmar';
+
     // --- RENDERIZADO DEL COMPONENTE ---
     return (
-        <Card className={`w-full bg-secondary shadow-md overflow-hidden border-l-4 ${resultColor} hover:border-accent-blue transition-colors duration-200 rounded-none`}>
-            <div className="flex justify-between p-2 sm:p-3 min-h-[75px]">
-                
-                {/* Bloque 1: Fecha y Hora */}
-                <div className="flex flex-col justify-end text-left w-[22%] sm:w-[15%]">
-                    <span className="text-accent-red font-bold uppercase text-[8px] sm:text-[10px] tracking-wider">{shortDate || 'A Confirmar'}</span>
-                    <span className="text-white font-bold text-xs sm:text-sm">{time}</span>
+        <Card className={`w-full bg-secondary shadow-lg overflow-hidden border-l-4 ${resultColor} transition-colors duration-300 rounded-none`}>
+            <div className="flex flex-col p-3 gap-2">
+
+                {/* --- 1. Fila de Metadatos --- */}
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground font-semibold uppercase">
+                    {match.tournamentId && match.tournamentName ? (
+                        <Link href={`/tournament/${match.tournamentId}`} className="hover:text-accent-blue transition-colors truncate pr-2">
+                            {match.tournamentName}
+                        </Link>
+                    ) : (
+                        <span className="truncate pr-2">{match.tournamentName || 'Partido Amistoso'}</span>
+                    )}
+
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3 text-accent-red" />
+                            <span>{venue}</span>
+                        </div>
+                        {match.details?.youtube_url ? (
+                            <Link href={match.details.youtube_url} target="_blank" rel="noopener noreferrer" aria-label="Ver resumen en YouTube">
+                                <Youtube className="h-5 w-5 text-red-600 hover:scale-110 transition-transform"/>
+                            </Link>
+                        ) : (
+                            <Youtube className="h-5 w-5 text-muted-foreground/30" />
+                        )}
+                    </div>
                 </div>
 
-                {/* Bloque 2: Enfrentamiento (auto-centrado) */}
-                <div className="flex-1 flex items-center justify-center px-1 w-[56%] sm:w-[70%]">
+                <Separator className="bg-border-soft" />
+
+                {/* --- 2. Fila de Enfrentamiento --- */}
+                <div className="flex items-center justify-between gap-3 min-h-[50px]">
                     {/* Equipo Local */}
                     <div className="flex items-center gap-2 justify-end flex-1 truncate">
-                        <span className="text-xs sm:text-sm font-bold text-white truncate">{match.homeTeamName}</span>
-                        <img src={match.homeTeamLogo || '/escudito-river.png'} alt={match.homeTeamName} className="h-6 w-6 sm:h-8 sm:w-8 rounded-full object-cover border border-border" />
+                        <span className="text-sm sm:text-base font-bold text-white text-right truncate">{match.homeTeamName}</span>
+                        <img src={match.homeTeamLogo || '/escudito-river.png'} alt={match.homeTeamName} className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover border-2 border-border-soft" />
                     </div>
 
-                    {/* Marcador o VS */}
-                    <div className="mx-2 text-center">
+                    {/* Marcador o Info de Horario */}
+                    <div className="text-center">
                         {isFinished ? (
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-lg sm:text-2xl font-black text-white">{match.result?.home}</span>
-                                <span className="text-sm sm:text-lg font-bold text-muted-foreground">-</span>
-                                <span className="text-lg sm:text-2xl font-black text-white">{match.result?.away}</span>
+                            <div className="flex flex-col items-center">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-2xl sm:text-3xl font-black text-white">{match.result?.home}</span>
+                                    <span className="text-lg font-bold text-muted-foreground">-</span>
+                                    <span className="text-2xl sm:text-3xl font-black text-white">{match.result?.away}</span>
+                                </div>
+                                <span className="text-[10px] text-muted-foreground uppercase font-semibold tracking-wider">
+                                    {shortDate} {time ? `- ${time}` : ''}
+                                </span>
                             </div>
                         ) : (
-                            <span className="text-base sm:text-xl font-extrabold text-muted-foreground/80">VS</span>
+                            <div className="flex flex-col items-center">
+                                <span className="text-accent-red font-bold uppercase text-xs tracking-wider">{shortDate}</span>
+                                <span className="text-white font-bold text-sm sm:text-base">{time || 'A conf.'}</span>
+                            </div>
                         )}
                     </div>
 
                     {/* Equipo Visitante */}
                     <div className="flex items-center gap-2 justify-start flex-1 truncate">
-                        <img src={match.awayTeamLogo || '/escudito-de-boca.png'} alt={match.awayTeamName} className="h-6 w-6 sm:h-8 sm:w-8 rounded-full object-cover border border-border" />
-                        <span className="text-xs sm:text-sm font-bold text-white truncate">{match.awayTeamName}</span>
+                        <img src={match.awayTeamLogo || '/escudito-de-boca.png'} alt={match.awayTeamName} className="h-8 w-8 sm:h-10 sm:w-10 rounded-full object-cover border-2 border-border-soft" />
+                        <span className="text-sm sm:text-base font-bold text-white text-left truncate">{match.awayTeamName}</span>
                     </div>
                 </div>
-
-                {/* Bloque 3: Torneo y Media */}
-                <div className="flex flex-col justify-end items-end text-right w-[22%] sm:w-[15%] gap-0.5">
-                    {match.details?.youtube_url ? (
-                         <Link href={match.details.youtube_url} target="_blank" rel="noopener noreferrer" aria-label="Ver resumen en YouTube">
-                            <Youtube className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 hover:scale-110 transition-transform"/>
-                         </Link>
-                    ) : (
-                        <Youtube className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground/30"/> // Ícono desactivado
-                    )}
-                    {match.tournamentName && (
-                        <span className="text-[8px] sm:text-[10px] text-muted-foreground font-semibold uppercase truncate px-1">{match.tournamentName}</span>
-                    )}
-                </div>
-
             </div>
         </Card>
     );
