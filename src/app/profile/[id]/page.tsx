@@ -7,11 +7,11 @@ import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useUpcomingMatches } from '@/hooks/use-upcoming-matches';
-import { UserProfile, ProfileView } from '@/lib/types';
+import { User, ProfileView } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
-import { updateUserProfile, updateUserAvatar } from '@/lib/firebase/db/users';
+import { updateUserProfile } from '@/lib/firebase/db/users';
 
 import { ProfileHeader } from '@/components/profile/ProfileHeader';
 import { ProfileTeamBadge } from '@/components/profile/ProfileTeamBadge';
@@ -23,6 +23,7 @@ import { SudonePassView } from '@/components/profile/SudonePassView';
 import { RankingPreview } from '@/components/profile/RankingPreview';
 import { TournamentsView } from '@/components/profile/TournamentsView';
 import { MyTeamModal } from '@/components/profile/MyTeamModal';
+import { MyDataContainer } from '@/components/profile/MyDataContainer'; // Importado
 import { PlayerStatsView } from '@/components/profile/PlayerStatsView';
 import { MatchHistoryView } from '@/components/profile/MatchHistoryView';
 import { NextMatchView } from '@/components/profile/NextMatchView';
@@ -46,8 +47,8 @@ const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
   history: MatchHistoryView,
   next_match: NextMatchView,
   favorite_tournaments: TournamentsView,
-  my_data: (props) => <ComingSoonView {...props} toast={useToast().toast} />, // Añadido
-  coach: (props) => <ComingSoonView {...props} toast={useToast().toast} />, // Añadido
+  my_data: MyDataContainer, // Reemplazado
+  coach: (props) => <ComingSoonView {...props} toast={useToast().toast} />, 
 };
 
 const actionCards = [
@@ -64,10 +65,10 @@ const actionCards = [
     bgImage: '/assets/profile/estandarte.png',
   },
     {
-    view: 'my_data' as ProfileView, // Vista temporal
+    view: 'my_data' as ProfileView,
     title: 'Mis Datos',
     tab: 'perfil',
-    bgImage: '/assets/profile/puntos.png', // Placeholder
+    bgImage: '/assets/profile/puntos.png', 
   },
   {
     view: 'favorite_tournaments' as ProfileView,
@@ -105,22 +106,23 @@ export default function ProfilePage() {
   const userId = params.id as string;
   const { toast } = useToast();
   const { user: currentUser, refreshUser } = useUser();
-  const { uploadFile } = useUpload();
+  const { uploadFile } = useUpload(); 
   const [view, setView] = useState<ProfileView>('buttons');
   const [activeTab, setActiveTab] = useState<'perfil' | 'equipo'>('perfil');
 
-  const { profileUser, loading: profileLoading } = useUserProfile(userId);
+  const { profileUser, loading: profileLoading, refreshProfile: refreshProfileUser } = useUserProfile(userId);
   const { upcomingMatches, loading: matchesLoading } = useUpcomingMatches(profileUser?.team?.id);
 
   const nextMatch = upcomingMatches?.[0];
 
-  const handleProfileUpdate = async (data: Partial<UserProfile>) => {
+  const handleProfileUpdate = async (data: Partial<User>) => {
     if (!profileUser) return;
     try {
       await updateUserProfile(profileUser.id, data);
       toast({ title: 'Éxito', description: 'Perfil actualizado correctamente.' });
+      refreshProfileUser(); 
       if (currentUser && currentUser.id === profileUser.id) {
-        await refreshUser();
+        await refreshUser(); 
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -134,16 +136,7 @@ export default function ProfilePage() {
     const path = `users/${profileUser.id}/avatars/${file.name}`;
     const url = await uploadFile(file, path);
     if (url) {
-      try {
-        await updateUserAvatar(profileUser.id, url);
-        toast({ title: 'Éxito', description: 'Avatar actualizado correctamente.' });
-        if (currentUser && currentUser.id === profileUser.id) {
-            await refreshUser();
-        }
-      } catch (error) {
-        console.error("Error updating avatar:", error);
-        toast({ title: "Error", description: "No se pudo actualizar el avatar.", variant: "destructive" });
-      }
+      await handleProfileUpdate({ avatar: url });
     }
   };
   
@@ -163,9 +156,11 @@ export default function ProfilePage() {
   
   const viewProps = {
       profileUser: profileUser,
+      onClose: handleCloseModal,
+      onSave: handleProfileUpdate,
+      // Props específicas para otros modales
       profileUserId: userId,
       teamId: profileUser.team?.id,
-      onClose: handleCloseModal,
       upcomingMatches: upcomingMatches, 
       loadingMatches: matchesLoading,
       toast

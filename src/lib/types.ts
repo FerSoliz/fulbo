@@ -1,6 +1,10 @@
 
 // src/lib/types.ts
 
+// --- TIPOS ESPECÍFICOS PARA MEJOR AUTOCOMPLETADO Y SEGURIDAD ---
+export type PlayingPosition = 'arquero' | 'defensa' | 'mediocampo' | 'lateral' | 'delantero' | 'otro';
+export type Surface = 'sintetico' | 'piso' | 'once';
+
 // --- TIPOS DE USUARIO Y AUTENTICACIÓN ---
 export interface User {
   id: string;
@@ -18,6 +22,14 @@ export interface User {
   } | null;
   sudpoints: number;
   createdAt: number;
+
+  // --- Campos Adicionales del Perfil ---
+  age?: number;
+  phone?: string;
+  playingPosition?: PlayingPosition;
+  preferredSurfaces?: {
+    [key in Surface]?: boolean;
+  };
 }
 
 export interface GuestPlayer {
