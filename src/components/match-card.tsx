@@ -11,6 +11,7 @@ import Link from 'next/link';
 interface MatchCardProps {
   match: EnrichedMatch;
   highlightTeamId?: string;
+  useBottomAccent?: boolean;
 }
 
 // --- COMPONENTE DEPRECADO (COMPATIBILIDAD) ---
@@ -21,7 +22,7 @@ export const TournamentMatchCard = ({ match }: { match: EnrichedMatch }) => <Mat
 
 
 // --- COMPONENTE PRINCIPAL (MOBILE-FIRST) ---
-export const MatchCard = ({ match, highlightTeamId }: MatchCardProps) => {
+export const MatchCard = ({ match, highlightTeamId, useBottomAccent = false }: MatchCardProps) => {
 
     // --- MEMOS PARA DATOS CALCULADOS ---
     const { shortDate, time } = useMemo(() => {
@@ -56,7 +57,7 @@ export const MatchCard = ({ match, highlightTeamId }: MatchCardProps) => {
 
     // --- RENDERIZADO DEL COMPONENTE ---
     return (
-        <Card className={`w-full bg-secondary shadow-lg overflow-hidden border-l-4 ${resultColor} transition-colors duration-300 rounded-none`}>
+        <Card className={`w-full bg-secondary shadow-lg overflow-hidden border-l-4 ${resultColor} ${useBottomAccent ? 'border-b border-b-accent-red' : ''} transition-colors duration-300 rounded-none`}>
             <div className="flex flex-col p-3 gap-2">
 
                 {/* --- 1. Fila de Metadatos --- */}

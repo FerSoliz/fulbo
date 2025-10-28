@@ -1,89 +1,95 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { EnrichedMatch, Match } from '@/lib/types';
-import { getMultipleTeams } from '@/lib/firebase/db';
+import { useState, useMemo } from 'react';
+import { Match } from '@/lib/types';
 import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Loader2 } from 'lucide-react';
-import { MatchCard } from '@/components/match-card'; // Importa la nueva tarjeta centralizada
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { MatchCard } from '@/components/match-card';
+
+// --- Interfaz enriquecida para uso interno del componente ---
+interface EnrichedMatchInternal extends Match {
+    homeTeamName: string;
+    homeTeamLogo?: string;
+    awayTeamName: string;
+    awayTeamLogo?: string;
+    tournamentName?: string; // <-- Prop para el nombre del torneo
+}
 
 // --- Componente Principal de la Vista del Fixture ---
-export const FixtureView = ({ matches }: { matches?: Match[] }) => {
-    const [enrichedMatches, setEnrichedMatches] = useState<EnrichedMatch[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+export const FixtureView = ({ matches, teamsMap, tournamentName }: { matches?: Match[], teamsMap?: any, tournamentName?: string }) => {
+    const [currentRound, setCurrentRound] = useState(1);
 
-    useEffect(() => {
-        if (!matches || matches.length === 0) {
-            setIsLoading(false);
-            return;
+    const { rounds, totalRounds } = useMemo(() => {
+        if (!matches || !teamsMap) return { rounds: {}, totalRounds: 0 };
+
+        const groupedByRound = matches.reduce((acc, match) => {
+            const round = match.round || 0;
+            if (!acc[round]) {
+                acc[round] = [];
+            }
+            acc[round].push({
+                ...match,
+                tournamentName: tournamentName, // <-- ¡Añadimos el nombre del torneo aquí!
+                homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
+                homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl,
+                awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
+                awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl,
+            });
+            return acc;
+        }, {} as Record<number, EnrichedMatchInternal[]>);
+        
+        const roundKeys = Object.keys(groupedByRound).map(Number).sort((a,b) => a - b);
+        const totalRounds = roundKeys.length;
+
+        if (totalRounds > 0 && !groupedByRound[currentRound]) {
+            setCurrentRound(roundKeys[0] || 1);
         }
 
-        const enrichData = async () => {
-            setIsLoading(true);
-            try {
-                const allTeamIds = [...new Set(matches.flatMap(m => [m.homeTeamId, m.awayTeamId]))];
-                const teamsMap = await getMultipleTeams(allTeamIds);
+        return { rounds: groupedByRound, totalRounds: totalRounds };
+    }, [matches, teamsMap, tournamentName, currentRound]);
 
-                const enriched = matches.map((match): EnrichedMatch => ({
-                    ...match,
-                    tournamentName: '', // No es necesario en este contexto
-                    homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
-                    homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl,
-                    awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
-                    awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl,
-                }));
-
-                setEnrichedMatches(enriched);
-            } catch (error) {
-                console.error("[FixtureView] Error enriqueciendo partidos:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        enrichData();
-    }, [matches]);
-
-    const groupedMatches = useMemo(() => {
-        if (enrichedMatches.length === 0) return {};
-        return enrichedMatches.reduce((acc, match) => {
-            const matchDate = match.details?.date || 'Sin Fecha';
-            if (!acc[matchDate]) {
-                acc[matchDate] = [];
-            }
-            acc[matchDate].push(match);
-            return acc;
-        }, {} as Record<string, EnrichedMatch[]>);
-    }, [enrichedMatches]);
-
-    if (isLoading) {
-        return <div className="flex justify-center items-center py-10"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-    }
+    const matchesForCurrentRound = rounds[currentRound] || [];
 
     if (!matches || matches.length === 0) {
         return <Card className="text-center text-muted-foreground py-6 px-4"><p>El fixture del torneo aún no está disponible.</p></Card>;
     }
 
-    const sortedDates = Object.keys(groupedMatches).sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
-
     return (
-        <div className="space-y-6">
-            {sortedDates.map((date, index) => (
-                <div key={date}>
-                    <div className="flex items-center gap-3 mb-3">
-                         <h3 className="text-sm font-semibold uppercase text-muted-foreground tracking-wider whitespace-nowrap">
-                             {date === 'Sin Fecha' ? 'A Confirmar' : `Jornada ${index + 1}`}
-                         </h3>
-                         <Separator className="flex-grow" />
-                    </div>
-                    <div className="space-y-3">
-                        {groupedMatches[date].map(match => (
-                            <MatchCard key={match.id} match={match} />
-                        ))}
-                    </div>
+        <div className="space-y-4">
+            <div className="flex items-center justify-between p-2 rounded-lg bg-secondary/50">
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setCurrentRound(r => r - 1)}
+                    disabled={currentRound <= 1}
+                >
+                    <ChevronLeft className="h-5 w-5" />
+                </Button>
+                
+                <div className="text-center">
+                    <h3 className="font-bold text-base">Jornada {currentRound}</h3>
                 </div>
-            ))}
+
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setCurrentRound(r => r + 1)}
+                    disabled={currentRound >= totalRounds}
+                >
+                    <ChevronRight className="h-5 w-5" />
+                </Button>
+            </div>
+
+            <div className="space-y-3">
+                {matchesForCurrentRound.length > 0 ? (
+                    matchesForCurrentRound.map(match => (
+                        <MatchCard key={match.id} match={match as any} useBottomAccent={true} />
+                    ))
+                ) : (
+                    <p className="text-center text-muted-foreground py-4">No hay partidos para esta jornada.</p>
+                )}
+            </div>
         </div>
     );
 };

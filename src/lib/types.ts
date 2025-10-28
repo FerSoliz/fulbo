@@ -89,6 +89,7 @@ export interface Tournament {
 export interface Match {
   id: string;
   tournamentId: string;
+  round: number;
   homeTeamId: string;
   awayTeamId: string;
   homeTeamName?: string; // Denormalized

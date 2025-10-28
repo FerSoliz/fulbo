@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getTournamentDetails } from '@/lib/firebase/db/tournaments';
-import { FullTournament, Standing, Scorer, Sanction } from '@/lib/types';
+import { FullTournament, Standing, Scorer, Sanction, Team } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -130,6 +130,14 @@ export default function TournamentDetailPage() {
     fetchAndSetDetails();
   }, [tournamentId]);
 
+  const teamsMap = useMemo(() => {
+    if (!tournament?.teamsList) return {};
+    return tournament.teamsList.reduce((acc, team: Team) => {
+        acc[team.id] = team;
+        return acc;
+    }, {} as Record<string, Team>);
+  }, [tournament?.teamsList]);
+
   return (
     <div className="max-w-4xl mx-auto p-2 sm:p-4 md:p-6">
       {isLoading && <p className="text-center text-muted-foreground py-10">Cargando detalles del torneo...</p>}
@@ -151,9 +159,13 @@ export default function TournamentDetailPage() {
               <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
             </TabsList>
 
-            {/* --- CONTENIDO FINAL DE LAS PESTAÑAS -- */}
             <TabsContent value="fixture" className="mt-4">
-              <FixtureView matches={tournament.matches} />
+              {/* ¡Le pasamos el nombre del torneo aquí! */}
+              <FixtureView 
+                matches={tournament.matches} 
+                teamsMap={teamsMap} 
+                tournamentName={tournament.name} 
+              />
             </TabsContent>
 
             <TabsContent value="positions" className="mt-4">
