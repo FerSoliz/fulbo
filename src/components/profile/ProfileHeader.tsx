@@ -58,6 +58,13 @@ const GuestRegisterBanner = ({ guestName, guestDni }: { guestName: string; guest
   </Link>
 );
 
+// Objeto para traducir los roles de usuario
+const roleTranslations: Record<string, string> = {
+  player: 'Jugador',
+  captain: 'Capitán',
+  admin: 'Admin', // Se mantiene como "Admin" según la solicitud
+};
+
 interface ProfileHeaderProps {
   profileUser: UserProfile;
   onSaveProfile: (updatedData: Partial<UserProfile>) => void;
@@ -86,13 +93,15 @@ export function ProfileHeader({
   const isOwnProfile = currentUser?.id === profileUser.id;
   const { name, username = '', role, isVerified, avatar, profileBackground, sudpoints = 0, transferStatus, isGuest, dni } = profileUser;
 
+  const translatedRole = roleTranslations[role] || role; // Obtener traducción o usar el rol original
+
   const divisionInfo = getDivisionInfo(sudpoints);
   const isLeyenda = !isFinite(divisionInfo.endOfDivisionPoints);
 
   const currentCrest = profileBackground ? crestMap[profileBackground] : null;
 
   function handleAvatarClick() {
-    if (isOwnProfile && !isUploading && !isGuest) {
+    if (isOwnProfile && !isGuest) {
       fileInputRef.current?.click();
     }
   }
@@ -172,7 +181,7 @@ export function ProfileHeader({
                   </Tooltip>
                   </TooltipProvider>
               )}
-              <span>· {role}</span>
+              <span>· {translatedRole}</span>
           </CardDescription>
         </div>
       </CardHeader>

@@ -96,7 +96,7 @@ export interface Team {
 }
 
 
-// --- TIPOS DE ESTADÍSTICAS ---
+// --- TIPOS DE ESTADÍSTICAS --
 export interface PlayerStatsInfo {
   goals?: number;
   assists?: number;
@@ -204,6 +204,19 @@ export interface Comment {
 
 // --- TIPOS DE PÁGINA ---
 export type PageState = 'LOADING' | 'READY' | 'NOT_FOUND' | 'ACCESS_DENIED';
+
+export type ProfileView = 
+  | 'buttons'
+  | 'sudone_pass'
+  | 'ranking_preview'
+  | 'my_team'
+  | 'stats'
+  | 'history'
+  | 'next_match'
+  | 'favorite_tournaments'
+  | 'my_data'
+  | 'coach';
+
 
 // --- TIPOS DE COLECCIONABLES ---
 export interface CollectibleCard {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react'; // <-- PASO 1: Importar useCallback
+import { useState, useCallback, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-context';
@@ -27,6 +27,16 @@ import { PlayerStatsView } from '@/components/profile/PlayerStatsView';
 import { MatchHistoryView } from '@/components/profile/MatchHistoryView';
 import { NextMatchView } from '@/components/profile/NextMatchView';
 
+// Placeholder para funcionalidades futuras
+const ComingSoonView = ({ onClose, toast }) => {
+  useEffect(() => {
+    toast({ title: 'Próximamente', description: 'Esta función estará disponible pronto.' });
+    onClose();
+  }, [onClose, toast]);
+
+  return null; // No renderiza nada
+};
+
 const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
   buttons: () => null,
   sudone_pass: SudonePassView,
@@ -36,6 +46,8 @@ const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
   history: MatchHistoryView,
   next_match: NextMatchView,
   favorite_tournaments: TournamentsView,
+  my_data: (props) => <ComingSoonView {...props} toast={useToast().toast} />, // Añadido
+  coach: (props) => <ComingSoonView {...props} toast={useToast().toast} />, // Añadido
 };
 
 const actionCards = [
@@ -50,6 +62,12 @@ const actionCards = [
     title: 'Ranking',
     tab: 'perfil',
     bgImage: '/assets/profile/estandarte.png',
+  },
+    {
+    view: 'my_data' as ProfileView, // Vista temporal
+    title: 'Mis Datos',
+    tab: 'perfil',
+    bgImage: '/assets/profile/puntos.png', // Placeholder
   },
   {
     view: 'favorite_tournaments' as ProfileView,
@@ -74,6 +92,11 @@ const actionCards = [
     title: 'Equipo',
     tab: 'equipo',
     bgImage: '/assets/profile/team.png',
+  },
+  {
+    view: 'coach' as ProfileView, // Vista temporal
+    title: 'DT',
+    tab: 'equipo',
   },
 ];
 
@@ -124,10 +147,9 @@ export default function ProfilePage() {
     }
   };
   
-  // --- PASO 2: Crear una función estable con useCallback ---
   const handleCloseModal = useCallback(() => {
     setView('buttons');
-  }, []); // El array vacío garantiza que la función nunca se recree
+  }, []);
 
   const ActiveView = viewComponents[view] || null;
 
@@ -143,9 +165,10 @@ export default function ProfilePage() {
       profileUser: profileUser,
       profileUserId: userId,
       teamId: profileUser.team?.id,
-      onClose: handleCloseModal, // <-- PASO 3: Pasar la función estable
+      onClose: handleCloseModal,
       upcomingMatches: upcomingMatches, 
       loadingMatches: matchesLoading,
+      toast
   };
   
   const cardsForTab = actionCards.filter(card => card.tab === activeTab);
