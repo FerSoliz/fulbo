@@ -23,19 +23,18 @@ import { SudonePassView } from '@/components/profile/SudonePassView';
 import { RankingPreview } from '@/components/profile/RankingPreview';
 import { TournamentsView } from '@/components/profile/TournamentsView';
 import { MyTeamModal } from '@/components/profile/MyTeamModal';
-import { MyDataContainer } from '@/components/profile/MyDataContainer'; // Importado
+import { MyDataContainer } from '@/components/profile/MyDataContainer';
 import { PlayerStatsView } from '@/components/profile/PlayerStatsView';
 import { MatchHistoryView } from '@/components/profile/MatchHistoryView';
 import { NextMatchView } from '@/components/profile/NextMatchView';
 
-// Placeholder para funcionalidades futuras
 const ComingSoonView = ({ onClose, toast }) => {
   useEffect(() => {
     toast({ title: 'Próximamente', description: 'Esta función estará disponible pronto.' });
     onClose();
   }, [onClose, toast]);
 
-  return null; // No renderiza nada
+  return null;
 };
 
 const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
@@ -47,8 +46,8 @@ const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
   history: MatchHistoryView,
   next_match: NextMatchView,
   favorite_tournaments: TournamentsView,
-  my_data: MyDataContainer, // Reemplazado
-  coach: (props) => <ComingSoonView {...props} toast={useToast().toast} />, 
+  my_data: MyDataContainer,
+  coach: (props) => <ComingSoonView {...props} toast={useToast().toast} />,
 };
 
 const actionCards = [
@@ -64,11 +63,11 @@ const actionCards = [
     tab: 'perfil',
     bgImage: '/assets/profile/estandarte.png',
   },
-    {
+  {
     view: 'my_data' as ProfileView,
-    title: 'Mis Datos',
+    title: 'Datos', // CAMBIO REALIZADO AQUÍ
     tab: 'perfil',
-    bgImage: '/assets/profile/puntos.png', 
+    bgImage: '/assets/profile/puntos.png',
   },
   {
     view: 'favorite_tournaments' as ProfileView,
@@ -95,7 +94,7 @@ const actionCards = [
     bgImage: '/assets/profile/team.png',
   },
   {
-    view: 'coach' as ProfileView, // Vista temporal
+    view: 'coach' as ProfileView,
     title: 'DT',
     tab: 'equipo',
   },
@@ -106,7 +105,7 @@ export default function ProfilePage() {
   const userId = params.id as string;
   const { toast } = useToast();
   const { user: currentUser, refreshUser } = useUser();
-  const { uploadFile } = useUpload(); 
+  const { uploadFile } = useUpload();
   const [view, setView] = useState<ProfileView>('buttons');
   const [activeTab, setActiveTab] = useState<'perfil' | 'equipo'>('perfil');
 
@@ -120,9 +119,9 @@ export default function ProfilePage() {
     try {
       await updateUserProfile(profileUser.id, data);
       toast({ title: 'Éxito', description: 'Perfil actualizado correctamente.' });
-      refreshProfileUser(); 
+      refreshProfileUser();
       if (currentUser && currentUser.id === profileUser.id) {
-        await refreshUser(); 
+        await refreshUser();
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -139,7 +138,7 @@ export default function ProfilePage() {
       await handleProfileUpdate({ avatar: url });
     }
   };
-  
+
   const handleCloseModal = useCallback(() => {
     setView('buttons');
   }, []);
@@ -153,19 +152,18 @@ export default function ProfilePage() {
   if (!profileUser) {
     return <div className="p-8 text-center">Usuario no encontrado.</div>;
   }
-  
+
   const viewProps = {
-      profileUser: profileUser,
-      onClose: handleCloseModal,
-      onSave: handleProfileUpdate,
-      // Props específicas para otros modales
-      profileUserId: userId,
-      teamId: profileUser.team?.id,
-      upcomingMatches: upcomingMatches, 
-      loadingMatches: matchesLoading,
-      toast
+    profileUser: profileUser,
+    onClose: handleCloseModal,
+    onSave: handleProfileUpdate,
+    profileUserId: userId,
+    teamId: profileUser.team?.id,
+    upcomingMatches: upcomingMatches,
+    loadingMatches: matchesLoading,
+    toast
   };
-  
+
   const cardsForTab = actionCards.filter(card => card.tab === activeTab);
 
   return (
@@ -179,7 +177,7 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      <ProfileHeader 
+      <ProfileHeader
         profileUser={profileUser}
         onSaveProfile={handleProfileUpdate}
         onAvatarChange={handleAvatarUpload}
@@ -191,7 +189,7 @@ export default function ProfilePage() {
       />
 
       {view === 'buttons' ? (
-        <motion.div 
+        <motion.div
             className="grid grid-cols-2 md:grid-cols-3 gap-[6px] pt-1"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -38,6 +38,9 @@ export default function RootLayout({
         <UserProvider>
           <CartProvider>
             <LayoutContent>{children}</LayoutContent>
+            {/* --- TOASTER GLOBAL --- */}
+            {/* Movido aquí para garantizar que siempre esté disponible */}
+            <Toaster />
           </CartProvider>
         </UserProvider>
       </body>
@@ -51,15 +54,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     
     const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
     const isImmersivePage = pathname.startsWith('/collectibles');
-    // Nueva lógica: El carrito solo se muestra si la ruta empieza con /store
     const showCart = pathname.startsWith('/store');
 
     if (isAuthPage || isImmersivePage) {
         return (
           <>
             <main>{children}</main>
-            <Toaster />
-          </>
+            {/* Toaster ha sido removido de aquí */}
+          </> 
         );
     }
 
@@ -70,8 +72,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <PageHeader />
                 <main>{children}</main>
             </div>
-            {showCart && <CartWidget />} {/* El widget ahora solo se renderiza en la tienda */}
-            <Toaster />
+            {showCart && <CartWidget />}
+            {/* Toaster ha sido removido de aquí */}
         </div>
     );
 }

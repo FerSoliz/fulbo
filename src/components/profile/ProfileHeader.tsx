@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { UserProfile } from '@/lib/types';
 import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
+import { useToast } from '@/hooks/use-toast';
 import { getDivisionInfo } from '@/lib/utils';
 import {
   Card,
@@ -17,7 +18,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { AnimatedAvatar } from '@/components/ui/animated-avatar';
 import { DivisionBadge } from '@/components/ui/division-badge';
-import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,7 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-  Loader2, MessageSquare, Pencil, Image as ImageIcon, Handshake, Star
+  Loader2, Pencil, Image as ImageIcon, Handshake, Star
 } from 'lucide-react';
 import { EditProfileDialog } from './EditProfileDialog';
 import { BackgroundChangerDialog } from './BackgroundChangerDialog';
@@ -58,11 +59,10 @@ const GuestRegisterBanner = ({ guestName, guestDni }: { guestName: string; guest
   </Link>
 );
 
-// Objeto para traducir los roles de usuario
 const roleTranslations: Record<string, string> = {
   player: 'Jugador',
   captain: 'Capitán',
-  admin: 'Admin', // Se mantiene como "Admin" según la solicitud
+  admin: 'Admin',
 };
 
 interface ProfileHeaderProps {
@@ -79,7 +79,7 @@ interface ProfileHeaderProps {
 export function ProfileHeader({ 
   profileUser, 
   onSaveProfile, 
-  onSendMessage, 
+  onSendMessage,
   onTransferClick, 
   onAvatarChange, 
   activeTab, 
@@ -88,12 +88,13 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
   const { user: currentUser } = useUser();
   const { isUploading } = useUpload();
+  const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwnProfile = currentUser?.id === profileUser.id;
-  const { name, username = '', role, isVerified, avatar, profileBackground, sudpoints = 0, transferStatus, isGuest, dni } = profileUser;
+  const { name, username = '', role, isVerified, avatar, profileBackground, sudpoints = 0, transferStatus, isGuest, dni, phone } = profileUser;
 
-  const translatedRole = roleTranslations[role] || role; // Obtener traducción o usar el rol original
+  const translatedRole = roleTranslations[role] || role;
 
   const divisionInfo = getDivisionInfo(sudpoints);
   const isLeyenda = !isFinite(divisionInfo.endOfDivisionPoints);
@@ -108,6 +109,21 @@ export function ProfileHeader({
 
   function handleChangeTransferStatus(status: 'libre' | 'traspaso' | 'blindado') {
     onSaveProfile({ transferStatus: status });
+  }
+
+  function handleContactClick() {
+    if (phone) {
+      const sanitizedPhone = phone.replace(/\D/g, '');
+      const whatsappUrl = `https://wa.me/${sanitizedPhone}`;
+      window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      toast({
+        title: 'No se puede contactar',
+        description: 'El jugador no tiene un teléfono cargado.',
+        variant: 'destructive',
+        duration: 3000, // --- AÑADIDO: Duración de 3 segundos ---
+      });
+    }
   }
 
   return (
@@ -190,7 +206,17 @@ export function ProfileHeader({
         <div className="space-y-2"> 
           <div className="flex items-center gap-4">
             <DivisionBadge sudpoints={sudpoints} />
-            {transferStatus && <TransferStatusBadge user={profileUser} onTransferClick={onTransferClick} />}
+            <div className="flex items-center gap-2">
+              {transferStatus && <TransferStatusBadge user={profileUser} onTransferClick={onTransferClick} />}
+              {!isOwnProfile && (transferStatus === 'libre' || transferStatus === 'traspaso') && (
+                <Badge
+                  onClick={handleContactClick}
+                  className="bg-accent-red text-white font-semibold cursor-pointer hover:bg-red-700 transition-colors"
+                >
+                  Contactar
+                </Badge>
+              )}
+            </div>
           </div>
 
           {!isLeyenda ? (
@@ -233,7 +259,6 @@ export function ProfileHeader({
         ) : (
           <>
             <input type="file" ref={fileInputRef} onChange={onAvatarChange} className="hidden" accept="image/*" disabled={isUploading} aria-label="Subir nueva imagen de perfil" />
-            {!isOwnProfile && <Button onClick={onSendMessage} className="w-full"><MessageSquare className="mr-2 h-4 w-4" />Enviar Mensaje</Button>}
           </>
         )}
       </CardContent>

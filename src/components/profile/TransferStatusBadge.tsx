@@ -22,7 +22,7 @@ export const TransferStatusBadge = ({ user, onTransferClick }: TransferStatusBad
 
   const statusConfig = {
     libre: { text: 'LIBRE', color: 'bg-green-500' },
-    traspaso: { text: 'TRASPASO', color: 'bg-yellow-500' },
+    traspaso: { text: 'TRASPASO', color: 'bg-amber-400' },
     blindado: { text: 'BLINDADO', color: 'bg-red-600' },
   };
 
