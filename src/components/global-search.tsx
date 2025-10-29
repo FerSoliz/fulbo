@@ -1,13 +1,12 @@
+
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Search, User, Trophy, Gamepad2, Newspaper, History, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useUser } from '@/context/user-context';
 import { cn } from '@/lib/utils';
 
 type SearchResult = {
@@ -22,24 +21,20 @@ const staticPages: SearchResult[] = [
     { type: 'PÁGINA', id: 'store', name: 'Tienda', path: '/store' },
     { type: 'JUEGO', id: 'collectibles', name: 'Cartas Coleccionables', path: '/collectibles' },
     { type: 'PÁGINA', id: 'ranking', name: 'Ranking de Jugadores', path: '/ranking' },
-    { type: 'PÁGINA', id: 'leagues', name: 'Ligas en Curso', path: '/leagues' },
+    { type: 'PÁGINA', id: 'tournaments', name: 'Torneos', path: '/tournaments' },
 ];
 
 export function GlobalSearch() {
   const router = useRouter();
-  const { user } = useUser(); // Solo necesitamos el usuario actual para la lógica
-  const [open, setOpen] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const [allData, setAllData] = useState<SearchResult[]>([]);
   const [searchValue, setSearchValue] = useState('');
   const [history, setHistory] = useState<SearchResult[]>([]);
   const [filteredData, setFilteredData] = useState<SearchResult[]>([]);
-
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Función para cargar todos los datos de búsqueda
     const loadAllData = async () => {
-      // Ya no obtenemos allUsers del contexto para evitar errores de renderizado.
-      // En una implementación más robusta, esto vendría de una API o una carga controlada.
       const usersFromLocalStorage = JSON.parse(localStorage.getItem('allUsers') || '[]');
       const userResults: SearchResult[] = (usersFromLocalStorage || []).map((u: any) => ({
         type: 'USUARIO',
@@ -54,22 +49,19 @@ export function GlobalSearch() {
           type: 'TORNEO',
           id: t.id,
           name: t.name,
-          path: `/leagues`,
+          path: `/tournaments/${t.id}`,
       }));
 
       setAllData([...userResults, ...tournamentResults, ...staticPages]);
     }
 
     loadAllData();
-    
-    // Cargar historial de búsqueda de localStorage
     const savedHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
     setHistory(savedHistory);
+  }, []);
 
-  }, []); // El array de dependencias vacío asegura que esto se ejecute solo una vez
-
-   useEffect(() => {
-    if (searchValue.length >= 3) {
+  useEffect(() => {
+    if (searchValue.length >= 2) {
       const lowercasedValue = searchValue.toLowerCase();
       const results = allData.filter(item =>
         item.name.toLowerCase().includes(lowercasedValue)
@@ -80,16 +72,14 @@ export function GlobalSearch() {
     }
   }, [searchValue, allData]);
 
-  
   useEffect(() => {
-    const down = (e: KeyboardEvent) => {
-        if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            setOpen((open) => !open);
-        }
-    }
-    document.addEventListener('keydown', down);
-    return () => document.removeEventListener('keydown', down);
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowResults(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
   
   const addToHistory = (item: SearchResult) => {
@@ -99,7 +89,7 @@ export function GlobalSearch() {
   };
   
   const removeFromHistory = (e: React.MouseEvent, id: string) => {
-      e.stopPropagation(); // Evitar la selección del item
+      e.stopPropagation();
       const newHistory = history.filter(h => h.id !== id);
       setHistory(newHistory);
       localStorage.setItem('searchHistory', JSON.stringify(newHistory));
@@ -108,7 +98,7 @@ export function GlobalSearch() {
   const handleSelect = (path: string, item: SearchResult) => {
     addToHistory(item);
     setSearchValue('');
-    setOpen(false);
+    setShowResults(false);
     router.push(path);
   }
   
@@ -123,82 +113,82 @@ export function GlobalSearch() {
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            className="relative h-9 w-full justify-start rounded-full text-sm text-muted-foreground sm:pr-12 bg-secondary/30 backdrop-blur-sm border border-border-soft hover:bg-secondary/50"
-          >
-            <Search className="h-4 w-4 mr-2" />
-            <span className="hidden lg:inline-flex">Buscar...</span>
-            <span className="inline-flex lg:hidden">Buscar...</span>
-            <kbd className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 hidden h-5 select-none items-center gap-1 rounded border border-white/10 bg-transparent px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
-              <span className="text-xs">⌘</span>K
-            </kbd>
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent 
-          className="w-[var(--radix-popover-trigger-width)] p-0 bg-secondary/80 backdrop-blur-md border-white/10"
-          align="start"
-        >
-             <Command shouldFilter={false} className="bg-transparent">
+    <div className="relative w-full" ref={searchContainerRef}>
+        <Command shouldFilter={false} className="bg-transparent">
+            {/* Contenedor con estilos ajustados: sin el efecto de foco azul */}
+            <div 
+                className="relative flex h-9 w-full items-center justify-start rounded-full text-sm text-muted-foreground bg-secondary/30 backdrop-blur-sm border border-border-soft transition-colors hover:bg-secondary/50"
+            >
+                {/* El CommandInput ahora maneja su propio ícono y padding. Ya no hay una lupa manual aquí. */}
                 <CommandInput 
-                    className="bg-transparent focus:bg-transparent"
-                    placeholder="Busca un perfil, torneo, página..." 
+                    className="h-full w-full border-none bg-transparent text-white placeholder:text-muted-foreground focus:ring-0"
+                    placeholder="Buscar..." 
                     value={searchValue}
                     onValueChange={setSearchValue}
+                    onFocus={() => setShowResults(true)}
                 />
-                <CommandList>
-                    {searchValue.length < 3 && history.length > 0 && (
-                        <CommandGroup heading="Búsquedas Recientes">
-                            {history.map(item => (
-                                <CommandItem key={`hist-${item.id}`} onSelect={() => handleSelect(item.path, item)} className="flex justify-between items-center group hover:bg-white/10">
-                                    <div className="flex items-center">
-                                        <History className="h-4 w-4 mr-3 text-muted-foreground"/>
-                                        {item.name}
-                                    </div>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={(e) => removeFromHistory(e, item.id)}>
-                                        <X className="h-4 w-4"/>
-                                    </Button>
-                                </CommandItem>
-                            ))}
-                        </CommandGroup>
-                    )}
-                    {searchValue.length >= 3 && (
-                       <>
-                         <CommandEmpty>No se encontraron resultados.</CommandEmpty>
-                         {filteredData.filter(i => i.type === 'USUARIO').length > 0 && <CommandGroup heading="Usuarios">
-                             {filteredData.filter(i => i.type === 'USUARIO').map(item => (
-                                 <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)} className="hover:bg-white/10">
-                                     <Avatar className="h-6 w-6 mr-3">
-                                         <AvatarImage src={item.avatar}/>
-                                         <AvatarFallback>{item.name.charAt(0)}</AvatarFallback>
-                                     </Avatar>
-                                     {item.name}
-                                 </CommandItem>
-                             ))}
-                         </CommandGroup>}
-                         {filteredData.filter(i => i.type === 'TORNEO').length > 0 && <CommandGroup heading="Torneos">
-                             {filteredData.filter(i => i.type === 'TORNEO').map(item => (
-                                 <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)} className="hover:bg-white/10">
-                                     {getIcon(item.type)}
-                                     {item.name}
-                                 </CommandItem>
-                             ))}
-                         </CommandGroup>}
-                         {filteredData.filter(i => i.type === 'PÁGINA' || i.type === 'JUEGO').length > 0 && <CommandGroup heading="Otras Páginas">
-                             {filteredData.filter(i => i.type === 'PÁGINA' || i.type === 'JUEGO').map(item => (
-                                 <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)} className="hover:bg-white/10">
-                                     {getIcon(item.type)}
-                                     {item.name}
-                                 </CommandItem>
-                             ))}
-                         </CommandGroup>}
-                       </>
-                    )}
-                </CommandList>
-            </Command>
-        </PopoverContent>
-    </Popover>
+            </div>
+
+            {showResults && (
+                <div className="absolute top-full mt-2 w-full z-50">
+                     <CommandList 
+                        className="w-full p-1 bg-secondary/80 backdrop-blur-md border border-white/10 rounded-lg"
+                     >
+                        {searchValue.length < 2 && history.length > 0 && !filteredData.length && (
+                            <CommandGroup heading="Búsquedas Recientes">
+                                {history.map(item => (
+                                    <CommandItem key={`hist-${item.id}`} onSelect={() => handleSelect(item.path, item)} className="flex justify-between items-center group hover:bg-white/10 rounded-md cursor-pointer">
+                                        <div className="flex items-center">
+                                            <History className="h-4 w-4 mr-3 text-muted-foreground"/>
+                                            {item.name}
+                                        </div>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100" onClick={(e) => removeFromHistory(e, item.id)} title="Eliminar del historial">
+                                            <X className="h-4 w-4"/>
+                                        </Button>
+                                    </CommandItem>
+                                ))}
+                            </CommandGroup>
+                        )}
+                        
+                        {searchValue.length >= 2 && filteredData.length > 0 && (
+                           <>
+                             {filteredData.filter(i => i.type === 'USUARIO').length > 0 && <CommandGroup heading="Usuarios">
+                                 {filteredData.filter(i => i.type === 'USUARIO').map(item => (
+                                     <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)} className="hover:bg-white/10 rounded-md cursor-pointer">
+                                         <Avatar className="h-6 w-6 mr-3">
+                                             <AvatarImage src={item.avatar}/>
+                                             <AvatarFallback>{item.name.charAt(0)}</AvatarFallback>
+                                         </Avatar>
+                                         {item.name}
+                                     </CommandItem>
+                                 ))}
+                             </CommandGroup>}
+                             {filteredData.filter(i => i.type === 'TORNEO').length > 0 && <CommandGroup heading="Torneos">
+                                 {filteredData.filter(i => i.type === 'TORNEO').map(item => (
+                                     <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)} className="hover:bg-white/10 rounded-md cursor-pointer">
+                                         {getIcon(item.type)}
+                                         {item.name}
+                                     </CommandItem>
+                                 ))}
+                             </CommandGroup>}
+                             {filteredData.filter(i => i.type === 'PÁGINA' || i.type === 'JUEGO').length > 0 && <CommandGroup heading="Otras Páginas">
+                                 {filteredData.filter(i => i.type === 'PÁGINA' || i.type === 'JUEGO').map(item => (
+                                     <CommandItem key={item.id} onSelect={() => handleSelect(item.path, item)} className="hover:bg-white/10 rounded-md cursor-pointer">
+                                         {getIcon(item.type)}
+                                         {item.name}
+                                     </CommandItem>
+                                 ))}
+                             </CommandGroup>}
+                           </>
+                        )}
+                        
+                        {searchValue.length >= 2 && filteredData.length === 0 && (
+                            <CommandEmpty>No se encontraron resultados para "{searchValue}".</CommandEmpty>
+                        )}
+                    </CommandList>
+                </div>
+            )}
+        </Command>
+    </div>
   );
 }
