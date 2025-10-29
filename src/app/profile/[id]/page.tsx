@@ -65,7 +65,7 @@ const actionCards = [
   },
   {
     view: 'my_data' as ProfileView,
-    title: 'Datos', // CAMBIO REALIZADO AQUÍ
+    title: 'Datos',
     tab: 'perfil',
     bgImage: '/assets/profile/puntos.png',
   },
@@ -104,12 +104,12 @@ export default function ProfilePage() {
   const params = useParams();
   const userId = params.id as string;
   const { toast } = useToast();
-  const { user: currentUser, refreshUser } = useUser();
+  const { user: currentUser, refreshProfileUser: refreshCurrentUser } = useUser();
   const { uploadFile } = useUpload();
   const [view, setView] = useState<ProfileView>('buttons');
   const [activeTab, setActiveTab] = useState<'perfil' | 'equipo'>('perfil');
 
-  const { profileUser, loading: profileLoading, refreshProfile: refreshProfileUser } = useUserProfile(userId);
+  const { profileUser, loading: profileLoading } = useUserProfile(userId);
   const { upcomingMatches, loading: matchesLoading } = useUpcomingMatches(profileUser?.team?.id);
 
   const nextMatch = upcomingMatches?.[0];
@@ -119,9 +119,8 @@ export default function ProfilePage() {
     try {
       await updateUserProfile(profileUser.id, data);
       toast({ title: 'Éxito', description: 'Perfil actualizado correctamente.' });
-      refreshProfileUser();
       if (currentUser && currentUser.id === profileUser.id) {
-        await refreshUser();
+        await refreshCurrentUser(currentUser.id); // Refresca el usuario del contexto global
       }
     } catch (error) {
       console.error("Error updating profile:", error);

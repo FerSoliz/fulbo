@@ -44,6 +44,7 @@ interface UserContextType {
   setNextPackTimestamp: React.Dispatch<React.SetStateAction<number | null>>;
   countdown: string;
   trackPackOpening: () => Promise<void>;
+  refreshProfileUser: (userId: string) => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -324,6 +325,30 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [user, availablePacks, nextPackTimestamp, toast]);
 
+  const refreshProfileUser = useCallback(async (userId: string) => {
+    if (user && user.id === userId) {
+      try {
+        const userRef = ref(db, `users/${userId}`);
+        const snapshot = await get(userRef);
+        if (snapshot.exists()) {
+          const updatedDbUser = snapshot.val();
+          setUser(prevUser => ({
+            ...prevUser,
+            ...updatedDbUser,
+            id: userId,
+          }));
+        }
+      } catch (error) {
+        console.error("Error refreshing user profile:", error);
+        toast({
+          title: "Error de Sincronización",
+          description: "No se pudo actualizar tu perfil. Por favor, recarga la página.",
+          variant: "destructive"
+        });
+      }
+    }
+  }, [user, toast]);
+
   return (
     <UserContext.Provider value={{
         user, 
@@ -342,7 +367,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         nextPackTimestamp,
         setNextPackTimestamp,
         countdown,
-        trackPackOpening
+        trackPackOpening,
+        refreshProfileUser
     }}>
       {children}
     </UserContext.Provider>
