@@ -23,6 +23,9 @@ export interface User {
   sudpoints: number;
   createdAt: number;
 
+  // --- Mercado de Pases ---
+  transferStatus?: 'libre' | 'traspaso'; // Estado del jugador en el mercado
+
   // --- Campos Adicionales del Perfil ---
   age?: number;
   phone?: string;
@@ -188,7 +191,7 @@ export interface CartItem {
 }
 
 
-// --- TIPOS DE POSTS (FEED) ---
+// --- TIPOS DE POSTS (FEED) --
 export interface Post {
   id: string;
   authorId: string;
@@ -214,7 +217,7 @@ export interface Comment {
   createdAt: number;
 }
 
-// --- TIPOS DE PÁGINA ---
+// --- TIPOS DE PÁGINA --
 export type PageState = 'LOADING' | 'READY' | 'NOT_FOUND' | 'ACCESS_DENIED';
 
 export type ProfileView = 

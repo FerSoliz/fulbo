@@ -13,6 +13,14 @@ interface PlayerRankingCardProps {
 }
 
 export const PlayerRankingCard = ({ user }: PlayerRankingCardProps) => {
+  // --- MI CORRECCIÓN ---
+  // Si el usuario no existe, no renderizamos nada.
+  // Esto previene el error si llegan datos inesperados.
+  if (!user) {
+    return null;
+  }
+  // --- FIN DE LA CORRECCIÓN ---
+
   const divisionInfo = getDivisionInfo(user.sudpoints ?? 0);
   const divisionColor = divisionInfo?.color || 'hsl(var(--foreground))';
 

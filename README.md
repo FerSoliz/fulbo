@@ -124,6 +124,12 @@
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Mercado de Pases Interactivo y Responsivo:**
+  - **Fecha:** 2024-05-28
+  - **Descripción:** Se ha creado desde cero la sección "Mercado de Pases" (`/transfer-market`), una página clave para la dinámica de fichajes entre equipos.
+  - **Lógica de Backend:** Se implementó la función `getTransferListPlayers` que consulta la Realtime Database para obtener eficientemente solo aquellos usuarios cuyo `transferStatus` es "libre" o "traspaso".
+  - **Diseño Iterativo y Responsivo:** Se diseñó el componente `TransferPlayerCard` a través de un proceso iterativo de feedback, resultando en un layout de 3 columnas (Info, Estado, Acción). Posteriormente, se realizó una optimización `mobile-first` completa, ajustando tamaños de avatar, fuentes y espaciados para una visualización perfecta en dispositivos móviles sin sacrificar el diseño de escritorio.
+  - **Consistencia Visual:** Se unificó el estilo del `username` para que coincida con el del ranking (itálico y con el prefijo `#` en color `accent-red`), mejorando la coherencia de la interfaz de usuario en toda la plataforma.
 - **Banner Principal Dinámico y Editable por Administradores:**
   - **Fecha:** 2024-05-28
   - **Descripción:** Se implementó un sistema para que el banner principal de la aplicación sea dinámico y gestionable. Los administradores ahora pueden cambiar el banner directamente desde la página principal.

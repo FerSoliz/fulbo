@@ -1,78 +1,114 @@
 import { ref, get, query, orderByChild, equalTo, update } from 'firebase/database';
-import { db } from '../../firebase';
-import { User, FoundPlayer } from '../../types';
+import { db } from '../../firebase'; // Instancia para el cliente
+import { db as serverDb } from '../server-init'; // Instancia para el servidor con ALIAS
+import { User } from '../../types';
 import { getGuestPlayerByDni } from './guestPlayers';
 
-/**
- * Obtiene el perfil completo de un usuario registrado por su ID.
- * @param userId El ID del usuario.
- * @returns Una promesa que se resuelve con el objeto User o null si no se encuentra.
- */
-export const getUserProfile = async (userId: string): Promise<User | null> => {
-    const userRef = ref(db, `users/${userId}`);
-    const snapshot = await get(userRef);
-    if(snapshot.exists()) return { id: snapshot.key, ...snapshot.val() } as User;
-    return null;
-};
-
-/**
- * Obtiene una lista de usuarios clasificados por SudPoints en orden descendente.
- * @returns Una promesa que se resuelve con un array de usuarios clasificados.
- */
 export const getRankedUsers = async (): Promise<User[]> => {
   try {
-    const usersRef = ref(db, 'users');
+    const usersRef = ref(serverDb, 'users');
     const q = query(usersRef, orderByChild('sudpoints'));
     const snapshot = await get(q);
 
     if (!snapshot.exists()) {
-      console.log("[DB Service] No se encontraron usuarios para el ranking.");
       return [];
     }
 
     const usersList: User[] = [];
     snapshot.forEach(childSnapshot => {
-      usersList.push({ id: childSnapshot.key!, ...childSnapshot.val() });
+      const userData = childSnapshot.val();
+      if (userData) {
+        usersList.push({ 
+          id: childSnapshot.key!, 
+          ...userData,
+          sudpoints: userData.sudpoints ?? 0,
+          username: userData.username ?? 'N/A',
+        });
+      }
     });
 
-    return usersList.reverse(); // Los SudPoints más altos primero
+    return usersList.reverse();
   } catch (error) {
     console.error("[DB Service] Error crítico al obtener el ranking de usuarios:", error);
     return [];
   }
 };
 
-/**
- * Busca un usuario por DNI, primero en usuarios registrados y luego en invitados.
- * @param dni El DNI del jugador a buscar.
- * @returns Una promesa que se resuelve con el objeto FoundPlayer o null si no se encuentra.
- */
-export const findUserByDni = async (dni: string): Promise<FoundPlayer | null> => {
+export const getTransferListPlayers = async (): Promise<User[]> => {
+  try {
+    const usersRef = ref(serverDb, 'users');
+    const snapshot = await get(usersRef);
+
+    if (!snapshot.exists()) {
+      return [];
+    }
+
+    const transferList: User[] = [];
+    snapshot.forEach(childSnapshot => {
+      const userData = childSnapshot.val();
+      if (userData) {
+        const user = {
+          id: childSnapshot.key!,
+          ...userData,
+          sudpoints: userData.sudpoints ?? 0,
+          username: userData.username ?? 'N/A',
+          name: userData.name ?? 'Usuario Desconocido',
+          avatar: userData.avatar ?? '',
+        } as User;
+
+        if (user.transferStatus === 'libre' || user.transferStatus === 'traspaso') {
+          transferList.push(user);
+        }
+      }
+    });
+
+    transferList.sort((a, b) => b.sudpoints - a.sudpoints);
+
+    return transferList;
+  } catch (error) {
+    console.error("[DB Service] Error crítico al obtener la lista de transferibles:", error);
+    return [];
+  }
+};
+
+export const getUserProfile = async (userId: string): Promise<User | null> => {
+    const userRef = ref(db, `users/${userId}`);
+    const snapshot = await get(userRef);
+    if(snapshot.exists()) {
+      const userData = snapshot.val();
+      if (userData) {
+        return {
+          id: snapshot.key!,
+          ...userData,
+          sudpoints: userData.sudpoints ?? 0,
+          username: userData.username ?? 'N/A',
+        } as User;
+      }
+    }
+    return null;
+};
+
+export const findUserByDni = async (dni: string) => {
   try {
     const usersRef = ref(db, 'users');
     const q = query(usersRef, orderByChild('dni'), equalTo(dni));
     const snapshot = await get(q);
 
     if (snapshot.exists()) {
-        let foundUser: FoundPlayer | null = null;
+        let foundUser = null;
         snapshot.forEach((childSnapshot) => {
-        const userData: User = childSnapshot.val();
-        if (!foundUser) {
-            foundUser = {
-            id: childSnapshot.key! as string, // Aseguramos que sea string
-            name: userData.name,
-            dni: userData.dni,
-            username: userData.username,
-            avatar: userData.avatar,
-            isGuest: false,
-            team: userData.team || null, 
-            };
-        }
+          const userData = childSnapshot.val();
+          if (userData && !foundUser) {
+              foundUser = {
+                id: childSnapshot.key!,
+                ...userData,
+                isGuest: false,
+              };
+          }
         });
         return foundUser;
     }
     
-    // Si no se encuentra en usuarios, buscar en jugadores invitados
     return await getGuestPlayerByDni(dni);
 
   } catch (error) {
@@ -81,27 +117,10 @@ export const findUserByDni = async (dni: string): Promise<FoundPlayer | null> =>
   }
 };
 
-/**
- * Actualiza el perfil de un usuario registrado en la Realtime Database.
- * @param userId El ID del usuario cuyo perfil se va a actualizar.
- * @param data Un objeto con los campos a actualizar del perfil del usuario. (Partial<User> permite actualizar solo algunos campos)
- * @returns Una promesa que se resuelve cuando la actualización se completa.
- */
 export const updateUserProfile = async (userId: string, data: Partial<User>): Promise<void> => {
   if (!userId) {
     throw new Error('El ID de usuario es requerido para actualizar el perfil.');
   }
   const userRef = ref(db, `users/${userId}`);
   await update(userRef, data);
-};
-
-/**
- * Actualiza la URL del avatar de un usuario registrado.
- * Esta función es un wrapper para `updateUserProfile` para una semántica más clara.
- * @param userId El ID del usuario cuyo avatar se va a actualizar.
- * @param avatarUrl La nueva URL del avatar.
- * @returns Una promesa que se resuelve cuando la actualización se completa.
- */
-export const updateUserAvatar = async (userId: string, avatarUrl: string): Promise<void> => {
-  await updateUserProfile(userId, { avatar: avatarUrl });
 };
