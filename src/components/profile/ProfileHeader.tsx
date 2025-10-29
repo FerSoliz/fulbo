@@ -111,17 +111,25 @@ export function ProfileHeader({
     onSaveProfile({ transferStatus: status });
   }
 
+  // --- LÓGICA CORREGIDA PARA WHATSAPP ---
   function handleContactClick() {
     if (phone) {
+      // 1. Limpia el número de cualquier caracter que no sea un dígito.
       const sanitizedPhone = phone.replace(/\D/g, '');
-      const whatsappUrl = `https://wa.me/${sanitizedPhone}`;
+      
+      // 2. Antepone el código de país de Argentina (54) y el prefijo de móvil (9).
+      const fullPhoneNumber = `549${sanitizedPhone}`;
+      
+      // 3. Construye la URL final.
+      const whatsappUrl = `https://wa.me/${fullPhoneNumber}`;
+      
       window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
     } else {
       toast({
         title: 'No se puede contactar',
         description: 'El jugador no tiene un teléfono cargado.',
         variant: 'destructive',
-        duration: 3000, // --- AÑADIDO: Duración de 3 segundos ---
+        duration: 3000,
       });
     }
   }
