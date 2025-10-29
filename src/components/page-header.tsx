@@ -91,39 +91,36 @@ export function PageHeader() {
 
   return (
       <header className="sticky top-0 z-20 w-full backdrop-blur-md border-b border-white/10">
-          <div className="flex h-14 items-center justify-between px-4 sm:px-6">
-              <div className="md:hidden flex-1">
-                  <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-                      <SheetTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                              <Menu/>
-                          </Button>
-                      </SheetTrigger>
-                      <SheetContent side="left" className="p-0 w-64">
-                         <MainSidebar isMobile={true} onLinkClick={() => setIsSheetOpen(false)} />
-                      </SheetContent>
-                  </Sheet>
-              </div>
-               <div className="hidden md:flex flex-1 items-center gap-2">
+          <div className="flex h-14 items-center justify-between gap-4 px-4 sm:px-6">
+              {/* Mobile & Desktop Header Layout */}
+              <div className="flex flex-1 items-center gap-2">
+                  <div className="md:hidden">
+                    <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+                        <SheetTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-9 w-9">
+                                <Menu/>
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="p-0 w-64">
+                          <MainSidebar isMobile={true} onLinkClick={() => setIsSheetOpen(false)} />
+                        </SheetContent>
+                    </Sheet>
+                  </div>
                   <div className="flex-1">
                       <GlobalSearch />
                   </div>
               </div>
-              <div className="flex flex-shrink-0 items-center justify-end gap-2">
+
+              <div className="flex flex-shrink-0 items-center justify-end">
                   {loading ? (
-                     <Skeleton className="h-10 w-10 rounded-full" />
+                     <Skeleton className="h-9 w-9 rounded-full" />
                   ) : user && user.id !== 'visitor' ? (
-                      <>
-                          {/* MENÚ DE NOTIFICACIONES OCULTADO TEMPORALMENTE */}
-                          <Link href={`/profile/${user.id}`}>
-                              <Button variant="ghost" size="icon" className="rounded-full">
-                                  <Avatar>
-                                      <AvatarImage src={user.avatar} alt={user.name} />
-                                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
-                                  </Avatar>
-                              </Button>
-                          </Link>
-                      </>
+                      <Link href={`/profile/${user.id}`}>
+                          <Avatar className="h-9 w-9">
+                              <AvatarImage src={user.avatar} alt={user.name} />
+                              <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                      </Link>
                   ) : (
                       <Link href="/login">
                           <Button>Iniciar Sesión</Button>
@@ -131,9 +128,8 @@ export function PageHeader() {
                   )}
               </div>
           </div>
-          <div className="border-t border-border/50 px-4 pt-2 pb-3 md:hidden">
-             <GlobalSearch />
-          </div>
+          
+          {/* Banner Section */}
           {!isProfilePage && (
              <div className="px-4 pb-2 relative">
                 {isBannerLoading ? (
