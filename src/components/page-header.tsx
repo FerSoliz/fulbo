@@ -116,7 +116,7 @@ export function PageHeader() {
                      <Skeleton className="h-9 w-9 rounded-full" />
                   ) : user && user.id !== 'visitor' ? (
                       <Link href={`/profile/${user.id}`}>
-                          <Avatar className="h-9 w-9">
+                          <Avatar className="h-9 w-9 cursor-pointer">
                               <AvatarImage src={user.avatar} alt={user.name} />
                               <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
                           </Avatar>
