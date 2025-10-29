@@ -1,13 +1,13 @@
-
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { Search, User, Trophy, Gamepad2, Newspaper, History, X } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn } from '@/lib/utils';
+import { getAllTournaments } from '@/lib/firebase/db/tournaments';
+import { getRankedUsers } from '@/lib/firebase/db/users';
 
 type SearchResult = {
   type: 'USUARIO' | 'TORNEO' | 'PÁGINA' | 'JUEGO';
@@ -35,8 +35,12 @@ export function GlobalSearch() {
 
   useEffect(() => {
     const loadAllData = async () => {
-      const usersFromLocalStorage = JSON.parse(localStorage.getItem('allUsers') || '[]');
-      const userResults: SearchResult[] = (usersFromLocalStorage || []).map((u: any) => ({
+      const [users, tournaments] = await Promise.all([
+        getRankedUsers(),
+        getAllTournaments(),
+      ]);
+
+      const userResults: SearchResult[] = users.map(u => ({
         type: 'USUARIO',
         id: u.id,
         name: u.name,
@@ -44,14 +48,13 @@ export function GlobalSearch() {
         path: `/profile/${u.id}`,
       }));
 
-      const storedTournaments = JSON.parse(localStorage.getItem('tournaments') || '[]');
-      const tournamentResults: SearchResult[] = (storedTournaments || []).map((t: any) => ({
+      const tournamentResults: SearchResult[] = tournaments.map(t => ({
           type: 'TORNEO',
           id: t.id,
           name: t.name,
           path: `/tournaments/${t.id}`,
       }));
-
+      
       setAllData([...userResults, ...tournamentResults, ...staticPages]);
     }
 
@@ -115,11 +118,9 @@ export function GlobalSearch() {
   return (
     <div className="relative w-full" ref={searchContainerRef}>
         <Command shouldFilter={false} className="bg-transparent">
-            {/* Contenedor con estilos ajustados: sin el efecto de foco azul */}
             <div 
                 className="relative flex h-9 w-full items-center justify-start rounded-full text-sm text-muted-foreground bg-secondary/30 backdrop-blur-sm border border-border-soft transition-colors hover:bg-secondary/50"
             >
-                {/* El CommandInput ahora maneja su propio ícono y padding. Ya no hay una lupa manual aquí. */}
                 <CommandInput 
                     className="h-full w-full border-none bg-transparent text-white placeholder:text-muted-foreground focus:ring-0"
                     placeholder="Buscar..." 
