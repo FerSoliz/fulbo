@@ -12,7 +12,7 @@ export interface User {
   name: string;
   username: string;
   dni: string;
-  role: 'admin' | 'player' | 'captain';
+  role: 'admin' | 'player' | 'captain' | 'vendedor';
   avatar?: string;
   profileBackground?: string;
   team?: {

@@ -1,12 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/context/user-context';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Product } from '@/lib/types';
-import { getProducts, createProduct, updateProduct, deleteProduct } from '@/lib/firebase/db';
+import { getProducts, createProduct, updateProduct, deleteProduct } from '@/lib/firebase/db/products';
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { ProductDataTable } from '@/components/admin/product-data-table';
 import { ProductEditDialog } from '@/components/admin/product-edit-dialog';
@@ -22,28 +22,37 @@ export default function AdminStorePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!userLoading && (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor'))) {
+    if (!userLoading && (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'vendedor'))) {
         router.replace('/');
     }
   }, [currentUser, userLoading, router]);
 
   useEffect(() => {
-    if(currentUser) { // Solo cargar productos si el usuario está autenticado
+    if(currentUser && (currentUser.role === 'admin' || currentUser.role === 'vendedor')) {
         const fetchProducts = async () => {
-        setLoading(true);
-        try {
-            const fetchedProducts = await getProducts();
-            setProducts(fetchedProducts);
-        } catch (error) {
-            console.error(error);
-            toast({ title: 'Error', description: 'No se pudieron cargar los productos.', variant: 'destructive' });
-        } finally {
-            setLoading(false);
-        }
+          setLoading(true);
+          try {
+              const fetchedProducts = await getProducts();
+              setProducts(fetchedProducts);
+          } catch (error) {
+              console.error(error);
+              toast({ title: 'Error', description: 'No se pudieron cargar los productos.', variant: 'destructive' });
+          } finally {
+              setLoading(false);
+          }
         };
         fetchProducts();
     }
   }, [currentUser, toast]);
+
+  // REFACTOR: Filtrar productos según el USERNAME del vendedor
+  const visibleProducts = useMemo(() => {
+    if (!currentUser) return [];
+    if (currentUser.role === 'vendedor') {
+      return products.filter(p => p.tienda === currentUser.username);
+    }
+    return products; // El admin ve todo
+  }, [products, currentUser]);
 
   const handleOpenDialog = (product: Product | null = null) => {
     setProductToEdit(product);
@@ -52,13 +61,15 @@ export default function AdminStorePage() {
 
   const handleSave = async (productData: Omit<Product, 'id'> & { id?: string }) => {
     try {
+      let savedProduct: Product;
       if (productToEdit && productData.id) {
         await updateProduct(productData.id, productData);
-        setProducts(products.map(p => p.id === productData.id ? { ...p, ...productData } as Product : p));
+        savedProduct = { ...productToEdit, ...productData } as Product;
+        setProducts(products.map(p => p.id === savedProduct.id ? savedProduct : p));
         toast({ title: 'Éxito', description: 'Producto actualizado correctamente.' });
       } else {
-        const newProduct = await createProduct(productData as Omit<Product, 'id'>);
-        setProducts([...products, newProduct]);
+        savedProduct = await createProduct(productData as Omit<Product, 'id'>);
+        setProducts([...products, savedProduct]);
         toast({ title: 'Éxito', description: 'Producto creado correctamente.' });
       }
       return true;
@@ -81,7 +92,7 @@ export default function AdminStorePage() {
     }
   };
 
-  if (userLoading || !currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) {
+  if (userLoading || !currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'vendedor')) {
     return <div className="p-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>;
   }
 
@@ -90,7 +101,10 @@ export default function AdminStorePage() {
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold tracking-tighter">Gestión de la Tienda</h1>
-            <p className="text-muted-foreground mt-1">Añade, edita o elimina productos de la SUDSTORE.</p>
+            {/* REFACTOR: Mostrar el username en el subtítulo */}
+            <p className="text-muted-foreground mt-1">
+              {currentUser.role === 'vendedor' ? `Mostrando productos de la tienda: @${currentUser.username}` : 'Añade, edita o elimina productos de la SUDSTORE.'}
+            </p>
           </div>
           <Button onClick={() => handleOpenDialog()}>
             <PlusCircle className="mr-2 h-4 w-4" />
@@ -104,7 +118,7 @@ export default function AdminStorePage() {
           </div>
         ) : (
           <ProductDataTable 
-            products={products}
+            products={visibleProducts}
             onEdit={handleOpenDialog}
             onDelete={handleDelete}
           />
@@ -115,6 +129,7 @@ export default function AdminStorePage() {
           onOpenChange={setIsDialogOpen}
           onSave={handleSave}
           productToEdit={productToEdit}
+          currentUser={currentUser}
         />
       </div>
   );

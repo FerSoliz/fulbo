@@ -69,6 +69,7 @@
 
 ## 5. Roles de usuario
 - **Admin:** controla todo el sistema (torneos, fixtures, resultados, ranking, pagos, moderación, tienda, publicaciones en feed).  
+- **Vendedor:** tiene todos los permisos de un `Player`, pero además tiene acceso al panel de administración para gestionar exclusivamente la tienda (`/admin/store`).
 - **Captain:** inscribe al equipo, gestiona jugadores, ve pagos y puede **publicar en el feed**.  
 - **Player:** ve su perfil, partidos, ranking, puede **comentar y reaccionar en el feed**, y comprar en la tienda, pero **no puede publicar**.  
 

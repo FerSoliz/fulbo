@@ -11,28 +11,25 @@ import { Button } from '@/components/ui/button';
 import {
   PlusCircle,
   Settings,
-  Upload,
   Users,
-  FileText,
-  ShieldAlert,
   ArrowRight,
   UserCog,
   Store,
-  Landmark, // Importar el ícono de la tienda
+  Landmark,
 } from 'lucide-react';
 import Link from 'next/link';
-import type { User } from '@/lib/data';
+import type { User } from '@/lib/types'; // CORREGIDO: Importar desde la fuente de verdad
 import { useUser } from '@/context/user-context';
 import { useRouter } from 'next/navigation';
 
-
-const adminActions = [
+const allAdminActions = [
   {
     title: 'Crear Nueva Competencia',
     description: 'Configura una nueva liga o copa desde cero, define su formato y equipos.',
     icon: PlusCircle,
     href: '/admin/create-competition',
     color: 'bg-green-500 hover:bg-green-600',
+    allowedRoles: ['admin'],
   },
   {
     title: 'Administrar Torneos',
@@ -40,13 +37,15 @@ const adminActions = [
     icon: Settings,
     href: '/admin/manage-tournaments',
     color: 'bg-blue-500 hover:bg-blue-600',
+    allowedRoles: ['admin'],
   },
   {
-    title: 'Gestionar Tienda', // Nueva acción
+    title: 'Gestionar Tienda',
     description: 'Añade, edita o elimina productos del merchandising de la SUDSTORE.',
     icon: Store,
     href: '/admin/store',
     color: 'bg-red-500 hover:bg-red-600',
+    allowedRoles: ['admin', 'vendedor'], // PERMISO: Admin y Vendedor pueden ver esto
   },
   {
     title: 'Administrar Usuarios',
@@ -54,6 +53,7 @@ const adminActions = [
     icon: UserCog,
     href: '/admin/manage-users',
     color: 'bg-orange-500 hover:bg-orange-600',
+    allowedRoles: ['admin'],
   },
   {
     title: 'Gestionar Equipos',
@@ -61,6 +61,7 @@ const adminActions = [
     icon: Users,
     href: '/admin/manage-teams',
     color: 'bg-purple-500 hover:bg-purple-600',
+    allowedRoles: ['admin'],
   },
   {
     title: 'Caja',
@@ -68,23 +69,30 @@ const adminActions = [
     icon: Landmark,
     href: '/admin/caja',
     color: 'bg-yellow-500 hover:bg-yellow-600',
+    allowedRoles: ['admin'],
   },
 ];
+
+const allowedRolesForPage: Array<User['role']> = ['admin', 'vendedor'];
 
 export default function AdminPage() {
   const { user: currentUser, loading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor'))) {
+    if (!loading && (!currentUser || !allowedRolesForPage.includes(currentUser.role))) {
         router.replace('/');
     }
   }, [currentUser, loading, router]);
 
-
-  if (loading || !currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'editor')) {
+  if (loading || !currentUser || !allowedRolesForPage.includes(currentUser.role)) {
     return <div className="p-8 text-center">Cargando...</div>;
   }
+
+  // Filtrar acciones basadas en el rol del usuario
+  const visibleActions = allAdminActions.filter(action => 
+    action.allowedRoles.includes(currentUser.role)
+  );
 
   return (
     <div className="p-4 sm:p-6 lg:p-8">
@@ -97,7 +105,7 @@ export default function AdminPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {adminActions.map((action) => {
+          {visibleActions.map((action) => {
             return (
               <Card key={action.title} className="flex flex-col">
                 <CardHeader className="flex-row items-center gap-4">
@@ -112,8 +120,6 @@ export default function AdminPage() {
                 <CardContent className="flex-grow"></CardContent>
                 <CardContent>
                     <Link href={action.href}>
-                      {/* @next-codemod-error This Link previously used the now removed `legacyBehavior` prop, and has a child that might not be an anchor. The codemod bailed out of lifting the child props to the Link. Check that the child component does not render an anchor, and potentially move the props manually to Link. */
-                      }
                       <Button className={`w-full ${action.color}`}>
                           Ir a {action.title}
                           <ArrowRight className="ml-2 h-4 w-4" />
