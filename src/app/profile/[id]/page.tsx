@@ -7,7 +7,7 @@ import { useUser } from '@/context/user-context';
 import { useUpload } from '@/hooks/use-upload';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useUpcomingMatches } from '@/hooks/use-upcoming-matches';
-import { User, ProfileView } from '@/lib/types';
+import { User, ProfileView, PlayerTeamInfo } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -95,10 +95,16 @@ const actionCards = [
   },
   {
     view: 'coach' as ProfileView,
-    title: 'DT',
+    title: 'Entrenador',
     tab: 'equipo',
   },
 ];
+
+const noTeamData: PlayerTeamInfo = {
+  id: '',
+  name: 'Sin Equipo',
+  crestUrl: '' // La URL vacía activará el fallback en ProfileTeamBadge
+};
 
 export default function ProfilePage() {
   const params = useParams();
@@ -169,7 +175,7 @@ export default function ProfilePage() {
     <div className="container mx-auto px-4 pt-2 pb-4 sm:px-6 sm:pb-6 sm:pt-4 lg:px-8 lg:pb-8 lg:pt-6 space-y-2 rounded-t-20x2 overflow-hidden">
       <div className="flex justify-between items-center w-full">
         <div>
-          {profileUser?.team && <ProfileTeamBadge team={profileUser.team} />}
+          <ProfileTeamBadge team={profileUser?.team || noTeamData} />
         </div>
         <div>
           <ClockBadge nextMatch={nextMatch} />
