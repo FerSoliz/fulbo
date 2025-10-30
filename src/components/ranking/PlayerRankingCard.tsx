@@ -25,7 +25,7 @@ export const PlayerRankingCard = ({ user }: PlayerRankingCardProps) => {
   const divisionColor = divisionInfo?.color || 'hsl(var(--foreground))';
 
   const cardStyle = {
-    backgroundImage: `linear-gradient(rgba(41, 46, 56, 0.75), rgba(41, 46, 56, 0.75)), url('/assets/profile/puntos.png')`,
+    backgroundImage: `linear-gradient(rgba(41, 46, 56, 0.4), rgba(41, 46, 56, 0.4)), url('/assets/profile/puntos.png')`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
   };

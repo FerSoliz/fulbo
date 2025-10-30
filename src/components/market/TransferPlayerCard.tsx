@@ -28,9 +28,18 @@ export const TransferPlayerCard = ({ player }: TransferPlayerCardProps) => {
     ? positionTranslations[player.playingPosition]
     : 'Sin Posición';
 
+  const cardStyle = {
+    backgroundImage: `linear-gradient(rgba(41, 46, 56, 0.4), rgba(41, 46, 56, 0.4)), url('/assets/profile/puntos.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+  };
+
   return (
     <Link href={`/profile/${player.id}`} passHref className="block w-full">
-      <div className="flex items-center justify-between p-2 md:p-4 bg-secondary border-t border-b border-border-soft hover:bg-container transition-colors duration-200 cursor-pointer">
+      <div
+        className="flex items-center justify-between p-2 md:p-4 border-t border-b border-border-soft transition-colors duration-200 cursor-pointer"
+        style={cardStyle}
+      >
         {/* Sección de Información del Jugador (Izquierda) */}
         <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
           <Avatar className="w-10 h-10 md:w-12 md:h-12">
