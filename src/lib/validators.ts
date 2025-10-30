@@ -25,24 +25,20 @@ export const createPostSchema = z
   
 export type CreatePostInput = z.infer<typeof createPostSchema>;
 
-// --- NUEVO ESQUEMA: Validación para el Formulario de Registro ---
+// Esquema de validación para el formulario de registro, con confirmación de contraseña
 export const registerSchema = z.object({
   name: z.string().min(1, { message: "El nombre es obligatorio." }),
   username: z.string().min(3, { message: "El nombre de usuario debe tener al menos 3 caracteres." }),
   email: z.string().email({ message: "El correo electrónico no es válido." }),
   password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
-  /**
-   * El DNI se valida como un string por varias razones clave:
-   * 1.  **Conservación de ceros iniciales:** Si un DNI comenzara con '0', un tipo 'number' lo eliminaría.
-   * 2.  **Flexibilidad futura:** Permite adaptarse a identificadores que puedan incluir letras (ej. pasaportes).
-   * 3.  **Consistencia:** Los inputs de formularios HTML siempre devuelven strings.
-   * La validación `.regex(/^\d+$/)` asegura que, aunque sea un string, solo contenga caracteres numéricos.
-   */
+  confirmPassword: z.string().min(6, { message: "La confirmación de contraseña es obligatoria." }),
   dni: z.string()
     .min(8, { message: "El DNI debe tener exactamente 8 dígitos." })
     .max(8, { message: "El DNI debe tener exactamente 8 dígitos." })
     .regex(/^\d+$/, { message: "El DNI solo puede contener números." }),
-  // El URL del fondo seleccionado no lo validamos con Zod aquí, ya que se selecciona de una lista predefinida.
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Las contraseñas no coinciden.",
+  path: ["confirmPassword"], // Indica que el error pertenece al campo de confirmación
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

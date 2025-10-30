@@ -9,11 +9,12 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useUser } from '@/context/user-context';
 import { useRouter } from 'next/navigation';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const { login } = useUser();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -56,9 +57,26 @@ export default function LoginPage() {
                 <Label htmlFor="email">Correo Electrónico</Label>
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-black/20 border-white/20" />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-2 relative">
                 <Label htmlFor="password">Contraseña</Label>
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="bg-black/20 border-white/20" />
+                <Input 
+                  id="password" 
+                  type={showPassword ? "text" : "password"} 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  required 
+                  className="bg-black/20 border-white/20 pr-10" 
+                />
+                <Button 
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute bottom-1 right-1 h-7 w-7 text-white/50 hover:bg-transparent hover:text-white/75"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  <span className="sr-only">{showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}</span>
+                </Button>
               </div>
             </CardContent>
             <CardFooter className="flex flex-col gap-4">

@@ -38,8 +38,6 @@ export default function RootLayout({
         <UserProvider>
           <CartProvider>
             <LayoutContent>{children}</LayoutContent>
-            {/* --- TOASTER GLOBAL --- */}
-            {/* Movido aquí para garantizar que siempre esté disponible */}
             <Toaster />
           </CartProvider>
         </UserProvider>
@@ -60,7 +58,6 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         return (
           <>
             <main>{children}</main>
-            {/* Toaster ha sido removido de aquí */}
           </> 
         );
     }
@@ -68,12 +65,11 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     return (
         <div className="flex">
             <MainSidebar />
-            <div className="flex flex-1 flex-col md:ml-72">
+            <div className="relative flex flex-1 flex-col md:ml-72">
                 <PageHeader />
-                <main>{children}</main>
+                <main className="flex-1">{children}</main>
+                {showCart && <CartWidget />}
             </div>
-            {showCart && <CartWidget />}
-            {/* Toaster ha sido removido de aquí */}
         </div>
     );
 }

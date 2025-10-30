@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useUser } from '@/context/user-context';
 import { useRouter } from 'next/navigation';
-import { Loader2, AlertCircle, Info, CheckCircle, Edit } from 'lucide-react';
+import { Loader2, AlertCircle, Info, CheckCircle, Edit, Eye, EyeOff } from 'lucide-react';
 
 // Server Action y Hook de debounce
 import { checkDni } from '@/app/actions';
@@ -42,20 +42,22 @@ export default function RegisterPage() {
   const [isDniChecking, setIsDniChecking] = useState(false);
   const [dniStatus, setDniStatus] = useState<'AVAILABLE' | 'USER_EXISTS' | 'GUEST_FOUND' | 'INVALID_DNI' | 'ERROR' | 'IDLE'>('IDLE');
   const [dniMessage, setDniMessage] = useState('');
-
-  // --- NUEVO: Estado para errores de registro en el paso final ---
   const [registrationError, setRegistrationError] = useState<string | null>(null);
+
+  // Estados para visibilidad de contraseñas
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
     setValue,
     watch,
-    reset, // <-- Importamos la función reset
+    reset,
     formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
-    defaultValues: { name: '', username: '', email: '', password: '', dni: '' },
+    defaultValues: { name: '', username: '', email: '', password: '', confirmPassword: '', dni: '' },
   });
 
   const watchedDni = watch('dni');
@@ -64,7 +66,6 @@ export default function RegisterPage() {
     setDniValue(watchedDni);
   }, [watchedDni, dniStepCompleted]);
 
-  // Efecto para la verificación con debounce
   useEffect(() => {
     if (dniStepCompleted) return;
 
@@ -87,7 +88,6 @@ export default function RegisterPage() {
           case 'AVAILABLE':
             setDniStatus('AVAILABLE');
             setDniMessage('DNI disponible. Puedes continuar.');
-            // --- CORRECCIÓN: Limpiamos el nombre si el DNI es nuevo ---
             setValue('name', '', { shouldValidate: true });
             break;
           case 'INVALID_DNI':
@@ -105,31 +105,27 @@ export default function RegisterPage() {
     }
   }, [debouncedDni, setValue, dniStepCompleted]);
 
-  // --- CORRECCIÓN: Lógica de envío con manejo de errores específico ---
   const onSubmit = async (data: RegisterInput) => {
     setIsLoading(true);
-    setRegistrationError(null); // Limpiamos errores previos
+    setRegistrationError(null);
     try {
       const success = await registerUser(data, selectedBackground.url);
       if (success) {
         router.push('/');
       } else {
-        // Este caso es poco probable si el contexto maneja bien sus errores, pero es buena práctica tenerlo.
         setRegistrationError('Ocurrió un error inesperado durante el registro.');
         setIsLoading(false);
       }
     } catch (error: any) {
-        // Capturamos el error específico de Firebase o de la lógica de negocio
         setRegistrationError(error.message || 'No se pudo completar el registro.');
         setIsLoading(false);
     }
   };
 
-  // --- CORRECCIÓN: Función para volver al paso 1, limpiando el formulario ---
   const handleBackToDniStep = () => {
     setDniStepCompleted(false);
-    const currentDni = watch('dni'); // Guardamos el DNI actual
-    reset({ dni: currentDni, name: '', username: '', email: '', password: '' }); // Reseteamos el formulario
+    const currentDni = watch('dni');
+    reset({ dni: currentDni, name: '', username: '', email: '', password: '', confirmPassword: '' });
   };
 
   const isSubmitDisabled = isLoading;
@@ -140,7 +136,6 @@ export default function RegisterPage() {
         return <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1"><Loader2 className="h-4 w-4 animate-spin" /> Verificando DNI...</p>
     }
     if(!dniMessage) return null;
-    // ... (sin cambios en este componente visual)
     switch(dniStatus) {
         case 'USER_EXISTS':
         case 'ERROR':
@@ -206,11 +201,24 @@ export default function RegisterPage() {
                       <Input id="email" type="email" {...register('email')} className="bg-black/20 border-white/20" />
                       {errors.email && (<p className="text-sm font-medium text-destructive flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4" />{errors.email.message}</p>)}
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 relative">
                       <Label htmlFor="password">Contraseña</Label>
-                      <Input id="password" type="password" {...register('password')} className="bg-black/20 border-white/20" />
-                      {errors.password && (<p className="text-sm font-medium text-destructive flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4" />{errors.password.message}</p>)}
+                      <Input id="password" type={showPassword ? "text" : "password"} {...register('password')} className="bg-black/20 border-white/20 pr-10" />
+                      <Button type="button" variant="ghost" size="icon" className="absolute bottom-1 right-1 h-7 w-7 text-white/50 hover:bg-transparent hover:text-white/75" onClick={() => setShowPassword(!showPassword)}>
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        <span className="sr-only">{showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}</span>
+                      </Button>
                     </div>
+                     {errors.password && (<p className="text-sm font-medium text-destructive flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4" />{errors.password.message}</p>)}
+                    <div className="space-y-2 relative">
+                      <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
+                      <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} {...register('confirmPassword')} className="bg-black/20 border-white/20 pr-10" />
+                      <Button type="button" variant="ghost" size="icon" className="absolute bottom-1 right-1 h-7 w-7 text-white/50 hover:bg-transparent hover:text-white/75" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+                        {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        <span className="sr-only">{showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}</span>
+                      </Button>
+                    </div>
+                     {errors.confirmPassword && (<p className="text-sm font-medium text-destructive flex items-center gap-1 mt-1"><AlertCircle className="h-4 w-4" />{errors.confirmPassword.message}</p>)}
                     <div className="space-y-2">
                         <Label>Elige tu Equipo de Hincha</Label>
                         <div className="grid grid-cols-3 gap-2"> {backgrounds.map(bg => (<button key={bg.name} type="button" onClick={() => setSelectedBackground(bg)} className={`flex flex-col items-center justify-center p-2 rounded-lg border-2 ${selectedBackground.name === bg.name ? 'border-primary bg-primary/10' : 'border-transparent bg-black/20'}`}><Image src={bg.crest} alt={bg.name} width={40} height={40} /><span className="text-xs mt-1">{bg.name}</span></button>))} </div>
@@ -235,7 +243,7 @@ export default function RegisterPage() {
                       <p>{registrationError}</p>
                   </div>
               )}
-              {Object.keys(errors).length > 0 && dniStepCompleted && (
+               {Object.keys(errors).length > 0 && dniStepCompleted && (
                   <div className="text-sm font-medium text-destructive flex flex-col items-start gap-1 mt-2 p-2 bg-destructive/10 rounded-md">
                       <p className='font-bold flex items-center gap-2'><AlertCircle className="h-4 w-4"/> Por favor, corrige los siguientes errores:</p>
                       <ul className='list-disc pl-5'>
@@ -243,6 +251,7 @@ export default function RegisterPage() {
                           {errors.username && <li>{errors.username.message}</li>}
                           {errors.email && <li>{errors.email.message}</li>}
                           {errors.password && <li>{errors.password.message}</li>}
+                          {errors.confirmPassword && <li>{errors.confirmPassword.message}</li>}
                       </ul>
                   </div>
               )}
