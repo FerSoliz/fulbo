@@ -233,7 +233,7 @@ export default function CollectibleCardsPage() {
                   <DialogTrigger asChild>
                     <div className="w-12 h-20 bg-muted/50 rounded-md flex items-center justify-center cursor-pointer hover:bg-muted/60 transition-colors">
                       {userTeam?.showcasedCard ? (
-                        <div className="w-full h-full scale-[.6]">
+                        <div className="w-full h-full scale-[.4] -translate-x-6 -translate-y-6">
                           <CollectibleCard card={userTeam.showcasedCard} small />
                         </div>
                       ) : (
