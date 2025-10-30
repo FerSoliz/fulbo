@@ -47,7 +47,7 @@ const TableSkeleton = () => (
 const CardListSkeleton = () => (
   <div className="space-y-2">
     {Array.from({ length: 10 }).map((_, i) => (
-       <div key={`skeleton-card-${i}`} className="flex items-center bg-container p-3 rounded-lg gap-3 border border-border-soft">
+       <div key={`skeleton-card-${i}`} className="flex items-center bg-container p-3 gap-3 border border-border-soft">
           <Skeleton className="h-7 w-10 rounded-md" />
           <Skeleton className="h-12 w-12 rounded-full" />
           <div className="flex-1 grid grid-cols-2 items-center gap-2">
@@ -102,7 +102,7 @@ export default function RankingPage() {
   // --- Renderizado de Vistas --- //
 
   const renderDesktopView = () => (
-    <div className="rounded-lg border bg-card">
+    <div className="border bg-card">
         <Table>
             <TableHeader>
             <TableRow>

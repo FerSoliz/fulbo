@@ -33,7 +33,7 @@ export const PlayerRankingCard = ({ user }: PlayerRankingCardProps) => {
   return (
     <Link
       href={`/profile/${user.id}`}
-      className="flex items-center p-2 rounded-lg gap-2 transition-all hover:brightness-125 border border-border-soft"
+      className="flex items-center p-2 gap-2 transition-all hover:brightness-125 border border-border-soft"
       style={cardStyle}
     >
         {/* Rank */}
