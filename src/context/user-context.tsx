@@ -148,10 +148,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (loading) return;
 
+    const publicPrefixes = ['/tournaments', '/tournament', '/profile', '/ranking', '/store', '/transfer-market'];
     const publicRoutes = ['/login', '/register', '/forgot-password', '/'];
-    const isPublicRoute = publicRoutes.includes(pathname) || pathname.startsWith('/tournaments') || pathname.startsWith('/tournament') || pathname.startsWith('/profile') || pathname.startsWith('/ranking') || pathname.startsWith('/store');
 
-    if (user?.id === 'visitor' && !isPublicRoute) {
+    const isPublic = publicRoutes.includes(pathname) || publicPrefixes.some(prefix => pathname.startsWith(prefix));
+
+    if (user?.id === 'visitor' && !isPublic) {
       router.push('/');
     }
 

@@ -3,7 +3,7 @@
     ".read": false,
     ".write": false,
     "products": {
-      ".read": "auth != null",
+      ".read": true,
       ".indexOn": "tienda",
       "$productId": {
         ".write": "root.child('users').child(auth.uid).child('role').val() === 'admin' || (root.child('users').child(auth.uid).child('role').val() === 'vendedor' && ((!data.exists() && newData.child('tienda').val() === root.child('users').child(auth.uid).child('username').val()) || (data.exists() && newData.exists() && data.child('tienda').val() === root.child('users').child(auth.uid).child('username').val() && newData.child('tienda').val() === root.child('users').child(auth.uid).child('username').val()) || (!newData.exists() && data.child('tienda').val() === root.child('users').child(auth.uid).child('username').val())))",
