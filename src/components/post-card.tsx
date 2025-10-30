@@ -214,7 +214,7 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
   );
 
   return (
-    <div className="relative mt-6">
+    <div className="relative mt-6 z-0">
       <div className="absolute top-0 left-0 right-0 w-full z-10 px-4 flex justify-between items-start pointer-events-none">
           <div className="flex items-start gap-3 pointer-events-auto">
               <div className="transform -translate-y-1/2">
