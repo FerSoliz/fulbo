@@ -46,9 +46,9 @@ export default function StorePage() {
   }, [products]);
 
   useEffect(() => {
-    if (stores.length > 0 && !initialStoreSet.current) {
-        setSelectedStore(stores[0]);
-        initialStoreSet.current = true;
+    if (!initialStoreSet.current && stores.length > 1) {
+      setSelectedStore(stores[0]);
+      initialStoreSet.current = true;
     }
   }, [stores]);
 
@@ -105,7 +105,7 @@ export default function StorePage() {
         {!loading && stores.length > 1 && (
           <Tabs value={selectedStore} onValueChange={setSelectedStore} className="w-full mb-8">
             <TabsList 
-              className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] rounded-lg p-1.5 gap-1 border border-border-soft"
+              className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start rounded-lg p-1.5 gap-1 border border-border-soft"
               style={tabsListStyle}
             >
               {stores.map((storeName) => (
@@ -113,7 +113,7 @@ export default function StorePage() {
                   key={storeName}
                   value={storeName}
                   className={cn(
-                    'py-1.5 transition-all duration-200 border-b-2 rounded-md uppercase text-sm bg-transparent',
+                    'py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent text-left px-3',
                     selectedStore === storeName
                       ? 'font-bold text-amber-400 border-accent-red'
                       : 'text-muted-foreground border-transparent hover:text-amber-400'

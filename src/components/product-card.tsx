@@ -26,7 +26,7 @@ export function ProductCard({ product, isExpanded, onToggleDetails }: ProductCar
 
     return (
         <Card className={cn(
-            "transition-all duration-500 ease-in-out overflow-hidden group bg-transparent border-0",
+            "transition-all duration-500 ease-in-out overflow-hidden group bg-transparent border border-accent-red/50",
             isExpanded ? 'col-span-2' : 'col-span-1'
         )}>
             <div className={`flex ${isExpanded ? 'flex-row' : 'flex-col'}`}>
