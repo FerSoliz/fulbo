@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 export default function StorePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedStore, setSelectedStore] = useState('Todos');
+  const [selectedStore, setSelectedStore] = useState('');
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const { toast } = useToast();
   const initialStoreSet = useRef(false);
@@ -47,11 +47,7 @@ export default function StorePage() {
 
   useEffect(() => {
     if (stores.length > 0 && !initialStoreSet.current) {
-        if (stores.includes('Todos')) {
-            setSelectedStore('Todos');
-        } else {
-            setSelectedStore(stores[0]);
-        }
+        setSelectedStore(stores[0]);
         initialStoreSet.current = true;
     }
   }, [stores]);
@@ -98,9 +94,12 @@ export default function StorePage() {
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
-        <header className="text-center mb-8">
-          <h1 className="text-4xl font-bold tracking-tighter">SUDSTORE</h1>
-          <p className="text-muted-foreground mt-2">El merchandising oficial de la comunidad SudOne.</p>
+        <header className="mb-8">
+          <h1 className="text-4xl font-bold tracking-tighter">
+            <div className="inline-block origin-left scale-x-[.70]">
+                <span className="text-accent-red">SUD</span>STORE
+            </div>
+          </h1>
         </header>
 
         {!loading && stores.length > 1 && (
@@ -130,8 +129,7 @@ export default function StorePage() {
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
-                <ProductCardSkeleton key
-={i} />
+                <ProductCardSkeleton key={i} />
             ))}
           </div>
         ) : filteredProducts.length > 0 ? (
