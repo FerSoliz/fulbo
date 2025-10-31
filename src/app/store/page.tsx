@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import Image from 'next/image';
 import { getProducts } from '@/lib/firebase/db/products';
 import { Product } from '@/lib/types';
 import { ProductCard } from '@/components/product-card';
@@ -94,16 +95,18 @@ export default function StorePage() {
 
   return (
     <div>
-        <header className="p-4 sm:p-6 lg:p-8 mb-8">
-          <h1 className="text-4xl font-bold tracking-tighter">
-            <div className="inline-block origin-left scale-x-[.70]">
-                <span className="text-accent-red">SUD</span>STORE
-            </div>
-          </h1>
-        </header>
+        <div className="pt-4 sm:pt-6 lg:pt-8 mb-2">
+          <Image 
+            src="/assets/profile/sudstore.png"
+            alt="Logo de Sudstore"
+            width={200}
+            height={48}
+            priority
+          />
+        </div>
 
         {!loading && stores.length > 1 && (
-            <div className="w-full mb-8 px-4 sm:px-6 lg:px-8">
+            <div className="w-full mb-4 px-4 sm:px-6 lg:px-8">
                 {isMobile ? (
                     <div style={tabsListStyle} className="flex items-center justify-between border border-border-soft rounded-none px-2">
                         <Tabs value={selectedStore} onValueChange={setSelectedStore} className="flex-grow">
