@@ -93,9 +93,8 @@ export default function StorePage() {
   };
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-8">
+    <div>
+        <header className="p-4 sm:p-6 lg:p-8 mb-8">
           <h1 className="text-4xl font-bold tracking-tighter">
             <div className="inline-block origin-left scale-x-[.70]">
                 <span className="text-accent-red">SUD</span>STORE
@@ -104,17 +103,17 @@ export default function StorePage() {
         </header>
 
         {!loading && stores.length > 1 && (
-            <div className="w-full mb-8">
+            <div className="w-full mb-8 px-4 sm:px-6 lg:px-8">
                 {isMobile ? (
-                    <div style={tabsListStyle} className="flex items-center justify-between border border-border-soft rounded-lg px-2">
+                    <div style={tabsListStyle} className="flex items-center justify-between border border-border-soft rounded-none px-2">
                         <Tabs value={selectedStore} onValueChange={setSelectedStore} className="flex-grow">
-                            <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 bg-transparent border-none">
+                            <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 bg-transparent border-none rounded-none">
                                 {stores.map((storeName) => (
                                     <TabsTrigger
                                     key={storeName}
                                     value={storeName}
                                     className={cn(
-                                        'flex justify-start items-end py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2',
+                                        'flex justify-start items-end py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2 rounded-none',
                                         selectedStore === storeName
                                         ? 'font-bold text-amber-400 border-accent-red'
                                         : 'text-muted-foreground border-transparent hover:text-amber-400'
@@ -130,7 +129,7 @@ export default function StorePage() {
                 ) : (
                     <Tabs value={selectedStore} onValueChange={setSelectedStore}>
                         <TabsList 
-                            className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 border border-border-soft"
+                            className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 border border-border-soft rounded-none"
                             style={tabsListStyle}
                         >
                             {stores.map((storeName) => (
@@ -138,7 +137,7 @@ export default function StorePage() {
                                 key={storeName}
                                 value={storeName}
                                 className={cn(
-                                    'flex justify-start items-end py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2',
+                                    'flex justify-start items-end py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2 rounded-none',
                                     selectedStore === storeName
                                     ? 'font-bold text-amber-400 border-accent-red'
                                     : 'text-muted-foreground border-transparent hover:text-amber-400'
@@ -152,32 +151,33 @@ export default function StorePage() {
                 )}
             </div>
         )}
-
-        {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
-            ))}
-          </div>
-        ) : filteredProducts.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-6">
-            {filteredProducts.map((product) => (
-              <ProductCard 
-                  key={product.id} 
-                  product={product}
-                  isExpanded={expandedProductId === product.id}
-                  onToggleDetails={() => handleToggleDetails(product.id)}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20">
-            <h2 className="text-2xl font-semibold">No hay productos</h2>
-            <p className="mt-2 text-muted-foreground">No se encontraron productos para la tienda seleccionada.</p>
-          </div>
-        )}
-
-      </div>
+        <div className="p-4 sm:p-6 lg:p-8">
+            <div className="max-w-7xl mx-auto">
+                {loading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                    {Array.from({ length: 8 }).map((_, i) => (
+                        <ProductCardSkeleton key={i} />
+                    ))}
+                </div>
+                ) : filteredProducts.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-6">
+                    {filteredProducts.map((product) => (
+                    <ProductCard 
+                        key={product.id} 
+                        product={product}
+                        isExpanded={expandedProductId === product.id}
+                        onToggleDetails={() => handleToggleDetails(product.id)}
+                    />
+                    ))}
+                </div>
+                ) : (
+                <div className="text-center py-20">
+                    <h2 className="text-2xl font-semibold">No hay productos</h2>
+                    <p className="mt-2 text-muted-foreground">No se encontraron productos para la tienda seleccionada.</p>
+                </div>
+                )}
+            </div>
+        </div>
     </div>
   );
 }

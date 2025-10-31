@@ -15,14 +15,14 @@ export function StoreFilters({ stores, selectedStore, onSelectStore }: StoreFilt
 
   return (
     <div className="w-full pb-2 mb-6">
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className="flex flex-wrap justify-start gap-2">
         {allStores.map(store => (
           <Button
             key={store}
             variant={selectedStore === store ? 'default' : 'outline'}
             size={isMobile ? 'xs' : 'sm'}
             onClick={() => onSelectStore(store)}
-            className="whitespace-nowrap rounded-full px-4"
+            className="whitespace-nowrap rounded-none px-4"
           >
             {store}
           </Button>
