@@ -102,7 +102,7 @@ export default function StorePage() {
           width={180}
           height={43}
           priority
-          className="translate-y-1"
+          className="translate-y-[22px]"
         />
         <p className="text-[10px] sm:text-xs uppercase text-white text-right ml-2">
           Indumentaria / Merchandising
