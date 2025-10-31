@@ -18,10 +18,15 @@ import {
 import { useCart } from '@/context/cart-context';
 import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 
 const WHATSAPP_NUMBER = '5491160390824';
 
-export function CartWidget() {
+interface CartWidgetProps {
+  variant?: 'floating' | 'inline';
+}
+
+export function CartWidget({ variant = 'floating' }: CartWidgetProps) {
   const [open, setOpen] = useState(false);
   const { cart, itemCount, cartTotal, updateQuantity, removeFromCart, clearCart } = useCart();
 
@@ -57,20 +62,32 @@ export function CartWidget() {
     setOpen(false);
   };
 
+  const isFloating = variant === 'floating';
+
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
         <Button
-          variant="outline"
+          variant={isFloating ? "outline" : "ghost"}
           size="icon"
-          className="fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 z-50"
+          className={cn(
+            isFloating 
+              ? "fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 z-50"
+              : "relative h-auto w-auto"
+          )}
         >
-          <ShoppingCart className="h-8 w-8" />
+          <ShoppingCart className={cn(isFloating ? "h-8 w-8" : "h-6 w-6")} />
           {itemCount > 0 && (
-            <span className="absolute top-0 right-0 block h-6 w-6 rounded-full bg-destructive text-destructive-foreground text-sm font-bold">
+            <span className={cn(
+              "absolute block rounded-full bg-destructive text-destructive-foreground font-bold",
+              isFloating 
+                ? "top-0 right-0 h-6 w-6 text-sm" 
+                : "top-[-4px] right-[-4px] h-4 w-4 text-xs"
+            )}>
               {itemCount}
             </span>
           )}
+          <span className="sr-only">Abrir carrito de compras</span>
         </Button>
       </SheetTrigger>
       <SheetContent className="flex flex-col">

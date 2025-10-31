@@ -10,6 +10,7 @@ import { UserProvider } from '@/context/user-context';
 import { CartProvider } from '@/context/cart-context';
 import { CartWidget } from '@/components/cart/cart-widget';
 import { usePathname } from 'next/navigation';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function RootLayout({
   children,
@@ -49,10 +50,13 @@ export default function RootLayout({
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
+    const isMobile = useIsMobile();
     
     const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
     const isImmersivePage = pathname.startsWith('/collectibles');
-    const showCart = pathname.startsWith('/store');
+
+    // Show floating cart button only on store page AND on desktop.
+    const showFloatingCart = pathname.startsWith('/store') && !isMobile;
 
     if (isAuthPage || isImmersivePage) {
         return (
@@ -68,7 +72,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <div className="relative flex flex-1 flex-col md:ml-72">
                 <PageHeader />
                 <main className="flex-1">{children}</main>
-                {showCart && <CartWidget />}
+                {showFloatingCart && <CartWidget variant="floating" />}
             </div>
         </div>
     );

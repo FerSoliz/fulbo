@@ -9,6 +9,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ProductCardSkeleton } from '@/components/product-card-skeleton';
 import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { CartWidget } from '@/components/cart/cart-widget';
 
 export default function StorePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -103,27 +104,53 @@ export default function StorePage() {
         </header>
 
         {!loading && stores.length > 1 && (
-          <Tabs value={selectedStore} onValueChange={setSelectedStore} className="w-full mb-8">
-            <TabsList 
-              className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start rounded-lg p-1.5 gap-1 border border-border-soft"
-              style={tabsListStyle}
-            >
-              {stores.map((storeName) => (
-                <TabsTrigger
-                  key={storeName}
-                  value={storeName}
-                  className={cn(
-                    'py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent text-left px-3',
-                    selectedStore === storeName
-                      ? 'font-bold text-amber-400 border-accent-red'
-                      : 'text-muted-foreground border-transparent hover:text-amber-400'
-                  )}
-                >
-                  {storeName}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
+            <div className="w-full mb-8">
+                {isMobile ? (
+                    <div style={tabsListStyle} className="flex items-center justify-between border border-border-soft rounded-lg px-2">
+                        <Tabs value={selectedStore} onValueChange={setSelectedStore} className="flex-grow">
+                            <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 bg-transparent border-none">
+                                {stores.map((storeName) => (
+                                    <TabsTrigger
+                                    key={storeName}
+                                    value={storeName}
+                                    className={cn(
+                                        'flex justify-start items-end py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2',
+                                        selectedStore === storeName
+                                        ? 'font-bold text-amber-400 border-accent-red'
+                                        : 'text-muted-foreground border-transparent hover:text-amber-400'
+                                    )}
+                                    >
+                                    {storeName}
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
+                        </Tabs>
+                        <CartWidget variant="inline" />
+                    </div>
+                ) : (
+                    <Tabs value={selectedStore} onValueChange={setSelectedStore}>
+                        <TabsList 
+                            className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 border border-border-soft"
+                            style={tabsListStyle}
+                        >
+                            {stores.map((storeName) => (
+                                <TabsTrigger
+                                key={storeName}
+                                value={storeName}
+                                className={cn(
+                                    'flex justify-start items-end py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2',
+                                    selectedStore === storeName
+                                    ? 'font-bold text-amber-400 border-accent-red'
+                                    : 'text-muted-foreground border-transparent hover:text-amber-400'
+                                )}
+                                >
+                                {storeName}
+                                </TabsTrigger>
+                            ))}
+                        </TabsList>
+                    </Tabs>
+                )}
+            </div>
         )}
 
         {loading ? (
