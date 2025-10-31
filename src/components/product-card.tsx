@@ -7,6 +7,7 @@ import { Product } from '@/lib/types';
 import { useCart } from '@/context/cart-context';
 import { ShoppingCart, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface ProductCardProps {
     product: Product;
@@ -24,7 +25,10 @@ export function ProductCard({ product, isExpanded, onToggleDetails }: ProductCar
     const imageUrl = product.imageUrl || PLACEHOLDER_IMAGE;
 
     return (
-        <Card className={`transition-all duration-500 ease-in-out overflow-hidden hover:shadow-lg group ${isExpanded ? 'col-span-2' : 'col-span-1'}`}>
+        <Card className={cn(
+            "transition-all duration-500 ease-in-out overflow-hidden group bg-transparent border-0",
+            isExpanded ? 'col-span-2' : 'col-span-1'
+        )}>
             <div className={`flex ${isExpanded ? 'flex-row' : 'flex-col'}`}>
                 {/* --- Primary Card Content --- */}
                 <div className={`${isExpanded ? 'w-1/2' : 'w-full'}`}>

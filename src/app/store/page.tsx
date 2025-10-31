@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { getProducts } from '@/lib/firebase/db';
+import { getProducts } from '@/lib/firebase/db/products';
 import { Product } from '@/lib/types';
 import { ProductCard } from '@/components/product-card';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ProductCardSkeleton } from '@/components/product-card-skeleton';
-import { StoreFilters } from '@/components/store-filters';
+import { cn } from '@/lib/utils';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function StorePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -36,18 +37,21 @@ export default function StorePage() {
       }
     }
 
-    // Simulate loading for demonstration purposes
     setTimeout(fetchProducts, 1500);
   }, [toast]);
 
   const stores = useMemo(() => {
     const storeSet = new Set(products.map(p => p.tienda).filter(Boolean) as string[]);
-    return Array.from(storeSet);
+    return [...Array.from(storeSet), 'Todos'];
   }, [products]);
 
   useEffect(() => {
     if (stores.length > 0 && !initialStoreSet.current) {
-        setSelectedStore(stores[0]);
+        if (stores.includes('Todos')) {
+            setSelectedStore('Todos');
+        } else {
+            setSelectedStore(stores[0]);
+        }
         initialStoreSet.current = true;
     }
   }, [stores]);
@@ -70,17 +74,14 @@ export default function StorePage() {
 
     const expandedIndex = filteredProducts.findIndex(p => p.id === expandedProductId);
 
-    // Si no se encuentra o es el primer elemento, no se necesita reordenar.
     if (expandedIndex <= 0) {
         return filteredProducts;
     }
 
-    // En una cuadrícula de 2 columnas, los elementos de la derecha tienen un índice impar.
     const isRightCard = expandedIndex % 2 !== 0;
 
     if (isRightCard) {
         const newProducts = [...filteredProducts];
-        // Intercambiar la tarjeta expandida con la anterior para que se renderice primero en la fila.
         const previousCard = newProducts[expandedIndex - 1];
         newProducts[expandedIndex - 1] = newProducts[expandedIndex];
         newProducts[expandedIndex] = previousCard;
@@ -90,6 +91,10 @@ export default function StorePage() {
     return filteredProducts;
   }, [filteredProducts, expandedProductId, isMobile]);
 
+  const tabsListStyle = {
+    backgroundColor: 'rgba(41, 46, 56, 0.4)',
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8">
       <div className="max-w-7xl mx-auto">
@@ -98,23 +103,40 @@ export default function StorePage() {
           <p className="text-muted-foreground mt-2">El merchandising oficial de la comunidad SudOne.</p>
         </header>
 
-        {!loading && stores.length > 0 && (
-          <StoreFilters 
-            stores={stores}
-            selectedStore={selectedStore}
-            onSelectStore={setSelectedStore}
-          />
+        {!loading && stores.length > 1 && (
+          <Tabs value={selectedStore} onValueChange={setSelectedStore} className="w-full mb-8">
+            <TabsList 
+              className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] rounded-lg p-1.5 gap-1 border border-border-soft"
+              style={tabsListStyle}
+            >
+              {stores.map((storeName) => (
+                <TabsTrigger
+                  key={storeName}
+                  value={storeName}
+                  className={cn(
+                    'py-1.5 transition-all duration-200 border-b-2 rounded-md uppercase text-sm bg-transparent',
+                    selectedStore === storeName
+                      ? 'font-bold text-amber-400 border-accent-red'
+                      : 'text-muted-foreground border-transparent hover:text-amber-400'
+                  )}
+                >
+                  {storeName}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
         )}
 
         {loading ? (
           <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
-                <ProductCardSkeleton key={i} />
+                <ProductCardSkeleton key
+={i} />
             ))}
           </div>
-        ) : renderableProducts.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {renderableProducts.map((product) => (
+        ) : filteredProducts.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-6">
+            {filteredProducts.map((product) => (
               <ProductCard 
                   key={product.id} 
                   product={product}
@@ -126,9 +148,10 @@ export default function StorePage() {
         ) : (
           <div className="text-center py-20">
             <h2 className="text-2xl font-semibold">No hay productos</h2>
-            <p className="mt-2 text-muted-foreground">No se encontraron productos que coincidan con el filtro seleccionado.</p>
+            <p className="mt-2 text-muted-foreground">No se encontraron productos para la tienda seleccionada.</p>
           </div>
         )}
+
       </div>
     </div>
   );
