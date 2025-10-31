@@ -95,92 +95,96 @@ export default function StorePage() {
 
   return (
     <div>
-        <div className="pt-4 sm:pt-6 lg:pt-8 mb-2">
-          <Image 
-            src="/assets/profile/sudstore.png"
-            alt="Logo de Sudstore"
-            width={200}
-            height={48}
-            priority
-          />
-        </div>
+      <div className="pt-4 sm:pt-6 lg:pt-8 px-4 sm:px-6 lg:px-8 flex justify-between items-end">
+        <Image 
+          src="/assets/profile/sudstore.png"
+          alt="Logo de Sudstore"
+          width={180}
+          height={43}
+          priority
+          className="translate-y-1"
+        />
+        <p className="text-[10px] sm:text-xs uppercase text-white text-right ml-2">
+          Indumentaria / Merchandising
+        </p>
+      </div>
 
-        {!loading && stores.length > 1 && (
-            <div className="w-full mb-4 px-4 sm:px-6 lg:px-8">
-                {isMobile ? (
-                    <div style={tabsListStyle} className="flex items-center justify-between border border-border-soft rounded-none px-2">
-                        <Tabs value={selectedStore} onValueChange={setSelectedStore} className="flex-grow">
-                            <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 bg-transparent border-none rounded-none">
-                                {stores.map((storeName) => (
-                                    <TabsTrigger
-                                    key={storeName}
-                                    value={storeName}
-                                    className={cn(
-                                        'flex justify-start items-end py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2 rounded-none',
-                                        selectedStore === storeName
-                                        ? 'font-bold text-amber-400 border-accent-red'
-                                        : 'text-muted-foreground border-transparent hover:text-amber-400'
-                                    )}
-                                    >
-                                    {storeName}
-                                    </TabsTrigger>
-                                ))}
-                            </TabsList>
-                        </Tabs>
-                        <CartWidget variant="inline" />
-                    </div>
-                ) : (
-                    <Tabs value={selectedStore} onValueChange={setSelectedStore}>
-                        <TabsList 
-                            className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 border border-border-soft rounded-none"
-                            style={tabsListStyle}
-                        >
-                            {stores.map((storeName) => (
-                                <TabsTrigger
-                                key={storeName}
-                                value={storeName}
-                                className={cn(
-                                    'flex justify-start items-end py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2 rounded-none',
-                                    selectedStore === storeName
-                                    ? 'font-bold text-amber-400 border-accent-red'
-                                    : 'text-muted-foreground border-transparent hover:text-amber-400'
-                                )}
-                                >
-                                {storeName}
-                                </TabsTrigger>
-                            ))}
-                        </TabsList>
-                    </Tabs>
-                )}
-            </div>
-        )}
-        <div className="p-4 sm:p-6 lg:p-8">
-            <div className="max-w-7xl mx-auto">
-                {loading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                    {Array.from({ length: 8 }).map((_, i) => (
-                        <ProductCardSkeleton key={i} />
-                    ))}
-                </div>
-                ) : filteredProducts.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-6">
-                    {filteredProducts.map((product) => (
+      {!loading && stores.length > 1 && (
+          <div className="w-full mt-2 mb-4 px-4 sm:px-6 lg:px-8">
+              {isMobile ? (
+                  <div style={tabsListStyle} className="flex items-center justify-between border border-border-soft rounded-none px-2">
+                      <Tabs value={selectedStore} onValueChange={setSelectedStore} className="flex-grow">
+                          <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 bg-transparent border-none rounded-none">
+                              {stores.map((storeName) => (
+                                  <TabsTrigger
+                                  key={storeName}
+                                  value={storeName}
+                                  className={cn(
+                                      'flex justify-start items-end py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2 rounded-none',
+                                      selectedStore === storeName
+                                      ? 'font-bold text-amber-400 border-accent-red'
+                                      : 'text-muted-foreground border-transparent hover:text-amber-400'
+                                  )}
+                                  >
+                                  {storeName}
+                                  </TabsTrigger>
+                              ))}
+                          </TabsList>
+                      </Tabs>
+                      <CartWidget variant="inline" />
+                  </div>
+              ) : (
+                  <Tabs value={selectedStore} onValueChange={setSelectedStore}>
+                      <TabsList 
+                          className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 border border-border-soft rounded-none"
+                          style={tabsListStyle}
+                      >
+                          {stores.map((storeName) => (
+                              <TabsTrigger
+                              key={storeName}
+                              value={storeName}
+                              className={cn(
+                                  'flex justify-start items-end py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2 rounded-none',
+                                  selectedStore === storeName
+                                  ? 'font-bold text-amber-400 border-accent-red'
+                                  : 'text-muted-foreground border-transparent hover:text-amber-400'
+                              )}
+                              >
+                              {storeName}
+                              </TabsTrigger>
+                          ))}
+                      </TabsList>
+                  </Tabs>
+              )}
+          </div>
+      )}
+      <div className="p-4 sm:p-6 lg:p-8">
+          <div className="max-w-7xl mx-auto">
+              {loading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                      <ProductCardSkeleton key={i} />
+                  ))}
+              </div>
+              ) : filteredProducts.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-6">
+                  {filteredProducts.map((product) => (
                     <ProductCard 
                         key={product.id} 
                         product={product}
                         isExpanded={expandedProductId === product.id}
                         onToggleDetails={() => handleToggleDetails(product.id)}
                     />
-                    ))}
-                </div>
-                ) : (
-                <div className="text-center py-20">
-                    <h2 className="text-2xl font-semibold">No hay productos</h2>
-                    <p className="mt-2 text-muted-foreground">No se encontraron productos para la tienda seleccionada.</p>
-                </div>
-                )}
-            </div>
-        </div>
+                  ))}
+              </div>
+              ) : (
+              <div className="text-center py-20">
+                  <h2 className="text-2xl font-semibold">No hay productos</h2>
+                  <p className="mt-2 text-muted-foreground">No se encontraron productos para la tienda seleccionada.</p>
+              </div>
+              )}
+          </div>
+      </div>
     </div>
   );
 }
