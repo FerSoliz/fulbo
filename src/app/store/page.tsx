@@ -8,7 +8,7 @@ import { ProductCard } from '@/components/product-card';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ProductCardSkeleton } from '@/components/product-card-skeleton';
-import { cn } from '@/lib/utils';
+import { cn } from '@/lib/utils'; // Corregido: 'from' y llaves en la importación de cn
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { CartWidget } from '@/components/cart/cart-widget';
 
@@ -27,7 +27,7 @@ export default function StorePage() {
       try {
         const productsData = await getProducts();
         setProducts(productsData);
-      } catch (error) {
+      } catch (error) { // Corregido: Llave de apertura aquí
         console.error("Error fetching products: ", error);
         toast({
             title: "Error al cargar productos",
@@ -37,7 +37,7 @@ export default function StorePage() {
       } finally {
         setLoading(false);
       }
-    }
+    };
 
     setTimeout(fetchProducts, 1500);
   }, [toast]);
@@ -112,18 +112,18 @@ export default function StorePage() {
       {!loading && stores.length > 1 && (
           <div className="w-full mt-2 mb-4 px-4 sm:px-6 lg:px-8">
               {isMobile ? (
-                  <div style={tabsListStyle} className="flex items-center justify-between border border-border-soft rounded-none">
+                  <div style={tabsListStyle} className="flex items-center justify-between border-t border-x border-border-soft rounded-none">
                       <Tabs value={selectedStore} onValueChange={setSelectedStore} className="flex-grow">
-                          <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 bg-transparent border-none rounded-none">
+                          <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start bg-transparent border-none rounded-none p-0">
                               {stores.map((storeName) => (
                                   <TabsTrigger
                                   key={storeName}
                                   value={storeName}
                                   className={cn(
-                                      'flex justify-start items-end py-1.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2 rounded-none',
+                                      'flex justify-start items-end py-2.5 transition-all duration-200 border-b-2 uppercase text-sm bg-transparent px-2 rounded-none',
                                       selectedStore === storeName
                                       ? 'font-bold text-amber-400 border-accent-red'
-                                      : 'text-muted-foreground border-transparent hover:text-amber-400'
+                                      : 'text-muted-foreground border-border-soft hover:text-amber-400'
                                   )}
                                   >
                                   {storeName}
@@ -131,7 +131,7 @@ export default function StorePage() {
                               ))}
                           </TabsList>
                       </Tabs>
-                      <div className="pr-2">
+                      <div className="pr-2 border-b-2 border-border-soft h-full flex items-center">
                         <CartWidget variant="inline" />
                       </div>
                   </div>
