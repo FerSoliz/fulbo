@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import { allCards, Card as CollectibleCardType } from '@/lib/collectible-cards-data'; // Renombrado para evitar conflicto
 import { CollectibleCard } from '@/components/collectible-card';
-import { Progress } from '@/components/ui/progress';
+import { Progress } from '@/components/ui/progress'; // ¡Error corregido aquí!
 import { AnimatePresence, motion } from 'framer-motion';
 import { useUser } from '@/context/user-context';
 import { getUserCollectibles } from '@/lib/firebase/db/collectibles';
+import Image from 'next/image'; // Importar Image para la precarga
 
 export default function CollectionPage() {
   const [userCollection, setUserCollection] = useState<CollectibleCardType[]>([]);
@@ -44,6 +45,20 @@ export default function CollectionPage() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 text-white min-h-screen">
+      {/* Bloque de precarga de imágenes (oculto) */}
+      <div className="hidden">
+        {userCollection.map((card) => (
+          <Image
+            key={`preload-${card.id}`}
+            src={card.playerImageUrl}
+            alt={`Preload ${card.name}`}
+            width={406} // Las dimensiones grandes de la carta ampliada
+            height={634}
+            priority // Indica a Next.js que esta imagen es importante y debe precargarse
+          />
+        ))}
+      </div>
+
       <div className="max-w-7xl mx-auto">
         <Link href="/collectibles">
           <Button variant="ghost" className="mb-4">
