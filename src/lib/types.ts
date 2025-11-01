@@ -202,17 +202,22 @@ export interface Post {
     type: 'image' | 'video';
     url: string;
     thumbnail?: string;
-  };
+    videoType?: 'youtube' | 'twitch'; // Agregado para el tipo de video
+    videoId?: string; // Agregado para el ID del video
+  }[]; // Se cambió a un array de media items
   createdAt: number;
   likes: { [userId: string]: boolean };
   comments: Comment[];
+  location?: string; // Agregado para la ubicación del post
+  isPinned?: boolean; // Agregado para el estado de fijado
+  pinnedUntil?: number; // Agregado para la fecha de fin de fijado
 }
 
 export interface Comment {
   id: string;
   authorId: string;
   authorName: string;
-  authorAvatar: string;
+  authorAvatar: string; // Agregado para el avatar del autor del comentario
   content: string;
   createdAt: number;
 }
@@ -234,14 +239,25 @@ export type ProfileView =
 
 
 // --- TIPOS DE COLECCIONABLES ---
+export interface CardStats {
+  vel: number; // Velocidad
+  tir: number; // Tiro
+  rit: number; // Ritmo
+  reg: number; // Regate
+  def: number; // Defensa
+  fis: number; // Físico
+}
+
 export interface CollectibleCard {
-  id: string;
+  id: number;
   name: string;
-  team: string;
-  position: string;
+  position: 'POR' | 'DEF' | 'MED' | 'DEL';
+  rarity: 'common' | 'rare' | 'epic' | 'legendary' | 'hero' | 'CRACKS' | 'LEYENDA MUNDIAL';
+  stats: CardStats;
   rating: number;
-  imageUrl: string;
-  type: 'player' | 'special';
+  playerImageUrl: string;
+  clubImageUrl: string;
+  countryImageUrl: string;
 }
 
 export interface UserCardCollection {
