@@ -112,7 +112,7 @@ export default function StorePage() {
       {!loading && stores.length > 1 && (
           <div className="w-full mt-2 mb-4 px-4 sm:px-6 lg:px-8">
               {isMobile ? (
-                  <div style={tabsListStyle} className="flex items-center justify-between border border-border-soft rounded-none px-2">
+                  <div style={tabsListStyle} className="flex items-center justify-between border border-border-soft rounded-none">
                       <Tabs value={selectedStore} onValueChange={setSelectedStore} className="flex-grow">
                           <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 bg-transparent border-none rounded-none">
                               {stores.map((storeName) => (
@@ -131,7 +131,9 @@ export default function StorePage() {
                               ))}
                           </TabsList>
                       </Tabs>
-                      <CartWidget variant="inline" />
+                      <div className="pr-2">
+                        <CartWidget variant="inline" />
+                      </div>
                   </div>
               ) : (
                   <Tabs value={selectedStore} onValueChange={setSelectedStore}>

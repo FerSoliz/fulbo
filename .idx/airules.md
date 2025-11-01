@@ -231,9 +231,6 @@ Esta sección sirve como un registro vivo del estado de las funcionalidades del 
   - **Próximos Pasos:** Estas funcionalidades se reactivarán y desarrollarán en una futura fase del proyecto, cuando las características principales estén consolidadas.
 
 ### Tareas a Futuro
-- **Soporte para múltiples equipos por jugador:**
-  - **Descripción:** Actualmente, la arquitectura de datos (específicamente el campo `team` en el nodo `/users/{userId}`) solo permite que un jugador pertenezca a un único equipo a la vez. Se debe diseñar e implementar una refactorización de la estructura de datos para permitir que un jugador pueda estar inscrito en múltiples equipos de diferentes torneos de forma simultánea. Esto impactará en la lógica de inscripción, perfiles de usuario y el modal "Mi Equipo".
-  - **Prioridad:** Media-Alta.
 - **Soporte para más plataformas de video:**
   - **Descripción:** Extender la lógica del formulario de creación de posts y del `PostCard` para dar soporte a otras plataformas de video relevantes como Vimeo o DailyMotion.
   - **Prioridad:** Baja.
