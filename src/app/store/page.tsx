@@ -8,7 +8,7 @@ import { ProductCard } from '@/components/product-card';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ProductCardSkeleton } from '@/components/product-card-skeleton';
-import { cn } from '@/lib/utils'; // Corregido: 'from' y llaves en la importación de cn
+import { cn } from '@/lib/utils';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { CartWidget } from '@/components/cart/cart-widget';
 
@@ -27,7 +27,7 @@ export default function StorePage() {
       try {
         const productsData = await getProducts();
         setProducts(productsData);
-      } catch (error) { // Corregido: Llave de apertura aquí
+      } catch (error) {
         console.error("Error fetching products: ", error);
         toast({
             title: "Error al cargar productos",
@@ -96,7 +96,7 @@ export default function StorePage() {
   return (
     <div>
       <div className="pt-4 sm:pt-6 lg:pt-8 px-4 sm:px-6 lg:px-8 flex justify-between items-end">
-        <Image 
+        <Image
           src="/assets/profile/sudstore.png"
           alt="Logo de Sudstore"
           width={180}
@@ -112,7 +112,7 @@ export default function StorePage() {
       {!loading && stores.length > 1 && (
           <div className="w-full mt-2 mb-4 px-4 sm:px-6 lg:px-8">
               {isMobile ? (
-                  <div style={tabsListStyle} className="flex items-center justify-between border-t border-x border-border-soft rounded-none">
+                  <div style={tabsListStyle} className="flex items-end justify-between border-t border-x border-border-soft rounded-none">
                       <Tabs value={selectedStore} onValueChange={setSelectedStore} className="flex-grow">
                           <TabsList className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start bg-transparent border-none rounded-none p-0">
                               {stores.map((storeName) => (
@@ -131,13 +131,13 @@ export default function StorePage() {
                               ))}
                           </TabsList>
                       </Tabs>
-                      <div className="pr-2 border-b-2 border-border-soft h-full flex items-center">
+                      <div className="pr-2 border-b-2 border-border-soft h-full flex items-end translate-y-[1.5px]">
                         <CartWidget variant="inline" />
                       </div>
                   </div>
               ) : (
                   <Tabs value={selectedStore} onValueChange={setSelectedStore}>
-                      <TabsList 
+                      <TabsList
                           className="grid w-full grid-cols-[repeat(auto-fit,minmax(0,1fr))] justify-start py-1.5 border border-border-soft rounded-none"
                           style={tabsListStyle}
                       >
@@ -171,8 +171,8 @@ export default function StorePage() {
               ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 mt-6">
                   {filteredProducts.map((product) => (
-                    <ProductCard 
-                        key={product.id} 
+                    <ProductCard
+                        key={product.id}
                         product={product}
                         isExpanded={expandedProductId === product.id}
                         onToggleDetails={() => handleToggleDetails(product.id)}
