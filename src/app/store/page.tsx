@@ -131,7 +131,7 @@ export default function StorePage() {
                               ))}
                           </TabsList>
                       </Tabs>
-                      <div className="pr-2 border-b-2 border-border-soft h-full flex items-end translate-y-[1.5px]">
+                      <div className="pr-2 border-b-2 border-border-soft h-full flex items-end translate-y-[2px]">
                         <CartWidget variant="inline" />
                       </div>
                   </div>

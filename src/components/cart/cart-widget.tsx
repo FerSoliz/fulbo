@@ -73,7 +73,7 @@ export function CartWidget({ variant = 'floating' }: CartWidgetProps) {
           className={cn(
             isFloating 
               ? "fixed bottom-6 right-6 h-16 w-16 rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 z-50"
-              : "relative h-auto w-auto pb-[11px]"
+              : "relative h-auto w-auto pb-[12px]"
           )}
         >
           <ShoppingCart className={cn(isFloating ? "h-8 w-8" : "h-6 w-6")} />
