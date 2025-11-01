@@ -14,7 +14,7 @@ export function CollectibleCard({ card, small = false }: CollectibleCardProps) {
 
   useEffect(() => {
     const cardElement = cardRef.current;
-    if (!cardElement || small) return; // Don't apply effect on small cards for performance
+    if (!cardElement || small) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       const { left, top, width, height } = cardElement.getBoundingClientRect();
@@ -45,9 +45,9 @@ export function CollectibleCard({ card, small = false }: CollectibleCardProps) {
     };
   }, [small]);
 
-  // Adjust size for small cards to be slightly bigger
-  const width = small ? 144 : 160;
-  const height = small ? 225 : 250;
+  // Aumento significativo para las cartas no pequeñas
+  const width = small ? 144 : 312; // 208 * 1.5 = 312
+  const height = small ? 225 : 488; // 325 * 1.5 = 487.5 => 488
 
   return (
     <div

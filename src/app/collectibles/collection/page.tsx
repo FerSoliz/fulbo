@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
-import { allCards, Card as CardType } from '@/lib/collectible-cards-data';
+import { allCards, Card as CollectibleCardType } from '@/lib/collectible-cards-data'; // Renombrado para evitar conflicto
 import { CollectibleCard } from '@/components/collectible-card';
 import { Progress } from '@/components/ui/progress';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -12,9 +12,9 @@ import { useUser } from '@/context/user-context';
 import { getUserCollectibles } from '@/lib/firebase/db/collectibles';
 
 export default function CollectionPage() {
-  const [userCollection, setUserCollection] = useState<CardType[]>([]);
+  const [userCollection, setUserCollection] = useState<CollectibleCardType[]>([]);
   const [isClient, setIsClient] = useState(false);
-  const [selectedCard, setSelectedCard] = useState<CardType | null>(null);
+  const [selectedCard, setSelectedCard] = useState<CollectibleCardType | null>(null);
   const { user } = useUser();
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export default function CollectionPage() {
           >
             <motion.div
               layoutId={`card-${selectedCard.id}`}
-              className="w-full max-w-[280px] sm:max-w-[320px]"
+              className="max-w-2xl md:max-w-3xl lg:max-w-4xl"
               onClick={(e) => e.stopPropagation()}
             >
               <CollectibleCard card={selectedCard} />
