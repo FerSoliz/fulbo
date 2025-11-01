@@ -18,51 +18,44 @@ import { Post, User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 
-interface PostCardProps {
-  post: Post;
-  currentUser: User | null;
-  isPriority?: boolean;
-  onLikeToggle: (postId: string) => void;
-  onAddComment: (postId: string, commentText: string) => void;
-  onDeletePost: (postId: string) => void;
-}
-
+// Helper constants
 const COMMENT_CHAR_LIMIT = 200;
 const COMMENT_TRUNCATE_LENGTH = 80;
 
-export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, onAddComment, onDeletePost }: PostCardProps) {
-  const [commentText, setCommentText] = useState('');
-  const [showComments, setShowComments] = useState(false);
+// =================================================================================================
+// 1. Componente de Contenido Multimedia Extraído
+// =================================================================================================
+// Se extrajo MediaContent para evitar que su estado (y el del DropdownMenu) se reinicie
+// cada vez que el componente padre PostCard se re-renderiza.
+// =================================================================================================
+
+interface MediaContentProps {
+  post: Post;
+  canDelete: boolean;
+  isPinned: boolean;
+  isPriority: boolean;
+  isVisitor: boolean;
+  isLiked: boolean;
+  onDeletePost: (postId: string) => void;
+  onLikeToggle: () => void;
+  onToggleComments: () => void;
+}
+
+function MediaContent({
+  post,
+  canDelete,
+  isPinned,
+  isPriority,
+  isVisitor,
+  isLiked,
+  onDeletePost,
+  onLikeToggle,
+  onToggleComments,
+}: MediaContentProps) {
   const [isYoutubePlaying, setIsYoutubePlaying] = useState(false);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
-  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
 
-  const authorName = post.authorName || 'Usuario Desconocido';
-  const authorAvatar = post.authorAvatar || 'https://avatar.vercel.sh/unknown.png';
-  const isVisitor = !currentUser || currentUser.id === 'visitor';
-
-  const handleLike = () => {
-    if (isVisitor) return;
-    onLikeToggle(post.id);
-  };
-
-  const handleAddComment = () => {
-    if (isVisitor || !commentText.trim() || commentText.length > COMMENT_CHAR_LIMIT) return;
-    onAddComment(post.id, commentText);
-    setCommentText('');
-    setShowComments(true);
-  };
-
-  const toggleCommentExpansion = (commentId: string) => {
-    setExpandedComments(prev => ({ ...prev, [commentId]: true }));
-  };
-  
-  const isPinned = post.isPinned && post.pinnedUntil && new Date(post.pinnedUntil) > new Date();
-  const canDelete = currentUser?.id === post.authorId || currentUser?.role === 'admin';
-
-  const { media, content } = post;
-  const hasMedia = media && media.length > 0;
-  const hasContent = content && content.trim() !== '';
+  const { media } = post;
   const videoItem = media?.find(item => item.type === 'video');
   const imageMedia = media?.filter(item => item.type === 'image') || [];
   const isTwitch = videoItem?.videoType === 'twitch' && videoItem?.videoId;
@@ -73,25 +66,8 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
   const gridClasses = {
     1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-2 grid-rows-2', 4: 'grid-cols-2 grid-rows-2',
   };
-  
-  const isLiked = currentUser && post.likes ? !!post.likes[currentUser.id] : false;
 
-  if (!post.authorName) {
-    return (
-      <div className="relative mt-6">
-        <div className="absolute top-0 left-4 z-10 transform -translate-y-1/2">
-          <Skeleton className="w-12 h-12 rounded-full border-2 border-background" />
-        </div>
-        <Card>
-          <div className="h-6" />
-          <Skeleton className="h-[250px] w-full" />
-          <div className="p-4"><Skeleton className="h-4 w-full mb-2" /><Skeleton className="h-4 w-3/4" /></div>
-        </Card>
-      </div>
-    );
-  }
-  
-  const MediaContent = () => (
+  return (
     <div className="relative border-y-4 border-accent-red">
       {isPinned && (
         <TooltipProvider>
@@ -200,18 +176,81 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
 
       <div className="absolute bottom-0 left-0 right-0 h-2/5 bg-gradient-to-t from-black/70 to-transparent pointer-events-none z-10" />
       <div className="absolute bottom-4 left-4 z-20 flex flex-col items-center">
-        <Button variant="ghost" size="icon" onClick={handleLike} disabled={isVisitor} className="h-auto p-1 rounded-full hover:bg-black/40">
+        <Button variant="ghost" size="icon" onClick={onLikeToggle} disabled={isVisitor} className="h-auto p-1 rounded-full hover:bg-black/40">
           <Heart className={cn('h-7 w-7 transition-all', isLiked ? 'text-red-500 fill-current' : 'text-white')} />
         </Button>
         <span className="text-white text-xs font-bold drop-shadow-lg mb-2">{post.likes ? Object.keys(post.likes).length : 0}</span>
         
-        <Button variant="ghost" size="icon" onClick={() => setShowComments(!showComments)} className="h-auto p-1 rounded-full hover:bg-black/40">
+        <Button variant="ghost" size="icon" onClick={onToggleComments} className="h-auto p-1 rounded-full hover:bg-black/40">
           <MessageSquare className="h-7 w-7 text-white" />
         </Button>
         <span className="text-white text-xs font-bold drop-shadow-lg">{post.comments ? Object.keys(post.comments).length : 0}</span>
       </div>
     </div>
   );
+}
+
+
+// =================================================================================================
+// 2. Componente Principal PostCard (Refactorizado)
+// =================================================================================================
+
+interface PostCardProps {
+  post: Post;
+  currentUser: User | null;
+  isPriority?: boolean;
+  onLikeToggle: (postId: string) => void;
+  onAddComment: (postId: string, commentText: string) => void;
+  onDeletePost: (postId: string) => void;
+}
+
+export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, onAddComment, onDeletePost }: PostCardProps) {
+  const [commentText, setCommentText] = useState('');
+  const [showComments, setShowComments] = useState(false);
+  const [expandedComments, setExpandedComments] = useState<Record<string, boolean>>({});
+
+  const authorName = post.authorName || 'Usuario Desconocido';
+  const authorAvatar = post.authorAvatar || 'https://avatar.vercel.sh/unknown.png';
+  const isVisitor = !currentUser || currentUser.id === 'visitor';
+
+  const handleLike = () => {
+    if (isVisitor) return;
+    onLikeToggle(post.id);
+  };
+
+  const handleAddComment = () => {
+    if (isVisitor || !commentText.trim() || commentText.length > COMMENT_CHAR_LIMIT) return;
+    onAddComment(post.id, commentText);
+    setCommentText('');
+    setShowComments(true);
+  };
+
+  const toggleCommentExpansion = (commentId: string) => {
+    setExpandedComments(prev => ({ ...prev, [commentId]: true }));
+  };
+  
+  const isPinned = !!(post.isPinned && post.pinnedUntil && new Date(post.pinnedUntil) > new Date());
+  const canDelete = !!(currentUser?.id === post.authorId || currentUser?.role === 'admin');
+
+  const { media, content } = post;
+  const hasMedia = media && media.length > 0;
+  const hasContent = content && content.trim() !== '';
+  const isLiked = !!(currentUser && post.likes && post.likes[currentUser.id]);
+
+  if (!post.authorName) {
+    return (
+      <div className="relative mt-6">
+        <div className="absolute top-0 left-4 z-10 transform -translate-y-1/2">
+          <Skeleton className="w-12 h-12 rounded-full border-2 border-background" />
+        </div>
+        <Card>
+          <div className="h-6" />
+          <Skeleton className="h-[250px] w-full" />
+          <div className="p-4"><Skeleton className="h-4 w-full mb-2" /><Skeleton className="h-4 w-3/4" /></div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="relative mt-6 z-0">
@@ -242,7 +281,19 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
       </div>
       <Card className="relative">
         <CardContent className="p-0">
-          {hasMedia && <MediaContent />}
+          {hasMedia && (
+            <MediaContent 
+              post={post}
+              canDelete={canDelete}
+              isPinned={isPinned}
+              isPriority={isPriority}
+              isVisitor={isVisitor}
+              isLiked={isLiked}
+              onDeletePost={onDeletePost}
+              onLikeToggle={handleLike}
+              onToggleComments={() => setShowComments(!showComments)}
+            />
+          )}
           {hasContent && (
             !hasMedia ? (
                 <div className="border-t-4 border-accent-red">
@@ -273,7 +324,8 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
         <CardFooter className="flex-col items-start pt-2">
           {showComments && (
             <div className="w-full space-y-3 pt-4 mt-4 border-t px-4">
-              {post.comments && Object.entries(post.comments).map(([commentId, comment]) => {
+              {post.comments && Object.values(post.comments).map((comment) => {
+                const commentId = `${post.id}-${comment.authorId}-${comment.createdAt}`; // synthetic key
                 const isLong = comment.content.length > COMMENT_TRUNCATE_LENGTH;
                 const isExpanded = !!expandedComments[commentId];
 
