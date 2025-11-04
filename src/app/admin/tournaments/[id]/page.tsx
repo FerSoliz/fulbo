@@ -20,7 +20,8 @@ import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { AddMatchDialog } from '@/components/add-match-dialog';
-import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2, Video, VideoOff } from 'lucide-react';
+import { CreatePlayoffsDialog } from '@/components/admin/CreatePlayoffsDialog'; // Importación del nuevo componente
+import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2, Video, VideoOff, Trophy, Lock } from 'lucide-react';
 
 import { Tournament, Team, Match, Stats, PageState, PlayerStatsInfo } from '@/lib/types';
 
@@ -55,7 +56,13 @@ export default function TournamentFixturePage() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isAddMatchDialogOpen, setIsAddMatchDialogOpen] = useState(false);
+    const [isPlayoffsDialogOpen, setIsPlayoffsDialogOpen] = useState(false); // Estado para el nuevo modal
     const [editingVideoMatchId, setEditingVideoMatchId] = useState<string | null>(null);
+
+    const allMatchesFinished = useMemo(() => {
+        if (matches.length === 0) return false;
+        return matches.every(match => match.status === 'finished');
+    }, [matches]);
 
     const updateMatchData = (matchId: string, path: string, value: any) => {
         set(ref(db, `matches/${matchId}/${path}`), value);
@@ -227,6 +234,23 @@ export default function TournamentFixturePage() {
                 <Link href="/admin/manage-tournaments">
                     <Button variant="outline" className="mb-6"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button></Link>
                 <div className="mb-8"><h1 className="text-3xl font-bold tracking-tight">{tournament?.name}</h1><p className="text-muted-foreground">Gestiona el fixture, resultados y estadísticas del torneo.</p></div>
+                
+                <div className="flex justify-start items-center gap-4 mb-4">
+                    <Button onClick={() => setIsAddMatchDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Añadir Partido</Button>
+                    {allMatchesFinished && (
+                        <>
+                            <Button variant="outline" onClick={() => setIsPlayoffsDialogOpen(true)}>
+                                <Trophy className="mr-2 h-4 w-4 text-yellow-400" />
+                                Crear Playoffs
+                            </Button>
+                            <Button variant="destructive">
+                                <Lock className="mr-2 h-4 w-4" />
+                                Cerrar Torneo
+                            </Button>
+                        </>
+                    )}
+                </div>
+
                 <Tabs defaultValue="fixture">
                     <TabsList className="grid w-full grid-cols-4"><TabsTrigger value="fixture">Fixture</TabsTrigger><TabsTrigger value="positions">Posiciones</TabsTrigger><TabsTrigger value="scorers">Goleadores</TabsTrigger><TabsTrigger value="sanctions">Sanciones</TabsTrigger></TabsList>
                     <TabsContent value="fixture" className="mt-6">
@@ -236,7 +260,6 @@ export default function TournamentFixturePage() {
                                     <CardTitle>Partidos del Torneo</CardTitle>
                                     <CardDescription>Carga o corrige las estadísticas de un partido. El sistema recalculará todo automáticamente.</CardDescription>
                                 </div>
-                                <Button onClick={() => setIsAddMatchDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Añadir Partido</Button>
                             </CardHeader>
                             <CardContent>
                                 {matches.length > 0 ? (
@@ -365,6 +388,16 @@ export default function TournamentFixturePage() {
                     open={isAddMatchDialogOpen}
                     onOpenChange={setIsAddMatchDialogOpen}
                 />
+                {/* Renderizado condicional del nuevo modal */}
+                {stats?.positions && (
+                    <CreatePlayoffsDialog 
+                        open={isPlayoffsDialogOpen}
+                        onOpenChange={setIsPlayoffsDialogOpen}
+                        tournamentId={tournamentId}
+                        teams={teams}
+                        positions={stats.positions}
+                    />
+                )}
             </div>
         </div>
     );
