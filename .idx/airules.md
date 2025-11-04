@@ -174,6 +174,12 @@ Esta sección describe la arquitectura de datos NoSQL de la Realtime Database. L
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Optimización `Mobile-First` de Planilla de Estadísticas:**
+  - **Fecha:** 2024-05-28
+  - **Descripción:** Se ha refactorizado intensivamente el modal de carga de estadísticas de partido (`match-stats-dialog.tsx`) para ofrecer una experiencia de usuario superior en dispositivos móviles, en línea con la directriz `mobile-first` del proyecto.
+  - **Interfaz Ultra-Compacta:** Se aplicaron múltiples rondas de ajustes responsivos para minimizar el tamaño de los controles, fuentes y espaciados, maximizando la densidad de información en pantallas pequeñas.
+  - **Mejora de UX en Iconos:** Se reemplazaron los íconos cuadrados de las tarjetas por representaciones rectangulares y verticales (`RectangleHorizontal`), mejorando la semántica visual y la usabilidad para los administradores.
+  - **Proceso Iterativo:** El trabajo se realizó de forma iterativa, refinando los detalles en cada paso según los requerimientos, para lograr un componente altamente funcional y estéticamente pulido en móviles.
 - **Centralización de la Lógica de Sobres de Cartas:**
   - **Fecha:** 2024-05-27
   - **Descripción:** Se ha refactorizado y centralizado toda la lógica relacionada con la gestión de sobres de cartas coleccionables en el contexto de usuario (`src/context/user-context.tsx`) para resolver un error `TypeError` y mejorar la robustez del sistema.

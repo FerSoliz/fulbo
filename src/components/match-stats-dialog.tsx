@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, BarChart, Shield, Plus, Minus, Edit, Save, X, ShieldAlert, Volleyball, Square, Trophy } from 'lucide-react';
+import { Loader2, BarChart, Shield, Plus, Minus, Edit, Save, X, ShieldAlert, Volleyball, RectangleHorizontal, Trophy } from 'lucide-react';
 
 interface Player { id: string; name: string; }
 interface PlayerStats { goals: number; yellowCards: number; redCard: boolean; mvp: boolean; }
@@ -33,21 +33,21 @@ const PlayerStatsRow = ({ player, stats, onStatChange, onMvpSelect, isMvp, disab
     isMvp: boolean;
     disabled: boolean;
 }) => {
-    const StatCounter = ({ icon: Icon, iconClassName, stat, value, onStatChange, disabled }: any) => (
+    const StatCounter = ({ icon: Icon, iconClassName, stat, value, onStatChange, disabled, iconSize }: any) => (
         <div className="flex items-center justify-center gap-0 sm:gap-1">
-            <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${iconClassName || 'text-muted-foreground'}`} />
-            <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center"> 
+            <Icon className={`${iconSize || 'h-4 w-4 sm:h-5 sm:w-5'} ${iconClassName || 'text-muted-foreground'}`} />
+            <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center"> 
               {(!disabled && value > 0) && (
-                <Button size="icon" variant="outline" className="h-7 w-7 sm:h-8 sm:w-8 rounded-full" onClick={() => onStatChange(stat, Math.max(0, value - 1))}>
-                    <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
+                <Button size="icon" variant="outline" className="h-6 w-6 sm:h-8 sm:w-8 rounded-full" onClick={() => onStatChange(stat, Math.max(0, value - 1))}>
+                    <Minus className="h-3 w-3" />
                 </Button>
               )}
             </div>
             <span className="font-bold w-5 text-center text-base sm:text-lg tabular-nums">{value}</span>
-            <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center"> 
+            <div className="w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center"> 
               {!disabled && (
-                <Button size="icon" variant="outline" className="h-7 w-7 sm:h-8 sm:w-8 rounded-full" onClick={() => onStatChange(stat, value + 1)}>
-                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
+                <Button size="icon" variant="outline" className="h-6 w-6 sm:h-8 sm:w-8 rounded-full" onClick={() => onStatChange(stat, value + 1)}>
+                    <Plus className="h-3 w-3" />
                 </Button>
               )}
             </div>
@@ -56,15 +56,15 @@ const PlayerStatsRow = ({ player, stats, onStatChange, onMvpSelect, isMvp, disab
 
     return (
         <div className={`flex items-center justify-between p-1 sm:p-2 rounded-lg border transition-colors ${disabled ? 'bg-muted/50 text-muted-foreground' : 'hover:bg-muted/50'}`}>
-            <p className="font-semibold text-sm sm:text-base truncate pr-1 w-1/3">{player.name}</p>
-            <div className="flex items-center gap-1 sm:gap-4">
-                <Button variant="ghost" size="icon" onClick={onMvpSelect} disabled={disabled} className="w-8 h-8 sm:w-10 sm:h-10">
+            <p className="font-semibold text-sm sm:text-base truncate pr-1 w-2/5 sm:w-1/3">{player.name}</p>
+            <div className="flex items-center gap-1 sm:gap-3">
+                <Button variant="ghost" size="icon" onClick={onMvpSelect} disabled={disabled} className="w-7 h-7 sm:w-10 sm:h-10">
                     <Trophy className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${isMvp ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/50 hover:text-yellow-400'}`} />
                 </Button>
                 <StatCounter icon={Volleyball} stat="goals" value={stats.goals} onStatChange={onStatChange} disabled={disabled} />
-                <StatCounter icon={Square} iconClassName="text-yellow-400 fill-current" stat="yellowCards" value={stats.yellowCards} onStatChange={onStatChange} disabled={disabled} />
+                <StatCounter icon={RectangleHorizontal} iconSize="w-4 h-5 sm:w-5 sm:h-6" iconClassName="text-yellow-400 fill-current rotate-90" stat="yellowCards" value={stats.yellowCards} onStatChange={onStatChange} disabled={disabled} />
                 <div className="flex items-center justify-center gap-1 sm:gap-2">
-                    <Square className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 fill-current" />
+                    <RectangleHorizontal className="w-4 h-5 sm:w-5 sm:h-6 text-red-600 fill-current rotate-90" />
                     <div className="w-8 h-8 flex items-center justify-center"> 
                       {!disabled && (
                         <Checkbox id={`redCard-${player.id}`} checked={stats.redCard} onCheckedChange={(checked) => onStatChange('redCard', !!checked)} className="w-5 h-5 sm:w-6 sm:h-6" />
