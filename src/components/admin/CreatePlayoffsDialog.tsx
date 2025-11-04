@@ -18,8 +18,14 @@ import {
   DragOverlay,
   useDraggable,
   useDroppable,
-  DragStartEvent
+  DragStartEvent,
+  useSensors,
+  useSensor,
+  PointerSensor,
+  KeyboardSensor
 } from '@dnd-kit/core';
+import { snapCenterToCursor } from '@dnd-kit/modifiers';
+import { CSS } from '@dnd-kit/utilities';
 
 // --- Tipos y Estructuras de Datos ---
 interface TeamInfo {
@@ -93,7 +99,6 @@ const generateBracket = (numTeams: number, positions: PositionEntry[], teams: Te
     let numMatches = numTeams / 2;
     let matchCounter = 1;
     
-    // --- Lógica para la ronda inicial (equipos reales) ---
     const initialRound: Round = { title: getStageName(numMatches, true), matchups: [] };
     for (let i = 0; i < numMatches; i++) {
         initialRound.matchups.push({
@@ -104,7 +109,6 @@ const generateBracket = (numTeams: number, positions: PositionEntry[], teams: Te
     }
     rounds.push(initialRound);
 
-    // --- Lógica para rondas futuras (placeholders) ---
     let winnerCounter = 1;
     numMatches /= 2;
     while (numMatches >= 1) {
@@ -128,12 +132,13 @@ const generateBracket = (numTeams: number, positions: PositionEntry[], teams: Te
     return rounds;
 };
 
-// --- Componentes Visuales Reutilizables ---
-const TeamDisplay = ({ team, isDragging = false }: { team: TeamInfo, isDragging?: boolean }) => {
-    const isPlaceholder = team.id.startsWith('winner-');
-    const opacity = isDragging ? 'opacity-50' : '';
+const TeamDisplay = ({ team, isPlaceholder, isDragging = false }: { team: TeamInfo, isPlaceholder?: boolean, isDragging?: boolean }) => {
+    const isWinnerPlaceholder = isPlaceholder || team.id.startsWith('winner-');
+    
+    // El elemento original se hace semi-transparente, el "fantasma" es sólido
+    const opacity = isDragging ? 'opacity-30' : 'opacity-100';
 
-    if (isPlaceholder) {
+    if (isWinnerPlaceholder) {
         return (
             <div className={`flex items-center gap-1 sm:gap-2 w-full bg-secondary/50 p-1 sm:p-2 rounded-md h-8 sm:h-10 ${opacity}`}>
                 <div className="flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 rounded-full bg-primary/50 text-muted-foreground font-bold text-xs sm:text-sm">?</div>
@@ -153,7 +158,6 @@ const TeamDisplay = ({ team, isDragging = false }: { team: TeamInfo, isDragging?
     );
 };
 
-// --- Componentes para Drag and Drop ---
 const DraggableTeam = ({ team, isEditMode }: { team: TeamInfo; isEditMode: boolean }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: team.id,
@@ -165,10 +169,12 @@ const DraggableTeam = ({ team, isEditMode }: { team: TeamInfo; isEditMode: boole
     id: team.id,
     disabled: !isEditMode || team.id.startsWith('winner-'),
   });
+  
+  // Se usa CSS.Transform para asegurar un cálculo de posición correcto
+  const style = {
+    transform: CSS.Transform.toString(transform),
+  };
 
-  const style = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-  } : undefined;
 
   const combinedRef = (node: HTMLElement | null) => {
       setNodeRef(node);
@@ -194,7 +200,6 @@ const MatchupCard = ({ matchup, isEditMode }: { matchup: Matchup, isEditMode: bo
     </div>
 );
 
-// --- Componentes del Árbol ---
 const MatchupPair = ({ pair, isEditMode }: { pair: Matchup[], isEditMode: boolean }) => {
     return (
         <div className="relative flex flex-col justify-center items-center">
@@ -235,7 +240,6 @@ const RoundColumn = ({ round, isEditMode }: { round: Round, isEditMode: boolean 
     );
 };
 
-// --- Componente Principal del Modal ---
 export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, positions }: CreatePlayoffsDialogProps) {
   const [numTeams, setNumTeams] = useState<string>('8');
   const [isEditMode, setIsEditMode] = useState(false);
@@ -243,6 +247,16 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
+
+  // Sensores para una detección de arrastre más rápida y natural
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Inicia el arrastre después de mover 8px
+      },
+    }),
+    useSensor(KeyboardSensor)
+  );
 
   const generatedRounds = useMemo(() => {
       const count = parseInt(numTeams, 10);
@@ -291,23 +305,37 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
     setIsCreating(true);
     try {
         const updates: { [key: string]: any } = {};
-        let matchCounter = 0;
+        const matchIdMap = new Map<string, string>();
 
         editableRounds.forEach(round => {
             round.matchups.forEach(matchup => {
-                // Usar un ID de partido más descriptivo y único
-                const stageAbbrev = round.title.substring(0, 3).toUpperCase();
-                const matchId = `match_${tournamentId}_${stageAbbrev}${matchCounter++}_${Date.now()}`;
-                
-                const newMatch = {
+                const matchId = `match_${tournamentId}_${round.title.substring(0,2).toUpperCase()}_${matchup.id}`;
+                matchIdMap.set(matchup.id, matchId);
+            });
+        });
+
+        editableRounds.forEach((round, roundIndex) => {
+            const nextRound = editableRounds[roundIndex + 1];
+
+            round.matchups.forEach((matchup, matchupIndex) => {
+                const matchId = matchIdMap.get(matchup.id)!;
+                const newMatch: any = {
                     id: matchId,
                     tournamentId,
                     homeTeamId: matchup.home.id,
                     awayTeamId: matchup.away.id,
                     status: 'pending',
                     result: { home: null, away: null },
-                    stage: round.title, // ¡El nuevo campo que queríamos!
+                    stage: round.title,
                 };
+
+                if (nextRound) {
+                    const nextMatchupIndex = Math.floor(matchupIndex / 2);
+                    const nextMatch = nextRound.matchups[nextMatchupIndex];
+                    newMatch.advancesToMatchId = matchIdMap.get(nextMatch.id)!;
+                    newMatch.advancesToPosition = matchupIndex % 2 === 0 ? 'home' : 'away';
+                }
+
                 updates[`/matches/${matchId}`] = newMatch;
             });
         });
@@ -316,18 +344,14 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
 
         toast({
             title: "¡Playoffs Creados!",
-            description: `Se generaron ${Object.keys(updates).length} partidos en el árbol de playoffs.`,
+            description: `Se generaron ${Object.keys(updates).length} partidos.`,
             className: "bg-green-500 text-white",
         });
         onOpenChange(false);
 
     } catch (error) {
         console.error("Error creating playoffs:", error);
-        toast({
-            title: "Error al crear playoffs",
-            description: "No se pudieron guardar los partidos. Inténtalo de nuevo.",
-            variant: "destructive",
-        });
+        toast({ title: "Error al crear playoffs", variant: "destructive" });
     } finally {
         setIsCreating(false);
     }
@@ -382,7 +406,7 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
           {editableRounds.length > 0 && (
             <div>
               <h4 className="text-sm font-medium mb-4 text-center">Vista Previa del Árbol de Playoffs</h4>
-              <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+              <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
                 <div className="p-1 sm:p-6 rounded-lg flex items-stretch overflow-x-auto bg-primary/20">
                     {editableRounds.map((round, index) => (
                     <div key={round.title} className="flex items-center">
@@ -391,8 +415,12 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
                     </div>
                     ))}
                 </div>
-                <DragOverlay>
-                    {activeTeam ? <TeamDisplay team={activeTeam} /> : null}
+                <DragOverlay modifiers={[snapCenterToCursor]}>
+                    {activeTeam ? (
+                        <div className="w-32 sm:w-56">
+                            <TeamDisplay team={activeTeam} isPlaceholder={activeTeam.id.startsWith('winner-')} />
+                        </div>
+                    ) : null}
                 </DragOverlay>
               </DndContext>
             </div>
