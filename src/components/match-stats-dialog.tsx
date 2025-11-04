@@ -34,20 +34,20 @@ const PlayerStatsRow = ({ player, stats, onStatChange, onMvpSelect, isMvp, disab
     disabled: boolean;
 }) => {
     const StatCounter = ({ icon: Icon, iconClassName, stat, value, onStatChange, disabled }: any) => (
-        <div className="flex items-center justify-center gap-3">
-            <Icon className={`h-6 w-6 ${iconClassName || 'text-muted-foreground'}`} />
-            <div className="w-9 h-9"> 
+        <div className="flex items-center justify-center gap-0 sm:gap-1">
+            <Icon className={`h-4 w-4 sm:h-5 sm:w-5 ${iconClassName || 'text-muted-foreground'}`} />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center"> 
               {(!disabled && value > 0) && (
-                <Button size="icon" variant="outline" className="h-9 w-9 rounded-full" onClick={() => onStatChange(stat, Math.max(0, value - 1))}>
-                    <Minus className="h-5 w-5" />
+                <Button size="icon" variant="outline" className="h-7 w-7 sm:h-8 sm:w-8 rounded-full" onClick={() => onStatChange(stat, Math.max(0, value - 1))}>
+                    <Minus className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               )}
             </div>
-            <span className="font-bold w-6 text-center text-xl tabular-nums">{value}</span>
-            <div className="w-9 h-9"> 
+            <span className="font-bold w-5 text-center text-base sm:text-lg tabular-nums">{value}</span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center"> 
               {!disabled && (
-                <Button size="icon" variant="outline" className="h-9 w-9 rounded-full" onClick={() => onStatChange(stat, value + 1)}>
-                    <Plus className="h-5 w-5" />
+                <Button size="icon" variant="outline" className="h-7 w-7 sm:h-8 sm:w-8 rounded-full" onClick={() => onStatChange(stat, value + 1)}>
+                    <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               )}
             </div>
@@ -55,19 +55,19 @@ const PlayerStatsRow = ({ player, stats, onStatChange, onMvpSelect, isMvp, disab
     );
 
     return (
-        <div className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${disabled ? 'bg-muted/50 text-muted-foreground' : 'hover:bg-muted/50'}`}>
-            <p className="font-semibold text-base sm:text-lg truncate pr-2">{player.name}</p>
-            <div className="flex items-center gap-4 sm:gap-6">
-                <Button variant="ghost" size="icon" onClick={onMvpSelect} disabled={disabled} className="w-12 h-12">
-                    <Trophy className={`h-7 w-7 transition-colors ${isMvp ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/50 hover:text-yellow-400'}`} />
+        <div className={`flex items-center justify-between p-1 sm:p-2 rounded-lg border transition-colors ${disabled ? 'bg-muted/50 text-muted-foreground' : 'hover:bg-muted/50'}`}>
+            <p className="font-semibold text-sm sm:text-base truncate pr-1 w-1/3">{player.name}</p>
+            <div className="flex items-center gap-1 sm:gap-4">
+                <Button variant="ghost" size="icon" onClick={onMvpSelect} disabled={disabled} className="w-8 h-8 sm:w-10 sm:h-10">
+                    <Trophy className={`h-5 w-5 sm:h-6 sm:w-6 transition-colors ${isMvp ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/50 hover:text-yellow-400'}`} />
                 </Button>
                 <StatCounter icon={Volleyball} stat="goals" value={stats.goals} onStatChange={onStatChange} disabled={disabled} />
                 <StatCounter icon={Square} iconClassName="text-yellow-400 fill-current" stat="yellowCards" value={stats.yellowCards} onStatChange={onStatChange} disabled={disabled} />
-                <div className="flex items-center justify-center gap-3">
-                    <Square className="h-6 w-6 text-red-600 fill-current" />
-                    <div className="w-9 h-9 flex items-center justify-center"> 
+                <div className="flex items-center justify-center gap-1 sm:gap-2">
+                    <Square className="h-4 w-4 sm:h-5 sm:w-5 text-red-600 fill-current" />
+                    <div className="w-8 h-8 flex items-center justify-center"> 
                       {!disabled && (
-                        <Checkbox id={`redCard-${player.id}`} checked={stats.redCard} onCheckedChange={(checked) => onStatChange('redCard', !!checked)} className="w-7 h-7" />
+                        <Checkbox id={`redCard-${player.id}`} checked={stats.redCard} onCheckedChange={(checked) => onStatChange('redCard', !!checked)} className="w-5 h-5 sm:w-6 sm:h-6" />
                       )}
                     </div>
                 </div>
@@ -245,29 +245,29 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
             <BarChart className="mr-2 h-4 w-4" /> Cargar Stats
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl w-[95vw] h-[85vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-2xl">Planilla Digital del Partido</DialogTitle>
-          <DialogDescription>Registra los eventos de cada jugador. Elige al MVP haciendo clic en el trofeo.</DialogDescription>
+      <DialogContent className="sm:max-w-4xl w-[98vw] sm:w-[95vw] h-[90vh] sm:h-[85vh] flex flex-col">
+        <DialogHeader className="p-2 sm:p-4">
+          <DialogTitle className="text-lg sm:text-2xl">Planilla Digital del Partido</DialogTitle>
+          <DialogDescription className="text-xs sm:text-base">Registra los eventos. Haz clic en el trofeo para elegir al MVP.</DialogDescription>
         </DialogHeader>
         
         {isLoading ? (
           <div className="flex-grow flex items-center justify-center"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
         ) : (
           <Tabs defaultValue="home" className="flex-grow flex flex-col overflow-hidden">
-            <TabsList className="grid w-full grid-cols-2 h-12">
-              <TabsTrigger value="home" className="text-base"><Shield className="mr-2 h-5 w-5" />{homeTeam.name}</TabsTrigger>
-              <TabsTrigger value="away" className="text-base"><ShieldAlert className="mr-2 h-5 w-5" />{awayTeam.name}</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 h-10 sm:h-12">
+              <TabsTrigger value="home" className="text-xs sm:text-base"><Shield className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />{homeTeam.name}</TabsTrigger>
+              <TabsTrigger value="away" className="text-xs sm:text-base"><ShieldAlert className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />{awayTeam.name}</TabsTrigger>
             </TabsList>
-            <div className="flex-grow overflow-y-auto mt-4 pr-2 space-y-3">
-                <TabsContent value="home" className="space-y-2">
+            <div className="flex-grow overflow-y-auto mt-2 pr-1 space-y-1 sm:space-y-2">
+                <TabsContent value="home" className="space-y-1 sm:space-y-2">
                     {homeTeam.players.length > 0 ? (
                         homeTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} onMvpSelect={() => handleMvpSelect(p.id)} isMvp={stats[p.id]?.mvp} disabled={formIsDisabled} /> : null)
                     ) : (
                         <p className="text-center text-muted-foreground pt-10">No hay jugadores en el equipo local.</p>
                     )}
                 </TabsContent>
-                <TabsContent value="away" className="space-y-2">
+                <TabsContent value="away" className="space-y-1 sm:space-y-2">
                      {awayTeam.players.length > 0 ? (
                         awayTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} onMvpSelect={() => handleMvpSelect(p.id)} isMvp={stats[p.id]?.mvp} disabled={formIsDisabled} /> : null)
                     ) : (
@@ -278,10 +278,10 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
           </Tabs>
         )}
         
-        <DialogFooter className="mt-4 pt-4 border-t gap-2">
+        <DialogFooter className="mt-2 pt-2 sm:mt-4 sm:pt-4 border-t gap-2">
           
-          <DialogClose asChild><Button size="lg" variant="ghost"><X className="mr-2 h-4 w-4" />Cancelar</Button></DialogClose>
-          <Button size="lg" onClick={handleSaveChanges} disabled={formIsDisabled || isSaving}>
+          <DialogClose asChild><Button className="w-full sm:w-auto" size="lg" variant="ghost"><X className="mr-2 h-4 w-4" />Cancelar</Button></DialogClose>
+          <Button className="w-full sm:w-auto" size="lg" onClick={handleSaveChanges} disabled={formIsDisabled || isSaving}>
             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Guardar Cambios
           </Button>
