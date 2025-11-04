@@ -21,6 +21,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { AddMatchDialog } from '@/components/add-match-dialog';
 import { CreatePlayoffsDialog } from '@/components/admin/CreatePlayoffsDialog';
+import { PlayoffBracket } from '@/components/admin/PlayoffBracket';
 import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2, Video, VideoOff, Trophy, Lock } from 'lucide-react';
 
 import { Tournament, Team, Match, Stats, PageState, PlayerStatsInfo } from '@/lib/types';
@@ -66,6 +67,42 @@ export default function TournamentFixturePage() {
         const stages = [...new Set(playoffs.map(match => match.stage))].sort((a, b) => stageOrder.indexOf(a) - stageOrder.indexOf(b));
         return { regularSeasonMatches: regular, playoffMatches: playoffs, playoffStages: stages };
     }, [matches]);
+    
+    // **FIXED**: Changed `homeTeam`/`awayTeam` to `home`/`away` to match component props
+    const playoffBracketData = useMemo(() => {
+      if (playoffMatches.length === 0) return [];
+  
+      const getTeamData = (teamId: string) => {
+        const team = teams.find(t => t.id === teamId);
+        if (team) return { id: team.id, name: team.name, logoUrl: team.logoUrl };
+        return { id: teamId, name: 'A definir' };
+      };
+  
+      const roundsMap = playoffMatches.reduce((acc, match) => {
+        const stage = match.stage || 'Playoffs';
+        if (!acc[stage]) {
+          acc[stage] = { name: stage, matches: [] };
+        }
+        const homeScore = match.result?.home;
+        const awayScore = match.result?.away;
+        let winnerId = null;
+        if (typeof homeScore === 'number' && typeof awayScore === 'number') {
+            winnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
+        }
+
+        acc[stage].matches.push({
+          id: match.id,
+          home: { ...getTeamData(match.homeTeamId), score: homeScore },
+          away: { ...getTeamData(match.awayTeamId), score: awayScore },
+          winnerId,
+        });
+        return acc;
+      }, {} as { [key: string]: { name: string; matches: any[] } });
+      
+      const stageOrder = ['16vos de Final', 'Octavos de Final', 'Cuartos de Final', 'Semifinales', 'Final'];
+      return Object.values(roundsMap).sort((a, b) => stageOrder.indexOf(a.name) - stageOrder.indexOf(b.name));
+  
+    }, [playoffMatches, teams]);
 
     const allRegularSeasonMatchesFinished = useMemo(() => {
         if (regularSeasonMatches.length === 0) return false;
@@ -85,7 +122,6 @@ export default function TournamentFixturePage() {
         if (!matchSnap.exists()) return { homeScore: 0, awayScore: 0 };
         const matchData = matchSnap.val();
 
-        // Los placeholders no tienen jugadores, así que devolvemos 0
         if (matchData.homeTeamId.startsWith('winner-') || matchData.awayTeamId.startsWith('winner-')) {
             return { homeScore: 0, awayScore: 0 };
         }
@@ -127,7 +163,6 @@ export default function TournamentFixturePage() {
             await update(ref(db, `matches/${match.id}`), { status: 'finished' });
             toast({ title: "Paso 1/4: Partido Cerrado", description: `Resultado final: ${homeScore} - ${awayScore}.` });
 
-            // --- Lógica de Avance de Playoffs ---
             if (match.advancesToMatchId && match.advancesToPosition) {
                 const winnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
                 const nextMatchRef = ref(db, `matches/${match.advancesToMatchId}/${match.advancesToPosition === 'home' ? 'homeTeamId' : 'awayTeamId'}`);
@@ -137,7 +172,7 @@ export default function TournamentFixturePage() {
                 toast({ title: "Paso 2/4: Actualizando tablas...", description: "Este es un partido de fase regular." });
             }
             
-            if (!match.stage) { // Solo calcular stats de torneo para fase regular
+            if (!match.stage) {
                  await calculateTournamentStats(tournament.id, teams);
                  toast({ title: "Paso 3/4: Tablas del Torneo Actualizadas" });
             }
@@ -179,7 +214,6 @@ export default function TournamentFixturePage() {
             toast({ title: "Error", description: "No se pudo eliminar el partido.", variant: "destructive" });
         }
     };
-
 
     useEffect(() => {
         if (userLoading) return;
@@ -261,7 +295,8 @@ export default function TournamentFixturePage() {
                     <span className="text-2xl font-bold">-</span>
                     <Input readOnly type="number" placeholder="-" className="w-16 h-12 text-center text-lg font-bold bg-muted/50" value={match.result?.away ?? ''} />
                 </div>
-                <div className="grid grid-cols-4 gap-2 text-xs">
+                {/* **IMPROVEMENT**: Responsive grid for match details */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                     <Input type="date" className="h-8" defaultValue={match.details?.date || ''} onBlur={(e) => updateMatchData(match.id, 'details/date', e.target.value)} disabled={match.status === 'finished'}/>
                     <Input type="time" className="h-8" defaultValue={match.details?.time || ''} onBlur={(e) => updateMatchData(match.id, 'details/time', e.target.value)} disabled={match.status === 'finished'}/>
                     <Input placeholder="Árbitro" className="h-8" defaultValue={match.details?.referee || ''} onBlur={(e) => updateMatchData(match.id, 'details/referee', e.target.value)} disabled={match.status === 'finished'}/>
@@ -321,13 +356,15 @@ export default function TournamentFixturePage() {
     if (pageState === 'ACCESS_DENIED') return <div className="flex flex-col h-screen items-center justify-center text-center p-4"><ShieldAlert className="h-16 w-16 text-destructive mb-4" /><h1 className="text-2xl font-bold">Acceso Denegado</h1></div>;
     if (pageState === 'NOT_FOUND') return <div className="flex flex-col h-screen items-center justify-center text-center p-4"><XCircle className="h-16 w-16 text-destructive mb-4" /><h1 className="text-2xl font-bold">Torneo no Encontrado</h1></div>;
 
+    const hasPlayoffs = playoffMatches.length > 0;
+
     return (
         <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
                 <Link href="/admin/manage-tournaments"><Button variant="outline" className="mb-6"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button></Link>
                 <div className="mb-8"><h1 className="text-3xl font-bold tracking-tight">{tournament?.name}</h1><p className="text-muted-foreground">Gestiona el fixture, resultados y estadísticas del torneo.</p></div>
                 
-                <div className="flex justify-start items-center gap-4 mb-4">
+                <div className="flex flex-wrap justify-start items-center gap-4 mb-4">
                     <Button onClick={() => setIsAddMatchDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Añadir Partido</Button>
                     {allRegularSeasonMatchesFinished && (
                         <>
@@ -341,7 +378,13 @@ export default function TournamentFixturePage() {
                 </div>
 
                 <Tabs defaultValue="fixture">
-                    <TabsList className="grid w-full grid-cols-4"><TabsTrigger value="fixture">Fixture</TabsTrigger><TabsTrigger value="positions">Posiciones</TabsTrigger><TabsTrigger value="scorers">Goleadores</TabsTrigger><TabsTrigger value="sanctions">Sanciones</TabsTrigger></TabsList>
+                    <TabsList className={`grid w-full ${hasPlayoffs ? 'grid-cols-5' : 'grid-cols-4'}`}>
+                        <TabsTrigger value="fixture">Fixture</TabsTrigger>
+                        {hasPlayoffs && <TabsTrigger value="playoffs">Playoffs</TabsTrigger>}
+                        <TabsTrigger value="positions">Posiciones</TabsTrigger>
+                        <TabsTrigger value="scorers">Goleadores</TabsTrigger>
+                        <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
+                    </TabsList>
                     
                     <TabsContent value="fixture" className="mt-6">
                         <Card>
@@ -351,8 +394,8 @@ export default function TournamentFixturePage() {
                             </CardHeader>
                             <CardContent>
                                 {matches.length > 0 ? (
-                                    <Tabs defaultValue={regularSeasonMatches.length > 0 ? `round-1` : playoffStages[0]} className="w-full">
-                                        <TabsList>
+                                    <Tabs defaultValue={regularSeasonMatches.length > 0 ? `round-1` : (playoffStages[0] || '')} className="w-full">
+                                        <TabsList className="overflow-x-auto h-auto">
                                             {rounds.map(([roundNum]) => <TabsTrigger key={`round-${roundNum}`} value={`round-${roundNum}`}>FECHA {roundNum}</TabsTrigger>)}
                                             {playoffStages.map(stage => <TabsTrigger key={stage} value={stage}>{stage}</TabsTrigger>)}
                                         </TabsList>
@@ -382,10 +425,25 @@ export default function TournamentFixturePage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
+                    
+                    {hasPlayoffs && (
+                        <TabsContent value="playoffs" className="mt-6">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle>Árbol de Playoffs</CardTitle>
+                                    <CardDescription>Visualización de las fases de eliminación directa y sus resultados.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <PlayoffBracket rounds={playoffBracketData} />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    )}
 
-                    <TabsContent value="positions" className="mt-6"><Card><CardHeader><CardTitle>Tabla de Posiciones</CardTitle></CardHeader><CardContent>{stats?.positions && stats.positions.length > 0 ? <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Equipo</TableHead><TableHead>PJ</TableHead><TableHead>G</TableHead><TableHead>E</TableHead><TableHead>P</TableHead><TableHead>GF</TableHead><TableHead>GC</TableHead><TableHead>DG</TableHead><TableHead>Ptos</TableHead></TableRow></TableHeader><TableBody>{stats.positions.map((pos, i) => <TableRow key={pos.teamId}><TableCell>{i+1}</TableCell><TableCell>{pos.teamName}</TableCell><TableCell>{pos.played}</TableCell><TableCell>{pos.won}</TableCell><TableCell>{pos.drawn}</TableCell><TableCell>{pos.lost}</TableCell><TableCell>{pos.gf}</TableCell><TableCell>{pos.gc}</TableCell><TableCell>{pos.dg}</TableCell><TableCell>{pos.points}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
-                    <TabsContent value="scorers" className="mt-6"><Card><CardHeader><CardTitle>Goleadores</CardTitle></CardHeader><CardContent>{stats?.scorers && stats.scorers.length > 0 ? <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead>Goles</TableHead></TableRow></TableHeader><TableBody>{stats.scorers.map((s, i) => <TableRow key={s.playerInfo.id}><TableCell>{i+1}</TableCell><TableCell>{s.playerInfo.name}</TableCell><TableCell>{s.teamName}</TableCell><TableCell>{s.goals}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
-                    <TabsContent value="sanctions" className="mt-6"><Card><CardHeader><CardTitle>Sanciones</CardTitle></CardHeader><CardContent>{stats?.sanctions && stats.sanctions.length > 0 ? <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead>Amarillas</TableHead><TableHead>Rojas</TableHead></TableRow></TableHeader><TableBody>{stats.sanctions.map(p => <TableRow key={p.playerInfo.id}><TableCell>{p.playerInfo.name}</TableCell><TableCell>{p.teamName}</TableCell><TableCell>{p.yellowCards}</TableCell><TableCell>{p.redCards}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
+                    {/* **IMPROVEMENT**: Added responsive wrapper for tables */}
+                    <TabsContent value="positions" className="mt-6"><Card><CardHeader><CardTitle>Tabla de Posiciones</CardTitle></CardHeader><CardContent>{stats?.positions && stats.positions.length > 0 ? <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Equipo</TableHead><TableHead>PJ</TableHead><TableHead>G</TableHead><TableHead>E</TableHead><TableHead>P</TableHead><TableHead>GF</TableHead><TableHead>GC</TableHead><TableHead>DG</TableHead><TableHead>Ptos</TableHead></TableRow></TableHeader><TableBody>{stats.positions.map((pos, i) => <TableRow key={pos.teamId}><TableCell>{i+1}</TableCell><TableCell>{pos.teamName}</TableCell><TableCell>{pos.played}</TableCell><TableCell>{pos.won}</TableCell><TableCell>{pos.drawn}</TableCell><TableCell>{pos.lost}</TableCell><TableCell>{pos.gf}</TableCell><TableCell>{pos.gc}</TableCell><TableCell>{pos.dg}</TableCell><TableCell>{pos.points}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
+                    <TabsContent value="scorers" className="mt-6"><Card><CardHeader><CardTitle>Goleadores</CardTitle></CardHeader><CardContent>{stats?.scorers && stats.scorers.length > 0 ? <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead>Goles</TableHead></TableRow></TableHeader><TableBody>{stats.scorers.map((s, i) => <TableRow key={s.playerInfo.id}><TableCell>{i+1}</TableCell><TableCell>{s.playerInfo.name}</TableCell><TableCell>{s.teamName}</TableCell><TableCell>{s.goals}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
+                    <TabsContent value="sanctions" className="mt-6"><Card><CardHeader><CardTitle>Sanciones</CardTitle></CardHeader><CardContent>{stats?.sanctions && stats.sanctions.length > 0 ? <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead>Amarillas</TableHead><TableHead>Rojas</TableHead></TableRow></TableHeader><TableBody>{stats.sanctions.map(p => <TableRow key={p.playerInfo.id}><TableCell>{p.playerInfo.name}</TableCell><TableCell>{p.teamName}</TableCell><TableCell>{p.yellowCards}</TableCell><TableCell>{p.redCards}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
                 </Tabs>
                  <AddMatchDialog
                     tournamentId={tournamentId}
