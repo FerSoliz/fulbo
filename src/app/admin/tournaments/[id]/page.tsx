@@ -20,7 +20,7 @@ import { Label } from '@/components/ui/label';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { AddMatchDialog } from '@/components/add-match-dialog';
-import { CreatePlayoffsDialog } from '@/components/admin/CreatePlayoffsDialog'; // Importación del nuevo componente
+import { CreatePlayoffsDialog } from '@/components/admin/CreatePlayoffsDialog';
 import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2, Video, VideoOff, Trophy, Lock } from 'lucide-react';
 
 import { Tournament, Team, Match, Stats, PageState, PlayerStatsInfo } from '@/lib/types';
@@ -56,13 +56,21 @@ export default function TournamentFixturePage() {
     const [stats, setStats] = useState<Stats | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [isAddMatchDialogOpen, setIsAddMatchDialogOpen] = useState(false);
-    const [isPlayoffsDialogOpen, setIsPlayoffsDialogOpen] = useState(false); // Estado para el nuevo modal
+    const [isPlayoffsDialogOpen, setIsPlayoffsDialogOpen] = useState(false);
     const [editingVideoMatchId, setEditingVideoMatchId] = useState<string | null>(null);
 
-    const allMatchesFinished = useMemo(() => {
-        if (matches.length === 0) return false;
-        return matches.every(match => match.status === 'finished');
+    const { regularSeasonMatches, playoffMatches, playoffStages } = useMemo(() => {
+        const regular = matches.filter(match => !match.stage);
+        const playoffs = matches.filter(match => !!match.stage);
+        const stages = [...new Set(playoffs.map(match => match.stage))];
+        // Puedes agregar un orden personalizado si es necesario, ej. Octavos, Cuartos, etc.
+        return { regularSeasonMatches: regular, playoffMatches: playoffs, playoffStages: stages };
     }, [matches]);
+
+    const allRegularSeasonMatchesFinished = useMemo(() => {
+        if (regularSeasonMatches.length === 0) return false;
+        return regularSeasonMatches.every(match => match.status === 'finished');
+    }, [regularSeasonMatches]);
 
     const updateMatchData = (matchId: string, path: string, value: any) => {
         set(ref(db, `matches/${matchId}/${path}`), value);
@@ -180,7 +188,7 @@ export default function TournamentFixturePage() {
         const matchesQuery = ref(db, 'matches');
         const unsubscribeMatches = onValue(matchesQuery, (snapshot) => {
             const allMatches = snapshot.val() || {};
-            const filtered = Object.values(allMatches).filter((m: any) => m.tournamentId === tournamentId).sort((a: any, b: any) => a.round - b.round) as Match[];
+            const filtered = Object.values(allMatches).filter((m: any) => m.tournamentId === tournamentId).sort((a: any, b: any) => (a.round || 0) - (b.round || 0)) as Match[];
             setMatches(filtered);
         });
 
@@ -213,16 +221,85 @@ export default function TournamentFixturePage() {
         } finally { setIsGenerating(false); }
     };
 
-    const getTeamName = (teamId: string) => teams.find(t => t.id === teamId)?.name || 'Equipo...';
+    const getTeamName = (teamId: string) => {
+        if (teamId.startsWith('winner-')) return teamId; // Placeholder for playoffs
+        return teams.find(t => t.id === teamId)?.name || 'Equipo...';
+    }
     
     const rounds = useMemo(() => {
-        const roundsMap = matches.reduce((acc, match) => {
-            if (!acc[match.round]) acc[match.round] = [];
-            acc[match.round].push(match);
+        const roundsMap = regularSeasonMatches.reduce((acc, match) => {
+            const roundNum = match.round || 0;
+            if (!acc[roundNum]) acc[roundNum] = [];
+            acc[roundNum].push(match);
             return acc;
         }, {} as { [round: number]: Match[] });
         return Object.entries(roundsMap).sort(([a], [b]) => Number(a) - Number(b));
-    }, [matches]);
+    }, [regularSeasonMatches]);
+
+    const renderMatchCard = (match: Match) => (
+        <Card key={match.id} className={match.status === 'finished' ? 'bg-green-900/20 border-green-500' : ''}>
+            <CardHeader><CardTitle className="text-lg">{getTeamName(match.homeTeamId)} vs {getTeamName(match.awayTeamId)}</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center justify-center gap-2">
+                    <Input readOnly type="number" placeholder="-" className="w-16 h-12 text-center text-lg font-bold bg-muted/50" value={match.result?.home ?? ''} />
+                    <span className="text-2xl font-bold">-</span>
+                    <Input readOnly type="number" placeholder="-" className="w-16 h-12 text-center text-lg font-bold bg-muted/50" value={match.result?.away ?? ''} />
+                </div>
+                <div className="grid grid-cols-4 gap-2 text-xs">
+                    <Input type="date" className="h-8" defaultValue={match.details?.date || ''} onBlur={(e) => updateMatchData(match.id, 'details/date', e.target.value)} disabled={match.status === 'finished'}/>
+                    <Input type="time" className="h-8" defaultValue={match.details?.time || ''} onBlur={(e) => updateMatchData(match.id, 'details/time', e.target.value)} disabled={match.status === 'finished'}/>
+                    <Input placeholder="Árbitro" className="h-8" defaultValue={match.details?.referee || ''} onBlur={(e) => updateMatchData(match.id, 'details/referee', e.target.value)} disabled={match.status === 'finished'}/>
+                    <div className="relative">
+                        {editingVideoMatchId === match.id ? (
+                            <Input
+                                placeholder="URL Video"
+                                className="h-8 pr-8"
+                                defaultValue={match.details?.videoUrl || ''}
+                                onBlur={(e) => { updateMatchData(match.id, 'details/videoUrl', e.target.value); setEditingVideoMatchId(null); }}
+                                onKeyDown={(e) => { if (e.key === 'Enter') { updateMatchData(match.id, 'details/videoUrl', e.currentTarget.value); setEditingVideoMatchId(null); } }}
+                                autoFocus
+                            />
+                        ) : (
+                            <Button variant="outline" size="sm" className="h-8 w-full justify-start px-2 font-normal text-muted-foreground" onClick={() => setEditingVideoMatchId(match.id)}>
+                                {match.details?.videoUrl ? <Video className="h-4 w-4 mr-2 text-green-400" /> : <VideoOff className="h-4 w-4 mr-2" />}
+                                <span className="truncate">{match.details?.videoUrl ? 'Ver/Editar' : 'Añadir video'}</span>
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </CardContent>
+            <CardContent className="flex items-center justify-between">
+                <MatchStatsDialog 
+                    matchId={match.id} 
+                    tournamentId={tournamentId} 
+                    homeTeamId={match.homeTeamId} 
+                    awayTeamId={match.awayTeamId} 
+                    isFinished={match.status === 'finished'}
+                    onStatsSaved={() => handleStatsSaved(match)}
+                />
+                
+                {match.status === 'pending' && typeof match.statsProcessed === 'undefined' && (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Eliminar</Button></AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>¿Eliminar este partido?</AlertDialogTitle><AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteMatch(match.id)} className="bg-destructive hover:bg-destructive/80">Sí, Eliminar</AlertDialogAction></AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
+
+                {match.status === 'finished' && (
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="outline" size="sm"><Pencil className="mr-2 h-4 w-4" /> Corregir</Button></AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader><AlertDialogTitle>¿Reabrir partido para corregir?</AlertDialogTitle><AlertDialogDescription>Esta acción revertirá las estadísticas y reabrirá el partido para edición. ¿Estás seguro?</AlertDialogDescription></AlertDialogHeader>
+                            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleReopenMatch(match)} className="bg-destructive hover:bg-destructive/80">Sí, Reabrir</AlertDialogAction></AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                )}
+            </CardContent>
+        </Card>
+    );
 
     if (pageState === 'LOADING') return <div className="flex h-screen items-center justify-center"><Loader2 className="h-12 w-12 animate-spin" /><p className="ml-4 text-lg">Cargando...</p></div>;
     if (pageState === 'ACCESS_DENIED') return <div className="flex flex-col h-screen items-center justify-center text-center p-4"><ShieldAlert className="h-16 w-16 text-destructive mb-4" /><h1 className="text-2xl font-bold">Acceso Denegado</h1></div>;
@@ -231,140 +308,51 @@ export default function TournamentFixturePage() {
     return (
         <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
-                <Link href="/admin/manage-tournaments">
-                    <Button variant="outline" className="mb-6"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button></Link>
+                <Link href="/admin/manage-tournaments"><Button variant="outline" className="mb-6"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button></Link>
                 <div className="mb-8"><h1 className="text-3xl font-bold tracking-tight">{tournament?.name}</h1><p className="text-muted-foreground">Gestiona el fixture, resultados y estadísticas del torneo.</p></div>
                 
                 <div className="flex justify-start items-center gap-4 mb-4">
                     <Button onClick={() => setIsAddMatchDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Añadir Partido</Button>
-                    {allMatchesFinished && (
+                    {allRegularSeasonMatchesFinished && (
                         <>
                             <Button variant="outline" onClick={() => setIsPlayoffsDialogOpen(true)}>
                                 <Trophy className="mr-2 h-4 w-4 text-yellow-400" />
                                 Crear Playoffs
                             </Button>
-                            <Button variant="destructive">
-                                <Lock className="mr-2 h-4 w-4" />
-                                Cerrar Torneo
-                            </Button>
+                            <Button variant="destructive"><Lock className="mr-2 h-4 w-4" />Cerrar Torneo</Button>
                         </>
                     )}
                 </div>
 
                 <Tabs defaultValue="fixture">
                     <TabsList className="grid w-full grid-cols-4"><TabsTrigger value="fixture">Fixture</TabsTrigger><TabsTrigger value="positions">Posiciones</TabsTrigger><TabsTrigger value="scorers">Goleadores</TabsTrigger><TabsTrigger value="sanctions">Sanciones</TabsTrigger></TabsList>
+                    
                     <TabsContent value="fixture" className="mt-6">
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <div>
-                                    <CardTitle>Partidos del Torneo</CardTitle>
-                                    <CardDescription>Carga o corrige las estadísticas de un partido. El sistema recalculará todo automáticamente.</CardDescription>
-                                </div>
+                            <CardHeader>
+                                <CardTitle>Partidos del Torneo</CardTitle>
+                                <CardDescription>Carga o corrige las estadísticas de un partido.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 {matches.length > 0 ? (
-                                    <Tabs defaultValue={`round-${rounds[0]?.[0]}`} className="w-full">
-                                        <TabsList>{rounds.map(([roundNum]) => <TabsTrigger key={roundNum} value={`round-${roundNum}`}>FECHA {roundNum}</TabsTrigger>)}</TabsList>
-                                        {rounds.map(([roundNum, roundMatches]) => (
-                                            <TabsContent key={roundNum} value={`round-${roundNum}`}>
-                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-                                                    {roundMatches.map(match => (
-                                                        <Card key={match.id} className={match.status === 'finished' ? 'bg-green-900/20 border-green-500' : ''}>
-                                                            <CardHeader><CardTitle className="text-lg">{getTeamName(match.homeTeamId)} vs {getTeamName(match.awayTeamId)}</CardTitle></CardHeader>
-                                                            <CardContent className="space-y-4">
-                                                                <div className="flex items-center justify-center gap-2">
-                                                                    <Input readOnly type="number" placeholder="-" className="w-16 h-12 text-center text-lg font-bold bg-muted/50" value={match.result?.home ?? ''} />
-                                                                    <span className="text-2xl font-bold">-</span>
-                                                                    <Input readOnly type="number" placeholder="-" className="w-16 h-12 text-center text-lg font-bold bg-muted/50" value={match.result?.away ?? ''} />
-                                                                </div>
-                                                                <div className="grid grid-cols-4 gap-2 text-xs">
-                                                                    <Input type="date" className="h-8" defaultValue={match.details?.date || ''} onBlur={(e) => updateMatchData(match.id, 'details/date', e.target.value)} disabled={match.status === 'finished'}/>
-                                                                    <Input type="time" className="h-8" defaultValue={match.details?.time || ''} onBlur={(e) => updateMatchData(match.id, 'details/time', e.target.value)} disabled={match.status === 'finished'}/>
-                                                                    <Input placeholder="Árbitro" className="h-8" defaultValue={match.details?.referee || ''} onBlur={(e) => updateMatchData(match.id, 'details/referee', e.target.value)} disabled={match.status === 'finished'}/>
-                                                                    <div className="relative">
-                                                                        {editingVideoMatchId === match.id ? (
-                                                                            <Input
-                                                                                placeholder="URL Video"
-                                                                                className="h-8 pr-8"
-                                                                                defaultValue={match.details?.videoUrl || ''}
-                                                                                onBlur={(e) => {
-                                                                                    updateMatchData(match.id, 'details/videoUrl', e.target.value);
-                                                                                    setEditingVideoMatchId(null);
-                                                                                }}
-                                                                                onKeyDown={(e) => {
-                                                                                  if (e.key === 'Enter') {
-                                                                                    updateMatchData(match.id, 'details/videoUrl', e.currentTarget.value);
-                                                                                    setEditingVideoMatchId(null);
-                                                                                  }
-                                                                                }}
-                                                                                autoFocus
-                                                                            />
-                                                                        ) : (
-                                                                            <Button
-                                                                                variant="outline"
-                                                                                size="sm"
-                                                                                className="h-8 w-full justify-start px-2 font-normal text-muted-foreground"
-                                                                                onClick={() => setEditingVideoMatchId(match.id)}
-                                                                            >
-                                                                                {match.details?.videoUrl ? <Video className="h-4 w-4 mr-2 text-green-400" /> : <VideoOff className="h-4 w-4 mr-2" />}
-                                                                                <span className="truncate">{match.details?.videoUrl ? 'Ver/Editar' : 'Añadir video'}</span>
-                                                                            </Button>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            </CardContent>
-                                                            <CardContent className="flex items-center justify-between">
-                                                                <MatchStatsDialog 
-                                                                    matchId={match.id} 
-                                                                    tournamentId={tournamentId} 
-                                                                    homeTeamId={match.homeTeamId} 
-                                                                    awayTeamId={match.awayTeamId} 
-                                                                    isFinished={match.status === 'finished'}
-                                                                    onStatsSaved={() => handleStatsSaved(match)}
-                                                                />
-                                                                
-                                                                {match.status === 'pending' && typeof match.statsProcessed === 'undefined' && (
-                                                                    <AlertDialog>
-                                                                        <AlertDialogTrigger asChild>
-                                                                            <Button variant="destructive" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Eliminar</Button>
-                                                                        </AlertDialogTrigger>
-                                                                        <AlertDialogContent>
-                                                                            <AlertDialogHeader>
-                                                                                <AlertDialogTitle>¿Eliminar este partido?</AlertDialogTitle>
-                                                                                <AlertDialogDescription>
-                                                                                    Esta acción eliminará permanentemente el partido del fixture. No se puede deshacer.
-                                                                                </AlertDialogDescription>
-                                                                            </AlertDialogHeader>
-                                                                            <AlertDialogFooter>
-                                                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                                                <AlertDialogAction onClick={() => handleDeleteMatch(match.id)} className="bg-destructive hover:bg-destructive/80">Sí, Eliminar</AlertDialogAction>
-                                                                            </AlertDialogFooter>
-                                                                        </AlertDialogContent>
-                                                                    </AlertDialog>
-                                                                )}
+                                    <Tabs defaultValue={regularSeasonMatches.length > 0 ? `round-1` : playoffStages[0]} className="w-full">
+                                        <TabsList>
+                                            {rounds.map(([roundNum]) => <TabsTrigger key={`round-${roundNum}`} value={`round-${roundNum}`}>FECHA {roundNum}</TabsTrigger>)}
+                                            {playoffStages.map(stage => <TabsTrigger key={stage} value={stage}>{stage}</TabsTrigger>)}
+                                        </TabsList>
 
-                                                                {match.status === 'finished' && (
-                                                                     <AlertDialog>
-                                                                        <AlertDialogTrigger asChild>
-                                                                            <Button variant="outline" size="sm"><Pencil className="mr-2 h-4 w-4" /> Corregir</Button>
-                                                                        </AlertDialogTrigger>
-                                                                        <AlertDialogContent>
-                                                                            <AlertDialogHeader>
-                                                                                <AlertDialogTitle>¿Reabrir partido para corregir?</AlertDialogTitle>
-                                                                                <AlertDialogDescription>
-                                                                                    Esta acción revertirá las estadísticas globales de los jugadores y reabrirá el partido para que puedas editar los datos. Las tablas del torneo se recalcularán. Es un proceso seguro. ¿Estás seguro?
-                                                                                </AlertDialogDescription>
-                                                                            </AlertDialogHeader>
-                                                                            <AlertDialogFooter>
-                                                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                                                <AlertDialogAction onClick={() => handleReopenMatch(match)} className="bg-destructive hover:bg-destructive/80">Sí, Reabrir</AlertDialogAction>
-                                                                            </AlertDialogFooter>
-                                                                        </AlertDialogContent>
-                                                                    </AlertDialog>
-                                                                )}
-                                                            </CardContent>
-                                                        </Card>
-                                                    ))}
+                                        {rounds.map(([roundNum, roundMatches]) => (
+                                            <TabsContent key={`content-round-${roundNum}`} value={`round-${roundNum}`}>
+                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                                                    {roundMatches.map(renderMatchCard)}
+                                                </div>
+                                            </TabsContent>
+                                        ))}
+
+                                        {playoffStages.map(stage => (
+                                            <TabsContent key={`content-stage-${stage}`} value={stage}>
+                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                                                    {playoffMatches.filter(m => m.stage === stage).map(renderMatchCard)}
                                                 </div>
                                             </TabsContent>
                                         ))}
@@ -378,9 +366,10 @@ export default function TournamentFixturePage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
+
                     <TabsContent value="positions" className="mt-6"><Card><CardHeader><CardTitle>Tabla de Posiciones</CardTitle></CardHeader><CardContent>{stats?.positions && stats.positions.length > 0 ? <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Equipo</TableHead><TableHead>PJ</TableHead><TableHead>G</TableHead><TableHead>E</TableHead><TableHead>P</TableHead><TableHead>GF</TableHead><TableHead>GC</TableHead><TableHead>DG</TableHead><TableHead>Ptos</TableHead></TableRow></TableHeader><TableBody>{stats.positions.map((pos, i) => <TableRow key={pos.teamId}><TableCell>{i+1}</TableCell><TableCell>{pos.teamName}</TableCell><TableCell>{pos.played}</TableCell><TableCell>{pos.won}</TableCell><TableCell>{pos.drawn}</TableCell><TableCell>{pos.lost}</TableCell><TableCell>{pos.gf}</TableCell><TableCell>{pos.gc}</TableCell><TableCell>{pos.dg}</TableCell><TableCell>{pos.points}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
                     <TabsContent value="scorers" className="mt-6"><Card><CardHeader><CardTitle>Goleadores</CardTitle></CardHeader><CardContent>{stats?.scorers && stats.scorers.length > 0 ? <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead>Goles</TableHead></TableRow></TableHeader><TableBody>{stats.scorers.map((s, i) => <TableRow key={s.playerInfo.id}><TableCell>{i+1}</TableCell><TableCell>{s.playerInfo.name}</TableCell><TableCell>{s.teamName}</TableCell><TableCell>{s.goals}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
-                    <TabsContent value="sanctions" className="mt-6"><Card><CardHeader><CardTitle>Sanciones</CardTitle></CardHeader><CardContent>{stats?.sanctions && stats.sanctions.length > 0 ? <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead>Amarillas</TableHead><TableHead>Rojas</TableHead></TableRow></TableHeader><TableBody>{stats.sanctions.map(p => <TableRow key={p.playerInfo.id}><TableCell>{p.playerInfo.name}</TableCell><TableCell>{p.teamName}</TableCell><TableCell>{p.yellowCards}</TableCell><TableCell>{p.redCards}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
+                    <TabsContent value="sanctions" className="mt-6"><Card><CardHeader><CardTitle>Sanciones</CardTitle></CardHeader><CardContent>{stats?.sanctions && stats.sanctions.length > 0 ? <div className="rounded-lg border"><Table><TableHeader><TableRow><TableHead>Jugador</TTableHead><TableHead>Equipo</TableHead><TableHead>Amarillas</TableHead><TableHead>Rojas</TableHead></TableRow></TableHeader><TableBody>{stats.sanctions.map(p => <TableRow key={p.playerInfo.id}><TableCell>{p.playerInfo.name}</TableCell><TableCell>{p.teamName}</TableCell><TableCell>{p.yellowCards}</TableCell><TableCell>{p.redCards}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
                 </Tabs>
                  <AddMatchDialog
                     tournamentId={tournamentId}
@@ -388,7 +377,6 @@ export default function TournamentFixturePage() {
                     open={isAddMatchDialogOpen}
                     onOpenChange={setIsAddMatchDialogOpen}
                 />
-                {/* Renderizado condicional del nuevo modal */}
                 {stats?.positions && (
                     <CreatePlayoffsDialog 
                         open={isPlayoffsDialogOpen}

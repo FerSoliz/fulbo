@@ -2,6 +2,9 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
+import { ref, update } from 'firebase/database';
+import { db } from '@/lib/firebase';
+import { useToast } from '@/hooks/use-toast';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -72,11 +75,12 @@ const getStageName = (numMatches: number, isRoundTitle = false) => {
 
 const getStageAbbreviation = (numMatches: number) => {
     switch (numMatches) {
-        case 2: return 'S';
-        case 4: return 'C';
-        case 8: return 'O';
+        case 1: return 'F';
+        case 2: return 'SF';
+        case 4: return 'CF';
+        case 8: return 'OF';
         case 16: return '16';
-        default: return `R${numMatches * 2}`;
+        default: return `R${numMatches * 2}`
     }
 };
 
@@ -88,8 +92,8 @@ const generateBracket = (numTeams: number, positions: PositionEntry[], teams: Te
     let currentTeams = positions.slice(0, numTeams).map(p => ({ id: p.teamId, name: p.teamName, logoUrl: getTeamLogo(p.teamId) }));
     let numMatches = numTeams / 2;
     let matchCounter = 1;
-    let winnerCounter = 1;
-
+    
+    // --- Lógica para la ronda inicial (equipos reales) ---
     const initialRound: Round = { title: getStageName(numMatches, true), matchups: [] };
     for (let i = 0; i < numMatches; i++) {
         initialRound.matchups.push({
@@ -100,19 +104,24 @@ const generateBracket = (numTeams: number, positions: PositionEntry[], teams: Te
     }
     rounds.push(initialRound);
 
+    // --- Lógica para rondas futuras (placeholders) ---
+    let winnerCounter = 1;
     numMatches /= 2;
     while (numMatches >= 1) {
         const prevRoundAbbrev = getStageAbbreviation(numMatches * 2);
         const newRound: Round = { title: getStageName(numMatches, true), matchups: [] };
         for (let i = 0; i < numMatches; i++) {
+            const homeWinnerId = `winner-${prevRoundAbbrev}${i * 2 + 1}`;
+            const awayWinnerId = `winner-${prevRoundAbbrev}${i * 2 + 2}`;
+
             newRound.matchups.push({
                 id: `m-${matchCounter++}`,
-                home: { id: `winner-${winnerCounter}`, name: `G. ${prevRoundAbbrev}${i * 2 + 1}` },
-                away: { id: `winner-${winnerCounter + 1}`, name: `G. ${prevRoundAbbrev}${i * 2 + 2}` },
+                home: { id: homeWinnerId, name: `Ganador ${prevRoundAbbrev}${i * 2 + 1}` },
+                away: { id: awayWinnerId, name: `Ganador ${prevRoundAbbrev}${i * 2 + 2}` },
             });
-            winnerCounter += 2;
         }
         rounds.push(newRound);
+        winnerCounter += numMatches*2;
         numMatches /= 2;
     }
 
@@ -232,6 +241,8 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
   const [isEditMode, setIsEditMode] = useState(false);
   const [editableRounds, setEditableRounds] = useState<Round[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const { toast } = useToast();
 
   const generatedRounds = useMemo(() => {
       const count = parseInt(numTeams, 10);
@@ -276,10 +287,50 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
     });
   };
   
-  const handleCreatePlayoffs = () => {
-    console.log(`Creando playoffs para ${numTeams} equipos en el torneo ${tournamentId}`);
-    console.log('Estructura de partidos:', editableRounds[0]?.matchups);
-    onOpenChange(false);
+  const handleCreatePlayoffs = async () => {
+    setIsCreating(true);
+    try {
+        const updates: { [key: string]: any } = {};
+        let matchCounter = 0;
+
+        editableRounds.forEach(round => {
+            round.matchups.forEach(matchup => {
+                // Usar un ID de partido más descriptivo y único
+                const stageAbbrev = round.title.substring(0, 3).toUpperCase();
+                const matchId = `match_${tournamentId}_${stageAbbrev}${matchCounter++}_${Date.now()}`;
+                
+                const newMatch = {
+                    id: matchId,
+                    tournamentId,
+                    homeTeamId: matchup.home.id,
+                    awayTeamId: matchup.away.id,
+                    status: 'pending',
+                    result: { home: null, away: null },
+                    stage: round.title, // ¡El nuevo campo que queríamos!
+                };
+                updates[`/matches/${matchId}`] = newMatch;
+            });
+        });
+
+        await update(ref(db), updates);
+
+        toast({
+            title: "¡Playoffs Creados!",
+            description: `Se generaron ${Object.keys(updates).length} partidos en el árbol de playoffs.`,
+            className: "bg-green-500 text-white",
+        });
+        onOpenChange(false);
+
+    } catch (error) {
+        console.error("Error creating playoffs:", error);
+        toast({
+            title: "Error al crear playoffs",
+            description: "No se pudieron guardar los partidos. Inténtalo de nuevo.",
+            variant: "destructive",
+        });
+    } finally {
+        setIsCreating(false);
+    }
   };
 
   const activeTeam = useMemo(() => {
@@ -312,7 +363,7 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
         
         <div className="space-y-4 py-4">
             <div className='flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between'>
-                <Select value={numTeams} onValueChange={setNumTeams}>
+                <Select value={numTeams} onValueChange={setNumTeams} disabled={isCreating}>
                     <SelectTrigger className="w-full sm:w-64">
                     <SelectValue placeholder="Seleccionar formato..." />
                     </SelectTrigger>
@@ -323,7 +374,7 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
                     </SelectContent>
                 </Select>
                 <div className="flex items-center space-x-2">
-                    <Switch id="edit-mode" checked={isEditMode} onCheckedChange={setIsEditMode} />
+                    <Switch id="edit-mode" checked={isEditMode} onCheckedChange={setIsEditMode} disabled={isCreating} />
                     <Label htmlFor="edit-mode">Modo Edición</Label>
                 </div>
             </div>
@@ -349,8 +400,10 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleCreatePlayoffs}>Generar Partidos de Playoffs</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isCreating}>Cancelar</Button>
+          <Button onClick={handleCreatePlayoffs} disabled={isCreating || editableRounds.length === 0}>
+            {isCreating ? 'Generando...' : 'Generar Partidos de Playoffs'}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
