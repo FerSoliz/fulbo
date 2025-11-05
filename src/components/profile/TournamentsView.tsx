@@ -1,10 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-// Importación centralizada desde el barrel de la DB
 import { getTournamentDetails, getTeamTournaments } from '@/lib/firebase/db';
-import { UserProfile, FullTournament, Tournament, Standing, Scorer, Sanction } from '@/lib/types';
+import { UserProfile, FullTournament, Tournament, Standing, Scorer, Sanction, Team, Match } from '@/lib/types';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Trophy, X, Info } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { PlayoffBracket } from '@/components/admin/PlayoffBracket';
 
 const backdropVariants = { hidden: { opacity: 0 }, visible: { opacity: 1 } };
 const modalVariants = { hidden: { opacity: 0, y: 30 }, visible: { opacity: 1, y: 0, transition: { type: 'spring', damping: 25, stiffness: 500 } }, exit: { opacity: 0, y: 30 } };
@@ -28,15 +28,70 @@ const TournamentDetails = ({ tournamentData }: { tournamentData: FullTournament 
     if (!tournamentData) {
         return <EmptyState message="Selecciona un torneo para ver sus detalles." />;
     }
+
+    const playoffMatches = useMemo(() => {
+        if (!tournamentData?.matches) return [];
+        return tournamentData.matches.filter((match) => !!match.stage);
+    }, [tournamentData?.matches]);
+
+    const hasPlayoffs = useMemo(() => playoffMatches.length > 0, [playoffMatches]);
+
+    const playoffBracketData = useMemo(() => {
+        if (!hasPlayoffs) return [];
+        
+        const teams = tournamentData?.teamsList || [];
+        
+        const getTeamData = (teamId: string) => {
+            const team = teams.find(t => t.id === teamId);
+            if (team) return { id: team.id, name: team.name, logoUrl: team.logoUrl };
+            return { id: teamId, name: 'A definir' };
+        };
+    
+        const roundsMap = playoffMatches.reduce((acc, match) => {
+          const stage = match.stage || 'Playoffs';
+          if (!acc[stage]) {
+            acc[stage] = { name: stage, matches: [] };
+          }
+          const homeScore = match.result?.home;
+          const awayScore = match.result?.away;
+          let winnerId = null;
+          if (typeof homeScore === 'number' && typeof awayScore === 'number') {
+              winnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
+          }
+
+          acc[stage].matches.push({
+            id: match.id,
+            home: { ...getTeamData(match.homeTeamId), score: homeScore },
+            away: { ...getTeamData(match.awayTeamId), score: awayScore },
+            winnerId,
+          });
+          return acc;
+        }, {} as { [key: string]: { name: string; matches: any[] } });
+        
+        const stageOrder = ['16vos de Final', 'Octavos de Final', 'Cuartos de Final', 'Semifinales', 'Final'];
+        return Object.values(roundsMap).sort((a, b) => stageOrder.indexOf(a.name) - stageOrder.indexOf(b.name));
+    
+    }, [playoffMatches, tournamentData?.teamsList, hasPlayoffs]);
+
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-4">
             <Tabs defaultValue="positions" className="w-full p-1">
-                <TabsList className="grid w-full grid-cols-3 bg-muted/80">
+                <TabsList className={`grid w-full ${hasPlayoffs ? 'grid-cols-4' : 'grid-cols-3'} bg-muted/80`}>
                     <TabsTrigger value="positions">Posiciones</TabsTrigger>
+                    {hasPlayoffs && <TabsTrigger value="playoffs">Playoffs</TabsTrigger>}
                     <TabsTrigger value="scorers">Goleadores</TabsTrigger>
                     <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
                 </TabsList>
                 <TabsContent value="positions"><PositionsTable standings={tournamentData.standings} /></TabsContent>
+                {hasPlayoffs && (
+                    <TabsContent value="playoffs">
+                        <Card className="border-0 shadow-none">
+                            <CardContent className="pt-6">
+                                <PlayoffBracket rounds={playoffBracketData} />
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+                )}
                 <TabsContent value="scorers"><ScorersTable scorers={tournamentData.scorers} /></TabsContent>
                 <TabsContent value="sanctions"><SanctionsTable sanctions={tournamentData.sanctions} /></TabsContent>
             </Tabs>
