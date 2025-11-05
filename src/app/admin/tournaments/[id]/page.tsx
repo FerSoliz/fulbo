@@ -21,7 +21,7 @@ import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { AddMatchDialog } from '@/components/add-match-dialog';
 import { CreatePlayoffsDialog } from '@/components/admin/CreatePlayoffsDialog';
 import { PlayoffBracket } from '@/components/admin/PlayoffBracket';
-import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2, Video, VideoOff, Trophy } from 'lucide-react';
+import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2, Video, VideoOff, Trophy, Flag } from 'lucide-react';
 
 import { Tournament, Team, Match, Stats, PageState, MatchStats } from '@/lib/types';
 
@@ -67,8 +67,10 @@ export default function TournamentFixturePage() {
         return { regularSeasonMatches: regular, playoffMatches: playoffs, playoffStages: stages };
     }, [matches]);
     
+    const hasPlayoffs = useMemo(() => playoffMatches.length > 0, [playoffMatches]);
+
     const playoffBracketData = useMemo(() => {
-      if (playoffMatches.length === 0) return [];
+      if (!hasPlayoffs) return [];
   
       const getTeamData = (teamId: string) => {
         const team = teams.find(t => t.id === teamId);
@@ -100,12 +102,30 @@ export default function TournamentFixturePage() {
       const stageOrder = ['16vos de Final', 'Octavos de Final', 'Cuartos de Final', 'Semifinales', 'Final'];
       return Object.values(roundsMap).sort((a, b) => stageOrder.indexOf(a.name) - stageOrder.indexOf(b.name));
   
-    }, [playoffMatches, teams]);
+    }, [playoffMatches, teams, hasPlayoffs]);
 
     const allRegularSeasonMatchesFinished = useMemo(() => {
         if (regularSeasonMatches.length === 0) return false;
         return regularSeasonMatches.every(match => match.status === 'finished');
     }, [regularSeasonMatches]);
+    
+    const allPlayoffMatchesFinished = useMemo(() => {
+        if (!hasPlayoffs) return false;
+        return playoffMatches.every(match => match.status === 'finished');
+    }, [playoffMatches, hasPlayoffs]);
+
+    const canCreatePlayoffs = useMemo(() => {
+        return allRegularSeasonMatchesFinished && !hasPlayoffs;
+    }, [allRegularSeasonMatchesFinished, hasPlayoffs]);
+
+    const canFinishTournament = useMemo(() => {
+        if (tournament?.status === 'finished') return false;
+        // Escenario A: Torneo de liga (sin playoffs) donde todos los partidos de temp. regular terminaron
+        const leagueOnlyFinished = allRegularSeasonMatchesFinished && !hasPlayoffs && regularSeasonMatches.length > 0;
+        // Escenario B: Torneo con playoffs donde todos los partidos de playoffs terminaron
+        const playoffsFinished = hasPlayoffs && allPlayoffMatchesFinished;
+        return leagueOnlyFinished || playoffsFinished;
+    }, [tournament?.status, allRegularSeasonMatchesFinished, hasPlayoffs, allPlayoffMatchesFinished, regularSeasonMatches.length]);
 
     const updateMatchData = (matchId: string, path: string, value: any) => {
         set(ref(db, `matches/${matchId}/${path}`), value);
@@ -311,8 +331,6 @@ export default function TournamentFixturePage() {
     if (pageState === 'ACCESS_DENIED') return <div className="flex flex-col h-screen items-center justify-center text-center p-4"><ShieldAlert className="h-16 w-16 text-destructive mb-4" /><h1 className="text-2xl font-bold">Acceso Denegado</h1></div>;
     if (pageState === 'NOT_FOUND') return <div className="flex flex-col h-screen items-center justify-center text-center p-4"><XCircle className="h-16 w-16 text-destructive mb-4" /><h1 className="text-2xl font-bold">Torneo no Encontrado</h1></div>;
 
-    const hasPlayoffs = playoffMatches.length > 0;
-
     return (
         <div className="p-4 sm:p-6 lg:p-8">
             <div className="max-w-7xl mx-auto">
@@ -321,10 +339,16 @@ export default function TournamentFixturePage() {
                 
                 <div className="flex flex-wrap justify-start items-center gap-4 mb-4">
                     <Button onClick={() => setIsAddMatchDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Añadir Partido</Button>
-                    {allRegularSeasonMatchesFinished && (
+                    {canCreatePlayoffs && (
                         <Button variant="outline" onClick={() => setIsPlayoffsDialogOpen(true)}>
                             <Trophy className="mr-2 h-4 w-4 text-yellow-400" />
                             Crear Playoffs
+                        </Button>
+                    )}
+                    {canFinishTournament && (
+                         <Button variant="outline" className="bg-green-600 hover:bg-green-700 text-white">
+                            <Flag className="mr-2 h-4 w-4" />
+                            Terminar Torneo
                         </Button>
                     )}
                 </div>
