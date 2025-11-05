@@ -35,10 +35,9 @@ import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
 import { User } from '@/lib/types';
 
-// Se actualiza el href de "INSCRIPCIONES" a /tournament
 const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
-    { href: '/tournament', icon: FilePenLine, label: 'INSCRIPCIONES' }, // <-- CORREGIDO
+    { href: '/tournament', icon: FilePenLine, label: 'INSCRIPCIONES' },
     { href: '/tournaments', icon: Trophy, label: 'LIGAS EN CURSO' },
     { href: '/store', icon: Store, label: 'TIENDA' },
     { href: '/collectibles', icon: Swords, label: 'TCG SUDONE', requiresAuth: true },
@@ -140,7 +139,7 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
         : (pathname === finalHref || pathname.startsWith(`${finalHref}/`));
 
       return (
-          <li key={item.label}> {/* Se usa el label como key porque es único en este caso */}
+          <li key={item.label}>
               <Link href={finalHref} onClick={handleMenuClick}>
                 <Button
                   variant='ghost'
@@ -213,39 +212,54 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
               ) : null}
           </div>
 
-          <nav className="flex flex-1 flex-col">
+          <nav className="flex flex-1 flex-col overflow-y-auto">
               <ul className="flex flex-col gap-1 p-2">
                   {renderMenuItems(menuItems)}
               </ul>
-              <ul className="mt-auto flex flex-col gap-1 border-t p-2">
-                  <div className="flex justify-start gap-2 py-2">
-                      {socialItems.map(item => (
-                          <li key={item.href}>
-                                <Link href={item.href} target="_blank" rel="noopener noreferrer">
-                                  <Button variant='destructive' size="icon" className='bg-red-600 hover:bg-red-700 text-white'>
-                                    <item.icon className="h-5 w-5" />
-                                  </Button>
-                                </Link>
-                          </li>
-                      ))}
-                  </div>
-                  {!isVisitor && renderMenuItems(footerMenuItems)}
-                    {installPrompt && (
-                      <li>
-                          <Button variant="ghost" className="main-sidebar-button w-full justify-start gap-2 text-foreground" onClick={handleInstallClick}>
-                              <Download className="h-5 w-5" />
-                              <span className="lg:text-base">DESCARGAR APP</span>
-                          </Button>
-                      </li>
-                    )}
-                    <li>
-                      <Button variant="ghost" className="main-sidebar-button w-full justify-start gap-2 text-foreground" onClick={handleLogout} disabled={loading}>
-                          <LogOut className="h-5 w-5" />
-                          <span className="lg:text-base">{isVisitor ? 'INICIAR SESIÓN' : 'CERRAR SESIÓN'}</span>
-                      </Button>
-                  </li>
-              </ul>
           </nav>
+          
+          {/* --- Footer con botones de acción y crédito -- */}
+          <div className="mt-auto border-t">
+            <ul className="flex flex-col gap-1 p-2">
+                <div className="flex justify-start gap-2 py-2">
+                    {socialItems.map(item => (
+                        <li key={item.href}>
+                              <Link href={item.href} target="_blank" rel="noopener noreferrer">
+                                <Button variant='destructive' size="icon" className='bg-red-600 hover:bg-red-700 text-white'>
+                                  <item.icon className="h-5 w-5" />
+                                </Button>
+                              </Link>
+                        </li>
+                    ))}
+                </div>
+                {!isVisitor && renderMenuItems(footerMenuItems)}
+                  {installPrompt && (
+                    <li>
+                        <Button variant="ghost" className="main-sidebar-button w-full justify-start gap-2 text-foreground" onClick={handleInstallClick}>
+                            <Download className="h-5 w-5" />
+                            <span className="lg:text-base">DESCARGAR APP</span>
+                        </Button>
+                    </li>
+                  )}
+                  <li>
+                    <Button variant="ghost" className="main-sidebar-button w-full justify-start gap-2 text-foreground" onClick={handleLogout} disabled={loading}>
+                        <LogOut className="h-5 w-5" />
+                        <span className="lg:text-base">{isVisitor ? 'INICIAR SESIÓN' : 'CERRAR SESIÓN'}</span>
+                    </Button>
+                </li>
+            </ul>
+            <div className="border-t p-3 text-center text-xs text-muted-foreground">
+              Desarrollado por{' '}
+              <Link 
+                href="https://fersoliz.vercel.app/" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                className="font-semibold text-foreground hover:underline"
+              >
+                Fer Soliz
+              </Link>
+            </div>
+          </div>
       </aside>
   );
 }
