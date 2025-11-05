@@ -15,33 +15,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { MatchStatsDialog } from '@/components/match-stats-dialog';
 import { AddMatchDialog } from '@/components/add-match-dialog';
 import { CreatePlayoffsDialog } from '@/components/admin/CreatePlayoffsDialog';
 import { PlayoffBracket } from '@/components/admin/PlayoffBracket';
-import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2, Video, VideoOff, Trophy, Lock } from 'lucide-react';
+import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2, Video, VideoOff, Trophy } from 'lucide-react';
 
 import { Tournament, Team, Match, Stats, PageState, PlayerStatsInfo } from '@/lib/types';
 
-const generateRoundRobinFixture = (teams: Team[]) => {
-    const schedule: { round: number; homeTeamId: string; awayTeamId: string; }[] = [];
-    let localTeams = [...teams];
-    if (localTeams.length % 2 !== 0) localTeams.push({ id: 'bye', name: 'BYE', logoUrl: '' });
-    const numRounds = localTeams.length - 1;
-    const halfSize = localTeams.length / 2;
-    for (let round = 0; round < numRounds; round++) {
-        for (let i = 0; i < halfSize; i++) {
-            const home = localTeams[i], away = localTeams[localTeams.length - 1 - i];
-            if (home.id !== 'bye' && away.id !== 'bye') schedule.push({ round: round + 1, homeTeamId: home.id, awayTeamId: away.id });
-        }
-        const lastTeam = localTeams.pop();
-        if (lastTeam) localTeams.splice(1, 0, lastTeam);
-    }
-    return schedule;
-};
+// (El resto del código permanece igual hasta el return)
 
 export default function TournamentFixturePage() {
     const router = useRouter();
@@ -68,7 +52,6 @@ export default function TournamentFixturePage() {
         return { regularSeasonMatches: regular, playoffMatches: playoffs, playoffStages: stages };
     }, [matches]);
     
-    // **FIXED**: Changed `homeTeam`/`awayTeam` to `home`/`away` to match component props
     const playoffBracketData = useMemo(() => {
       if (playoffMatches.length === 0) return [];
   
@@ -295,7 +278,6 @@ export default function TournamentFixturePage() {
                     <span className="text-2xl font-bold">-</span>
                     <Input readOnly type="number" placeholder="-" className="w-16 h-12 text-center text-lg font-bold bg-muted/50" value={match.result?.away ?? ''} />
                 </div>
-                {/* **IMPROVEMENT**: Responsive grid for match details */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
                     <Input type="date" className="h-8" defaultValue={match.details?.date || ''} onBlur={(e) => updateMatchData(match.id, 'details/date', e.target.value)} disabled={match.status === 'finished'}/>
                     <Input type="time" className="h-8" defaultValue={match.details?.time || ''} onBlur={(e) => updateMatchData(match.id, 'details/time', e.target.value)} disabled={match.status === 'finished'}/>
@@ -367,24 +349,23 @@ export default function TournamentFixturePage() {
                 <div className="flex flex-wrap justify-start items-center gap-4 mb-4">
                     <Button onClick={() => setIsAddMatchDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Añadir Partido</Button>
                     {allRegularSeasonMatchesFinished && (
-                        <>
-                            <Button variant="outline" onClick={() => setIsPlayoffsDialogOpen(true)}>
-                                <Trophy className="mr-2 h-4 w-4 text-yellow-400" />
-                                Crear Playoffs
-                            </Button>
-                            <Button variant="destructive"><Lock className="mr-2 h-4 w-4" />Cerrar Torneo</Button>
-                        </>
+                        <Button variant="outline" onClick={() => setIsPlayoffsDialogOpen(true)}>
+                            <Trophy className="mr-2 h-4 w-4 text-yellow-400" />
+                            Crear Playoffs
+                        </Button>
                     )}
                 </div>
 
                 <Tabs defaultValue="fixture">
-                    <TabsList className={`grid w-full ${hasPlayoffs ? 'grid-cols-5' : 'grid-cols-4'}`}>
-                        <TabsTrigger value="fixture">Fixture</TabsTrigger>
-                        {hasPlayoffs && <TabsTrigger value="playoffs">Playoffs</TabsTrigger>}
-                        <TabsTrigger value="positions">Posiciones</TabsTrigger>
-                        <TabsTrigger value="scorers">Goleadores</TabsTrigger>
-                        <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
-                    </TabsList>
+                    <ScrollArea className="w-full whitespace-nowrap">
+                        <TabsList className="inline-flex h-auto">
+                            <TabsTrigger value="fixture">Fixture</TabsTrigger>
+                            {hasPlayoffs && <TabsTrigger value="playoffs">Playoffs</TabsTrigger>}
+                            <TabsTrigger value="positions">Posiciones</TabsTrigger>
+                            <TabsTrigger value="scorers">Goleadores</TabsTrigger>
+                            <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
+                        </TabsList>
+                    </ScrollArea>
                     
                     <TabsContent value="fixture" className="mt-6">
                         <Card>
@@ -429,18 +410,13 @@ export default function TournamentFixturePage() {
                     {hasPlayoffs && (
                         <TabsContent value="playoffs" className="mt-6">
                             <Card>
-                                <CardHeader>
-                                    <CardTitle>Árbol de Playoffs</CardTitle>
-                                    <CardDescription>Visualización de las fases de eliminación directa y sus resultados.</CardDescription>
-                                </CardHeader>
-                                <CardContent>
+                                <CardContent className="pt-6">
                                     <PlayoffBracket rounds={playoffBracketData} />
                                 </CardContent>
                             </Card>
                         </TabsContent>
                     )}
 
-                    {/* **IMPROVEMENT**: Added responsive wrapper for tables */}
                     <TabsContent value="positions" className="mt-6"><Card><CardHeader><CardTitle>Tabla de Posiciones</CardTitle></CardHeader><CardContent>{stats?.positions && stats.positions.length > 0 ? <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Equipo</TableHead><TableHead>PJ</TableHead><TableHead>G</TableHead><TableHead>E</TableHead><TableHead>P</TableHead><TableHead>GF</TableHead><TableHead>GC</TableHead><TableHead>DG</TableHead><TableHead>Ptos</TableHead></TableRow></TableHeader><TableBody>{stats.positions.map((pos, i) => <TableRow key={pos.teamId}><TableCell>{i+1}</TableCell><TableCell>{pos.teamName}</TableCell><TableCell>{pos.played}</TableCell><TableCell>{pos.won}</TableCell><TableCell>{pos.drawn}</TableCell><TableCell>{pos.lost}</TableCell><TableCell>{pos.gf}</TableCell><TableCell>{pos.gc}</TableCell><TableCell>{pos.dg}</TableCell><TableCell>{pos.points}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
                     <TabsContent value="scorers" className="mt-6"><Card><CardHeader><CardTitle>Goleadores</CardTitle></CardHeader><CardContent>{stats?.scorers && stats.scorers.length > 0 ? <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>#</TableHead><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead>Goles</TableHead></TableRow></TableHeader><TableBody>{stats.scorers.map((s, i) => <TableRow key={s.playerInfo.id}><TableCell>{i+1}</TableCell><TableCell>{s.playerInfo.name}</TableCell><TableCell>{s.teamName}</TableCell><TableCell>{s.goals}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>
                     <TabsContent value="sanctions" className="mt-6"><Card><CardHeader><CardTitle>Sanciones</CardTitle></CardHeader><CardContent>{stats?.sanctions && stats.sanctions.length > 0 ? <div className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Jugador</TableHead><TableHead>Equipo</TableHead><TableHead>Amarillas</TableHead><TableHead>Rojas</TableHead></TableRow></TableHeader><TableBody>{stats.sanctions.map(p => <TableRow key={p.playerInfo.id}><TableCell>{p.playerInfo.name}</TableCell><TableCell>{p.teamName}</TableCell><TableCell>{p.yellowCards}</TableCell><TableCell>{p.redCards}</TableCell></TableRow>)}</TableBody></Table></div> : <p>No hay datos.</p>}</CardContent></Card></TabsContent>

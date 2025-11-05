@@ -31,15 +31,14 @@ interface PlayoffBracketProps {
 
 const ChampionDisplay = ({ team }: { team: TeamInfo }) => {
     return (
-        <div className="flex flex-col items-center justify-center w-36 sm:w-56 gap-2">
-            <h4 className="text-xs sm:text-base font-semibold tracking-wider uppercase text-yellow-400 mb-2 sm:mb-4 text-center">Campeón</h4>
-            <div className="flex flex-col items-center justify-center gap-2 p-3 sm:p-4 rounded-lg bg-secondary border-2 border-yellow-500/50 shadow-lg shadow-yellow-500/10">
-                <Trophy className="w-8 h-8 sm:w-10 sm:w-10 text-yellow-400" strokeWidth={2}/>
-                <Avatar className="h-10 w-10 sm:h-14 sm:w-14 border-2 border-yellow-400">
+        <div className="flex flex-col items-center justify-center w-32 sm:w-40 gap-2">
+            <h4 className="text-xs sm:text-sm font-semibold tracking-wider uppercase text-yellow-400 mb-1 sm:mb-2 text-center">Campeón</h4>
+            <div className="flex flex-col items-center justify-center gap-2 p-2 sm:p-3 rounded-lg bg-secondary border-2 border-yellow-500/50 shadow-lg shadow-yellow-500/10">
+                <Avatar className="h-8 w-8 sm:h-10 sm:w-10 border-2 border-yellow-400">
                     {team.logoUrl && <AvatarImage src={team.logoUrl} alt={team.name} />}
-                    <AvatarFallback className="text-lg font-bold">{team.name.slice(0, 2)}</AvatarFallback>
+                    <AvatarFallback className="text-sm font-bold">{team.name.slice(0, 2)}</AvatarFallback>
                 </Avatar>
-                <span className="text-sm sm:text-base font-bold text-center text-white">{team.name}</span>
+                <span className="text-xs sm:text-sm font-bold text-center text-white">{team.name}</span>
             </div>
         </div>
     )
