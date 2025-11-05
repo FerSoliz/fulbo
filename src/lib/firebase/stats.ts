@@ -1,7 +1,7 @@
 'use client';
 import { ref, get, update, child } from 'firebase/database';
 import { db } from '@/lib/firebase';
-import { Match, PlayerStatsInfo, Team, User, GuestPlayer, PlayerStats } from '@/lib/types';
+import { Match, PlayerStatsInfo, Team, User, GuestPlayer, PlayerStats, MatchStats } from '@/lib/types';
 
 // --- CONSTANTES DE PUNTUACIÓN ---
 const SP_POINTS = {
@@ -117,7 +117,7 @@ export async function calculateTournamentStats(tournamentId: string, teams: Team
 }
 
 // --- FUNCIÓN 2: MOTOR DE ESTADÍSTICAS GLOBALES DEL JUGADOR ---
-export async function updatePlayerGlobalStats(matchId: string) {
+export async function updatePlayerGlobalStats(matchId: string, tournamentId: string, tournamentName: string) {
     const dbRef = ref(db);
     const matchSnap = await get(child(dbRef, `matches/${matchId}`));
     const matchStatsSnap = await get(child(dbRef, `match_stats/${matchId}`));
@@ -133,9 +133,6 @@ export async function updatePlayerGlobalStats(matchId: string) {
         console.log(`El partido ${matchId} ya fue procesado. No se realizarán más acciones.`);
         return;
     }
-
-    const tournamentSnap = await get(child(dbRef, `tournaments/${match.tournamentId}/name`));
-    const tournamentName = tournamentSnap.val() || 'Torneo Desconocido';
 
     const homeResult = match.result?.home ?? 0;
     const awayResult = match.result?.away ?? 0;
@@ -189,7 +186,7 @@ export async function updatePlayerGlobalStats(matchId: string) {
             goals: (currentTournamentStats.goals || 0) + (individualMatchStats.goals || 0),
             mvp: (currentTournamentStats.mvp || 0) + (individualMatchStats.mvp ? 1 : 0),
         };
-        updates[`/playerStats/${playerId}/byTournament/${match.tournamentId}`] = newTournamentStats;
+        updates[`/playerStats/${playerId}/byTournament/${tournamentId}`] = newTournamentStats;
     }
 
     updates[`/matches/${matchId}/statsProcessed`] = true;
@@ -197,7 +194,7 @@ export async function updatePlayerGlobalStats(matchId: string) {
 }
 
 // --- FUNCIÓN 3: REVERTIR ESTADÍSTICAS GLOBALES (CORREGIDA) ---
-export async function revertMatchStats(matchId: string) {
+export async function revertMatchStats(matchId: string, tournamentId: string) {
     const dbRef = ref(db);
     const matchSnap = await get(child(dbRef, `matches/${matchId}`));
     const matchStatsSnap = await get(child(dbRef, `match_stats/${matchId}`));
@@ -208,7 +205,6 @@ export async function revertMatchStats(matchId: string) {
     }
 
     const match: Match = matchSnap.val();
-    const tournamentId = match.tournamentId;
     const matchStats: { [playerId: string]: PlayerStatsInfo } = matchStatsSnap.val();
     const playerIds = Object.keys(matchStats);
     const updates: { [key: string]: any } = {};
@@ -217,7 +213,6 @@ export async function revertMatchStats(matchId: string) {
         const individualMatchStats = matchStats[playerId];
         if (!individualMatchStats) continue;
 
-        // --- Reversión de SudPoints ---
         const sudPointsChange = individualMatchStats.sudPointsChange;
         if (typeof sudPointsChange === 'number') {
             const playerInfo = await getPlayerProfileInfo(playerId);
@@ -226,19 +221,16 @@ export async function revertMatchStats(matchId: string) {
             }
         }
 
-        // --- Reversión de PlayerStats (TOTALES y POR TORNEO) ---
         const playerStatsSnap = await get(child(dbRef, `playerStats/${playerId}`));
         if (playerStatsSnap.exists()) {
             const currentFullStats: PlayerStats = playerStatsSnap.val();
 
-            // Revertir Totales
             const newTotals = { ...(currentFullStats.totals || {}) };
             newTotals.matchesPlayed = Math.max(0, (newTotals.matchesPlayed || 0) - 1);
             newTotals.goals = Math.max(0, (newTotals.goals || 0) - (individualMatchStats.goals || 0));
             newTotals.mvp = Math.max(0, (newTotals.mvp || 0) - (individualMatchStats.mvp ? 1 : 0));
             updates[`/playerStats/${playerId}/totals`] = newTotals;
 
-            // Revertir Estadísticas del Torneo
             if (currentFullStats.byTournament && currentFullStats.byTournament[tournamentId]) {
                 const currentTournamentStats = currentFullStats.byTournament[tournamentId];
                 const newTournamentStats = { ...currentTournamentStats };
@@ -249,14 +241,11 @@ export async function revertMatchStats(matchId: string) {
             }
         }
         
-        // Limpiar el registro para evitar dobles reversiones
         updates[`/match_stats/${matchId}/${playerId}/sudPointsChange`] = null;
     }
     
-    // Marcar el partido como no procesado para permitir una nueva carga
     updates[`/matches/${matchId}/statsProcessed`] = false;
     
-    // Ejecutar todas las actualizaciones de forma atómica
     await update(dbRef, updates);
     console.log(`Reversión completada para el partido ${matchId}`);
 }
@@ -314,4 +303,39 @@ const getPlayerTeamId = async (playerId: string, teamIds: string[]): Promise<str
         }
     }
     return null;
+};
+
+/**
+ * Guarda la planilla de un partido, calcula el resultado final y cierra el partido.
+ * Esta es la función centralizada que reemplaza la lógica anterior.
+ *
+ * @param matchId El ID del partido.
+ * @param stats La planilla con las estadísticas de los jugadores.
+ * @param homeTeamId El ID del equipo local para poder calcular el marcador.
+ */
+export const saveMatchStatsAndRecalculate = async (matchId: string, stats: MatchStats, homeTeamId: string) => {
+    const homePlayersSnap = await get(ref(db, `teams/${homeTeamId}/players`));
+    if (!homePlayersSnap.exists()) {
+        throw new Error(`No se encontró la lista de jugadores para el equipo local ${homeTeamId}.`);
+    }
+    const homePlayerIds = Object.keys(homePlayersSnap.val());
+
+    let homeScore = 0;
+    let awayScore = 0;
+
+    for (const playerId in stats) {
+        const playerGoals = stats[playerId].goals || 0;
+        if (homePlayerIds.includes(playerId)) {
+            homeScore += playerGoals;
+        } else {
+            awayScore += playerGoals;
+        }
+    }
+
+    const updates: { [key: string]: any } = {};
+    updates[`/match_stats/${matchId}`] = stats;
+    updates[`/matches/${matchId}/result`] = { home: homeScore, away: awayScore };
+    updates[`/matches/${matchId}/status`] = 'finished';
+    
+    await update(ref(db), updates);
 };

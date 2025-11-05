@@ -7,7 +7,7 @@ import { ref, onValue, update, set, get, remove } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
-import { updatePlayerGlobalStats, revertMatchStats, calculateTournamentStats } from '@/lib/firebase/stats';
+import { saveMatchStatsAndRecalculate, revertMatchStats, calculateTournamentStats } from '@/lib/firebase/stats';
 
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -23,9 +23,24 @@ import { CreatePlayoffsDialog } from '@/components/admin/CreatePlayoffsDialog';
 import { PlayoffBracket } from '@/components/admin/PlayoffBracket';
 import { ArrowLeft, Loader2, ListOrdered, PlusCircle, XCircle, ShieldAlert, Pencil, Trash2, Video, VideoOff, Trophy } from 'lucide-react';
 
-import { Tournament, Team, Match, Stats, PageState, PlayerStatsInfo } from '@/lib/types';
+import { Tournament, Team, Match, Stats, PageState, MatchStats } from '@/lib/types';
 
-// (El resto del código permanece igual hasta el return)
+const generateRoundRobinFixture = (teams: Team[]) => {
+    const schedule: { round: number; homeTeamId: string; awayTeamId: string; }[] = [];
+    let localTeams = [...teams];
+    if (localTeams.length % 2 !== 0) localTeams.push({ id: 'bye', name: 'BYE', logoUrl: '' });
+    const numRounds = localTeams.length - 1;
+    const halfSize = localTeams.length / 2;
+    for (let round = 0; round < numRounds; round++) {
+        for (let i = 0; i < halfSize; i++) {
+            const home = localTeams[i], away = localTeams[localTeams.length - 1 - i];
+            if (home.id !== 'bye' && away.id !== 'bye') schedule.push({ round: round + 1, homeTeamId: home.id, awayTeamId: away.id });
+        }
+        const lastTeam = localTeams.pop();
+        if (lastTeam) localTeams.splice(1, 0, lastTeam);
+    }
+    return schedule;
+};
 
 export default function TournamentFixturePage() {
     const router = useRouter();
@@ -95,66 +110,25 @@ export default function TournamentFixturePage() {
     const updateMatchData = (matchId: string, path: string, value: any) => {
         set(ref(db, `matches/${matchId}/${path}`), value);
     };
-
-    const updateMatchScoreFromStats = useCallback(async (matchId: string) => {
-        const matchStatsSnap = await get(ref(db, `match_stats/${matchId}`));
-        if (!matchStatsSnap.exists()) return { homeScore: 0, awayScore: 0 };
-
-        const matchRef = ref(db, `matches/${matchId}`);
-        const matchSnap = await get(matchRef);
-        if (!matchSnap.exists()) return { homeScore: 0, awayScore: 0 };
-        const matchData = matchSnap.val();
-
-        if (matchData.homeTeamId.startsWith('winner-') || matchData.awayTeamId.startsWith('winner-')) {
-            return { homeScore: 0, awayScore: 0 };
-        }
-
-        const homePlayersSnap = await get(ref(db, `teams/${matchData.homeTeamId}/players`));
-        const awayPlayersSnap = await get(ref(db, `teams/${matchData.awayTeamId}/players`));
-
-        if (!homePlayersSnap.exists() || !awayPlayersSnap.exists()) {
-            toast({ title: "Error de Datos", description: "No se encontraron jugadores para uno o ambos equipos.", variant: "destructive" });
-            return { homeScore: 0, awayScore: 0 };
-        }
-
-        const homePlayerIds = Object.keys(homePlayersSnap.val());
-        const awayPlayerIds = Object.keys(awayPlayersSnap.val());
-        const stats: { [playerId: string]: PlayerStatsInfo } = matchStatsSnap.val();
-
-        let homeScore = 0;
-        let awayScore = 0;
-
-        for (const playerId in stats) {
-            const playerGoals = stats[playerId].goals || 0;
-            if (homePlayerIds.includes(playerId)) {
-                homeScore += playerGoals;
-            } else if (awayPlayerIds.includes(playerId)) {
-                awayScore += playerGoals;
-            }
-        }
-
-        await update(ref(db, `matches/${matchId}/result`), { home: homeScore, away: awayScore });
-        return { homeScore, awayScore };
-    }, [toast]);
-
-    const handleStatsSaved = useCallback(async (match: Match) => {
+    
+    const handleConfirmStats = useCallback(async (match: Match, newStats: MatchStats) => {
         if (!tournament) return;
-
+        
         try {
-            toast({ title: "Procesando...", description: "Actualizando marcador y cerrando partido." });
-            const { homeScore, awayScore } = await updateMatchScoreFromStats(match.id);
-            await update(ref(db, `matches/${match.id}`), { status: 'finished' });
-            toast({ title: "Paso 1/4: Partido Cerrado", description: `Resultado final: ${homeScore} - ${awayScore}.` });
+            toast({ title: "Paso 1/4: Guardando planilla..." });
+            await saveMatchStatsAndRecalculate(match.id, newStats, match.homeTeamId);
+            toast({ title: "Paso 2/4: Planilla guardada y partido cerrado" });
 
-            if (match.advancesToMatchId && match.advancesToPosition) {
-                const winnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
-                const nextMatchRef = ref(db, `matches/${match.advancesToMatchId}/${match.advancesToPosition === 'home' ? 'homeTeamId' : 'awayTeamId'}`);
+            const matchSnap = await get(ref(db, `matches/${match.id}`));
+            const updatedMatch = matchSnap.val();
+
+            if (updatedMatch.advancesToMatchId && updatedMatch.advancesToPosition) {
+                const winnerId = updatedMatch.result.home > updatedMatch.result.away ? updatedMatch.homeTeamId : updatedMatch.awayTeamId;
+                const nextMatchRef = ref(db, `matches/${updatedMatch.advancesToMatchId}/${updatedMatch.advancesToPosition === 'home' ? 'homeTeamId' : 'awayTeamId'}`);
                 await set(nextMatchRef, winnerId);
-                toast({ title: "Paso 2/4: ¡Equipo avanza en playoffs!", className: "bg-blue-500 text-white" });
-            } else {
-                toast({ title: "Paso 2/4: Actualizando tablas...", description: "Este es un partido de fase regular." });
+                toast({ title: "¡Equipo avanza en playoffs!", className: "bg-blue-500 text-white" });
             }
-            
+
             if (!match.stage) {
                  await calculateTournamentStats(tournament.id, teams);
                  toast({ title: "Paso 3/4: Tablas del Torneo Actualizadas" });
@@ -164,11 +138,11 @@ export default function TournamentFixturePage() {
             toast({ title: "Paso 4/4: Ranking Global Actualizado", className: "bg-green-500 text-white" });
 
         } catch (error) {
-            console.error("Error en guardado de stats:", error);
-            toast({ title: "Error en el Proceso", variant: "destructive" });
+            console.error("Error en el proceso de guardado de stats:", error);
+            toast({ title: "Error en el Proceso", description: "Ocurrió un error al guardar y procesar los datos.", variant: "destructive" });
         }
-    }, [updateMatchScoreFromStats, tournament, teams, toast]);
-    
+    }, [tournament, teams, toast]);
+
     const handleReopenMatch = useCallback(async (match: Match) => {
         if (!tournament) return;
         try {
@@ -302,14 +276,13 @@ export default function TournamentFixturePage() {
                 </div>
             </CardContent>
             <CardContent className="flex items-center justify-between">
-                <MatchStatsDialog 
-                    matchId={match.id} 
-                    tournamentId={tournamentId} 
-                    homeTeamId={match.homeTeamId} 
-                    awayTeamId={match.awayTeamId} 
+                 <MatchStatsDialog 
+                    matchId={match.id}
+                    homeTeamId={match.homeTeamId}
+                    awayTeamId={match.awayTeamId}
                     isFinished={match.status === 'finished'}
-                    onStatsSaved={() => handleStatsSaved(match)}
-                />
+                    onConfirm={(newStats) => handleConfirmStats(match, newStats)}
+                 />
                 
                 {match.status === 'pending' && typeof match.statsProcessed === 'undefined' && (
                     <AlertDialog>

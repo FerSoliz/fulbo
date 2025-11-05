@@ -1,6 +1,6 @@
 import { ref, get, query, orderByChild, equalTo, update } from 'firebase/database';
 import { db } from '../../firebase';
-import { Match, EnrichedMatch, MatchFinances } from '../../types';
+import { Match, EnrichedMatch, MatchFinances, Player, Team, MatchStats } from '../../types';
 
 /**
  * Obtiene el historial de partidos para un equipo específico, buscando en todos los torneos en los que participa.
@@ -187,4 +187,70 @@ export const saveMatchFinances = async (matchId: string, financesData: MatchFina
         console.error(`[DB Service] Error al guardar finanzas para el partido ${matchId}:`, error);
         throw new Error('No se pudieron guardar los datos financieros del partido.');
     }
+};
+
+/**
+ * Fetches the complete context required for the Match Stats Dialog.
+ * This includes team names, full player lists for both teams (with names),
+ * and any existing stats for the match.
+ * It's optimized to reduce multiple database calls.
+ *
+ * @param matchId The ID of the match.
+ * @param homeTeamId The ID of the home team.
+ * @param awayTeamId The ID of the away team.
+ * @returns An object containing all necessary data for the stats dialog.
+ */
+export const getMatchStatsContext = async (matchId: string, homeTeamId: string, awayTeamId: string) => {
+
+    // 1. Fetch team names, player IDs, and existing stats in parallel
+    const [homeTeamSnap, awayTeamSnap, homePlayerIdsSnap, awayPlayerIdsSnap, statsSnap] = await Promise.all([
+        get(ref(db, `teams/${homeTeamId}/name`)),
+        get(ref(db, `teams/${awayTeamId}/name`)),
+        get(ref(db, `teams/${homeTeamId}/players`)),
+        get(ref(db, `teams/${awayTeamId}/players`)),
+        get(ref(db, `match_stats/${matchId}`))
+    ]);
+
+    const homePlayerIds = homePlayerIdsSnap.exists() ? Object.keys(homePlayerIdsSnap.val()) : [];
+    const awayPlayerIds = awayPlayerIdsSnap.exists() ? Object.keys(awayPlayerIdsSnap.val()) : [];
+    const allPlayerIds = [...new Set([...homePlayerIds, ...awayPlayerIds])];
+
+    // 2. Fetch all player profiles (users and guests) in a single batch
+    const playerPromises = allPlayerIds.map(id => {
+        const isDni = id.length === 8 && /^\d+$/.test(id);
+        const path = isDni ? `guestPlayers/${id}` : `users/${id}`;
+        return get(ref(db, path)).then(snapshot => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                return { id, name: data.name || 'Nombre no encontrado' };
+            }
+            return null;
+        });
+    });
+    
+    const playersData = (await Promise.all(playerPromises)).filter((p): p is Player => p !== null);
+    const playersMap = new Map(playersData.map(p => [p.id, p]));
+
+    // 3. Separate players back into their teams
+    const homePlayers = homePlayerIds.map(id => playersMap.get(id)).filter((p): p is Player => !!p);
+    const awayPlayers = awayPlayerIds.map(id => playersMap.get(id)).filter((p): p is Player => !!p);
+
+    // 4. Construct the initial stats object for all players
+    const initialStats: MatchStats = {};
+    const savedStats = statsSnap.exists() ? statsSnap.val() : {};
+    const allPlayers = [...homePlayers, ...awayPlayers];
+
+    allPlayers.forEach(player => {
+        if (player && player.id) {
+            const playerSavedStats = savedStats[player.id] || {};
+            initialStats[player.id] = { goals: 0, yellowCards: 0, redCard: false, mvp: false, ...playerSavedStats };
+        }
+    });
+
+    // 5. Return the complete context object
+    return {
+        homeTeam: { name: homeTeamSnap.val() || 'Local', players: homePlayers },
+        awayTeam: { name: awayTeamSnap.val() || 'Visitante', players: awayPlayers },
+        stats: initialStats,
+    };
 };

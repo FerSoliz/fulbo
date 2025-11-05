@@ -161,9 +161,9 @@ export function PlayoffBracket({ rounds }: PlayoffBracketProps) {
         </div>
       ))}
       {champion && (
-          <div className="flex items-center pl-4 sm:pl-8">
+          <div className="flex items-center">
                <div className="w-4 sm:w-8 h-px bg-border-soft" />
-               <div className="pl-4 sm:pl-8">
+               <div className="pl-2 sm:pl-8">
                   <ChampionDisplay team={champion} />
                </div>
           </div>

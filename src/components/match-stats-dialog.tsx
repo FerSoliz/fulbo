@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { db } from '@/lib/firebase';
-import { ref, get, set, update } from 'firebase/database';
-import { updatePlayerGlobalStats } from '@/lib/firebase/stats';
+import { getMatchStatsContext } from '@/lib/firebase/db/matches';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -11,24 +10,21 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, BarChart, Shield, Plus, Minus, Edit, Save, X, ShieldAlert, Volleyball, RectangleHorizontal, Trophy } from 'lucide-react';
 
-interface Player { id: string; name: string; }
-interface PlayerStats { goals: number; yellowCards: number; redCard: boolean; mvp: boolean; }
-type MatchStats = { [playerId: string]: PlayerStats };
+import { Player, MatchStats, PlayerStatsInfo } from '@/lib/types';
 
 interface MatchStatsDialogProps {
   matchId: string;
-  tournamentId: string;
   homeTeamId: string;
   awayTeamId: string;
   isFinished: boolean;
   disabled?: boolean;
-  onStatsSaved?: () => void;
+  onConfirm: (stats: MatchStats) => void;
 }
 
 const PlayerStatsRow = ({ player, stats, onStatChange, onMvpSelect, isMvp, disabled }: {
     player: Player;
-    stats: PlayerStats;
-    onStatChange: (stat: keyof Omit<PlayerStats, 'mvp'>, value: number | boolean) => void;
+    stats: PlayerStatsInfo;
+    onStatChange: (stat: keyof Omit<PlayerStatsInfo, 'mvp'>, value: number | boolean) => void;
     onMvpSelect: () => void;
     isMvp: boolean;
     disabled: boolean;
@@ -76,24 +72,7 @@ const PlayerStatsRow = ({ player, stats, onStatChange, onMvpSelect, isMvp, disab
     );
 };
 
-const fetchPlayersData = async (playerIds: string[]): Promise<Player[]> => {
-    if (!playerIds || playerIds.length === 0) return [];
-    const playerPromises = playerIds.map(id => {
-        const isDni = id.length === 8 && /^\d+$/.test(id);
-        const path = isDni ? `guestPlayers/${id}` : `users/${id}`;
-        return get(ref(db, path)).then(snapshot => {
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                return { id, name: data.name || 'Nombre no encontrado' };
-            }
-            return null;
-        });
-    });
-    const results = await Promise.all(playerPromises);
-    return results.filter((player): player is Player => player !== null);
-};
-
-export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId, isFinished, disabled, onStatsSaved }: MatchStatsDialogProps) {
+export function MatchStatsDialog({ matchId, homeTeamId, awayTeamId, isFinished, disabled, onConfirm }: MatchStatsDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -103,38 +82,14 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
   const [stats, setStats] = useState<MatchStats>({});
   const { toast } = useToast();
   
-  const fetchMatchData = useCallback(async () => {
+  const loadData = useCallback(async () => {
+    if (!isOpen) return;
     setIsLoading(true);
     try {
-        const [homeTeamSnap, awayTeamSnap, homePlayerIdsSnap, awayPlayerIdsSnap, statsSnap] = await Promise.all([
-            get(ref(db, `teams/${homeTeamId}/name`)),
-            get(ref(db, `teams/${awayTeamId}/name`)),
-            get(ref(db, `teams/${homeTeamId}/players`)),
-            get(ref(db, `teams/${awayTeamId}/players`)),
-            get(ref(db, `match_stats/${matchId}`))
-        ]);
-
-        const homePlayerIds = homePlayerIdsSnap.exists() ? Object.keys(homePlayerIdsSnap.val()) : [];
-        const awayPlayerIds = awayPlayerIdsSnap.exists() ? Object.keys(awayPlayerIdsSnap.val()) : [];
-
-        const [homePlayers, awayPlayers] = await Promise.all([ fetchPlayersData(homePlayerIds), fetchPlayersData(awayPlayerIds) ]);
-
-        setHomeTeam({ name: homeTeamSnap.val() || 'Local', players: homePlayers });
-        setAwayTeam({ name: awayTeamSnap.val() || 'Visitante', players: awayPlayers });
-        
-        const initialStats: MatchStats = {};
-        const allPlayers = [...homePlayers, ...awayPlayers];
-        const savedStats = statsSnap.exists() ? statsSnap.val() : {};
-
-        allPlayers.forEach(player => {
-            if (player && player.id) {
-                const playerSavedStats = savedStats[player.id] || {};
-                initialStats[player.id] = { goals: 0, yellowCards: 0, redCard: false, mvp: false, ...playerSavedStats };
-            }
-        });
-        
-        setStats(initialStats);
-
+        const context = await getMatchStatsContext(matchId, homeTeamId, awayTeamId);
+        setHomeTeam(context.homeTeam);
+        setAwayTeam(context.awayTeam);
+        setStats(context.stats);
     } catch (error) {
         console.error("Error al cargar datos del partido:", error);
         toast({ title: "Error de Carga", description: "No se pudieron cargar los datos.", variant: "destructive" });
@@ -142,101 +97,46 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
     } finally {
         setIsLoading(false);
     }
-  }, [matchId, homeTeamId, awayTeamId, toast]);
+  }, [isOpen, matchId, homeTeamId, awayTeamId, toast]);
 
   useEffect(() => {
     if (isOpen) {
-      fetchMatchData();
+      loadData();
       setIsEditing(!isFinished);
     }
-  }, [isOpen, isFinished, fetchMatchData]);
+  }, [isOpen, isFinished, loadData]);
 
-  const handleStatChange = (playerId: string, stat: keyof Omit<PlayerStats, 'mvp'>, value: number | boolean) => {
+  const handleStatChange = (playerId: string, stat: keyof Omit<PlayerStatsInfo, 'mvp'>, value: number | boolean) => {
     setStats(prevStats => ({ ...prevStats, [playerId]: { ...prevStats[playerId], [stat]: value } }));
   };
 
   const handleMvpSelect = (selectedPlayerId: string) => {
     setStats(prevStats => {
         const isDeselecting = prevStats[selectedPlayerId]?.mvp;
-
-        const newStats = Object.keys(prevStats).reduce((acc, playerId) => {
-            acc[playerId] = { ...prevStats[playerId] };
-            acc[playerId].mvp = (playerId === selectedPlayerId) && !isDeselecting;
-            return acc;
-        }, {} as MatchStats);
-
+        const newStats = { ...prevStats };
+        for (const playerId in newStats) {
+            newStats[playerId] = { ...newStats[playerId], mvp: (playerId === selectedPlayerId) && !isDeselecting };
+        }
         return newStats;
     });
   };
 
-  const handleSaveChanges = async () => {
+  const handleConfirm = () => {
+    // The dialog is now "dumb". It doesn't save anything.
+    // It just passes the final state up to the parent component to handle orchestration.
     setIsSaving(true);
-
-    let homeScore = 0;
-    let awayScore = 0;
-    const homePlayerIds = new Set(homeTeam.players.map(p => p.id));
-    for (const playerId in stats) {
-        const playerStats = stats[playerId];
-        if (playerStats.goals > 0) {
-            if (homePlayerIds.has(playerId)) {
-                homeScore += playerStats.goals;
-            } else {
-                awayScore += playerStats.goals;
-            }
-        }
-    }
-    
-    const updates: { [key: string]: any } = {};
-    updates[`/match_stats/${matchId}`] = stats;
-    updates[`/matches/${matchId}/result`] = { home: homeScore, away: awayScore };
-    updates[`/matches/${matchId}/status`] = 'finished';
-
     try {
-        await update(ref(db), updates);
-
-        toast({ 
-            title: "¡Planilla Guardada!", 
-            description: "El resultado se guardó. Actualizando estadísticas globales...",
-            className: "bg-green-500 text-white" 
-        });
-        
-        try {
-            console.log(`Disparando recálculo de estadísticas para el partido: ${matchId}`);
-            await updatePlayerGlobalStats(matchId);
-            console.log(`Recálculo de estadísticas para el partido ${matchId} completado.`);
-            toast({
-                title: "¡Estadísticas Sincronizadas!",
-                description: "El ranking y los perfiles de los jugadores han sido actualizados."
-            });
-        } catch (statsError) {
-            console.error("Error crítico al recalcular las estadísticas globales:", statsError);
-            toast({
-                title: "Error de Sincronización",
-                description: "La planilla se guardó, pero falló la actualización de las estadísticas globales.",
-                variant: "destructive"
-            });
-        }
-        
-        setIsOpen(false);
-        if (onStatsSaved) {
-            onStatsSaved();
-        }
-
+      onConfirm(stats);
+      setIsOpen(false);
     } catch (error) {
-        console.error("Error al guardar la planilla:", error);
-        toast({ 
-            title: "Error al Guardar", 
-            description: "No se pudo guardar la planilla. Revisa la consola.", 
-            variant: "destructive" 
-        });
-
+      console.error("Error al confirmar los stats:", error);
+      toast({ title: "Error", description: "Hubo un problema al procesar la acción.", variant: "destructive"});
     } finally {
-        setIsSaving(false);
+      setIsSaving(false);
     }
   };
 
-
-  const formIsDisabled = !isEditing;
+  const formIsDisabled = !isEditing || isLoading;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -279,12 +179,13 @@ export function MatchStatsDialog({ matchId, tournamentId, homeTeamId, awayTeamId
         )}
         
         <DialogFooter className="mt-2 pt-2 sm:mt-4 sm:pt-4 border-t gap-2">
-          
           <DialogClose asChild><Button className="w-full sm:w-auto" size="lg" variant="ghost"><X className="mr-2 h-4 w-4" />Cancelar</Button></DialogClose>
-          <Button className="w-full sm:w-auto" size="lg" onClick={handleSaveChanges} disabled={formIsDisabled || isSaving}>
-            {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Guardar Cambios
-          </Button>
+          {isEditing && (
+            <Button className="w-full sm:w-auto" size="lg" onClick={handleConfirm} disabled={formIsDisabled || isSaving}>
+              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              Guardar Cambios
+            </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
