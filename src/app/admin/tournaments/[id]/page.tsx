@@ -337,17 +337,27 @@ export default function TournamentFixturePage() {
                 <Link href="/admin/manage-tournaments"><Button variant="outline" className="mb-6"><ArrowLeft className="mr-2 h-4 w-4" /> Volver</Button></Link>
                 <div className="mb-8"><h1 className="text-3xl font-bold tracking-tight">{tournament?.name}</h1><p className="text-muted-foreground">Gestiona el fixture, resultados y estadísticas del torneo.</p></div>
                 
-                <div className="flex flex-wrap justify-start items-center gap-4 mb-4">
-                    <Button onClick={() => setIsAddMatchDialogOpen(true)}><PlusCircle className="mr-2 h-4 w-4" /> Añadir Partido</Button>
+                <div className="flex flex-wrap justify-start items-center gap-2 sm:gap-4 mb-4">
+                    <Button 
+                        onClick={() => setIsAddMatchDialogOpen(true)}
+                        className="h-7 px-2 text-xs sm:h-10 sm:px-4 sm:text-base"
+                    >
+                        Añadir Partido
+                    </Button>
                     {canCreatePlayoffs && (
-                        <Button variant="outline" onClick={() => setIsPlayoffsDialogOpen(true)}>
-                            <Trophy className="mr-2 h-4 w-4 text-yellow-400" />
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setIsPlayoffsDialogOpen(true)}
+                            className="h-7 px-2 text-xs sm:h-10 sm:px-4 sm:text-base"
+                        >
                             Crear Playoffs
                         </Button>
                     )}
                     {canFinishTournament && (
-                         <Button variant="outline" className="bg-green-600 hover:bg-green-700 text-white">
-                            <Flag className="mr-2 h-4 w-4" />
+                         <Button 
+                            variant="outline" 
+                            className="bg-green-600 hover:bg-green-700 text-white h-7 px-2 text-xs sm:h-10 sm:px-4 sm:text-base"
+                        >
                             Terminar Torneo
                         </Button>
                     )}
@@ -399,7 +409,7 @@ export default function TournamentFixturePage() {
                                         <ListOrdered className="mx-auto h-12 w-12 text-muted-foreground" /><h3 className="mt-4 text-lg font-semibold">No hay fixture</h3><p className="mt-2 text-sm text-muted-foreground">Aún no se han generado los partidos.</p>
                                         <AlertDialog><AlertDialogTrigger asChild><Button className="mt-6" disabled={isGenerating || teams.length < 2}><PlusCircle className="mr-2 h-4 w-4" />Generar Fixture</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Confirmar?</AlertDialogTitle><AlertDialogDescription>Se crearán partidos para los {teams.length} equipos.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleGenerateFixture}>Sí, generar</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
                                     </div>
-                                )}
+                                )}\
                             </CardContent>
                         </Card>
                     </TabsContent>
