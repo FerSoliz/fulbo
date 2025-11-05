@@ -9,11 +9,9 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Image from 'next/image';
 
-// --- Importando los nuevos componentes de vista ---
 import { FixtureView } from '@/components/tournaments/fixture-view';
 import { TeamsView } from '@/components/tournaments/teams-view';
-
-// --- Componentes de Tabla (Sin cambios) ---
+import { PlayoffBracket } from '@/components/admin/PlayoffBracket'; // Importamos el componente de Playoffs
 
 const StandingsTable = ({ standings }: { standings?: Standing[] }) => {
   if (!standings || standings.length === 0) {
@@ -96,8 +94,6 @@ const SanctionsTable = ({ sanctions }: { sanctions?: Sanction[] }) => {
   );
 };
 
-// --- Componente Principal Integrado ---
-
 export default function TournamentDetailPage() {
   const params = useParams();
   const tournamentId = Array.isArray(params.id) ? params.id[0] : params.id;
@@ -137,9 +133,11 @@ export default function TournamentDetailPage() {
         return acc;
     }, {} as Record<string, Team>);
   }, [tournament?.teamsList]);
+  
+  const hasPlayoffs = tournament?.playoffRounds && tournament.playoffRounds.length > 0;
 
   return (
-    <div className="max-w-4xl mx-auto p-2 sm:p-4 md:p-6">
+    <div className="max-w-7xl mx-auto p-2 sm:p-4 md:p-6">
       {isLoading && <p className="text-center text-muted-foreground py-10">Cargando detalles del torneo...</p>}
       {error && <p className="text-center text-red-500 bg-red-100 p-4 rounded-md">{error}</p>}
       
@@ -154,6 +152,7 @@ export default function TournamentDetailPage() {
             <TabsList className="flex flex-wrap sm:flex-nowrap h-auto sm:h-9 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground">
               <TabsTrigger value="fixture">Fixture</TabsTrigger>
               <TabsTrigger value="positions">Posiciones</TabsTrigger>
+               {hasPlayoffs && <TabsTrigger value="playoffs">Playoffs</TabsTrigger>}
               <TabsTrigger value="teams">Equipos</TabsTrigger>
               <TabsTrigger value="scorers">Goleadores</TabsTrigger>
               <TabsTrigger value="sanctions">Sanciones</TabsTrigger>
@@ -164,13 +163,19 @@ export default function TournamentDetailPage() {
                 matches={tournament.matches} 
                 teamsMap={teamsMap} 
                 tournamentName={tournament.name} 
-                venue={tournament.venue} // <-- ¡AQUÍ LE PASAMOS LA SEDE!
+                venue={tournament.venue}
               />
             </TabsContent>
 
             <TabsContent value="positions" className="mt-4">
               <StandingsTable standings={tournament.standings} />
             </TabsContent>
+
+            {hasPlayoffs && (
+                <TabsContent value="playoffs" className="mt-4">
+                    <PlayoffBracket rounds={tournament.playoffRounds || []} title="Playoffs"/>
+                </TabsContent>
+            )}
 
             <TabsContent value="teams" className="mt-4">
               <TeamsView teams={tournament.teamsList} />
