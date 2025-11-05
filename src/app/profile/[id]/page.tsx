@@ -28,15 +28,6 @@ import { PlayerStatsView } from '@/components/profile/PlayerStatsView';
 import { MatchHistoryView } from '@/components/profile/MatchHistoryView';
 import { NextMatchView } from '@/components/profile/NextMatchView';
 
-const ComingSoonView = ({ onClose, toast }) => {
-  useEffect(() => {
-    toast({ title: 'Próximamente', description: 'Esta función estará disponible pronto.' });
-    onClose();
-  }, [onClose, toast]);
-
-  return null;
-};
-
 const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
   buttons: () => null,
   sudone_pass: SudonePassView,
@@ -47,7 +38,7 @@ const viewComponents: Record<ProfileView, React.ComponentType<any>> = {
   next_match: NextMatchView,
   favorite_tournaments: TournamentsView,
   my_data: MyDataContainer,
-  coach: (props) => <ComingSoonView {...props} toast={useToast().toast} />,
+  coach: () => null, // No necesita hacer nada, el click está deshabilitado
 };
 
 const actionCards = [
@@ -97,6 +88,8 @@ const actionCards = [
     view: 'coach' as ProfileView,
     title: 'Entrenador',
     tab: 'equipo',
+    disabled: true,
+    badge: 'Próximamente',
   },
 ];
 
@@ -126,7 +119,7 @@ export default function ProfilePage() {
       await updateUserProfile(profileUser.id, data);
       toast({ title: 'Éxito', description: 'Perfil actualizado correctamente.' });
       if (currentUser && currentUser.id === profileUser.id) {
-        await refreshCurrentUser(currentUser.id); // Refresca el usuario del contexto global
+        await refreshCurrentUser(currentUser.id);
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -206,6 +199,8 @@ export default function ProfilePage() {
                 title={card.title}
                 onClick={() => setView(card.view)}
                 secondaryBgImage={card.bgImage}
+                disabled={card.disabled}
+                badge={card.badge}
               />
             </div>
           ))}

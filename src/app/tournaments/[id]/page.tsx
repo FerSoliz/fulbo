@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { getTournamentDetails } from '@/lib/firebase/db/tournaments';
-import { FullTournament, Standing, Scorer, Sanction, Team } from '@/lib/types';
+import { FullTournament, Standing, Scorer, Sanction, Team, Match } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -11,7 +11,7 @@ import Image from 'next/image';
 
 import { FixtureView } from '@/components/tournaments/fixture-view';
 import { TeamsView } from '@/components/tournaments/teams-view';
-import { PlayoffBracket } from '@/components/admin/PlayoffBracket'; // Importamos el componente de Playoffs
+import { PlayoffBracket } from '@/components/admin/PlayoffBracket';
 
 const StandingsTable = ({ standings }: { standings?: Standing[] }) => {
   if (!standings || standings.length === 0) {
@@ -134,7 +134,49 @@ export default function TournamentDetailPage() {
     }, {} as Record<string, Team>);
   }, [tournament?.teamsList]);
   
-  const hasPlayoffs = tournament?.playoffRounds && tournament.playoffRounds.length > 0;
+  const playoffMatches = useMemo(() => {
+    if (!tournament?.matches) return [];
+    return tournament.matches.filter((match) => !!match.stage);
+  }, [tournament?.matches]);
+
+  const hasPlayoffs = useMemo(() => playoffMatches.length > 0, [playoffMatches]);
+
+  const playoffBracketData = useMemo(() => {
+      if (!hasPlayoffs) return [];
+      
+      const teams = tournament?.teamsList || [];
+      
+      const getTeamData = (teamId: string) => {
+          const team = teams.find(t => t.id === teamId);
+          if (team) return { id: team.id, name: team.name, logoUrl: team.logoUrl };
+          return { id: teamId, name: 'A definir' };
+      };
+  
+      const roundsMap = playoffMatches.reduce((acc, match) => {
+        const stage = match.stage || 'Playoffs';
+        if (!acc[stage]) {
+          acc[stage] = { name: stage, matches: [] };
+        }
+        const homeScore = match.result?.home;
+        const awayScore = match.result?.away;
+        let winnerId = null;
+        if (typeof homeScore === 'number' && typeof awayScore === 'number') {
+            winnerId = homeScore > awayScore ? match.homeTeamId : match.awayTeamId;
+        }
+
+        acc[stage].matches.push({
+          id: match.id,
+          home: { ...getTeamData(match.homeTeamId), score: homeScore },
+          away: { ...getTeamData(match.awayTeamId), score: awayScore },
+          winnerId,
+        });
+        return acc;
+      }, {} as { [key: string]: { name: string; matches: any[] } });
+      
+      const stageOrder = ['16vos de Final', 'Octavos de Final', 'Cuartos de Final', 'Semifinales', 'Final'];
+      return Object.values(roundsMap).sort((a, b) => stageOrder.indexOf(a.name) - stageOrder.indexOf(b.name));
+  
+  }, [playoffMatches, tournament?.teamsList, hasPlayoffs]);
 
   return (
     <div className="max-w-7xl mx-auto p-2 sm:p-4 md:p-6">
@@ -173,7 +215,14 @@ export default function TournamentDetailPage() {
 
             {hasPlayoffs && (
                 <TabsContent value="playoffs" className="mt-4">
-                    <PlayoffBracket rounds={tournament.playoffRounds || []} title="Playoffs"/>
+                   <Card>
+                      <CardHeader>
+                          <CardTitle>Bracket de Playoffs</CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-6">
+                          <PlayoffBracket rounds={playoffBracketData} />
+                      </CardContent>
+                  </Card>
                 </TabsContent>
             )}
 

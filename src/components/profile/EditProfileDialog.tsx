@@ -24,18 +24,22 @@ interface EditProfileDialogProps {
 }
 
 export const EditProfileDialog = ({ user, onSave, children }: EditProfileDialogProps) => {
-  const [name, setName] = useState(user.name);
   const [username, setUsername] = useState(user.username);
-  const [dni, setDni] = useState(user.dni || '');
+  const [phone, setPhone] = useState(user.phone || '');
 
   useEffect(() => {
-    setName(user.name);
     setUsername(user.username);
-    setDni(user.dni || '');
+    setPhone(user.phone || '');
   }, [user]);
 
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value.length <= 15) {
+      setUsername(e.target.value);
+    }
+  };
+
   const handleSave = () => {
-    onSave({ name, username, dni });
+    onSave({ username, phone });
   };
 
   return (
@@ -47,16 +51,24 @@ export const EditProfileDialog = ({ user, onSave, children }: EditProfileDialogP
         </DialogHeader>
         <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Nombre y Apellido</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+            <Label htmlFor="name">Nombre y Apellido (no editable)</Label>
+            <Input id="name" value={user.name} disabled />
           </div>
           <div className="space-y-2">
             <Label htmlFor="username">Nombre de Usuario</Label>
-            <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+            <Input id="username" value={username} onChange={handleUsernameChange} />
+            <p className="text-xs text-muted-foreground">Máximo 15 caracteres.</p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="dni">DNI</Label>
-            <Input id="dni" value={dni} onChange={(e) => setDni(e.target.value)} />
+            <Label htmlFor="dni">DNI (no editable)</Label>
+            <Input id="dni" value={user.dni || ''} disabled />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="phone">Teléfono</Label>
+            <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Ej: 1122334455" />
+             <p className="text-xs text-muted-foreground">
+              Tu número para que te contacten por fichajes. No incluyas el 0 ni el 15.
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email (no editable)</Label>
