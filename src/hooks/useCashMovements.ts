@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Unsubscribe } from 'firebase/database';
-import { db } from '@/lib/firebase';
-import { CashMovement, ManualCashEntry } from '@/lib/types';
-import { getFinishedMatches, listenToManualCashEntries } from '@/lib/firebase/db';
+import { CashMovement } from '@/lib/types';
+import { listenToManualCashEntries } from '@/lib/firebase/db';
 
 export function useCashMovements() {
   const [movements, setMovements] = useState<CashMovement[]>([]);
@@ -15,13 +14,10 @@ export function useCashMovements() {
     const fetchAndCombineData = async () => {
       try {
         setLoading(true);
-        const finishedMatches = await getFinishedMatches();
-        const matchMovements: CashMovement[] = finishedMatches.map(match => ({
-          id: match.id,
-          type: 'match',
-          date: match.details?.date || match.date,
-          data: match,
-        }));
+        
+        // Cambio temporal: Ocultamos los partidos finalizados para simplificar la vista.
+        // La llamada a `getFinishedMatches` se omite y se usa un array vacío.
+        const matchMovements: CashMovement[] = [];
 
         unsubscribe = listenToManualCashEntries(
           (manualEntries) => {
@@ -32,7 +28,8 @@ export function useCashMovements() {
               data: entry,
             }));
 
-            const allMovements = [...matchMovements, ...manualMovements];
+            // La lista ahora solo contiene los asientos manuales.
+            const allMovements = [...manualMovements];
             allMovements.sort((a, b) => {
               const dateA = a.date ? new Date(a.date).getTime() : 0;
               const dateB = b.date ? new Date(b.date).getTime() : 0;
@@ -44,9 +41,9 @@ export function useCashMovements() {
           }
         );
 
-      } catch (err) {
+      } catch (err: any) {
         console.error("[useCashMovements] Error crítico al obtener datos:", err);
-        setError('Error crítico al cargar los movimientos.');
+        setError(`Error crítico al cargar los movimientos: ${err.message}`);
         setLoading(false);
       }
     };

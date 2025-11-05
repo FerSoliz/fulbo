@@ -20,6 +20,7 @@ import {
   Trophy,
   User as UserIcon,
   Youtube,
+  FilePenLine, // Icono para Inscripciones
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -32,18 +33,18 @@ import * as React from "react";
 import { useState, useEffect } from 'react';
 import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
-import { User } from '@/lib/types'; // ¡IMPORTANTE! Usar el tipo centralizado
+import { User } from '@/lib/types';
 
-// REFACTOR: Lógica de permisos centralizada con `allowedRoles`
+// Se actualiza el href de "INSCRIPCIONES" a /tournament
 const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
+    { href: '/tournament', icon: FilePenLine, label: 'INSCRIPCIONES' }, // <-- CORREGIDO
     { href: '/tournaments', icon: Trophy, label: 'LIGAS EN CURSO' },
     { href: '/store', icon: Store, label: 'TIENDA' },
-    { href: '/collectibles', icon: Swords, label: 'TCG SUDONE', requiresAuth: true }, // Nuevo: requiere autenticación
+    { href: '/collectibles', icon: Swords, label: 'TCG SUDONE', requiresAuth: true },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
     { href: '/transfer-market', icon: Landmark, label: 'MERCADO DE PASES' },
-    // { href: '/messages', icon: MessageSquare, label: 'MENSAJES' }, // Ocultado temporalmente
-    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', allowedRoles: ['admin', 'vendedor'] }, // REFACTOR: Permisos claros
+    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', allowedRoles: ['admin', 'vendedor'] },
 ];
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (
@@ -78,7 +79,6 @@ interface MainSidebarProps {
 
 export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps) {
   const pathname = usePathname();
-  // REFACTOR: Usar el tipo `User` correcto del contexto
   const { user, loading, logout, trackInteraction } = useUser();
   const router = useRouter();
   const [installPrompt, setInstallPrompt] = React.useState<BeforeInstallPromptEvent | null>(null);
@@ -120,7 +120,6 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
 
   const renderMenuItems = (items: typeof menuItems | typeof footerMenuItems) => {
     return items.map((item) => {
-      // REFACTOR: Lógica de permisos simplificada
       if (item.allowedRoles && (!user || !item.allowedRoles.includes(user.role))) {
         return null;
       }
@@ -141,7 +140,7 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
         : (pathname === finalHref || pathname.startsWith(`${finalHref}/`));
 
       return (
-          <li key={item.href}>
+          <li key={item.label}> {/* Se usa el label como key porque es único en este caso */}
               <Link href={finalHref} onClick={handleMenuClick}>
                 <Button
                   variant='ghost'
