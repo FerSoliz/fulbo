@@ -20,7 +20,7 @@ import Image from 'next/image';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
-const WHATSAPP_NUMBER = '5491160390824';
+const WHATSAPP_NUMBER = '5491141790072';
 
 interface CartWidgetProps {
   variant?: 'floating' | 'inline';
