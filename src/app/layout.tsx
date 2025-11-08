@@ -1,16 +1,15 @@
 'use client';
-import { useState, useEffect } from 'react';
-import type { Metadata } from "next";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { MainSidebar } from "@/components/main-sidebar";
 import { PageHeader } from "@/components/page-header";
-import type { User } from "@/lib/data";
 import { UserProvider } from '@/context/user-context';
 import { CartProvider } from '@/context/cart-context';
 import { CartWidget } from '@/components/cart/cart-widget';
 import { usePathname } from 'next/navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { InstallPwaBanner } from '@/components/install-pwa-banner';
+import { PwaProvider, usePwa } from '@/context/pwa-context'; // 1. Importar el Provider y el Hook
 
 export default function RootLayout({
   children,
@@ -23,7 +22,7 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="manifest" href="/manifest.json" />
-        <link rel="icon" href="https://i.postimg.cc/1zpZ1G3p/favicon.png" type="image/png" />
+        <link rel="icon" href="/assets/icons/favicon.ico" type="image/x-icon" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
@@ -38,7 +37,10 @@ export default function RootLayout({
       <body className="font-body antialiased bg-background-mobile md:bg-background-desktop bg-cover bg-center bg-fixed">
         <UserProvider>
           <CartProvider>
-            <LayoutContent>{children}</LayoutContent>
+            {/* 2. Envolver la aplicación con el PwaProvider */}
+            <PwaProvider>
+              <LayoutContent>{children}</LayoutContent>
+            </PwaProvider>
             <Toaster />
           </CartProvider>
         </UserProvider>
@@ -47,21 +49,23 @@ export default function RootLayout({
   );
 }
 
-
-function LayoutContent({ children }: { children: React.ReactNode }) {
+function LayoutContent({ children }: { children: React.Node }) {
     const pathname = usePathname();
     const isMobile = useIsMobile();
+    // 3. Usar el hook para obtener el estado y las funciones
+    const { showInstallBanner, handleInstallPrompt, handleDismissBanner } = usePwa();
     
     const isAuthPage = pathname === '/login' || pathname === '/register' || pathname === '/forgot-password';
     const isImmersivePage = pathname.startsWith('/collectibles');
 
-    // Show floating cart button only on store page AND on desktop.
     const showFloatingCart = pathname.startsWith('/store') && !isMobile;
 
     if (isAuthPage || isImmersivePage) {
         return (
           <>
             <main>{children}</main>
+            {/* 4. El banner se muestra según el estado del contexto */}
+            {showInstallBanner && <InstallPwaBanner onInstall={handleInstallPrompt} onDismiss={handleDismissBanner} />}
           </> 
         );
     }
@@ -74,6 +78,8 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
                 <main className="flex-1">{children}</main>
                 {showFloatingCart && <CartWidget variant="floating" />}
             </div>
+            {/* 4. El banner se muestra según el estado del contexto */}
+            {showInstallBanner && <InstallPwaBanner onInstall={handleInstallPrompt} onDismiss={handleDismissBanner} />}
         </div>
     );
 }

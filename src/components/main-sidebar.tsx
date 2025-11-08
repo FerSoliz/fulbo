@@ -1,26 +1,9 @@
-
 'use client';
 
 import {
-  BarChart2,
-  Bell,
-  Cog,
-  Download,
-  Footprints,
-  Home,
-  Instagram,
-  Landmark,
-  LogOut,
-  Loader2,
-  MessageSquare,
-  ShieldCheck,
-  Store,
-  Swords,
-  Ticket,
-  Trophy,
-  User as UserIcon,
-  Youtube,
-  FilePenLine, // Icono para Inscripciones
+  BarChart2, Bell, Cog, Download, Footprints, Home, Instagram, Landmark, LogOut, 
+  Loader2, MessageSquare, ShieldCheck, Store, Swords, Ticket, Trophy, User as UserIcon,
+  Youtube, FilePenLine
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -30,10 +13,9 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as React from "react";
-import { useState, useEffect } from 'react';
 import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
-import { User } from '@/lib/types';
+import { usePwa } from '@/context/pwa-context'; // 1. Importar el hook usePwa
 
 const menuItems = [
     { href: '/', icon: Home, label: 'INICIO' },
@@ -65,12 +47,6 @@ const footerMenuItems = [
     { href: '/profile', icon: UserIcon, label: 'MI PERFIL', requiresAuth: true },
 ];
 
-interface BeforeInstallPromptEvent extends Event {
-  readonly platforms: Array<string>;
-  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed', platform: string }>;
-  prompt(): Promise<void>;
-}
-
 interface MainSidebarProps {
   isMobile?: boolean;
   onLinkClick?: () => void;
@@ -79,25 +55,15 @@ interface MainSidebarProps {
 export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps) {
   const pathname = usePathname();
   const { user, loading, logout, trackInteraction } = useUser();
+  const { installPrompt, handleInstallPrompt } = usePwa(); // 2. Usar el hook usePwa
   const router = useRouter();
-  const [installPrompt, setInstallPrompt] = React.useState<BeforeInstallPromptEvent | null>(null);
-
+  
   const isVisitor = !user || user.id === 'visitor';
 
-  useEffect(() => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-        e.preventDefault();
-        setInstallPrompt(e as BeforeInstallPromptEvent);
-    };
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    return () => {
-        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
-  }, []);
+  // 3. Limpieza: Se elimina el useEffect y useState para `installPrompt` de aquí
 
   const handleInstallClick = () => {
-      if (!installPrompt) return;
-      installPrompt.prompt();
+      handleInstallPrompt(); // Se llama a la función del contexto
       onLinkClick?.();
   };
 
@@ -118,6 +84,7 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
   }
 
   const renderMenuItems = (items: typeof menuItems | typeof footerMenuItems) => {
+    // ... (El resto de la función renderMenuItems permanece igual)
     return items.map((item) => {
       if (item.allowedRoles && (!user || !item.allowedRoles.includes(user.role))) {
         return null;
@@ -163,6 +130,7 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
 
   return (
       <aside className={cn(sidebarClasses, "rounded-r-xl")}>
+          {/* ... (Cabecera y perfil de usuario sin cambios) ... */}
           <div className="flex h-16 items-center justify-center border-b p-2">
               <Link href="/" onClick={onLinkClick}>
               <div className="relative" style={{ width: '140px', height: '40px' }}>
@@ -218,7 +186,6 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
               </ul>
           </nav>
           
-          {/* --- Footer con botones de acción y crédito -- */}
           <div className="mt-auto border-t">
             <ul className="flex flex-col gap-1 p-2">
                 <div className="flex justify-start gap-2 py-2">
@@ -231,16 +198,17 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
                               </Link>
                         </li>
                     ))}
+                    {/* 4. Mostrar el ícono de descarga si la app es instalable */}
+                    {installPrompt && (
+                      <li>
+                        <Button variant='destructive' size="icon" className='bg-red-600 hover:bg-red-700 text-white' onClick={handleInstallClick}>
+                          <Download className="h-5 w-5" />
+                        </Button>
+                      </li>
+                    )}
                 </div>
                 {!isVisitor && renderMenuItems(footerMenuItems)}
-                  {installPrompt && (
-                    <li>
-                        <Button variant="ghost" className="main-sidebar-button w-full justify-start gap-2 text-foreground" onClick={handleInstallClick}>
-                            <Download className="h-5 w-5" />
-                            <span className="lg:text-base">DESCARGAR APP</span>
-                        </Button>
-                    </li>
-                  )}
+                  {/* Limpieza: Se elimina el botón de texto "DESCARGAR APP" que estaba aquí abajo */}
                   <li>
                     <Button variant="ghost" className="main-sidebar-button w-full justify-start gap-2 text-foreground" onClick={handleLogout} disabled={loading}>
                         <LogOut className="h-5 w-5" />
