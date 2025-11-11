@@ -23,8 +23,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/context/user-context";
-import { createManualCashEntry } from "@/lib/firebase/db";
-import { MatchFinances, FinancialItem } from "@/lib/types";
+import { saveManualCashEntry } from "@/lib/firebase/db/cashEntries";
+import { MatchFinances, FinancialItem, ManualCashEntry } from "@/lib/types";
 import { Calendar as CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -33,6 +33,7 @@ interface ManualCashEntryModalProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onSaveSuccess: () => void;
+  existingEntry?: ManualCashEntry;
 }
 
 const emptyItem: FinancialItem = { id: "", concept: "", amount: 0 };
@@ -41,6 +42,7 @@ export function ManualCashEntryModal({
   isOpen,
   onOpenChange,
   onSaveSuccess,
+  existingEntry,
 }: ManualCashEntryModalProps) {
   const { user } = useUser();
   const { toast } = useToast();
@@ -67,9 +69,19 @@ export function ManualCashEntryModal({
 
   useEffect(() => {
     if (isOpen) {
-      resetForm();
+        if (existingEntry) {
+            setConcept(existingEntry.concept);
+            setDate(new Date(existingEntry.date));
+            const incomes = existingEntry.finances.income.items;
+            const expenses = existingEntry.finances.expenses.items;
+            setIncomeItems(incomes && incomes.length > 0 ? incomes : [{ ...emptyItem, id: uuidv4() }]);
+            setExpenseItems(expenses && expenses.length > 0 ? expenses : [{ ...emptyItem, id: uuidv4() }]);
+            setNotes(existingEntry.finances.notes || "");
+        } else {
+            resetForm();
+        }
     }
-  }, [isOpen]);
+  }, [isOpen, existingEntry]);
 
   const { totalIncome, totalExpenses, balance } = useMemo(() => {
     const totalIncome = incomeItems.reduce(
@@ -115,21 +127,15 @@ export function ManualCashEntryModal({
 
   const handleSave = async () => {
     if (!user || !user.id) {
-      toast({
-        title: "Error de autenticación",
-        description: "No se pudo verificar tu identidad. Por favor, inicia sesión de nuevo.",
-        variant: "destructive",
-      });
+      toast({ title: "Error de autenticación", variant: "destructive" });
       return;
     }
-
     if (!concept.trim()) {
-      toast({ title: "Concepto requerido", description: "Por favor, añade un concepto para el asiento.", variant: "destructive" });
+      toast({ title: "Concepto requerido", variant: "destructive" });
       return;
     }
-
     if (!date) {
-        toast({ title: "Fecha requerida", description: "Por favor, selecciona una fecha.", variant: "destructive" });
+        toast({ title: "Fecha requerida", variant: "destructive" });
         return;
     }
 
@@ -146,176 +152,126 @@ export function ManualCashEntryModal({
       },
       balance,
       notes,
-      closedBy: {
-        id: user.id,
-        name: user.name,
-      },
-      closedAt: new Date().toISOString(),
+      closedBy: existingEntry?.finances.closedBy || { id: user.id, name: user.name },
+      closedAt: existingEntry?.finances.closedAt || new Date().toISOString(),
     };
+    
+    if (existingEntry) {
+        financesData.lastEditedBy = { id: user.id, name: user.name };
+        financesData.lastEditedAt = new Date().toISOString();
+    }
 
     try {
-      await createManualCashEntry(concept, date.toISOString(), financesData);
-      toast({
-        title: "Asiento manual creado",
-        description: `El asiento "${concept}" ha sido guardado correctamente.`,
-      });
-      onSaveSuccess(); // This will trigger a re-fetch in the parent page
-      onOpenChange(false); // Close the modal
+        const entryId = existingEntry ? existingEntry.id : undefined;
+        await saveManualCashEntry(concept, date, financesData, entryId);
+        toast({ title: existingEntry ? "Asiento actualizado" : "Asiento creado" });
+        onSaveSuccess();
+        onOpenChange(false);
     } catch (error) {
-      console.error("Error al crear asiento manual:", error);
-      toast({
-        title: "Error al guardar",
-        description: "No se pudo crear el asiento manual. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      });
+        console.error("Error al guardar asiento:", error);
+        toast({ title: "Error al guardar", variant: "destructive" });
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
   };
+  
+  const title = existingEntry ? "Editar Asiento de Caja Manual" : "Registrar Asiento de Caja Manual";
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>Registrar Asiento de Caja Manual</DialogTitle>
+      <DialogContent className="max-w-3xl h-full md:h-auto md:max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 pb-4">
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-            {/* Column 1: Concept & Date */}
-            <div className="space-y-4">
-                <div>
-                    <Label htmlFor="concept">Concepto Principal</Label>
-                    <Input id="concept" value={concept} onChange={(e) => setConcept(e.target.value)} placeholder="Ej: Venta de bebidas en amistoso" />
-                </div>
-                <div>
-                    <Label>Fecha del Movimiento</Label>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button
-                            variant={"outline"}
-                            className="w-full justify-start text-left font-normal"
-                            >
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {date ? format(date, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                            <Calendar
-                            mode="single"
-                            selected={date}
-                            onSelect={setDate}
-                            initialFocus
-                            />
-                        </PopoverContent>
-                    </Popover>
-                </div>
-            </div>
-
-            {/* Column 2: Notes */}
-            <div className="space-y-4">
-                 <div>
-                    <Label htmlFor="notes">Notas Adicionales</Label>
-                    <Input id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Detalles opcionales" />
-                </div>
-            </div>
-        </div>
         
-        <Separator />
-        
-        {/* Financial Items */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-4">
-          {/* Income */}
-          <div>
-            <h3 className="text-lg font-semibold text-green-600 mb-2">Ingresos (+)</h3>
-            <ScrollArea className="h-40 pr-4">
-                <div className="space-y-3">
-                    {incomeItems.map((item, index) => (
-                    <div key={item.id} className="flex items-center gap-2">
-                        <Input
-                        type="text"
-                        placeholder="Concepto (ej: 10 aguas)"
-                        value={item.concept}
-                        onChange={(e) => handleItemChange(item.id, "concept", e.target.value, "income")}
-                        />
-                        <Input
-                        type="number"
-                        placeholder="Monto"
-                        value={item.amount === 0 ? '' : item.amount}
-                        onChange={(e) => handleItemChange(item.id, "amount", e.target.value, "income")}
-                        className="w-28"
-                        />
-                        <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeItem(item.id, "income")}
-                        disabled={incomeItems.length <= 1}
-                        >
-                        <Trash2 className="h-4 w-4 text-red-500" />
+        <div className="flex-grow overflow-y-auto px-6">
+            <div className="space-y-6">
+                {/* Concept, Date & Notes */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="concept">Concepto Principal</Label>
+                        <Input id="concept" value={concept} onChange={(e) => setConcept(e.target.value)} placeholder="Ej: Venta de bebidas" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Fecha del Movimiento</Label>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant={"outline"} className="w-full justify-start text-left font-normal">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {date ? format(date, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Calendar mode="single" selected={date} onSelect={setDate} initialFocus />
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                     <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="notes">Notas Adicionales</Label>
+                        <Input id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Detalles opcionales" />
+                    </div>
+                </div>
+                
+                <Separator />
+                
+                {/* Financial Items */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    {/* Income */}
+                    <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-green-600">Ingresos (+)</h3>
+                        <div className="space-y-3">
+                            {incomeItems.map((item) => (
+                            <div key={item.id} className="flex items-center gap-2">
+                                <Input type="text" placeholder="Concepto (ej: 10 aguas)" value={item.concept} onChange={(e) => handleItemChange(item.id, "concept", e.target.value, "income")} />
+                                <Input type="number" placeholder="Monto" value={item.amount === 0 ? '' : item.amount} onChange={(e) => handleItemChange(item.id, "amount", e.target.value, "income")} className="w-32" />
+                                <Button variant="ghost" size="icon" onClick={() => removeItem(item.id, "income")} disabled={incomeItems.length <= 1}>
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                            </div>
+                            ))}
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => addItem("income")} className="mt-2">
+                            <Plus className="h-4 w-4 mr-1" /> Añadir Ingreso
                         </Button>
                     </div>
-                    ))}
-                </div>
-            </ScrollArea>
-            <Button variant="outline" size="sm" onClick={() => addItem("income")} className="mt-2">
-                <Plus className="h-4 w-4 mr-1" /> Añadir Ingreso
-            </Button>
-          </div>
 
-          {/* Expenses */}
-          <div>
-            <h3 className="text-lg font-semibold text-red-600 mb-2">Egresos (-)</h3>
-            <ScrollArea className="h-40 pr-4">
-                <div className="space-y-3">
-                {expenseItems.map((item) => (
-                    <div key={item.id} className="flex items-center gap-2">
-                    <Input
-                        type="text"
-                        placeholder="Concepto (ej: Pago árbitro)"
-                        value={item.concept}
-                        onChange={(e) => handleItemChange(item.id, "concept", e.target.value, "expense")}
-                    />
-                    <Input
-                        type="number"
-                        placeholder="Monto"
-                        value={item.amount === 0 ? '' : item.amount}
-                        onChange={(e) => handleItemChange(item.id, "amount", e.target.value, "expense")}
-                        className="w-28"
-                    />
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeItem(item.id, "expense")}
-                        disabled={expenseItems.length <= 1}
-                    >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
+                    {/* Expenses */}
+                    <div className="space-y-3">
+                        <h3 className="text-lg font-semibold text-red-600">Egresos (-)</h3>
+                        <div className="space-y-3">
+                            {expenseItems.map((item) => (
+                            <div key={item.id} className="flex items-center gap-2">
+                                <Input type="text" placeholder="Concepto (ej: Pago árbitro)" value={item.concept} onChange={(e) => handleItemChange(item.id, "concept", e.target.value, "expense")} />
+                                <Input type="number" placeholder="Monto" value={item.amount === 0 ? '' : item.amount} onChange={(e) => handleItemChange(item.id, "amount", e.target.value, "expense")} className="w-32" />
+                                <Button variant="ghost" size="icon" onClick={() => removeItem(item.id, "expense")} disabled={expenseItems.length <= 1}>
+                                    <Trash2 className="h-4 w-4 text-red-500" />
+                                </Button>
+                            </div>
+                            ))}
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => addItem("expense")} className="mt-2">
+                            <Plus className="h-4 w-4 mr-1" /> Añadir Egreso
+                        </Button>
                     </div>
-                ))}
                 </div>
-            </ScrollArea>
-            <Button variant="outline" size="sm" onClick={() => addItem("expense")} className="mt-2">
-                <Plus className="h-4 w-4 mr-1" /> Añadir Egreso
-            </Button>
-          </div>
+            </div>
+        </div>
+        
+        {/* Totals Section */}
+        <div className="p-6 pt-4 mt-auto border-t bg-background">
+             <div className="flex flex-wrap justify-end items-center gap-x-6 gap-y-2">
+                <div className="text-sm">Ingresos: <span className="font-bold text-green-600">${totalIncome.toFixed(2)}</span></div>
+                <div className="text-sm">Egresos: <span className="font-bold text-red-600">${totalExpenses.toFixed(2)}</span></div>
+                <div className="text-base">Balance: <span className={`font-bold ${balance >= 0 ? 'text-blue-600' : 'text-red-700'}`}>${balance.toFixed(2)}</span></div>
+            </div>
         </div>
 
-        <Separator />
-
-        {/* Totals */}
-        <div className="flex justify-end items-center space-x-6 pr-4 pt-4">
-            <p>Ingresos: <span className="font-bold text-green-600">${totalIncome.toFixed(2)}</span></p>
-            <p>Egresos: <span className="font-bold text-red-600">${totalExpenses.toFixed(2)}</span></p>
-            <p className="text-xl">Balance: <span className={`font-bold ${balance >= 0 ? 'text-blue-600' : 'text-red-700'}`}>${balance.toFixed(2)}</span></p>
-        </div>
-
-
-        <DialogFooter>
+        <DialogFooter className="p-6 pt-0">
           <DialogClose asChild>
-            <Button type="button" variant="secondary" disabled={isLoading}>
-              Cancelar
-            </Button>
+            <Button type="button" variant="secondary" disabled={isLoading}>Cancelar</Button>
           </DialogClose>
           <Button type="button" onClick={handleSave} disabled={isLoading}>
-            {isLoading ? "Guardando..." : "Guardar Asiento"}
+            {isLoading ? "Guardando..." : (existingEntry ? "Actualizar Asiento" : "Guardar Asiento")}
           </Button>
         </DialogFooter>
       </DialogContent>
