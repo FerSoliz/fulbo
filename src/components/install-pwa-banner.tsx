@@ -20,12 +20,12 @@ interface InstallPwaBannerProps {
 
 export function InstallPwaBanner({ onInstall, onDismiss }: InstallPwaBannerProps) {
   return (
-    <div className="fixed bottom-4 right-4 z-50 w-full max-w-md rounded-lg bg-container p-4 shadow-lg border border-border-soft animate-in slide-in-from-bottom-10">
-      <div className="flex items-center justify-between">
-        <div className="pr-4">
-          <h4 className="font-bold text-white">¡Llevá SudOne con vos!</h4>
+    <div className="fixed bottom-0 left-0 right-0 z-50 w-full bg-container p-4 border-t border-border-soft animate-in slide-in-from-bottom-10 md:bottom-4 md:right-4 md:left-auto md:w-full md:max-w-md md:rounded-lg md:border">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-grow">
+          <h4 className="font-bold text-white">Acceso Directo a SudOne</h4>
           <p className="text-sm text-gray-300 mt-1">
-            Instalá la aplicación en tu dispositivo para un acceso rápido y una mejor experiencia.
+            Instala la aplicación para una mejor experiencia móvil.
           </p>
         </div>
         <div className="flex items-center shrink-0">
