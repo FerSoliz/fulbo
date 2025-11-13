@@ -63,7 +63,7 @@ export default function TournamentFixturePage() {
         const regular = matches.filter(match => !match.stage);
         const playoffs = matches.filter(match => !!match.stage);
         const stageOrder = ['16vos de Final', 'Octavos de Final', 'Cuartos de Final', 'Semifinales', 'Final'];
-        const stages = [...new Set(playoffs.map(match => match.stage))].sort((a, b) => stageOrder.indexOf(a) - stageOrder.indexOf(b));
+        const stages = [...new Set(playoffs.map(match => match.stage!))].sort((a, b) => stageOrder.indexOf(a) - stageOrder.indexOf(b));
         return { regularSeasonMatches: regular, playoffMatches: playoffs, playoffStages: stages };
     }, [matches]);
     
@@ -115,8 +115,13 @@ export default function TournamentFixturePage() {
     }, [playoffMatches, hasPlayoffs]);
 
     const canCreatePlayoffs = useMemo(() => {
-        return allRegularSeasonMatchesFinished && !hasPlayoffs;
-    }, [allRegularSeasonMatchesFinished, hasPlayoffs]);
+        // Si la fase regular ha terminado Y no hay playoffs, se pueden crear.
+        const leagueFinished = allRegularSeasonMatchesFinished && !hasPlayoffs;
+        // O si NO hay partidos de fase regular (torneo vacío), también se pueden crear.
+        const noLeaguePhase = regularSeasonMatches.length === 0 && !hasPlayoffs;
+
+        return leagueFinished || noLeaguePhase;
+    }, [allRegularSeasonMatchesFinished, hasPlayoffs, regularSeasonMatches.length]);
 
     const canFinishTournament = useMemo(() => {
         if (tournament?.status === 'finished') return false;
@@ -409,7 +414,7 @@ export default function TournamentFixturePage() {
                                         <ListOrdered className="mx-auto h-12 w-12 text-muted-foreground" /><h3 className="mt-4 text-lg font-semibold">No hay fixture</h3><p className="mt-2 text-sm text-muted-foreground">Aún no se han generado los partidos.</p>
                                         <AlertDialog><AlertDialogTrigger asChild><Button className="mt-6" disabled={isGenerating || teams.length < 2}><PlusCircle className="mr-2 h-4 w-4" />Generar Fixture</Button></AlertDialogTrigger><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Confirmar?</AlertDialogTitle><AlertDialogDescription>Se crearán partidos para los {teams.length} equipos.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleGenerateFixture}>Sí, generar</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
                                     </div>
-                                )}\
+                                )}
                             </CardContent>
                         </Card>
                     </TabsContent>
@@ -434,13 +439,13 @@ export default function TournamentFixturePage() {
                     open={isAddMatchDialogOpen}
                     onOpenChange={setIsAddMatchDialogOpen}
                 />
-                {stats?.positions && (
+                 {canCreatePlayoffs && (
                     <CreatePlayoffsDialog 
                         open={isPlayoffsDialogOpen}
                         onOpenChange={setIsPlayoffsDialogOpen}
                         tournamentId={tournamentId}
                         teams={teams}
-                        positions={stats.positions}
+                        positions={stats?.positions || []}
                     />
                 )}
             </div>

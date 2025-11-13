@@ -90,12 +90,13 @@ const getStageAbbreviation = (numMatches: number) => {
     }
 };
 
-const generateBracket = (numTeams: number, positions: PositionEntry[], teams: Team[]): Round[] => {
-    if (numTeams < 2 || positions.length < numTeams) return [];
+const generateBracket = (numTeams: number, dataSource: PositionEntry[], teams: Team[]): Round[] => {
+    if (numTeams < 2 || dataSource.length < numTeams) return [];
 
     const getTeamLogo = (teamId: string) => teams.find(t => t.id === teamId)?.logoUrl || undefined;
     const rounds: Round[] = [];
-    let currentTeams = positions.slice(0, numTeams).map(p => ({ id: p.teamId, name: p.teamName, logoUrl: getTeamLogo(p.teamId) }));
+    // Usar el dataSource que ya viene preparado
+    let currentTeams = dataSource.slice(0, numTeams).map(p => ({ id: p.teamId, name: p.teamName, logoUrl: getTeamLogo(p.teamId) }));
     let numMatches = numTeams / 2;
     let matchCounter = 1;
     
@@ -135,7 +136,6 @@ const generateBracket = (numTeams: number, positions: PositionEntry[], teams: Te
 const TeamDisplay = ({ team, isPlaceholder, isDragging = false }: { team: TeamInfo, isPlaceholder?: boolean, isDragging?: boolean }) => {
     const isWinnerPlaceholder = isPlaceholder || team.id.startsWith('winner-');
     
-    // El elemento original se hace semi-transparente, el "fantasma" es sólido
     const opacity = isDragging ? 'opacity-30' : 'opacity-100';
 
     if (isWinnerPlaceholder) {
@@ -170,7 +170,6 @@ const DraggableTeam = ({ team, isEditMode }: { team: TeamInfo; isEditMode: boole
     disabled: !isEditMode || team.id.startsWith('winner-'),
   });
   
-  // Se usa CSS.Transform para asegurar un cálculo de posición correcto
   const style = {
     transform: CSS.Transform.toString(transform),
   };
@@ -241,28 +240,52 @@ const RoundColumn = ({ round, isEditMode }: { round: Round, isEditMode: boolean 
 };
 
 export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, positions }: CreatePlayoffsDialogProps) {
-  const [numTeams, setNumTeams] = useState<string>('8');
+  const [numTeams, setNumTeams] = useState<string>('');
   const [isEditMode, setIsEditMode] = useState(false);
   const [editableRounds, setEditableRounds] = useState<Round[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const { toast } = useToast();
 
-  // Sensores para una detección de arrastre más rápida y natural
   const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8, // Inicia el arrastre después de mover 8px
-      },
-    }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor)
   );
 
+  // Decidir la fuente de datos: la tabla de posiciones o la lista completa de equipos.
+  const dataSource = useMemo(() => {
+    if (positions && positions.length > 0) {
+        // Si hay tabla de posiciones, esa es nuestra fuente.
+        return positions;
+    }
+    // Si no, usamos la lista completa de equipos inscritos.
+    return teams.map(team => ({ teamId: team.id, teamName: team.name }));
+  }, [positions, teams]);
+
+  // Generar las opciones del selector (4, 8, 16 equipos) basado en la fuente de datos real.
+  const playoffOptions = useMemo(() => {
+    const possibleSizes = [2, 4, 8, 16, 32];
+    return possibleSizes
+      .filter(size => size <= dataSource.length)
+      .map(size => ({ value: size.toString(), label: `${getStageName(size / 2, true)} (${size} equipos)` }));
+  }, [dataSource]);
+
+  // Efecto para establecer un valor por defecto en el selector cuando las opciones cambian.
+  useEffect(() => {
+      if (playoffOptions.length > 0) {
+          // Por defecto, selecciona la llave más grande posible.
+          setNumTeams(playoffOptions[playoffOptions.length - 1].value);
+      } else {
+          setNumTeams('');
+      }
+  }, [playoffOptions]);
+
   const generatedRounds = useMemo(() => {
       const count = parseInt(numTeams, 10);
-      if (isNaN(count)) return [];
-      return generateBracket(count, positions, teams);
-  }, [numTeams, positions, teams]);
+      if (isNaN(count) || count === 0) return [];
+      // Generar el bracket usando la fuente de datos correcta.
+      return generateBracket(count, dataSource, teams);
+  }, [numTeams, dataSource, teams]);
 
   useEffect(() => {
     setEditableRounds(generatedRounds);
@@ -368,13 +391,6 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
       return null;
   }, [activeId, editableRounds]);
 
-  const playoffOptions = useMemo(() => {
-    const possibleSizes = [2, 4, 8, 16];
-    return possibleSizes
-      .filter(size => size <= positions.length)
-      .map(size => ({ value: size.toString(), label: `${getStageName(size / 2, true)} (${size} equipos)` }));
-  }, [positions.length]);
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-fit">
@@ -387,14 +403,18 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
         
         <div className="space-y-4 py-4">
             <div className='flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between'>
-                <Select value={numTeams} onValueChange={setNumTeams} disabled={isCreating}>
+                <Select value={numTeams} onValueChange={setNumTeams} disabled={isCreating || playoffOptions.length === 0}>
                     <SelectTrigger className="w-full sm:w-64">
-                    <SelectValue placeholder="Seleccionar formato..." />
+                        <SelectValue placeholder="Seleccionar formato..." />
                     </SelectTrigger>
                     <SelectContent>
-                    {playoffOptions.map(option => (
-                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                    ))}
+                        {playoffOptions.length > 0 ? (
+                            playoffOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                            ))
+                        ) : (
+                            <SelectItem value="" disabled>No hay equipos suficientes</SelectItem>
+                        )}
                     </SelectContent>
                 </Select>
                 <div className="flex items-center space-x-2">
