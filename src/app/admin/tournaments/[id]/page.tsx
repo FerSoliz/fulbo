@@ -7,7 +7,7 @@ import { ref, onValue, update, set, get, remove } from 'firebase/database';
 import { db } from '@/lib/firebase';
 import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
-import { saveMatchStatsAndRecalculate, revertMatchStats, calculateTournamentStats } from '@/lib/firebase/stats';
+import { saveMatchStatsAndRecalculate, revertMatchStats, calculateTournamentStats, updatePlayerGlobalStats } from '@/lib/firebase/stats';
 
 import Link from 'next/link';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
