@@ -15,7 +15,7 @@ export const TeamDisplay = ({ team, isPlaceholder = false, isDragging = false }:
   const content = team ? (
     <>
       <Image 
-        src={team.logoUrl || '/images/team-placeholder.png'} 
+        src={team.logoUrl || '/assets/profile/team.png'} 
         alt={team.name} 
         width={20}
         height={20}
