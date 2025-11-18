@@ -111,6 +111,30 @@ export interface Team {
 }
 
 
+// --- TIPOS DE PLAYOFFS ---
+export interface TeamInfo {
+  id: string;
+  name: string;
+  logoUrl?: string;
+}
+
+export interface PositionEntry {
+  teamId: string;
+  teamName: string;
+}
+
+export interface Matchup {
+  id: string;
+  home: TeamInfo | null;
+  away: TeamInfo | null;
+}
+
+export interface Round {
+  title: string;
+  matchups: Matchup[];
+}
+
+
 // --- TIPOS DE ESTADÍSTICAS --
 export interface PlayerStatsInfo {
   goals?: number;
