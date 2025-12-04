@@ -1,6 +1,7 @@
+
 import { ref, get, query, orderByChild, equalTo, update, push } from 'firebase/database';
 import { db } from '../../firebase';
-import { Match, EnrichedMatch, MatchFinances, Player, Team, MatchStats, Round } from '../../types';
+import { Match, EnrichedMatch, MatchFinances, Player, Team, MatchStats, Round, Matchup } from '../../types';
 
 /**
  * Obtiene el historial de partidos para un equipo específico, buscando en todos los torneos en los que participa.
@@ -255,57 +256,80 @@ export const getMatchStatsContext = async (matchId: string, homeTeamId: string, 
     };
 };
 
+// MODIFICADO: Ahora 'stage' es una propiedad opcional en Match y 'advancesTo' también.
+interface PlayoffMatch extends Match {
+  stage: string;
+  advancesToMatchId?: string;
+  advancesToPosition?: 'home' | 'away';
+}
+
 /**
- * Crea una serie de partidos de playoffs en la base de datos para un torneo dado.
- * Esto incluye partidos con equipos placeholder para rondas futuras.
- * @param tournamentId El ID del torneo al que pertenecen los playoffs.
- * @param playoffRounds Las rondas de playoffs generadas, conteniendo los matchups.
+ * Crea una serie de partidos de playoffs en la base de datos para un torneo dado,
+ * incluyendo la estructura completa del bracket con relaciones entre partidos.
+ * @param tournamentId El ID del torneo.
+ * @param playoffRounds Las rondas de playoffs generadas, que deben contener los matchups con referencias al siguiente.
  * @returns Una promesa que se resuelve cuando todos los partidos han sido creados.
  */
 export const createPlayoffMatches = async (tournamentId: string, playoffRounds: Round[]): Promise<void> => {
   console.log(`[DB Service] Iniciando la creación de partidos de playoffs para el torneo: ${tournamentId}`);
-  const updates: { [key: string]: any } = {};
-  let matchCount = 0;
 
+  const updates: { [key: string]: any } = {};
+  // Mapa para relacionar el ID de un matchup (ej: "match-0-0") con el ID del partido real que se creará en la DB.
+  const matchupIdToDbIdMap = new Map<string, string>();
+  // Array temporal para almacenar los objetos de partido antes de añadir las referencias de avance.
+  const matchesToCreate: any[] = [];
+
+  // --- 1. Primera Pasada: Generar IDs y crear objetos de partido base ---
   playoffRounds.forEach((round, roundIndex) => {
     round.matchups.forEach(matchup => {
-      const newMatchRef = push(ref(db, 'matches')); // Generar una nueva clave única
+      const newMatchRef = push(ref(db, 'matches'));
       const newMatchId = newMatchRef.key as string;
+      matchupIdToDbIdMap.set(matchup.id, newMatchId);
 
-      // Determinar los IDs de los equipos. Si son placeholders, se guarda su ID de placeholder.
-      const homeTeamId = matchup.home?.id || 'TBD';
-      const awayTeamId = matchup.away?.id || 'TBD';
-
-      const newMatch: Match = {
+      const newMatch: Partial<PlayoffMatch> = {
         id: newMatchId,
-        tournamentId: tournamentId,
-        round: roundIndex, // El índice de la ronda
-        roundTitle: round.title, // Título de la ronda (ej. "Cuartos de Final")
-        matchupRef: matchup.id, // Referencia al ID del matchup del bracket (ej. "match-0-0", "winner-0-0")
-        homeTeamId: homeTeamId,
-        awayTeamId: awayTeamId,
-        status: 'pending', // Todos los partidos de playoffs inician como pendientes
-        statsProcessed: false,
-        details: { // Se pueden añadir detalles iniciales vacíos
-            date: '',
-            time: '',
-            referee: '',
-            videoUrl: '',
-        }
+        tournamentId,
+        round: roundIndex,
+        roundTitle: round.title,
+        matchupRef: matchup.id,
+        homeTeamId: matchup.home?.id || `winner-${matchup.id.replace('match', 'winner')}`,
+        awayTeamId: matchup.away?.id || `winner-${matchup.id.replace('match', 'winner')}`,
+        status: 'pending',
+        stage: round.title, // La fase del playoff (ej. "Cuartos de Final")
+        details: { date: '', time: '', referee: '', videoUrl: '' },
+        // Guardamos la referencia al siguiente matchup para usarla en la segunda pasada
+        _nextMatchupId: (matchup as any).nextMatchupId,
+        _nextMatchupPosition: (matchup as any).nextMatchupPosition,
       };
-      updates[`/matches/${newMatchId}`] = newMatch;
-      matchCount++;
+      matchesToCreate.push(newMatch);
     });
   });
 
-  if (matchCount === 0) {
+  // --- 2. Segunda Pasada: Añadir las referencias de avance (advancesTo) ---
+  matchesToCreate.forEach(match => {
+    if (match._nextMatchupId) {
+      const nextDbId = matchupIdToDbIdMap.get(match._nextMatchupId);
+      if (nextDbId) {
+        match.advancesToMatchId = nextDbId;
+        match.advancesToPosition = match._nextMatchupPosition;
+      }
+    }
+
+    // Limpiamos las propiedades temporales
+    delete match._nextMatchupId;
+    delete match._nextMatchupPosition;
+    
+    updates[`/matches/${match.id}`] = match;
+  });
+
+  if (Object.keys(updates).length === 0) {
     console.log('[DB Service] No se encontraron partidos de playoffs para crear.');
     return;
   }
 
   try {
     await update(ref(db), updates);
-    console.log(`[DB Service] ${matchCount} partidos de playoffs creados exitosamente para el torneo ${tournamentId}.`);
+    console.log(`[DB Service] ${Object.keys(updates).length} partidos de playoffs creados exitosamente para el torneo ${tournamentId}.`);
   } catch (error) {
     console.error(`[DB Service] Error al crear partidos de playoffs para el torneo ${tournamentId}:`, error);
     throw new Error('No se pudieron crear los partidos de playoffs.');

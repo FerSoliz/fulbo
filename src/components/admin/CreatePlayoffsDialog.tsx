@@ -16,7 +16,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { createPlayoffMatches } from '@/lib/firebase/db/matches'; // Importamos la nueva función
+import { createPlayoffMatches } from '@/lib/firebase/db/matches'; // Importamos la función actualizada
 
 interface CreatePlayoffsDialogProps {
   open: boolean;
@@ -41,7 +41,7 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
     autoRounds,
     customStartPhase, setCustomStartPhase,
     unassignedTeams,
-    customRounds,
+    customRounds, // Este contiene la estructura completa del bracket
     activeTeam,
     handleDragStart, handleDragEnd,
     autoPlayoffOptions,
@@ -51,34 +51,34 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
   const handleCreatePlayoffs = async () => {
     setIsCreating(true);
     try {
+      let roundsToCreate = [];
+      
       if (playoffMode === 'automatic') {
         if (autoRounds.length === 0 || autoRounds[0].matchups.length === 0) {
-          toast({
-            title: "Error al generar playoffs",
-            description: "No hay partidos generados en el modo automático. Asegúrate de seleccionar un número de equipos válido.",
-            variant: "destructive",
-          });
+          toast({ title: "Error", description: "No hay partidos generados. Asegúrate de seleccionar un número de equipos válido.", variant: "destructive" });
           return;
         }
-        await createPlayoffMatches(tournamentId, autoRounds);
-        toast({
-          title: "Playoffs creados",
-          description: "Los partidos de playoffs han sido generados exitosamente.",
-        });
-        onOpenChange(false); // Cierra el modal al finalizar
-      } else {
-        // Lógica para modo personalizado - pendiente de implementar
-        toast({
-            title: "Modo Personalizado",
-            description: "La generación de partidos en modo personalizado aún no está implementada.",
-            variant: "destructive",
-        });
+        roundsToCreate = autoRounds;
+      } else { // Modo Personalizado
+        if (customRounds.length === 0) {
+          toast({ title: "Error", description: "No hay rondas definidas en el modo personalizado. Selecciona una fase de inicio.", variant: "destructive" });
+          return;
+        }
+        roundsToCreate = customRounds;
       }
+
+      await createPlayoffMatches(tournamentId, roundsToCreate);
+      toast({
+        title: "¡Playoffs Creados!",
+        description: `Se generó el fixture para ${playoffMode === 'automatic' ? 'el modo automático' : 'el modo personalizado'}.`,
+      });
+      onOpenChange(false); // Cierra el modal al finalizar
+
     } catch (error) {
       console.error("Error al crear partidos de playoffs:", error);
       toast({
-        title: "Error",
-        description: "Hubo un error al generar los partidos de playoffs. Inténtalo de nuevo.",
+        title: "Error Inesperado",
+        description: "Hubo un error al generar los partidos. Revisa la consola para más detalles.",
         variant: "destructive",
       });
     } finally {
@@ -92,7 +92,7 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
         <DialogHeader>
           <DialogTitle>Crear Playoffs</DialogTitle>
           <DialogDescription>
-            Selecciona el modo de generación y arrastra los equipos para configurar los cruces.
+            Selecciona el modo de generación y configura los cruces.
           </DialogDescription>
         </DialogHeader>
 
@@ -146,26 +146,6 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
               {playoffMode === 'automatic' ? (
                 <AutomaticModeView autoRounds={autoRounds} isEditMode={isEditMode} />
               ) : (
-                <>
-                  {/* For custom mode, we need a sidebar for controls and the unassigned teams */}
-                  <div className='hidden'>
-                    {/* This is a placeholder as CustomModeView now includes the sidebar logic */}
-                    <div className="w-full sm:w-64 flex-shrink-0 space-y-4">
-                      <div className="space-y-4 p-4 border rounded-lg">
-                        <Label>Arrancar Playoffs desde</Label>
-                        <Select value={customStartPhase} onValueChange={setCustomStartPhase} disabled={isCreating || customPlayoffOptions.length === 0}>
-                          <SelectTrigger><SelectValue placeholder="Seleccionar fase..." /></SelectTrigger>
-                          <SelectContent>
-                            {customPlayoffOptions.length > 0 ? (
-                              customPlayoffOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)
-                            ) : (
-                              <SelectItem value="" disabled>No hay fases disponibles</SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </div>
                   <CustomModeView 
                     unassignedTeams={unassignedTeams} 
                     customRounds={customRounds} 
@@ -174,7 +154,6 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
                     customPlayoffOptions={customPlayoffOptions}
                     isCreating={isCreating}
                   />
-                </>
               )}
             </div>
           </div>
@@ -191,7 +170,7 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
         <DialogFooter className='mt-4 flex-shrink-0'>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isCreating}>Cancelar</Button>
           <Button onClick={handleCreatePlayoffs} disabled={isCreating}>
-            {isCreating ? 'Generando...' : 'Generar Partidos de Playoffs'}
+            {isCreating ? 'Generando...' : 'Generar Fixture de Playoffs'}
           </Button>
         </DialogFooter>
       </DialogContent>

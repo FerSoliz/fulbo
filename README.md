@@ -125,6 +125,13 @@
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Generación de Playoffs en Modo Personalizado:**
+  - **Fecha:** 2024-05-29
+  - **Descripción:** Se ha implementado un "Modo Personalizado" para la creación de llaves de playoffs, ofreciendo máxima flexibilidad a los administradores.
+  - **Bracket Completo:** A diferencia del modo automático, esta funcionalidad genera el árbol de playoffs completo de una sola vez, incluyendo todas las rondas futuras (semifinales, final, etc.) desde el inicio.
+  - **Equipos Placeholder:** Para las rondas futuras donde los equipos aún no se han definido, el sistema crea partidos con "placeholders" (ej. "Ganador del Partido X"), que se actualizarán automáticamente a medida que se completen los partidos anteriores.
+  - **Lógica de Backend Robusta:** Se refactorizó la función `createPlayoffMatches` para que construya toda la estructura de partidos, creando las relaciones de avance (`advancesToMatchId` y `advancesToPosition`) entre ellos en una operación atómica.
+  - **Interfaz Intuitiva:** El componente `CreatePlayoffsDialog` ahora invoca esta nueva lógica cuando el administrador selecciona "Modo Personalizado", enviando la estructura del bracket definida por el usuario para su creación.
 - **Generación Automática de Partidos de Playoffs:**
   - **Fecha:** 2024-05-29
   - **Descripción:** Se ha implementado la funcionalidad completa para generar automáticamente el fixture de playoffs de un torneo. El modal "Crear Playoffs" ahora permite a los administradores seleccionar el número de equipos y el sistema generará todos los partidos (incluyendo los de rondas futuras con equipos placeholder) y los guardará en la Realtime Database.
