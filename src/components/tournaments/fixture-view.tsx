@@ -1,16 +1,12 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-// MODIFICADO: Se importa el tipo centralizado EnrichedMatch
+import { useState, useMemo, useEffect } from 'react';
 import { Match, EnrichedMatch, Team } from '@/lib/types';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { MatchCard } from '@/components/match-card';
 
-// ELIMINADO: La interfaz local ya no es necesaria.
-
-// --- Propiedades del Componente ---
 interface FixtureViewProps {
     matches?: Match[];
     teamsMap?: Record<string, Team>;
@@ -18,46 +14,80 @@ interface FixtureViewProps {
     venue?: string;
 }
 
-// --- Componente Principal de la Vista del Fixture ---
+// Estructura de una ronda para la UI
+interface DisplayRound {
+    title: string;
+    matches: EnrichedMatch[];
+}
+
 export const FixtureView = ({ matches, teamsMap, tournamentName, venue }: FixtureViewProps) => {
-    const [currentRound, setCurrentRound] = useState(1);
+    const [currentRoundIndex, setCurrentRoundIndex] = useState(0);
 
-    const { rounds, totalRounds } = useMemo(() => {
-        if (!matches || !teamsMap) return { rounds: {}, totalRounds: 0 };
+    const allDisplayRounds = useMemo(() => {
+        if (!matches || !teamsMap) return [];
 
-        // MODIFICADO: El acumulador ahora usa el tipo EnrichedMatch importado.
-        const groupedByRound = matches.reduce((acc, match) => {
-            const round = match.round || 0;
-            if (!acc[round]) {
-                acc[round] = [];
-            }
-            // Se crea un objeto que cumple con la interfaz EnrichedMatch
-            acc[round].push({
-                ...match,
-                tournamentName: tournamentName,
-                venue: venue,
-                homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
-                homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl,
-                awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
-                awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl,
-                details: match.details, 
-            });
-            return acc;
-        }, {} as Record<number, EnrichedMatch[]>);
-        
-        const roundKeys = Object.keys(groupedByRound).map(Number).sort((a,b) => a - b);
-        const totalRounds = roundKeys.length;
+        // Función para enriquecer los datos de un partido
+        const enrichMatch = (match: Match): EnrichedMatch => ({
+            ...match,
+            tournamentName: tournamentName,
+            venue: venue,
+            homeTeamName: teamsMap[match.homeTeamId]?.name || 'Equipo Local',
+            homeTeamLogo: teamsMap[match.homeTeamId]?.logoUrl,
+            awayTeamName: teamsMap[match.awayTeamId]?.name || 'Equipo Visitante',
+            awayTeamLogo: teamsMap[match.awayTeamId]?.logoUrl,
+        });
 
-        // Lógica para ajustar la ronda actual si no hay partidos cargados para ella
-        if (totalRounds > 0 && !groupedByRound[currentRound]) {
-            const firstAvailableRound = roundKeys.find(r => groupedByRound[r]?.length > 0);
-            setCurrentRound(firstAvailableRound || roundKeys[0] || 1);
+        // 1. Agrupar partidos de liga por jornada
+        const leagueRoundsMap = matches
+            .filter(m => !m.stage)
+            .reduce((acc, match) => {
+                const round = match.round || 0;
+                if (!acc[round]) acc[round] = [];
+                acc[round].push(enrichMatch(match));
+                return acc;
+            }, {} as Record<number, EnrichedMatch[]>);
+
+        const leagueDisplayRounds: DisplayRound[] = Object.keys(leagueRoundsMap)
+            .map(Number)
+            .sort((a, b) => a - b)
+            .map(roundNum => ({
+                title: `Jornada ${roundNum}`,
+                matches: leagueRoundsMap[roundNum],
+            }));
+
+        // 2. Agrupar partidos de playoffs por su fase (stage)
+        const playoffRoundsMap = matches
+            .filter(m => !!m.stage)
+            .reduce((acc, match) => {
+                const stage = match.stage || 'Playoffs';
+                if (!acc[stage]) acc[stage] = [];
+                acc[stage].push(enrichMatch(match));
+                return acc;
+            }, {} as Record<string, EnrichedMatch[]>);
+
+        // Ordenar las fases de playoffs en el orden correcto
+        const stageOrder = ['16vos de Final', 'Octavos de Final', 'Cuartos de Final', 'Semifinales', 'Final'];
+        const playoffDisplayRounds: DisplayRound[] = Object.keys(playoffRoundsMap)
+            .sort((a, b) => stageOrder.indexOf(a) - stageOrder.indexOf(b))
+            .map(stageName => ({
+                title: stageName,
+                matches: playoffRoundsMap[stageName],
+            }));
+
+        // 3. Combinar rondas de liga y de playoffs en un solo array
+        return [...leagueDisplayRounds, ...playoffDisplayRounds];
+
+    }, [matches, teamsMap, tournamentName, venue]);
+
+    // Ajustar el índice si cambia la cantidad de rondas para evitar errores
+    useEffect(() => {
+        if (currentRoundIndex >= allDisplayRounds.length) {
+            setCurrentRoundIndex(Math.max(0, allDisplayRounds.length - 1));
         }
+    }, [allDisplayRounds, currentRoundIndex]);
 
-        return { rounds: groupedByRound, totalRounds: totalRounds };
-    }, [matches, teamsMap, tournamentName, venue, currentRound]);
-
-    const matchesForCurrentRound = rounds[currentRound] || [];
+    const activeRound = allDisplayRounds[currentRoundIndex];
+    const totalRounds = allDisplayRounds.length;
 
     if (!matches || matches.length === 0) {
         return <Card className="text-center text-muted-foreground py-6 px-4"><p>El fixture del torneo aún no está disponible.</p></Card>;
@@ -70,21 +100,21 @@ export const FixtureView = ({ matches, teamsMap, tournamentName, venue }: Fixtur
                     <Button 
                         variant="ghost" 
                         size="icon" 
-                        onClick={() => setCurrentRound(r => r - 1)}
-                        disabled={currentRound <= 1}
+                        onClick={() => setCurrentRoundIndex(i => i - 1)}
+                        disabled={currentRoundIndex <= 0}
                     >
                         <ChevronLeft className="h-5 w-5" />
                     </Button>
                     
                     <div className="text-center">
-                        <h3 className="font-bold text-base">Jornada {currentRound}</h3>
+                        <h3 className="font-bold text-base">{activeRound?.title || 'Fixture'}</h3>
                     </div>
 
                     <Button 
                         variant="ghost" 
                         size="icon" 
-                        onClick={() => setCurrentRound(r => r + 1)}
-                        disabled={currentRound >= totalRounds}
+                        onClick={() => setCurrentRoundIndex(i => i + 1)}
+                        disabled={currentRoundIndex >= totalRounds - 1}
                     >
                         <ChevronRight className="h-5 w-5" />
                     </Button>
@@ -92,13 +122,12 @@ export const FixtureView = ({ matches, teamsMap, tournamentName, venue }: Fixtur
             )}
 
             <div className="space-y-3">
-                {matchesForCurrentRound.length > 0 ? (
-                    matchesForCurrentRound.map(match => (
-                        // MODIFICADO: Se ha eliminado el `as any`. ¡Código limpio y seguro!
+                {activeRound?.matches && activeRound.matches.length > 0 ? (
+                    activeRound.matches.map(match => (
                         <MatchCard key={match.id} match={match} useBottomAccent={true} />
                     ))
                 ) : (
-                    <p className="text-center text-muted-foreground py-4">No hay partidos para esta jornada.</p>
+                    <p className="text-center text-muted-foreground py-4">No hay partidos para esta ronda.</p>
                 )}
             </div>
         </div>
