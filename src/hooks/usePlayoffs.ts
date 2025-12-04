@@ -1,8 +1,44 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
-import { TeamInfo, Round, PositionEntry, Team } from '@/lib/types';
+import { TeamInfo, Round, PositionEntry, Team, Matchup } from '@/lib/types';
 import { generateBracket, generateEmptyBracket, getStageName } from '@/lib/playoffs-utils';
+
+/**
+ * Recorre un bracket de playoffs y añade las referencias al siguiente partido.
+ * Esta función es clave para permitir el avance automático de los ganadores.
+ * @param rounds Las rondas generadas que se van a interconectar.
+ * @returns Un nuevo array de rondas con los matchups actualizados.
+ */
+const linkBracket = (rounds: Round[]): Round[] => {
+  // Creamos una copia profunda para no mutar el estado original, una buena práctica en React.
+  const newRounds = JSON.parse(JSON.stringify(rounds));
+
+  // Iteramos sobre las rondas, excepto la última (la final no avanza a ningún lado).
+  for (let i = 0; i < newRounds.length - 1; i++) {
+    const currentRound = newRounds[i];
+    const nextRound = newRounds[i + 1];
+
+    // Iteramos sobre los partidos de la ronda actual de 2 en 2.
+    for (let j = 0; j < currentRound.matchups.length; j += 2) {
+      const match1 = currentRound.matchups[j];
+      const match2 = currentRound.matchups[j + 1];
+      // El partido destino en la siguiente ronda es el índice j dividido por 2.
+      const nextMatchup = nextRound.matchups[Math.floor(j / 2)];
+
+      if (match1 && nextMatchup) {
+        (match1 as Matchup).nextMatchupId = nextMatchup.id;
+        (match1 as Matchup).nextMatchupPosition = 'home';
+      }
+      if (match2 && nextMatchup) {
+        (match2 as Matchup).nextMatchupId = nextMatchup.id;
+        (match2 as Matchup).nextMatchupPosition = 'away';
+      }
+    }
+  }
+
+  return newRounds;
+};
 
 export const usePlayoffs = (teams: Team[], positions: PositionEntry[]) => {
   const dataSource = useMemo(() => {
@@ -41,20 +77,19 @@ export const usePlayoffs = (teams: Team[], positions: PositionEntry[]) => {
       setUnassignedTeams(allTournamentTeams);
       setCustomRounds([]);
       setCustomStartPhase('');
-    } else {
-        const count = parseInt(numTeams, 10);
-        if (!isNaN(count) && count > 0) {
-            const newBracket = generateBracket(count, dataSource, teams);
-            setAutoRounds(newBracket);
-        }
     }
-  }, [playoffMode, teams, dataSource, allTournamentTeams, numTeams]); 
+  }, [playoffMode, allTournamentTeams]); 
 
   useEffect(() => {
     if (playoffMode === 'custom' && customStartPhase) {
       const numMatches = parseInt(customStartPhase, 10);
+      if (isNaN(numMatches) || numMatches <= 0) {
+        setCustomRounds([]);
+        return;
+      }
       const newBracket = generateEmptyBracket(numMatches);
-      setCustomRounds(newBracket);
+      const linkedBracket = linkBracket(newBracket); // Se aplica la lógica de interconexión
+      setCustomRounds(linkedBracket);
       setUnassignedTeams(allTournamentTeams);
     }
   }, [customStartPhase, playoffMode, allTournamentTeams]);
@@ -77,7 +112,8 @@ export const usePlayoffs = (teams: Team[], positions: PositionEntry[]) => {
         return;
       };
       const newBracket = generateBracket(count, dataSource, teams);
-      setAutoRounds(newBracket)
+      const linkedBracket = linkBracket(newBracket); // Se aplica la lógica de interconexión
+      setAutoRounds(linkedBracket)
   }, [playoffMode, numTeams, dataSource, teams]);
 
 

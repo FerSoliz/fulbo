@@ -125,6 +125,12 @@
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Avance Automático de Ganadores en Playoffs:**
+  - **Fecha:** 2024-05-29
+  - **Descripción:** Se corrigió y completó la lógica de generación de playoffs para asegurar el avance automático de los equipos ganadores a la siguiente ronda del bracket.
+  - **Interconexión de Partidos:** Se implementó una nueva función (`linkBracket` dentro del hook `usePlayoffs`) que recorre la estructura del bracket recién generado y añade a cada partido una referencia a su partido de destino en la siguiente ronda (`advancesToMatchId` y `nextMatchupPosition`).
+  - **Persistencia de Datos:** Esta información de interconexión ahora se guarda en la Realtime Database durante la creación de los partidos, garantizando que el sistema siempre sepa cómo avanza la llave. Cuando un administrador cierra un partido, el sistema utiliza estas referencias para colocar al ganador en la siguiente fase.
+  - **Solución Robusta:** La corrección se aplicó en el origen (al generar la estructura de playoffs), solucionando el problema de forma definitiva tanto para el modo automático como para el personalizado.
 - **Generación de Playoffs en Modo Personalizado:**
   - **Fecha:** 2024-05-29
   - **Descripción:** Se ha implementado un "Modo Personalizado" para la creación de llaves de playoffs, ofreciendo máxima flexibilidad a los administradores.
