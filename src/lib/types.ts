@@ -80,6 +80,8 @@ export interface Match {
   id: string;
   tournamentId: string;
   round: number;
+  roundTitle?: string; // Añadido para el título de la ronda (ej. "Cuartos de Final")
+  matchupRef?: string; // Añadido para la referencia del matchup del bracket (ej. "match-0-0")
   homeTeamId: string;
   awayTeamId: string;
   status: 'pending' | 'finished' | 'live';

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -59,11 +58,13 @@ export default function TournamentFixturePage() {
     const [isPlayoffsDialogOpen, setIsPlayoffsDialogOpen] = useState(false);
     const [editingVideoMatchId, setEditingVideoMatchId] = useState<string | null>(null);
 
+    // Mantenemos esta lógica para las funcionalidades que dependen de la separación.
     const { regularSeasonMatches, playoffMatches, playoffStages } = useMemo(() => {
-        const regular = matches.filter(match => !match.stage);
-        const playoffs = matches.filter(match => !!match.stage);
+        // Aseguramos que 'stage' esté tipado si viene de la base de datos
+        const regular = matches.filter(match => !(match as any).stage);
+        const playoffs = matches.filter(match => !!(match as any).stage);
         const stageOrder = ['16vos de Final', 'Octavos de Final', 'Cuartos de Final', 'Semifinales', 'Final'];
-        const stages = [...new Set(playoffs.map(match => match.stage!))].sort((a, b) => stageOrder.indexOf(a) - stageOrder.indexOf(b));
+        const stages = [...new Set(playoffs.map(match => (match as any).stage!))].sort((a, b) => stageOrder.indexOf(a) - stageOrder.indexOf(b));
         return { regularSeasonMatches: regular, playoffMatches: playoffs, playoffStages: stages };
     }, [matches]);
     
@@ -79,7 +80,7 @@ export default function TournamentFixturePage() {
       };
   
       const roundsMap = playoffMatches.reduce((acc, match) => {
-        const stage = match.stage || 'Playoffs';
+        const stage = (match as any).stage || 'Playoffs';
         if (!acc[stage]) {
           acc[stage] = { name: stage, matches: [] };
         }
@@ -115,9 +116,7 @@ export default function TournamentFixturePage() {
     }, [playoffMatches, hasPlayoffs]);
 
     const canCreatePlayoffs = useMemo(() => {
-        // Si la fase regular ha terminado Y no hay playoffs, se pueden crear.
         const leagueFinished = allRegularSeasonMatchesFinished && !hasPlayoffs;
-        // O si NO hay partidos de fase regular (torneo vacío), también se pueden crear.
         const noLeaguePhase = regularSeasonMatches.length === 0 && !hasPlayoffs;
 
         return leagueFinished || noLeaguePhase;
@@ -125,9 +124,7 @@ export default function TournamentFixturePage() {
 
     const canFinishTournament = useMemo(() => {
         if (tournament?.status === 'finished') return false;
-        // Escenario A: Torneo de liga (sin playoffs) donde todos los partidos de temp. regular terminaron
         const leagueOnlyFinished = allRegularSeasonMatchesFinished && !hasPlayoffs && regularSeasonMatches.length > 0;
-        // Escenario B: Torneo con playoffs donde todos los partidos de playoffs terminaron
         const playoffsFinished = hasPlayoffs && allPlayoffMatchesFinished;
         return leagueOnlyFinished || playoffsFinished;
     }, [tournament?.status, allRegularSeasonMatchesFinished, hasPlayoffs, allPlayoffMatchesFinished, regularSeasonMatches.length]);
@@ -154,7 +151,7 @@ export default function TournamentFixturePage() {
                 toast({ title: "¡Equipo avanza en playoffs!", className: "bg-blue-500 text-white" });
             }
 
-            if (!match.stage) {
+            if (!(match as any).stage) { // Solo recalcular si no es de playoff
                  await calculateTournamentStats(tournament.id, teams);
                  toast({ title: "Paso 3/4: Tablas del Torneo Actualizadas" });
             }
@@ -258,15 +255,51 @@ export default function TournamentFixturePage() {
         return teams.find(t => t.id === teamId)?.name || 'Equipo...';
     }
     
-    const rounds = useMemo(() => {
-        const roundsMap = regularSeasonMatches.reduce((acc, match) => {
-            const roundNum = match.round || 0;
-            if (!acc[roundNum]) acc[roundNum] = [];
-            acc[roundNum].push(match);
-            return acc;
-        }, {} as { [round: number]: Match[] });
-        return Object.entries(roundsMap).sort(([a], [b]) => Number(a) - Number(b));
-    }, [regularSeasonMatches]);
+    const groupedRoundsAndStages = useMemo(() => {
+        const roundsAndStages: Record<string, { title: string; matches: Match[] }> = {};
+        const stageOrder = ['16vos de Final', 'Octavos de Final', 'Cuartos de Final', 'Semifinales', 'Final'];
+
+        matches.forEach(match => {
+            let idKey: string;
+            let displayTitle: string;
+
+            // Si el partido tiene 'stage' (para playoffs), lo usamos como ID y título
+            if ((match as any).stage) {
+                idKey = (match as any).stage;
+                displayTitle = (match as any).stage; // Usar directamente el stage como título
+            } else {
+                // Para partidos de temporada regular o sin 'stage', usamos 'round'
+                idKey = `round-${match.round || 0}`;
+                displayTitle = match.roundTitle || `Jornada ${match.round || 0}`;
+            }
+
+            if (!roundsAndStages[idKey]) {
+                roundsAndStages[idKey] = { title: displayTitle, matches: [] };
+            }
+            roundsAndStages[idKey].matches.push(match);
+        });
+
+        // Convertir a array y ordenar
+        return Object.values(roundsAndStages).sort((a, b) => {
+            // Intenta ordenar por el orden de los playoffs si son stages
+            const aIsStage = stageOrder.indexOf(a.title);
+            const bIsStage = stageOrder.indexOf(b.title);
+
+            if (aIsStage > -1 && bIsStage > -1) {
+                return aIsStage - bIsStage;
+            } else if (aIsStage > -1) {
+                return -1; // Los stages van antes que las jornadas
+            } else if (bIsStage > -1) {
+                return 1; // Las jornadas van después de los stages
+            } else {
+                // Si ambos son jornadas, ordenar por número de ronda
+                const roundA = parseInt(a.title.replace('Jornada ', ''));
+                const roundB = parseInt(b.title.replace('Jornada ', ''));
+                return roundA - roundB;
+            }
+        });
+
+    }, [matches]);
 
     const renderMatchCard = (match: Match) => (
         <Card key={match.id} className={match.status === 'finished' ? 'bg-green-900/20 border-green-500' : ''}>
@@ -387,24 +420,17 @@ export default function TournamentFixturePage() {
                             </CardHeader>
                             <CardContent>
                                 {matches.length > 0 ? (
-                                    <Tabs defaultValue={regularSeasonMatches.length > 0 ? `round-1` : (playoffStages[0] || '')} className="w-full">
+                                    <Tabs defaultValue={Object.keys(groupedRoundsAndStages)[0]} className="w-full">
                                         <TabsList className="overflow-x-auto h-auto">
-                                            {rounds.map(([roundNum]) => <TabsTrigger key={`round-${roundNum}`} value={`round-${roundNum}`}>FECHA {roundNum}</TabsTrigger>)}
-                                            {playoffStages.map(stage => <TabsTrigger key={stage} value={stage}>{stage}</TabsTrigger>)}
+                                            {groupedRoundsAndStages.map((roundOrStage) => (
+                                                <TabsTrigger key={roundOrStage.title} value={roundOrStage.title}>{roundOrStage.title}</TabsTrigger>
+                                            ))}
                                         </TabsList>
 
-                                        {rounds.map(([roundNum, roundMatches]) => (
-                                            <TabsContent key={`content-round-${roundNum}`} value={`round-${roundNum}`}>
+                                        {groupedRoundsAndStages.map((roundOrStage) => (
+                                            <TabsContent key={`content-${roundOrStage.title}`} value={roundOrStage.title}>
                                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-                                                    {roundMatches.map(renderMatchCard)}
-                                                </div>
-                                            </TabsContent>
-                                        ))}
-
-                                        {playoffStages.map(stage => (
-                                            <TabsContent key={`content-stage-${stage}`} value={stage}>
-                                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
-                                                    {playoffMatches.filter(m => m.stage === stage).map(renderMatchCard)}
+                                                    {roundOrStage.matches.map(renderMatchCard)}
                                                 </div>
                                             </TabsContent>
                                         ))}

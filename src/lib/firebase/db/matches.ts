@@ -1,6 +1,6 @@
-import { ref, get, query, orderByChild, equalTo, update } from 'firebase/database';
+import { ref, get, query, orderByChild, equalTo, update, push } from 'firebase/database';
 import { db } from '../../firebase';
-import { Match, EnrichedMatch, MatchFinances, Player, Team, MatchStats } from '../../types';
+import { Match, EnrichedMatch, MatchFinances, Player, Team, MatchStats, Round } from '../../types';
 
 /**
  * Obtiene el historial de partidos para un equipo específico, buscando en todos los torneos en los que participa.
@@ -253,4 +253,61 @@ export const getMatchStatsContext = async (matchId: string, homeTeamId: string, 
         awayTeam: { name: awayTeamSnap.val() || 'Visitante', players: awayPlayers },
         stats: initialStats,
     };
+};
+
+/**
+ * Crea una serie de partidos de playoffs en la base de datos para un torneo dado.
+ * Esto incluye partidos con equipos placeholder para rondas futuras.
+ * @param tournamentId El ID del torneo al que pertenecen los playoffs.
+ * @param playoffRounds Las rondas de playoffs generadas, conteniendo los matchups.
+ * @returns Una promesa que se resuelve cuando todos los partidos han sido creados.
+ */
+export const createPlayoffMatches = async (tournamentId: string, playoffRounds: Round[]): Promise<void> => {
+  console.log(`[DB Service] Iniciando la creación de partidos de playoffs para el torneo: ${tournamentId}`);
+  const updates: { [key: string]: any } = {};
+  let matchCount = 0;
+
+  playoffRounds.forEach((round, roundIndex) => {
+    round.matchups.forEach(matchup => {
+      const newMatchRef = push(ref(db, 'matches')); // Generar una nueva clave única
+      const newMatchId = newMatchRef.key as string;
+
+      // Determinar los IDs de los equipos. Si son placeholders, se guarda su ID de placeholder.
+      const homeTeamId = matchup.home?.id || 'TBD';
+      const awayTeamId = matchup.away?.id || 'TBD';
+
+      const newMatch: Match = {
+        id: newMatchId,
+        tournamentId: tournamentId,
+        round: roundIndex, // El índice de la ronda
+        roundTitle: round.title, // Título de la ronda (ej. "Cuartos de Final")
+        matchupRef: matchup.id, // Referencia al ID del matchup del bracket (ej. "match-0-0", "winner-0-0")
+        homeTeamId: homeTeamId,
+        awayTeamId: awayTeamId,
+        status: 'pending', // Todos los partidos de playoffs inician como pendientes
+        statsProcessed: false,
+        details: { // Se pueden añadir detalles iniciales vacíos
+            date: '',
+            time: '',
+            referee: '',
+            videoUrl: '',
+        }
+      };
+      updates[`/matches/${newMatchId}`] = newMatch;
+      matchCount++;
+    });
+  });
+
+  if (matchCount === 0) {
+    console.log('[DB Service] No se encontraron partidos de playoffs para crear.');
+    return;
+  }
+
+  try {
+    await update(ref(db), updates);
+    console.log(`[DB Service] ${matchCount} partidos de playoffs creados exitosamente para el torneo ${tournamentId}.`);
+  } catch (error) {
+    console.error(`[DB Service] Error al crear partidos de playoffs para el torneo ${tournamentId}:`, error);
+    throw new Error('No se pudieron crear los partidos de playoffs.');
+  }
 };

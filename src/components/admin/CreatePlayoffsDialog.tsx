@@ -16,6 +16,7 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { createPlayoffMatches } from '@/lib/firebase/db/matches'; // Importamos la nueva función
 
 interface CreatePlayoffsDialogProps {
   open: boolean;
@@ -48,7 +49,41 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
   } = usePlayoffs(teams, positions);
 
   const handleCreatePlayoffs = async () => {
-    alert("Funcionalidad de 'Generar Partidos' pendiente de implementación.");
+    setIsCreating(true);
+    try {
+      if (playoffMode === 'automatic') {
+        if (autoRounds.length === 0 || autoRounds[0].matchups.length === 0) {
+          toast({
+            title: "Error al generar playoffs",
+            description: "No hay partidos generados en el modo automático. Asegúrate de seleccionar un número de equipos válido.",
+            variant: "destructive",
+          });
+          return;
+        }
+        await createPlayoffMatches(tournamentId, autoRounds);
+        toast({
+          title: "Playoffs creados",
+          description: "Los partidos de playoffs han sido generados exitosamente.",
+        });
+        onOpenChange(false); // Cierra el modal al finalizar
+      } else {
+        // Lógica para modo personalizado - pendiente de implementar
+        toast({
+            title: "Modo Personalizado",
+            description: "La generación de partidos en modo personalizado aún no está implementada.",
+            variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error al crear partidos de playoffs:", error);
+      toast({
+        title: "Error",
+        description: "Hubo un error al generar los partidos de playoffs. Inténtalo de nuevo.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreating(false);
+    }
   };
 
   return (
@@ -72,7 +107,7 @@ export function CreatePlayoffsDialog({ open, onOpenChange, tournamentId, teams, 
                     type="single"
                     value={playoffMode}
                     onValueChange={(value: 'automatic' | 'custom') => value && setPlayoffMode(value)}
-                    className="grid grid-cols-2"
+                    className="grid grid-cols2"
                     disabled={isCreating}
                   >
                     <ToggleGroupItem value="automatic">Automático</ToggleGroupItem>

@@ -125,6 +125,12 @@
 ## 11. Roadmap del Proyecto
 Esta sección sirve como un registro vivo del estado de las funcionalidades del proyecto SudOne.
 ### Funcionalidades Implementadas
+- **Generación Automática de Partidos de Playoffs:**
+  - **Fecha:** 2024-05-29
+  - **Descripción:** Se ha implementado la funcionalidad completa para generar automáticamente el fixture de playoffs de un torneo. El modal "Crear Playoffs" ahora permite a los administradores seleccionar el número de equipos y el sistema generará todos los partidos (incluyendo los de rondas futuras con equipos placeholder) y los guardará en la Realtime Database.
+  - **Estructura de Datos Mejorada:** Se actualizaron los tipos en `src/lib/types.ts` para incluir `roundTitle` y `matchupRef` en la interfaz `Match`, permitiendo una mejor trazabilidad y visualización del bracket.
+  - **Capa de Datos Centralizada:** Se añadió la función `createPlayoffMatches` en `src/lib/firebase/db/matches.ts`, encargada de persistir de forma atómica todos los partidos generados en la colección `/matches` de Firebase.
+  - **Feedback al Usuario:** Se integró el `useToast` para proporcionar notificaciones claras sobre el éxito o fracaso de la operación, y se gestionó el estado de carga del botón.
 - **Mercado de Pases Interactivo y Responsivo:**
   - **Fecha:** 2024-05-28
   - **Descripción:** Se ha creado desde cero la sección "Mercado de Pases" (`/transfer-market`), una página clave para la dinámica de fichajes entre equipos.
