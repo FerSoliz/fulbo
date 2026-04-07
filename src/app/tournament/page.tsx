@@ -160,7 +160,7 @@ export default function TournamentPage() {
         setNewTournament({ title: '', subtitle: '', costs: { inscription: '', match: '' }, contact: { name: '', phone: '' }, note: '', days: '', timeSlot: '', prizes: '', format: [] });
     };
 
-    const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'editor';
+    const isAdmin = currentUser?.role === 'admin';
 
    return (
        <div className="p-4 sm:p-6 lg:p-8">

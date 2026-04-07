@@ -84,7 +84,7 @@ export default function HomePage() {
     }
   };
 
-  const canPost = currentUser?.role === 'admin' || currentUser?.role === 'captain';
+  const canPost = currentUser?.role === 'admin' || currentUser?.role === 'player';
 
   return (
     <div className="max-w-2xl mx-auto p-4" aria-live="polite" aria-busy={postsStatus === 'loading' || userContextLoading}>

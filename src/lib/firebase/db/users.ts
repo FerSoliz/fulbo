@@ -95,7 +95,7 @@ export const findUserByDni = async (dni: string) => {
     const snapshot = await get(q);
 
     if (snapshot.exists()) {
-        let foundUser = null;
+        let foundUser: any = null;
         snapshot.forEach((childSnapshot) => {
           const userData = childSnapshot.val();
           if (userData && !foundUser) {

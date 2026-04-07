@@ -1,0 +1,18 @@
+# Documentacion de la Plataforma
+
+Este directorio centraliza toda la documentacion del proyecto.
+
+## Estructura
+
+- `documentacion/producto/plataforma.md`: vision funcional, modulos, roles y flujos clave.
+- `documentacion/arquitectura/blueprint.md`: arquitectura tecnica actual (Realtime-only).
+- `documentacion/dev/convenciones.md`: reglas de trabajo, calidad y mantenimiento.
+- `documentacion/checklists/implementacion-checklist-1.md`: checklist operativo ejecutado y estado de cierre.
+- `documentacion/plantillas/plantilla-documento.md`: plantilla base para nuevas docs.
+
+## Regla de orden
+
+- Todo documento nuevo se crea dentro de `documentacion/`.
+- No crear docs sueltos en la raiz.
+- Usar nombres en `kebab-case` para archivos nuevos.
+- Si un doc cambia de lugar, actualizar este indice y el `README.md` de raiz.

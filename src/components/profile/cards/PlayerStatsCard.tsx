@@ -19,11 +19,11 @@ const StatItem = ({ icon, value, label }: { icon: React.ReactNode, value: number
 );
 
 // Componente interno para mostrar la cuadrícula de estadísticas
-const StatsDisplay = ({ stats }: { stats: { matchesPlayed: number; goals: number; assists: number; mvp: number; } }) => (
+const StatsDisplay = ({ stats }: { stats: { matchesPlayed: number; goals: number; assists?: number; mvp: number; } }) => (
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
         <StatItem icon={<Shield className="h-8 w-8" />} value={stats.matchesPlayed} label="Partidos" />
         <StatItem icon={<Target className="h-8 w-8" />} value={stats.goals} label="Goles" />
-        <StatItem icon={<Star className="h-8 w-8" />} value={stats.assists} label="Asistencias" />
+        <StatItem icon={<Star className="h-8 w-8" />} value={stats.assists ?? 0} label="Asistencias" />
         <StatItem icon={<Trophy className="h-8 w-8" />} value={stats.mvp} label="MVPs" />
     </div>
 );

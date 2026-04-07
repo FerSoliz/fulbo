@@ -31,7 +31,7 @@ const adaptGuestToProfile = (guestData: GuestPlayer, dni: string): UserProfile =
   isGuest: true,
   // Proporcionamos valores por defecto para campos de usuario que no existen en invitados
   username: guestData.name.replace(/\s+/g, '.').toLowerCase(), // generamos un username temporal
-  role: 'Player',
+  role: 'player',
   avatar: '/assets/images/default-avatar.png', // avatar por defecto
   profileBackground: '/assets/images/default-background.jpg', // fondo por defecto
   isVerified: false,

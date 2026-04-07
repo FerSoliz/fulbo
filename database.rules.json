@@ -11,9 +11,9 @@
       }
     },
     "guestPlayers": {
-      ".read": true,
+      ".read": "auth != null",
       "$dni": {
-        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'captain' || (newData.val() === null && !root.child('users').child(auth.uid).exists()))"
+        ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('team').child('id').exists())"
       }
     },
     "match_stats": {
@@ -49,7 +49,7 @@
       ".read": true,
       "$postId": {
         ".validate": "newData.hasChildren(['authorId', 'authorName', 'authorAvatar', 'authorUsername', 'createdAt']) && newData.child('authorId').isString() && newData.child('authorName').isString() && newData.child('authorAvatar').isString() && newData.child('authorUsername').isString() && (newData.hasChild('content') && newData.child('content').isString() && newData.child('content').val().length > 0 || newData.hasChild('media'))",
-        ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'captain')) || (data.exists() && (data.child('authorId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')))",
+        ".write": "auth != null && ((!data.exists() && newData.child('authorId').val() === auth.uid && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'player')) || (data.exists() && (data.child('authorId').val() === auth.uid || root.child('users').child(auth.uid).child('role').val() === 'admin')))",
         "authorAvatar": {
           ".validate": "newData.isString()"
         },
@@ -103,7 +103,7 @@
       ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
       "$teamId": {
         "players": {
-          ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('role').val() === 'captain')"
+          ".write": "auth != null && (root.child('users').child(auth.uid).child('role').val() === 'admin' || root.child('users').child(auth.uid).child('team').child('id').val() === $teamId)"
         }
       }
     },
@@ -120,11 +120,12 @@
         "dni",
         "sudpoints"
       ],
-      ".read": true,
+      ".read": "auth != null",
       "$userId": {
-        ".write": "auth != null && ( (auth.uid === $userId && !data.exists()) || (auth.uid === $userId && data.exists()) || root.child('users').child(auth.uid).child('role').val() === 'admin' )",
+        ".write": "auth != null && (auth.uid === $userId || root.child('users').child(auth.uid).child('role').val() === 'admin')",
         "role": {
-          ".validate": "newData.isString() && (newData.val() === 'player' || newData.val() === 'captain' || newData.val() === 'admin')"
+          ".write": "auth != null && root.child('users').child(auth.uid).child('role').val() === 'admin'",
+          ".validate": "newData.isString() && (newData.val() === 'player' || newData.val() === 'admin' || newData.val() === 'vendedor')"
         },
         "username": {
           ".validate": "newData.isString() && newData.val().length > 0"

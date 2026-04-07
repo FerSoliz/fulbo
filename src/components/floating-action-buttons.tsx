@@ -26,7 +26,9 @@ import { useUser } from '@/context/user-context';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import type { Conversation, Message } from '@/lib/data';
+import type { Conversation } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { ref, onValue } from 'firebase/database';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { format, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -39,11 +41,19 @@ export function FloatingActionButtons() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
 
   useEffect(() => {
-    if (currentUser) {
-        const savedConversations = JSON.parse(localStorage.getItem('conversations') || '[]');
-        const userConversations = savedConversations.filter((c: Conversation) => c.participants.includes(currentUser.id));
-        setConversations(userConversations);
-    }
+    if (!currentUser) return;
+
+    const conversationsRef = ref(db, 'conversations');
+    const unsubscribe = onValue(conversationsRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const userConversations: Conversation[] = Object.keys(data)
+        .map((id) => ({ id, ...data[id] }))
+        .filter((convo: Conversation) => convo.participants?.includes(currentUser.id));
+
+      setConversations(userConversations);
+    });
+
+    return () => unsubscribe();
   }, [currentUser]);
 
   if (!currentUser || currentUser.name === 'VISITANTE') {

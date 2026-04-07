@@ -1,5 +1,5 @@
 // Este archivo NO debe tener 'use client';
-import { initializeApp, getApps, getApp, App } from 'firebase/app';
+import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
 import { getDatabase } from "firebase/database";
 
 // ¡CAMBIO CLAVE! Leemos las mismas variables que usa el cliente.
@@ -9,7 +9,6 @@ const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
@@ -17,7 +16,7 @@ const firebaseConfig = {
 };
 
 // Patrón Singleton para la inicialización en el servidor
-let app: App;
+let app: FirebaseApp;
 if (!getApps().length) {
   // Validamos que las variables de entorno se hayan cargado correctamente.
   // Esta validación ahora funcionará en producción porque Vercel inyecta las variables.

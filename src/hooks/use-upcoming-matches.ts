@@ -7,6 +7,8 @@ import { getUpcomingMatchesForTeam, getMultipleTeams, getMultipleTournaments } f
 // MODIFICADO: Se importa el tipo centralizado
 import { EnrichedMatch, Match } from '@/lib/types';
 
+export type { EnrichedMatch } from '@/lib/types';
+
 // ELIMINADO: La definición local de EnrichedMatch ya no es necesaria.
 
 export const useUpcomingMatches = (teamId: string | undefined) => {

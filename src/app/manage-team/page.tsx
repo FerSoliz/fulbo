@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link'; // <-- Importamos Link para el botón del admin
 import { RosterManager } from '@/components/team/RosterManager';
 import { useUser } from '@/context/user-context';
-import { getTeamDetails, TeamDetails } from '@/lib/firebase/db';
+import { getTeamDetails } from '@/lib/firebase/db';
+import type { TeamDetails } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button'; // <-- Importamos Button
@@ -36,10 +37,10 @@ export default function ManageTeamPage() {
   useEffect(() => {
     async function fetchTeamData() {
       // Solo cargamos los datos del equipo si el usuario es un Capitán
-      if (user?.role === 'Captain' && user.teamId) {
+      if (user?.team?.id) {
         setHeaderLoading(true);
         try {
-          const details = await getTeamDetails(user.teamId);
+          const details = await getTeamDetails(user.team.id);
           if (details) setTeamDetails(details);
         } catch (error) {
           console.error("Error al cargar los detalles del equipo:", error);
@@ -93,7 +94,7 @@ export default function ManageTeamPage() {
   }
 
   // 3. Guardia de acceso para Capitanes (y otros roles)
-  if (user?.role !== 'Captain' || !user.teamId) {
+  if (!user?.team?.id) {
     return (
       <div className="container mx-auto p-4">
         <Alert variant="destructive">
@@ -116,7 +117,7 @@ export default function ManageTeamPage() {
         <Card className="mb-6"><CardHeader><CardTitle className="text-3xl font-bold">Gestionar Equipo</CardTitle></CardHeader></Card>
       )}
 
-      <RosterManager teamId={user.teamId} />
+      <RosterManager teamId={user.team.id} />
     </div>
   );
 }

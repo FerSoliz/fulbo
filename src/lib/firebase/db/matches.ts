@@ -286,7 +286,7 @@ export const createPlayoffMatches = async (tournamentId: string, playoffRounds: 
       const newMatchId = newMatchRef.key as string;
       matchupIdToDbIdMap.set(matchup.id, newMatchId);
 
-      const newMatch: Partial<PlayoffMatch> = {
+      const newMatch: any = {
         id: newMatchId,
         tournamentId,
         round: roundIndex,

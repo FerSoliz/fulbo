@@ -23,8 +23,8 @@ export default {
         code: ['monospace'],
       },
       colors: {
-        'primary': '#21232f',
-        'secondary': '#2e303f',
+        'brand-primary': '#21232f',
+        'brand-secondary': '#2e303f',
         'container': '#292e38',
         'border-soft': '#343b46',
         'border-hard': '#222222',

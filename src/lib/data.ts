@@ -8,7 +8,7 @@ export interface User {
   email?: string;
   dni?: string;
   // CORRECCIÓN: Alineado con los roles definidos en rules.md
-  role: 'player' | 'captain' | 'admin';
+  role: 'player' | 'admin' | 'vendedor';
   avatar: string;
   isBlocked?: boolean;
   sudpoints: number;
@@ -182,14 +182,14 @@ export const initialUsers: User[] = [
     favoriteTournaments: ['clausura-2024'], // <-- TORNEO FAVORITO AÑADIDO
   },
   {
-    id: 'captain-user', // ID actualizado
+    id: 'player-user',
     name: 'Leo Messi',
     username: 'leomessi',
-    email: 'captain@sudone.com', // Email actualizado
+    email: 'player@sudone.com',
     avatar: 'https://i.postimg.cc/L6ZDmP25/messi.jpg',
     location: 'Rosario, Argentina',
     isVerified: true,
-    role: 'captain', // Rol actualizado
+    role: 'player',
     isBlocked: false,
     sudpoints: 80,
     baseSudpoints: 0,

@@ -72,8 +72,8 @@ export function ManualCashEntryModal({
         if (existingEntry) {
             setConcept(existingEntry.concept);
             setDate(new Date(existingEntry.date));
-            const incomes = existingEntry.finances.income.items;
-            const expenses = existingEntry.finances.expenses.items;
+            const incomes = existingEntry.finances.income?.items || [];
+            const expenses = existingEntry.finances.expenses?.items || [];
             setIncomeItems(incomes && incomes.length > 0 ? incomes : [{ ...emptyItem, id: uuidv4() }]);
             setExpenseItems(expenses && expenses.length > 0 ? expenses : [{ ...emptyItem, id: uuidv4() }]);
             setNotes(existingEntry.finances.notes || "");

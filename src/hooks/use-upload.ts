@@ -1,8 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { useToast } from '@/hooks/use-toast';
-import { storage } from '@/lib/firebase';
 
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -11,81 +9,79 @@ export function useUpload() {
   const [progress, setProgress] = useState(0);
   const { toast } = useToast();
 
-  const uploadFile = async (file: File, path: string): Promise<string> => {
+  const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  }
+
+  const compressImageToDataUrl = async (file: File): Promise<string> => {
+    const imageDataUrl = await fileToDataUrl(file);
+    const image = new Image();
+
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error('No se pudo leer la imagen.'));
+      image.src = imageDataUrl;
+    });
+
+    const MAX_SIDE = 1280;
+    const scale = Math.min(1, MAX_SIDE / Math.max(image.width, image.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.floor(image.width * scale));
+    canvas.height = Math.max(1, Math.floor(image.height * scale));
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      return imageDataUrl;
+    }
+
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.78);
+  }
+
+  const uploadFile = async (file: File, _path: string): Promise<string> => {
     setIsUploading(true);
     setProgress(0);
-    
-    // Sanitize the file name to prevent issues with special characters.
-    const sanitizedFileName = file.name.replace(/[/\\?%*:|"<>]/g, '_');
-    const storageRef = ref(storage, `${path}/${Date.now()}_${sanitizedFileName}`);
-    const uploadTask = uploadBytesResumable(storageRef, file);
 
-    return new Promise((resolve, reject) => {
-      uploadTask.on(
-        'state_changed',
-        (snapshot) => {
-          const currentProgress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-          setProgress(currentProgress);
-        },
-        (error) => {
-          console.error("Upload error:", error);
-          toast({
-            title: 'Error de Subida',
-            description: 'Hubo un problema al subir el archivo.',
-            variant: 'destructive',
-          });
-          setIsUploading(false);
-          reject(error);
-        },
-        () => {
-          getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-            setIsUploading(false);
-            resolve(downloadURL);
-          }).catch((error) => {
-             console.error("URL fetch error:", error);
-             setIsUploading(false);
-             reject(error);
-          });
-        }
-      );
-    });
+    try {
+      setProgress(35);
+      const dataUrl = file.type.startsWith('image/')
+        ? await compressImageToDataUrl(file)
+        : await fileToDataUrl(file);
+      setProgress(100);
+      return dataUrl;
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Error de Subida',
+        description: 'Hubo un problema al procesar el archivo.',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsUploading(false);
+    }
   };
   
   const uploadMultipleFiles = async (files: File[], path: string): Promise<string[]> => {
       setIsUploading(true);
       setProgress(0);
       
-      const uploadPromises = files.map((file, index) => 
-        new Promise<string | null>((resolve, reject) => {
-          const sanitizedFileName = file.name.replace(/[/\\?%*:|"<>]/g, '_');
-          const storageRef = ref(storage, `${path}/${Date.now()}_${sanitizedFileName}`);
-          const uploadTask = uploadBytesResumable(storageRef, file);
-
-          uploadTask.on(
-            'state_changed',
-            (snapshot) => {
-              const overallProgress = ((index + (snapshot.bytesTransferred / snapshot.totalBytes)) / files.length) * 100;
-              setProgress(overallProgress);
-            },
-            (error) => {
-              console.error(`Error subiendo ${file.name}:`, error);
-              resolve(null); // Resolve with null on error for individual file
-            },
-            () => {
-              getDownloadURL(uploadTask.snapshot.ref).then(downloadURL => {
-                  resolve(downloadURL);
-              }).catch(error => {
-                  console.error(`Error obteniendo URL for ${file.name}:`, error);
-                  resolve(null);
-              });
-            }
-          );
-        })
-      );
-      
       try {
-        const results = await Promise.all(uploadPromises);
-        const successfulUrls = results.filter((url): url is string => url !== null);
+        const successfulUrls: string[] = [];
+        for (let i = 0; i < files.length; i++) {
+          try {
+            const url = await uploadFile(files[i], path);
+            successfulUrls.push(url);
+          } catch (error) {
+            console.error(`Error procesando ${files[i].name}:`, error);
+          }
+          setProgress(((i + 1) / files.length) * 100);
+        }
         
         if (successfulUrls.length === files.length) {
             toast({
@@ -101,10 +97,10 @@ export function useUpload() {
         }
         return successfulUrls;
 
-      } catch (error) { 
+      } catch (error) {
         toast({
           title: 'Error de Subida Múltiple',
-          description: 'Ocurrió un error inesperado durante la subida.',
+          description: 'Ocurrió un error inesperado durante el proceso.',
           variant: 'destructive',
         });
         return [];
@@ -112,16 +108,6 @@ export function useUpload() {
         setIsUploading(false);
         setProgress(0);
       }
-  }
-
-  // Converts a file to a base64 Data URL
-  const fileToDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
   }
 
   return { isUploading, progress, uploadFile, uploadMultipleFiles, fileToDataUrl };

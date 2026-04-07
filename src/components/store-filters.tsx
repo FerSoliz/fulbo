@@ -20,7 +20,7 @@ export function StoreFilters({ stores, selectedStore, onSelectStore }: StoreFilt
           <Button
             key={store}
             variant={selectedStore === store ? 'default' : 'outline'}
-            size={isMobile ? 'xs' : 'sm'}
+            size={'sm'}
             onClick={() => onSelectStore(store)}
             className="whitespace-nowrap rounded-none px-4"
           >

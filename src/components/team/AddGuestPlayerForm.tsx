@@ -23,9 +23,10 @@ interface AddGuestPlayerFormProps {
   dni: string; // El DNI que no se encontró
   onAddGuest: (name: string, dni: string) => void;
   onCancel: () => void;
+  isSubmitting?: boolean;
 }
 
-export function AddGuestPlayerForm({ dni, onAddGuest, onCancel }: AddGuestPlayerFormProps) {
+export function AddGuestPlayerForm({ dni, onAddGuest, onCancel, isSubmitting = false }: AddGuestPlayerFormProps) {
   const [loading, setLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<GuestPlayerInput>({
@@ -37,6 +38,7 @@ export function AddGuestPlayerForm({ dni, onAddGuest, onCancel }: AddGuestPlayer
   });
 
   const onSubmit = (data: GuestPlayerInput) => {
+    if (isSubmitting) return;
     setLoading(true);
     console.log('Añadiendo jugador invitado:', data);
 
@@ -64,7 +66,7 @@ export function AddGuestPlayerForm({ dni, onAddGuest, onCancel }: AddGuestPlayer
                         id="guest-name" 
                         {...register('name')} 
                         placeholder="Ej: Jorge Campos"
-                        disabled={loading}
+                        disabled={loading || isSubmitting}
                     />
                     {errors.name && <p className="text-sm text-destructive mt-1">{errors.name.message}</p>}
                 </div>
@@ -74,8 +76,8 @@ export function AddGuestPlayerForm({ dni, onAddGuest, onCancel }: AddGuestPlayer
                 </div>
             </CardContent>
             <CardFooter className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" onClick={onCancel} disabled={loading}>Cancelar</Button>
-                <Button type="submit" disabled={loading}>
+                <Button type="button" variant="ghost" onClick={onCancel} disabled={loading || isSubmitting}>Cancelar</Button>
+                <Button type="submit" disabled={loading || isSubmitting}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Añadir
                 </Button>
             </CardFooter>

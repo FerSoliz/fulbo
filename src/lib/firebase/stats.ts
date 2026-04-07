@@ -44,7 +44,7 @@ export async function calculateTournamentStats(tournamentId: string, teams: Team
 
     const finishedMatches = Object.entries(allMatches)
         .filter(([, m]: [string, any]) => m.tournamentId === tournamentId && m.status === 'finished')
-        .map(([id, data]) => ({ id, ...(data as Match) }));
+        .map(([id, data]) => ({ ...(data as Match), id }));
 
     const allPlayerIds = new Set<string>();
     const matchStatsMap = new Map<string, { [playerId: string]: PlayerStatsInfo }>();

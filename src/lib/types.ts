@@ -8,11 +8,11 @@ export type Surface = 'sintetico' | 'piso' | 'once';
 // --- TIPOS DE USUARIO Y AUTENTICACIÓN ---
 export interface User {
   id: string;
-  email: string;
+  email?: string;
   name: string;
   username: string;
   dni: string;
-  role: 'admin' | 'player' | 'captain' | 'vendedor';
+  role: 'admin' | 'player' | 'vendedor';
   avatar?: string;
   profileBackground?: string;
   team?: {
@@ -21,10 +21,13 @@ export interface User {
     crestUrl: string;
   } | null;
   sudpoints: number;
-  createdAt: number;
+  createdAt?: number;
 
   // --- Mercado de Pases ---
-  transferStatus?: 'libre' | 'traspaso'; // Estado del jugador en el mercado
+  transferStatus?: 'libre' | 'traspaso' | 'blindado'; // Estado del jugador en el mercado
+  isBlocked?: boolean;
+  isGuest?: boolean;
+  isVerified?: boolean;
 
   // --- Campos Adicionales del Perfil ---
   age?: number;
@@ -33,6 +36,25 @@ export interface User {
   preferredSurfaces?: {
     [key in Surface]?: boolean;
   };
+  baseSudpoints?: number;
+  league?: string;
+  division?: number;
+  location?: string;
+  stats?: {
+    partidosJugados?: number;
+    victorias?: number;
+    empates?: number;
+    derrotas?: number;
+    goles?: number;
+    asistencias?: number;
+    amarillas?: number;
+    rojas?: number;
+    mvps?: number;
+  };
+  sudonepassLevel?: number;
+  sudonepassExp?: number;
+  collectibles?: any;
+  gamertag?: string;
 }
 
 export interface GuestPlayer {
@@ -44,6 +66,22 @@ export interface GuestPlayer {
     crestUrl: string;
   } | null;
   sudpoints: number;
+  teamId?: string;
+}
+
+export interface FoundPlayer {
+  id: string;
+  name: string;
+  dni: string;
+  username: string;
+  profilePicture?: string;
+  avatar?: string;
+  isGuest?: boolean;
+  team?: {
+    id: string;
+    name: string;
+    crestUrl?: string;
+  } | null;
 }
 
 
@@ -54,19 +92,28 @@ export interface FullTournament {
   name: string;
   status: 'upcoming' | 'ongoing' | 'finished';
   venue?: string; // Sede
+  startDate?: string;
+  endDate?: string;
   date?: string; // Fecha
   category?: string;
   price?: number;
   imageUrl?: string;
+  teamsList?: Team[];
+  matches?: Match[];
+  standings?: Standing[];
+  scorers?: Scorer[];
+  sanctions?: Sanction[];
 }
 
 export interface Tournament {
   id: string;
   name: string;
-  category: string;
-  startDate: string;
-  teams: { [teamId: string]: boolean };
-  teamCount: number;
+  category?: string;
+  startDate?: string;
+  venue?: string;
+  status?: 'upcoming' | 'ongoing' | 'finished';
+  teams?: { [teamId: string]: boolean };
+  teamCount?: number;
 }
 
 export interface MatchDetails {
@@ -91,6 +138,10 @@ export interface Match {
   };
   details?: MatchDetails;
   statsProcessed?: boolean;
+  stage?: string;
+  date?: string;
+  advancesToMatchId?: string;
+  advancesToPosition?: 'home' | 'away';
 }
 
 // NUEVO: Interfaz para Partidos Enriquecidos
@@ -101,15 +152,17 @@ export interface EnrichedMatch extends Match {
   awayTeamLogo?: string;
   tournamentName?: string;
   venue?: string; // Sede del torneo
+  finances?: MatchFinances;
+  financesProcessed?: boolean;
 }
 
 export interface Team {
   id: string;
   name: string;
-  logoUrl: string;
-  captainId: string;
-  players: { [playerId: string]: { isGuest?: boolean } };
-  tournaments: { [tournamentId: string]: boolean };
+  logoUrl?: string;
+  captainId?: string;
+  players?: { [playerId: string]: { isGuest?: boolean } };
+  tournaments?: { [tournamentId: string]: boolean };
 }
 
 
@@ -129,6 +182,8 @@ export interface Matchup {
   id: string;
   home: TeamInfo | null;
   away: TeamInfo | null;
+  nextMatchupId?: string;
+  nextMatchupPosition?: 'home' | 'away';
 }
 
 export interface Round {
@@ -144,6 +199,7 @@ export interface PlayerStatsInfo {
   mvp?: boolean;
   yellowCards?: number;
   redCards?: number;
+  redCard?: boolean;
   sudPointsChange?: number; // Para trazabilidad
 }
 
@@ -157,7 +213,7 @@ export interface GlobalPlayerStats {
   totals: {
     matchesPlayed: number;
     goals: number;
-    assists: number;
+    assists?: number;
     mvp: number;
     yellowCards: number;
     redCards: number;
@@ -206,9 +262,13 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  imageUrl: string;
+  imageUrl?: string;
+  images?: string[];
   stock: number;
-  category: string;
+  category?: string;
+  tienda?: string;
+  sizes?: string[];
+  colors?: string[];
 }
 
 export interface CartItem {
@@ -221,8 +281,9 @@ export interface CartItem {
 export interface Post {
   id: string;
   authorId: string;
-  authorName: string;
-  authorAvatar: string;
+  authorName?: string;
+  authorAvatar?: string;
+  authorUsername?: string;
   content: string;
   media?: {
     type: 'image' | 'video';
@@ -231,12 +292,13 @@ export interface Post {
     videoType?: 'youtube' | 'twitch'; // Agregado para el tipo de video
     videoId?: string; // Agregado para el ID del video
   }[]; // Se cambió a un array de media items
+  url?: string;
   createdAt: number;
   likes: { [userId: string]: boolean };
   comments: Comment[];
   location?: string; // Agregado para la ubicación del post
   isPinned?: boolean; // Agregado para el estado de fijado
-  pinnedUntil?: number; // Agregado para la fecha de fin de fijado
+  pinnedUntil?: number | null; // Agregado para la fecha de fin de fijado
 }
 
 export interface Comment {
@@ -301,4 +363,164 @@ export interface UserCollectiblesData {
     available: number;
     nextPackTimestamp: number;
   };
+}
+
+export type UserProfile = User;
+
+export interface Notification {
+  id: string;
+  type?: string;
+  link?: string;
+  title?: string;
+  message: string;
+  createdAt?: number;
+  read?: boolean;
+  isRead?: boolean;
+  actions?: { label: string; action: string }[];
+}
+
+export interface PlayerTeamInfo {
+  id: string;
+  name: string;
+  crestUrl?: string;
+}
+
+export interface TeamDetails {
+  id: string;
+  name: string;
+  logoUrl?: string;
+  captainId?: string | null;
+}
+
+export interface TeamSummary {
+  id: string;
+  name: string;
+  logoUrl?: string;
+}
+
+export interface RosterPlayer {
+  id: string;
+  name: string;
+  dni: string;
+  isGuest?: boolean;
+}
+
+export interface Standing {
+  rank: number;
+  team: string;
+  played: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  points: number;
+  crestUrl?: string;
+}
+
+export interface Scorer {
+  rank: number;
+  player: string;
+  team: string;
+  goals: number;
+}
+
+export interface Sanction {
+  player: string;
+  team: string;
+  yellowCards: number;
+  redCards: number;
+}
+
+export interface TournamentStats {
+  standings?: Standing[];
+  scorers?: Scorer[];
+  sanctions?: Sanction[];
+}
+
+export interface Player {
+  id: string;
+  name: string;
+  teamId?: string;
+}
+
+export type MatchStats = Record<string, PlayerStatsInfo>;
+
+export interface PlayerStats {
+  totals: {
+    matchesPlayed: number;
+    goals: number;
+    assists?: number;
+    mvp: number;
+    yellowCards?: number;
+    redCards?: number;
+  };
+  byTournament: Record<string, {
+    tournamentName?: string;
+    matchesPlayed: number;
+    goals: number;
+    assists?: number;
+    mvp: number;
+  }>;
+}
+
+export interface FinancialItem {
+  id: string;
+  label?: string;
+  concept: string;
+  amount: number;
+}
+
+export interface MatchFinances {
+  matchId?: string;
+  income?: { total: number; items: FinancialItem[] };
+  expenses?: { total: number; items: FinancialItem[] };
+  balance?: number;
+  notes?: string;
+  closedBy?: { id: string; name: string };
+  closedAt?: string;
+  lastEditedBy?: { id: string; name: string };
+  lastEditedAt?: string;
+}
+
+export interface ManualCashEntry {
+  id: string;
+  date: string;
+  concept: string;
+  finances: MatchFinances;
+}
+
+export interface CashMovement {
+  id: string;
+  type: 'match' | 'manual';
+  date: string | number;
+  data: any;
+}
+
+export interface Conversation {
+  id: string;
+  participants: string[];
+  messages: Message[];
+  lastMessage?: {
+    text: string;
+    timestamp: number;
+  };
+}
+
+export interface Message {
+  id: string;
+  senderId: string;
+  text: string;
+  timestamp: number;
+}
+
+export interface Card {
+  id: any;
+  name: string;
+  imageUrl?: string;
+  rarity?: string;
+  position?: string;
+  stats?: any;
+  rating?: number;
+  playerImageUrl?: string;
+  clubImageUrl?: string;
+  countryImageUrl?: string;
 }

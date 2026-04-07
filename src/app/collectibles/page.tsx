@@ -234,7 +234,7 @@ export default function CollectibleCardsPage() {
                     <div className="w-12 h-20 bg-muted/50 rounded-md flex items-center justify-center cursor-pointer hover:bg-muted/60 transition-colors">
                       {userTeam?.showcasedCard ? (
                         <div className="w-full h-full scale-[.4] -translate-x-6 -translate-y-6">
-                          <CollectibleCard card={userTeam.showcasedCard} small />
+                          <CollectibleCard card={userTeam.showcasedCard as any} small />
                         </div>
                       ) : (
                         <Plus className="w-6 h-6 text-white" />

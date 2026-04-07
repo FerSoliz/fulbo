@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 // --- IMPORTACIONES CENTRALIZADAS ---
-import { storage, db } from '@/lib/firebase';
+import { db } from '@/lib/firebase';
 // Importamos nuestra nueva función para actualizar y propagar cambios.
 import { updateTeamWithFanOut } from '@/lib/firebase/db';
 // Ya no necesitamos `update` directamente en el componente.
 import { ref as dbRef, set, push } from 'firebase/database';
-import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -33,6 +32,15 @@ interface UpsertTeamDialogProps {
 }
 
 const MAX_FILE_SIZE_MB = 2;
+
+const fileToDataUrl = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
 
 export function UpsertTeamDialog({ open, onOpenChange, teamToEdit, onSuccess }: UpsertTeamDialogProps) {
   const [name, setName] = useState('');
@@ -84,9 +92,7 @@ export function UpsertTeamDialog({ open, onOpenChange, teamToEdit, onSuccess }: 
 
       let logoUrl = teamToEdit?.logoUrl || '';
       if (logoFile) {
-        const logoStorageRef = storageRef(storage, `team-logos/${teamId}`);
-        const uploadResult = await uploadBytes(logoStorageRef, logoFile);
-        logoUrl = await getDownloadURL(uploadResult.ref);
+        logoUrl = await fileToDataUrl(logoFile);
       }
 
       if (isEditMode) {
@@ -148,7 +154,7 @@ export function UpsertTeamDialog({ open, onOpenChange, teamToEdit, onSuccess }: 
             <Label className="text-right">Logo</Label>
             <div className="col-span-3 flex items-center gap-4">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={logoPreview} />
+                <AvatarImage src={logoPreview || undefined} />
                 <AvatarFallback><ImageIcon className="h-8 w-8 text-muted-foreground" /></AvatarFallback>
               </Avatar>
               <Button variant="outline" onClick={() => fileInputRef.current?.click()}>

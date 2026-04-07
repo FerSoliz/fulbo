@@ -31,8 +31,8 @@ export const subscribeToPosts = (callback: (posts: Post[]) => void) => {
         });
 
         const now_ts = new Date().getTime();
-        const pinned = postsList.filter(p => p.isPinned && p.pinnedUntil && p.pinnedUntil > now_ts);
-        const unpinned = postsList.filter(p => !p.isPinned || !p.pinnedUntil || p.pinnedUntil <= now_ts);
+        const pinned = postsList.filter(p => p.isPinned && p.pinnedUntil && Number(p.pinnedUntil) > now_ts);
+        const unpinned = postsList.filter(p => !p.isPinned || !p.pinnedUntil || Number(p.pinnedUntil) <= now_ts);
 
         const sortedPosts = [...pinned, ...unpinned].reverse();
         

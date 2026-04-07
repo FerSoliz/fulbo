@@ -61,7 +61,7 @@ const GuestRegisterBanner = ({ guestName, guestDni }: { guestName: string; guest
 
 const roleTranslations: Record<string, string> = {
   player: 'Jugador',
-  captain: 'Capitán',
+  vendedor: 'Vendedor',
   admin: 'Admin',
 };
 

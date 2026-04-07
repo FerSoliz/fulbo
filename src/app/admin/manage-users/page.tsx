@@ -52,7 +52,7 @@ import {
   Search,
 } from 'lucide-react';
 import { useUser } from '@/context/user-context';
-import type { User } from '@/lib/data';
+import type { User } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -110,7 +110,7 @@ export default function ManageUsersPage() {
     });
   };
 
-  const handleChangeRole = (userId: string, newRole: 'player' | 'captain' | 'admin') => {
+  const handleChangeRole = (userId: string, newRole: 'player' | 'vendedor' | 'admin') => {
     const userToUpdate = users.find((u) => u.id === userId);
     if (!userToUpdate) return;
     const updatedUser = { id: userId, role: newRole };
@@ -208,7 +208,7 @@ export default function ManageUsersPage() {
                           variant={
                             user.role === 'admin'
                               ? 'destructive'
-                              : user.role === 'captain'
+                              : user.role === 'vendedor'
                               ? 'secondary'
                               : 'outline'
                           }
@@ -250,9 +250,9 @@ export default function ManageUsersPage() {
                                     <DropdownMenuItem onClick={() => handleChangeRole(user.id, 'player')}>
                                         <Shield className="mr-2 h-4 w-4" /> Player
                                     </DropdownMenuItem>
-                                     <DropdownMenuItem onClick={() => handleChangeRole(user.id, 'captain')}>
-                                        <Pencil className="mr-2 h-4 w-4" /> Captain
-                                    </DropdownMenuItem>
+                                     <DropdownMenuItem onClick={() => handleChangeRole(user.id, 'vendedor')}>
+                                        <Pencil className="mr-2 h-4 w-4" /> Vendedor
+                                     </DropdownMenuItem>
                                      <DropdownMenuItem onClick={() => handleChangeRole(user.id, 'admin')}>
                                         <ShieldAlert className="mr-2 h-4 w-4" /> Admin
                                     </DropdownMenuItem>

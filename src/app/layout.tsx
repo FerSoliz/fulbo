@@ -49,7 +49,7 @@ export default function RootLayout({
   );
 }
 
-function LayoutContent({ children }: { children: React.Node }) {
+function LayoutContent({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const isMobile = useIsMobile();
     // 3. Usar el hook para obtener el estado y las funciones

@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Image as ImageIcon, Video, X, Play, Star } from 'lucide-react';
-import { User, Post } from '@/lib/data';
+import type { User, Post } from '@/lib/types';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useUpload } from '@/hooks/use-upload';
 import { Progress } from '@/components/ui/progress';
@@ -100,7 +100,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
       authorId: currentUser.id,
       content: data.content || '',
       media: media,
-      url: externalUrl,
+      url: externalUrl || undefined,
       isPinned: currentUser.role === 'admin' && data.isPinned, // Asegurarse que solo el admin puede fijar
     });
 

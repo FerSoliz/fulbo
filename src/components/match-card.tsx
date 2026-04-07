@@ -71,7 +71,8 @@ export const MatchCard = ({ match, highlightTeamId, useBottomAccent = false }: M
         const finished = match.status === 'finished' && match.result && typeof match.result.home === 'number' && typeof match.result.away === 'number';
         let color = 'border-transparent';
         if (finished && highlightTeamId) {
-            const { home, away } = match.result!;
+            const home = Number(match.result?.home ?? 0);
+            const away = Number(match.result?.away ?? 0);
             const isHome = match.homeTeamId === highlightTeamId;
             if ((isHome && home > away) || (!isHome && away > home)) color = 'border-green-500/70'; // Victoria
             else if ((isHome && home < away) || (!isHome && away < home)) color = 'border-red-500/70'; // Derrota

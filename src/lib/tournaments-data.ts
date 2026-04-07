@@ -1,6 +1,4 @@
 
-import { Tournament, Standing, Scorer, Sanction } from './types';
-
 // Definimos una estructura más completa para el torneo en la base de datos
 export interface FullTournament {
     id: string;

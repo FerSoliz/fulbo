@@ -43,8 +43,8 @@ export function MatchFinanceDialog({ match, isOpen, onClose }: MatchFinanceDialo
 
   useEffect(() => {
     if (isOpen && match) {
-      setIncomeItems(match.finances?.income.items || [{ ...emptyItem, id: uuidv4() }]);
-      setExpenseItems(match.finances?.expenses.items || [{ ...emptyItem, id: uuidv4() }]);
+      setIncomeItems(match.finances?.income?.items || [{ ...emptyItem, id: uuidv4() }]);
+      setExpenseItems(match.finances?.expenses?.items || [{ ...emptyItem, id: uuidv4() }]);
       setNotes(match.finances?.notes || "");
     } else {
       // Reset when closing

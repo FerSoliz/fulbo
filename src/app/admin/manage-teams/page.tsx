@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 
 // Importaciones de Firebase y de la nueva función de servicio
-import { deleteTeam } from '../../../../lib/firebase/db'; // DIAGNÓSTICO: Usar ruta relativa
+import { deleteTeam } from '@/lib/firebase/db';
 import { useToast } from '@/hooks/use-toast';
 
 // Importación del nuevo hook

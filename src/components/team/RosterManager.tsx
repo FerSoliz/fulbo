@@ -5,18 +5,12 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle, CardDescription }
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, UserX, AlertTriangle } from 'lucide-react';
-import { PlayerSearch, FoundPlayer } from '@/components/search/PlayerSearch';
+import { PlayerSearch } from '@/components/search/PlayerSearch';
 import { AddGuestPlayerForm } from '@/components/team/AddGuestPlayerForm';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getTeamRoster, addGuestPlayerToTeam, addRegisteredPlayerToTeam, removePlayerFromTeam } from '@/lib/firebase/db';
-
-export interface RosterPlayer {
-  id: string;
-  name: string;
-  dni: string;
-  isGuest: boolean;
-}
+import type { FoundPlayer, RosterPlayer } from '@/lib/types';
 
 interface RosterManagerProps {
   teamId: string;
@@ -108,7 +102,7 @@ export function RosterManager({ teamId }: RosterManagerProps) {
 
   const handleRemovePlayer = async (player: RosterPlayer) => {
     setIsSubmitting(true);
-    const success = await removePlayerFromTeam(player.id, teamId, player.isGuest);
+    const success = await removePlayerFromTeam(player.id, teamId, !!player.isGuest);
     if (success) {
       toast({ title: "Jugador Eliminado", description: `${player.name} fue eliminado de la plantilla.` });
       await fetchRoster();

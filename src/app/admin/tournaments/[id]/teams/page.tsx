@@ -25,7 +25,7 @@ import { assignTeamToTournament, TeamSummary } from '@/lib/firebase/db';
 interface Team {
   id: string;
   name: string;
-  logoUrl: string;
+  logoUrl?: string;
 }
 
 interface Tournament {

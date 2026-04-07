@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useUser } from '@/context/user-context';
-import { User, Conversation, Message } from '@/lib/data';
+import { Conversation, Message } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { Send, MessageSquareDashed } from 'lucide-react';
 import Link from 'next/link';
 import { format, isToday, isYesterday } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { collection, onSnapshot, doc, setDoc } from 'firebase/firestore';
+import { ref, onValue, get, set, runTransaction } from 'firebase/database';
 import { db } from '@/lib/firebase';
 
 function MessagesPageContent() {
@@ -28,17 +28,15 @@ function MessagesPageContent() {
 
   useEffect(() => {
     if (!currentUser) return;
-    
-    const conversationsRef = collection(db, 'conversations');
-    const unsubscribe = onSnapshot(conversationsRef, (snapshot) => {
-        const userConversations: Conversation[] = [];
-        snapshot.forEach(doc => {
-            const convo = doc.data() as Conversation;
-            if (convo.participants.includes(currentUser.id)) {
-                userConversations.push({ id: doc.id, ...convo });
-            }
-        });
-        setConversations(userConversations);
+
+    const conversationsRef = ref(db, 'conversations');
+    const unsubscribe = onValue(conversationsRef, (snapshot) => {
+      const data = snapshot.val() || {};
+      const userConversations: Conversation[] = Object.keys(data)
+        .map((id) => ({ id, ...data[id] }))
+        .filter((convo: Conversation) => convo.participants?.includes(currentUser.id));
+
+      setConversations(userConversations);
     });
 
     return () => unsubscribe();
@@ -61,8 +59,11 @@ function MessagesPageContent() {
               participants: [currentUser.id, recipientId],
               messages: [],
             };
-            const convoRef = doc(db, 'conversations', conversationId);
-            await setDoc(convoRef, newConversation);
+            const convoRef = ref(db, `conversations/${conversationId}`);
+            const convoSnapshot = await get(convoRef);
+            if (!convoSnapshot.exists()) {
+              await set(convoRef, newConversation);
+            }
             setActiveConversationId(conversationId);
           }
         } else if (conversations.length > 0 && !activeConversationId) {
@@ -90,15 +91,17 @@ function MessagesPageContent() {
       timestamp: Date.now(),
     };
 
-    const convoRef = doc(db, 'conversations', activeConversationId);
-    const activeConvo = conversations.find(c => c.id === activeConversationId);
+    const convoRef = ref(db, `conversations/${activeConversationId}`);
+    await runTransaction(convoRef, (currentValue) => {
+      if (!currentValue) return currentValue;
 
-    if (activeConvo) {
-      const updatedMessages = [...activeConvo.messages, message];
-      const lastMessage = { text: newMessage, timestamp: message.timestamp };
-      
-      await setDoc(convoRef, { messages: updatedMessages, lastMessage }, { merge: true });
-    }
+      const currentMessages = Array.isArray(currentValue.messages) ? currentValue.messages : [];
+      return {
+        ...currentValue,
+        messages: [...currentMessages, message],
+        lastMessage: { text: newMessage, timestamp: message.timestamp },
+      };
+    });
     
     setNewMessage('');
   };

@@ -1,6 +1,6 @@
 import { ref, get, set, update, remove, query, orderByChild, equalTo, push, serverTimestamp, increment, onValue, Unsubscribe } from 'firebase/database';
 import { db } from '../../firebase';
-import { RosterPlayer, Team, TeamDetails, TeamSummary, Tournament } from '../../types';
+import { RosterPlayer, Team, TeamDetails, TeamSummary } from '../../types';
 import { getUserProfile } from './users';
 import { getGuestPlayerByDni } from './guestPlayers';
 
@@ -230,26 +230,11 @@ export const updateTeamWithFanOut = async (teamId: string, teamData: { name: str
   }
 };
 
-/**
- * Obtiene la lista de torneos en los que un equipo está participando.
- * @param teamId El ID del equipo.
- * @returns Una promesa que se resuelve con un array de objetos Tournament.
- */
-export const getTeamTournaments = async (teamId: string): Promise<Tournament[]> => {
-  try {
-    const teamTournamentsRef = ref(db, `teams/${teamId}/tournaments`);
-    const snapshot = await get(teamTournamentsRef);
-    if (!snapshot.exists()) {
-      return [];
-    }
-    const tournamentIds = Object.keys(snapshot.val());
-    const tournamentPromises = tournamentIds.map(id => get(ref(db, `tournaments/${id}`)));
-    const tournamentSnapshots = await Promise.all(tournamentPromises);
-    return tournamentSnapshots
-      .filter(snap => snap.exists())
-      .map(snap => ({ id: snap.key!, ...snap.val() } as Tournament));
-  } catch (error) {
-    console.error(`Error al obtener los torneos para el equipo ${teamId}:`, error);
-    return [];
+export const deleteTeam = async (team: Pick<Team, 'id'>): Promise<void> => {
+  if (!team?.id) {
+    throw new Error('Datos del equipo invalidos para eliminar.');
   }
+
+  await remove(ref(db, `teams/${team.id}`));
 };
+

@@ -5,6 +5,8 @@ import { useToast } from '@/hooks/use-toast';
 import { getMatchHistoryForTeam, getMultipleTeams, getMultipleTournaments } from '@/lib/firebase/db';
 import { Match, Tournament, Team, EnrichedMatch } from '@/lib/types';
 
+export type { EnrichedMatch } from '@/lib/types';
+
 interface UseMatchHistoryReturn {
   matches: EnrichedMatch[];
   tournaments: Tournament[];

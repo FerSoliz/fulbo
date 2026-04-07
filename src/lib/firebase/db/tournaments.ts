@@ -166,29 +166,30 @@ export const getTournamentDetails = async (tournamentId: string): Promise<FullTo
       return dateB - dateA;
     });
 
-    const standings: Standing[] = statsData?.positions?.map((pos, index) => ({
+    const standings: Standing[] = statsData?.positions?.map((pos: any, index: number) => ({
       rank: index + 1,
       team: teamsMap[pos.teamId]?.name || 'Equipo Desconocido',
       played: pos.played, won: pos.won, drawn: pos.drawn, lost: pos.lost, points: pos.points,
       crestUrl: teamsMap[pos.teamId]?.logoUrl || ''
     })) || [];
 
-    const scorers: Scorer[] = statsData?.scorers?.map((scorer, index) => ({
+    const scorers: Scorer[] = statsData?.scorers?.map((scorer: any, index: number) => ({
       rank: index + 1,
       player: `${scorer.playerInfo?.name || ''} ${scorer.playerInfo?.lastName || ''}`.trim(),
       team: teamsMap[scorer.teamId]?.name || 'Equipo Desconocido',
       goals: scorer.goals,
     })) || [];
     
-    const sanctions: Sanction[] = statsData?.sanctions?.map(sanc => ({
+    const sanctions: Sanction[] = statsData?.sanctions?.map((sanc: any) => ({
       player: `${sanc.playerInfo?.name || ''} ${sanc.playerInfo?.lastName || ''}`.trim(),
       team: teamsMap[sanc.teamId]?.name || 'Equipo Desconocido',
       yellowCards: sanc.yellowCards, redCards: sanc.redCards,
     })) || [];
 
     const fullTournamentData: FullTournament = {
-      id: tournamentSnapshot.key!,
       ...tournamentData,
+      id: tournamentSnapshot.key!,
+      status: tournamentData.status || 'ongoing',
       standings,
       scorers,
       sanctions,

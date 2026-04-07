@@ -162,14 +162,14 @@ export function MatchStatsDialog({ matchId, homeTeamId, awayTeamId, isFinished, 
             <div className="flex-grow overflow-y-auto mt-2 pr-1 space-y-1 sm:space-y-2">
                 <TabsContent value="home" className="space-y-1 sm:space-y-2">
                     {homeTeam.players.length > 0 ? (
-                        homeTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} onMvpSelect={() => handleMvpSelect(p.id)} isMvp={stats[p.id]?.mvp} disabled={formIsDisabled} /> : null)
+                        homeTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} onMvpSelect={() => handleMvpSelect(p.id)} isMvp={!!stats[p.id]?.mvp} disabled={formIsDisabled} /> : null)
                     ) : (
                         <p className="text-center text-muted-foreground pt-10">No hay jugadores en el equipo local.</p>
                     )}
                 </TabsContent>
                 <TabsContent value="away" className="space-y-1 sm:space-y-2">
                      {awayTeam.players.length > 0 ? (
-                        awayTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} onMvpSelect={() => handleMvpSelect(p.id)} isMvp={stats[p.id]?.mvp} disabled={formIsDisabled} /> : null)
+                        awayTeam.players.map(p => p && p.id && stats[p.id] ? <PlayerStatsRow key={p.id} player={p} stats={stats[p.id]} onStatChange={(stat, value) => handleStatChange(p.id, stat, value)} onMvpSelect={() => handleMvpSelect(p.id)} isMvp={!!stats[p.id]?.mvp} disabled={formIsDisabled} /> : null)
                     ) : (
                         <p className="text-center text-muted-foreground pt-10">No hay jugadores en el equipo visitante.</p>
                     )}

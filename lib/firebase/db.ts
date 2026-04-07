@@ -4,7 +4,7 @@
 // ================================================
 // CORRECCIÓN DE ARQUITECTURA: Unificamos la importación de la DB
 // ================================================
-import { db, storage } from '@/lib/firebase'; // USAMOS LA INSTANCIA CORRECTA
+import { db } from '@/lib/firebase'; // USAMOS LA INSTANCIA CORRECTA
 import {
   ref,
   get,
@@ -16,11 +16,9 @@ import {
   equalTo,
   update
 } from 'firebase/database';
-import { ref as storageRef, deleteObject } from 'firebase/storage';
 
-import { FoundPlayer } from '@/components/search/PlayerSearch';
-import { RosterPlayer } from '@/components/team/RosterManager';
-import type { Team } from '@/lib/types';
+import { FoundPlayer } from '@/lib/types';
+import type { Team, RosterPlayer } from '@/lib/types';
 
 // --- TIPOS GLOBALES ---
 
@@ -35,7 +33,7 @@ export interface TeamSummary {
 // ================================================
 
 /**
- * Elimina un equipo de la base de datos y su logo de Storage.
+ * Elimina un equipo de la base de datos.
  * @param team - El objeto del equipo a eliminar.
  */
 export async function deleteTeam(team: Team): Promise<void> {
@@ -44,19 +42,6 @@ export async function deleteTeam(team: Team): Promise<void> {
   }
 
   const teamDbRef = ref(db, `teams/${team.id}`); // Usamos la instancia 'db' unificada
-
-  if (team.logoUrl) {
-    const logoStorage = storageRef(storage, `team-logos/${team.id}`);
-    try {
-      await deleteObject(logoStorage);
-    } catch (error: any) {
-      if (error.code === 'storage/object-not-found') {
-        console.warn(`El logo para el equipo ${team.name} no se encontró en Storage.`);
-      } else {
-        throw error;
-      }
-    }
-  }
 
   await remove(teamDbRef);
 }

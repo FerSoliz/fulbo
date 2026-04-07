@@ -17,7 +17,15 @@ import { Skeleton } from './ui/skeleton';
 import { useUser } from '@/context/user-context';
 import { usePwa } from '@/context/pwa-context'; // 1. Importar el hook usePwa
 
-const menuItems = [
+type MenuItem = {
+  href: string;
+  icon: React.ElementType;
+  label: string;
+  requiresAuth?: boolean;
+  allowedRoles?: string[];
+};
+
+const menuItems: MenuItem[] = [
     { href: '/', icon: Home, label: 'INICIO' },
     { href: '/tournament', icon: FilePenLine, label: 'INSCRIPCIONES' },
     { href: '/tournaments', icon: Trophy, label: 'LIGAS EN CURSO' },
@@ -43,7 +51,7 @@ const socialItems = [
     { href: 'https://discord.gg/H8tuKK5c', icon: DiscordIcon, label: 'DISCORD' }
 ];
 
-const footerMenuItems = [
+const footerMenuItems: MenuItem[] = [
     { href: '/profile', icon: UserIcon, label: 'MI PERFIL', requiresAuth: true },
 ];
 
@@ -83,7 +91,7 @@ export function MainSidebar({ isMobile = false, onLinkClick }: MainSidebarProps)
     }
   }
 
-  const renderMenuItems = (items: typeof menuItems | typeof footerMenuItems) => {
+  const renderMenuItems = (items: MenuItem[]) => {
     // ... (El resto de la función renderMenuItems permanece igual)
     return items.map((item) => {
       if (item.allowedRoles && (!user || !item.allowedRoles.includes(user.role))) {
