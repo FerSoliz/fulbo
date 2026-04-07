@@ -13,6 +13,7 @@ import {
   deletePost,
 } from '@/lib/firebase/db/posts';
 import { usePosts } from '@/hooks/use-posts'; // ¡Nuestro nuevo hook!
+import { canDeleteAnyPost } from '@/lib/auth/roles';
 
 export default function HomePage() {
   const { user: currentUser, loading: userContextLoading } = useUser();
@@ -70,7 +71,7 @@ export default function HomePage() {
 
   const handleDeletePost = async (postId: string) => {
     const postToDelete = posts.find((p) => p.id === postId);
-    if (!currentUser || (currentUser.role !== 'admin' && currentUser.id !== postToDelete?.authorId)) {
+    if (!currentUser || (!canDeleteAnyPost(currentUser) && currentUser.id !== postToDelete?.authorId)) {
       toast({ title: "Acceso denegado", description: "No tienes permiso para eliminar esta publicación.", variant: "destructive" });
       return;
     }

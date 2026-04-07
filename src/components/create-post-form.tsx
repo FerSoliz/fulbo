@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { Textarea } from '@/components/ui/textarea';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useForm } from 'react-hook-form';
+import { canPinPost } from '@/lib/auth/roles';
 
 interface CreatePostInput {
   content: string;
@@ -100,7 +101,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
       authorId: currentUser.id,
       content: data.content || '',
       media: media,
-      isPinned: currentUser.role === 'admin' && data.isPinned, // Asegurarse que solo el admin puede fijar
+      isPinned: canPinPost(currentUser) && data.isPinned,
     };
 
     if (externalUrl) {
@@ -257,7 +258,7 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
             />
             
             <div className="flex items-center gap-2">
-              {currentUser.role === 'admin' && (
+              {canPinPost(currentUser) && (
                 <FormField
                   control={form.control}
                   name="isPinned"

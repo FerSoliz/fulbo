@@ -13,6 +13,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
 // --- Importamos los nuevos íconos ---
 import { Loader2, Shield, ArrowRight } from 'lucide-react';
+import { canAccessAdminPanel } from '@/lib/auth/roles';
 
 // --- Componente de Esqueleto (sin cambios) ---
 function TeamHeaderSkeleton() {
@@ -61,7 +62,7 @@ export default function ManageTeamPage() {
   }
 
   // 2. Guardia de acceso para ADMIN - La nueva lógica inteligente
-  if (user?.role === 'admin') {
+  if (canAccessAdminPanel(user)) {
     return (
       <div className="container mx-auto p-4 md:p-8">
         <Card className="max-w-2xl mx-auto bg-blue-50 border-blue-200">

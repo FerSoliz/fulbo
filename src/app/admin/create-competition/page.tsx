@@ -36,6 +36,7 @@ import { cn } from '@/lib/utils';
 import { TeamSearch } from '@/components/search/TeamSearch';
 import { TeamSummary } from '@/lib/firebase/db';
 import { Slider } from '@/components/ui/slider';
+import { canAccessAdminPanel } from '@/lib/auth/roles';
 
 type TournamentType = 'Liga' | 'Copa';
 type TournamentFormat = '5v5' | '6v6' | '7v7' | '8v8' | '11v11';
@@ -58,7 +59,7 @@ export default function CreateCompetitionPage() {
   const [selectedTeams, setSelectedTeams] = useState<TeamSummary[]>([]);
   const [newTeamNames, setNewTeamNames] = useState<string[]>(['']);
 
-  if (user && user.role !== 'admin') {
+  if (user && !canAccessAdminPanel(user)) {
       router.push('/');
   }
 
@@ -175,7 +176,7 @@ export default function CreateCompetitionPage() {
 
   const currentTeamCount = selectedTeams.length + newTeamNames.filter(Boolean).length;
 
-  if (!user || user.role !== 'admin') {
+  if (!user || !canAccessAdminPanel(user)) {
     return <div className="p-8 text-center">Acceso denegado. Redirigiendo...</div>;
   }
 

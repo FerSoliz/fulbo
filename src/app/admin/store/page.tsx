@@ -10,6 +10,7 @@ import { getProducts, createProduct, updateProduct, deleteProduct } from '@/lib/
 import { PlusCircle, Loader2 } from 'lucide-react';
 import { ProductDataTable } from '@/components/admin/product-data-table';
 import { ProductEditDialog } from '@/components/admin/product-edit-dialog';
+import { canManageStore, hasRole } from '@/lib/auth/roles';
 
 export default function AdminStorePage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -22,13 +23,13 @@ export default function AdminStorePage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!userLoading && (!currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'vendedor'))) {
+    if (!userLoading && (!currentUser || !canManageStore(currentUser))) {
         router.replace('/');
     }
   }, [currentUser, userLoading, router]);
 
   useEffect(() => {
-    if(currentUser && (currentUser.role === 'admin' || currentUser.role === 'vendedor')) {
+    if (currentUser && canManageStore(currentUser)) {
         const fetchProducts = async () => {
           setLoading(true);
           try {
@@ -48,7 +49,7 @@ export default function AdminStorePage() {
   // REFACTOR: Filtrar productos según el USERNAME del vendedor
   const visibleProducts = useMemo(() => {
     if (!currentUser) return [];
-    if (currentUser.role === 'vendedor') {
+    if (hasRole(currentUser, 'organizador')) {
       return products.filter(p => p.tienda === currentUser.username);
     }
     return products; // El admin ve todo
@@ -92,7 +93,7 @@ export default function AdminStorePage() {
     }
   };
 
-  if (userLoading || !currentUser || (currentUser.role !== 'admin' && currentUser.role !== 'vendedor')) {
+  if (userLoading || !currentUser || !canManageStore(currentUser)) {
     return <div className="p-8 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto" /></div>;
   }
 
@@ -103,7 +104,7 @@ export default function AdminStorePage() {
             <h1 className="text-3xl font-bold tracking-tighter">Gestión de la Tienda</h1>
             {/* REFACTOR: Mostrar el username en el subtítulo */}
             <p className="text-muted-foreground mt-1">
-              {currentUser.role === 'vendedor' ? `Mostrando productos de la tienda: @${currentUser.username}` : 'Añade, edita o elimina productos de la SUDSTORE.'}
+              {hasRole(currentUser, 'organizador') ? `Mostrando productos de la tienda: @${currentUser.username}` : 'Añade, edita o elimina productos de la SUDSTORE.'}
             </p>
           </div>
           <Button onClick={() => handleOpenDialog()}>

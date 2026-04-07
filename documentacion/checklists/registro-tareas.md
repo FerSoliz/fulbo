@@ -48,3 +48,38 @@ Crear base de gobernanza documental para reconstruccion.
 - Estado final: base documental y tecnica creada.
 - Riesgos abiertos: falta cierre de QA manual integral.
 - Siguiente paso: ejecutar matriz QA y cerrar GO etapa 2.
+
+---
+
+## TAREA-0002
+
+- Fecha: 2026-04-07
+- ID tarea: TAREA-0002
+- Estado: completada
+- Responsable: IA
+
+### Objetivo
+
+Rediseñar la guia de usuario dentro de la plataforma con una interfaz profesional y mejor jerarquia de informacion.
+
+### Alcance
+
+- Incluye: mejora visual de `/guia`, nueva navegacion interna por secciones y reestructura documental de la guia.
+- No incluye: rediseño visual global del resto de pantallas.
+
+### Archivos tocados
+
+- `src/app/guia/page.tsx`
+- `documentacion/producto/guia-usuario.md`
+
+### Validacion
+
+- [x] `npm run typecheck`
+- [x] `npm run build`
+- [x] Verificacion visual de estructura jerarquica en la guia
+
+### Resultado
+
+- Estado final: guia con estructura profesional (hero, indice lateral, secciones y FAQ).
+- Riesgos abiertos: ninguno bloqueante para continuar.
+- Siguiente paso: continuar implementacion del modelo de 4 roles en toda la plataforma.

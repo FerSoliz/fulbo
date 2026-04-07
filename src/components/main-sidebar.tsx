@@ -34,7 +34,7 @@ const menuItems: MenuItem[] = [
     { href: '/collectibles', icon: Swords, label: 'TCG SUDONE', requiresAuth: true },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
     { href: '/transfer-market', icon: Landmark, label: 'MERCADO DE PASES' },
-    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', allowedRoles: ['admin', 'vendedor'] },
+    { href: '/admin', icon: ShieldCheck, label: 'PANEL DE ADMIN', allowedRoles: ['dios', 'organizador', 'admin', 'vendedor'] },
 ];
 
 const WhatsAppIcon = (props: React.SVGProps<SVGSVGElement>) => (

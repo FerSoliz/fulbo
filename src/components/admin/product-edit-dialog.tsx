@@ -7,6 +7,7 @@ import * as z from 'zod';
 import { Product, User } from '@/lib/types';
 import { useUpload } from '@/hooks/use-upload';
 import { useToast } from '@/hooks/use-toast';
+import { hasRole } from '@/lib/auth/roles';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
@@ -72,13 +73,13 @@ function ProductForm({ onSave, onFinished, productToEdit, currentUser }: Product
     const [isSaving, setIsSaving] = useState(false);
     const { uploadFile, isUploading, progress } = useUpload();
     const { toast } = useToast();
-    const isVendedor = currentUser?.role === 'vendedor';
+    const isStoreOperator = hasRole(currentUser, 'organizador');
 
     const form = useForm<ProductFormValues>({
         resolver: zodResolver(productSchema),
         defaultValues: {
             name: '',
-            tienda: isVendedor && currentUser ? currentUser.username : '',
+            tienda: isStoreOperator && currentUser ? currentUser.username : '',
             description: '',
             price: 0,
             stock: 0,
@@ -92,14 +93,14 @@ function ProductForm({ onSave, onFinished, productToEdit, currentUser }: Product
         if (productToEdit) {
             form.reset({
                 ...productToEdit,
-                tienda: isVendedor && currentUser ? currentUser.username : productToEdit.tienda,
+                tienda: isStoreOperator && currentUser ? currentUser.username : productToEdit.tienda,
                 sizes: productToEdit.sizes ? productToEdit.sizes.join(', ') : '',
                 colors: productToEdit.colors || [],
             });
         } else {
             form.reset({
                 name: '',
-                tienda: isVendedor && currentUser ? currentUser.username : '',
+                tienda: isStoreOperator && currentUser ? currentUser.username : '',
                 description: '',
                 price: 0,
                 stock: 0,
@@ -108,7 +109,7 @@ function ProductForm({ onSave, onFinished, productToEdit, currentUser }: Product
                 colors: [],
             });
         }
-    }, [productToEdit, form, isVendedor, currentUser]);
+    }, [productToEdit, form, isStoreOperator, currentUser]);
 
     const handleImageUpload = async (file: File) => {
         if (!file) return;
@@ -145,7 +146,7 @@ function ProductForm({ onSave, onFinished, productToEdit, currentUser }: Product
                 <FormField control={form.control} name="tienda" render={({ field }) => (
                     <FormItem>
                         <FormLabel>Tienda</FormLabel>
-                        <FormControl><Input {...field} disabled={isVendedor} /></FormControl>
+                        <FormControl><Input {...field} disabled={isStoreOperator} /></FormControl>
                         <FormMessage />
                     </FormItem>
                 )} />

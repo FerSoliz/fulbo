@@ -46,6 +46,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import Link from "next/link";
 import { useUser } from "@/context/user-context";
+import { canAccessAdminPanel } from '@/lib/auth/roles';
 
 
 type TournamentInfo = {
@@ -160,7 +161,7 @@ export default function TournamentPage() {
         setNewTournament({ title: '', subtitle: '', costs: { inscription: '', match: '' }, contact: { name: '', phone: '' }, note: '', days: '', timeSlot: '', prizes: '', format: [] });
     };
 
-    const isAdmin = currentUser?.role === 'admin';
+    const isAdmin = canAccessAdminPanel(currentUser);
 
    return (
        <div className="p-4 sm:p-6 lg:p-8">

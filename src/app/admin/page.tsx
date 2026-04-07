@@ -21,6 +21,7 @@ import Link from 'next/link';
 import type { User } from '@/lib/types'; // CORREGIDO: Importar desde la fuente de verdad
 import { useUser } from '@/context/user-context';
 import { useRouter } from 'next/navigation';
+import { canAccessAdminPanel, hasRole } from '@/lib/auth/roles';
 
 const allAdminActions = [
   {
@@ -29,7 +30,7 @@ const allAdminActions = [
     icon: PlusCircle,
     href: '/admin/create-competition',
     color: 'bg-green-500 hover:bg-green-600',
-    allowedRoles: ['admin'],
+    allowedRoles: ['dios'],
   },
   {
     title: 'Administrar Torneos',
@@ -37,7 +38,7 @@ const allAdminActions = [
     icon: Settings,
     href: '/admin/manage-tournaments',
     color: 'bg-blue-500 hover:bg-blue-600',
-    allowedRoles: ['admin'],
+    allowedRoles: ['dios', 'organizador'],
   },
   {
     title: 'Gestionar Tienda',
@@ -45,7 +46,7 @@ const allAdminActions = [
     icon: Store,
     href: '/admin/store',
     color: 'bg-red-500 hover:bg-red-600',
-    allowedRoles: ['admin', 'vendedor'], // PERMISO: Admin y Vendedor pueden ver esto
+    allowedRoles: ['dios', 'organizador'],
   },
   {
     title: 'Administrar Usuarios',
@@ -53,7 +54,7 @@ const allAdminActions = [
     icon: UserCog,
     href: '/admin/manage-users',
     color: 'bg-orange-500 hover:bg-orange-600',
-    allowedRoles: ['admin'],
+    allowedRoles: ['dios'],
   },
   {
     title: 'Gestionar Equipos',
@@ -61,7 +62,7 @@ const allAdminActions = [
     icon: Users,
     href: '/admin/manage-teams',
     color: 'bg-purple-500 hover:bg-purple-600',
-    allowedRoles: ['admin'],
+    allowedRoles: ['dios', 'organizador'],
   },
   {
     title: 'Caja',
@@ -69,29 +70,29 @@ const allAdminActions = [
     icon: Landmark,
     href: '/admin/caja',
     color: 'bg-yellow-500 hover:bg-yellow-600',
-    allowedRoles: ['admin'],
+    allowedRoles: ['dios', 'organizador'],
   },
 ];
 
-const allowedRolesForPage: Array<User['role']> = ['admin', 'vendedor'];
+const allowedRolesForPage: Array<User['role']> = ['dios', 'organizador', 'admin', 'vendedor'];
 
 export default function AdminPage() {
   const { user: currentUser, loading } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (!loading && (!currentUser || !allowedRolesForPage.includes(currentUser.role))) {
+    if (!loading && (!currentUser || !canAccessAdminPanel(currentUser))) {
         router.replace('/');
     }
   }, [currentUser, loading, router]);
 
-  if (loading || !currentUser || !allowedRolesForPage.includes(currentUser.role)) {
+  if (loading || !currentUser || !canAccessAdminPanel(currentUser)) {
     return <div className="p-8 text-center">Cargando...</div>;
   }
 
   // Filtrar acciones basadas en el rol del usuario
-  const visibleActions = allAdminActions.filter(action => 
-    action.allowedRoles.includes(currentUser.role)
+  const visibleActions = allAdminActions.filter(action =>
+    action.allowedRoles.some((role) => hasRole(currentUser, role as any))
   );
 
   return (

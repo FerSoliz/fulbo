@@ -6,6 +6,7 @@ import { useUser } from '@/context/user-context';
 import { listenToAllTeams } from '@/lib/firebase/db';
 import type { Team } from '@/lib/types';
 import type { Unsubscribe } from 'firebase/database';
+import { canAccessAdminPanel } from '@/lib/auth/roles';
 
 export type PageState = 'LOADING' | 'ACCESS_DENIED' | 'EMPTY' | 'READY' | 'ERROR';
 
@@ -20,7 +21,7 @@ export const useAdminTeams = () => {
       return;
     }
 
-    if (!user || user.role !== 'admin') {
+    if (!user || !canAccessAdminPanel(user)) {
       setPageState('ACCESS_DENIED');
       return;
     }

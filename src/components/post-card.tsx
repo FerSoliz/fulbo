@@ -17,6 +17,7 @@ import { es } from 'date-fns/locale';
 import { Post, User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { canDeleteAnyPost } from '@/lib/auth/roles';
 
 // Helper constants
 const COMMENT_CHAR_LIMIT = 200;
@@ -230,7 +231,7 @@ export function PostCard({ post, currentUser, isPriority = false, onLikeToggle, 
   };
   
   const isPinned = !!(post.isPinned && post.pinnedUntil && new Date(post.pinnedUntil) > new Date());
-  const canDelete = !!(currentUser?.id === post.authorId || currentUser?.role === 'admin');
+  const canDelete = !!(currentUser?.id === post.authorId || canDeleteAnyPost(currentUser));
 
   const { media, content } = post;
   const hasMedia = media && media.length > 0;

@@ -7,6 +7,7 @@ import { useUpload } from '@/hooks/use-upload';
 import { setHeaderBannerUrl } from '@/lib/firebase/db';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
+import { isGod } from '@/lib/auth/roles';
 
 interface EditBannerButtonProps {
   onUploadComplete: (newUrl: string) => void;
@@ -18,7 +19,7 @@ export function EditBannerButton({ onUploadComplete }: EditBannerButtonProps) {
   const { toast } = useToast();
   const [isHovering, setIsHovering] = useState(false);
 
-  if (user?.role !== 'admin') {
+  if (!isGod(user)) {
     return null;
   }
 

@@ -39,6 +39,7 @@ import { db } from '@/lib/firebase';
 import { ref, onValue, update } from 'firebase/database';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/context/user-context';
+import { canAccessAdminPanel } from '@/lib/auth/roles';
 
 interface Tournament {
   id: string;
@@ -61,7 +62,7 @@ export default function ManageTournamentsPage() {
 
   useEffect(() => {
     if (user === null) router.push('/');
-    if (user && user.role !== 'admin') router.push('/');
+    if (user && !canAccessAdminPanel(user)) router.push('/');
   }, [user, router]);
 
   useEffect(() => {
@@ -97,7 +98,7 @@ export default function ManageTournamentsPage() {
     }
   };
 
-  if (!user || user.role !== 'admin') {
+  if (!user || !canAccessAdminPanel(user)) {
       return <div className="p-8 text-center">Acceso denegado. Redirigiendo...</div>;
   }
 
