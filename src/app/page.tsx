@@ -20,7 +20,7 @@ export default function HomePage() {
   const { toast } = useToast();
 
   const handleAddPost = async (postData: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments' | 'authorName' | 'authorAvatar' | 'authorUsername'>) => {
-    if (!currentUser || currentUser.id === 'visitor' || currentUser.role === 'player') return;
+    if (!currentUser || currentUser.id === 'visitor') return;
 
     const author = {
       id: currentUser.id,
@@ -84,7 +84,7 @@ export default function HomePage() {
     }
   };
 
-  const canPost = currentUser?.role === 'admin' || currentUser?.role === 'player';
+  const canPost = !!currentUser && currentUser.id !== 'visitor';
 
   return (
     <div className="max-w-2xl mx-auto p-4" aria-live="polite" aria-busy={postsStatus === 'loading' || userContextLoading}>

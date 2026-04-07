@@ -60,7 +60,7 @@ export const createPost = async (
 ) => {
   const { author, ...restOfPost } = postData;
 
-  const newPostData = {
+  const newPostDataRaw = {
     ...restOfPost,
     authorId: author.id,
     authorName: author.name,
@@ -68,6 +68,10 @@ export const createPost = async (
     authorUsername: author.username,
     createdAt: serverTimestamp(),
   };
+
+  const newPostData = Object.fromEntries(
+    Object.entries(newPostDataRaw).filter(([, value]) => value !== undefined)
+  );
 
   const newPostRef = push(ref(db, 'posts'));
   await update(newPostRef, newPostData);

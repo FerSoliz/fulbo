@@ -96,13 +96,18 @@ export function CreatePostForm({ currentUser, onAddPost }: CreatePostFormProps) 
       media.push(...imageMedia);
     }
     
-    await onAddPost({
+    const postPayload: Omit<Post, 'id' | 'createdAt' | 'likes' | 'comments'> = {
       authorId: currentUser.id,
       content: data.content || '',
       media: media,
-      url: externalUrl || undefined,
       isPinned: currentUser.role === 'admin' && data.isPinned, // Asegurarse que solo el admin puede fijar
-    });
+    };
+
+    if (externalUrl) {
+      postPayload.url = externalUrl;
+    }
+
+    await onAddPost(postPayload);
 
     form.reset();
     setImagePreviews([]);
