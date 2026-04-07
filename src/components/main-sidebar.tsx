@@ -2,7 +2,7 @@
 
 import {
   BarChart2, Bell, Cog, Download, Footprints, Home, Instagram, Landmark, LogOut, 
-  Loader2, MessageSquare, ShieldCheck, Store, Swords, Ticket, Trophy, User as UserIcon,
+  Loader2, MessageSquare, ShieldCheck, Store, Swords, Ticket, Trophy, User as UserIcon, BookOpen,
   Youtube, FilePenLine
 } from 'lucide-react';
 import Link from 'next/link';
@@ -30,6 +30,7 @@ const menuItems: MenuItem[] = [
     { href: '/tournament', icon: FilePenLine, label: 'INSCRIPCIONES' },
     { href: '/tournaments', icon: Trophy, label: 'LIGAS EN CURSO' },
     { href: '/store', icon: Store, label: 'TIENDA' },
+    { href: '/guia', icon: BookOpen, label: 'GUIA DE USUARIO' },
     { href: '/collectibles', icon: Swords, label: 'TCG SUDONE', requiresAuth: true },
     { href: '/ranking', icon: BarChart2, label: 'RANKING' },
     { href: '/transfer-market', icon: Landmark, label: 'MERCADO DE PASES' },
